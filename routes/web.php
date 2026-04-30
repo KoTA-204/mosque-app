@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\UserController;
 
 // dashboard pages
 Route::get('/', function () {
@@ -83,10 +84,11 @@ Route::get('/videos', function () {
     return view('pages.ui-elements.videos', ['title' => 'Videos']);
 })->name('videos');
 
-
-
-
-
+//user page
+// Route::middleware(['auth'])->group(function () {
+//     Route::resource('users', UserController::class);
+// });
+Route::resource('users', UserController::class);
 
 
 

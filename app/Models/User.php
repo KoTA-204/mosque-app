@@ -59,4 +59,9 @@ class User extends Authenticatable implements CanResetPasswordContract
     {
         $this->notify(new ResetPassword($token));
     }
+
+    public function getUsernameAttribute()
+    {
+        return explode('@', $this->email)[0];
+    }
 }
