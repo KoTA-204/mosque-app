@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
 class Permission extends Model
 {
@@ -17,6 +18,11 @@ class Permission extends Model
         'description',
         'is_active',
     ];
+
+    public function getSlugAttribute(): string
+    {
+        return Str::slug($this->permission_code);
+    }
 
     public function roles()
     {

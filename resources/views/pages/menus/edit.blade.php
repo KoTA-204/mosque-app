@@ -1,0 +1,101 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold text-dark dark:text-white">Edit Menu</h2>
+    </div>
+
+    <div class="rounded-xl border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
+        <form action="{{ route('menus.update', $menu) }}" method="POST">
+            @csrf
+            @method('PUT')
+
+            {{-- Menu Name --}}
+            <div class="mb-4">
+                <label class="mb-2 block text-sm font-medium text-black dark:text-white">
+                    Nama Menu <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="menu_name"
+                       value="{{ old('menu_name', $menu->menu_name) }}"
+                       class="w-full rounded-lg border border-stroke px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white @error('menu_name') border-red-500 @enderror">
+                @error('menu_name')
+                    <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Route Name --}}
+            <div class="mb-4">
+                <label class="mb-2 block text-sm font-medium text-black dark:text-white">
+                    Route Name
+                </label>
+                <input type="text" name="route_name"
+                       value="{{ old('route_name', $menu->route_name) }}"
+                       class="w-full rounded-lg border border-stroke px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white">
+                <p class="mt-1 text-xs text-body dark:text-bodydark">
+                    Isi dengan nama route Laravel, contoh: pemasukan.index
+                </p>
+            </div>
+
+            {{-- Icon --}}
+            <div class="mb-4">
+                <label class="mb-2 block text-sm font-medium text-black dark:text-white">Icon</label>
+                <input type="text" name="icon"
+                       value="{{ old('icon', $menu->icon) }}"
+                       class="w-full rounded-lg border border-stroke px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white">
+            </div>
+
+            {{-- Parent Menu --}}
+            <div class="mb-4">
+                <label class="mb-2 block text-sm font-medium text-black dark:text-white">
+                    Parent Menu
+                </label>
+                <select name="parent_id"
+                        class="w-full rounded-lg border border-stroke px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white">
+                    <option value="">-- Tidak ada (menu utama) --</option>
+                    @foreach($parentMenus as $parent)
+                        @if($parent->id !== $menu->id)
+                            <option value="{{ $parent->id }}"
+                                {{ old('parent_id', $menu->parent_id) == $parent->id ? 'selected' : '' }}>
+                                {{ $parent->menu_name }}
+                            </option>
+                        @endif
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- Sort Order --}}
+            <div class="mb-4">
+                <label class="mb-2 block text-sm font-medium text-black dark:text-white">Urutan</label>
+                <input type="number" name="sort_order"
+                       value="{{ old('sort_order', $menu->sort_order) }}"
+                       class="w-full rounded-lg border border-stroke px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white"
+                       min="0">
+            </div>
+
+            {{-- Is Active --}}
+            <div class="mb-6">
+                <label class="flex items-center gap-2 text-sm font-medium text-black dark:text-white">
+                    <input type="checkbox" name="is_active" value="1"
+                           {{ old('is_active', $menu->is_active) ? 'checked' : '' }}
+                           class="h-4 w-4 rounded border-stroke">
+                    Aktif
+                </label>
+            </div>
+
+            {{-- Buttons --}}
+            <div class="flex items-center gap-3">
+                <button type="submit"
+                        class="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-opacity-90">
+                    Update
+                </button>
+                <a href="{{ route('menus.index') }}"
+                   class="rounded-lg border border-stroke px-6 py-2.5 text-sm font-medium text-black hover:bg-gray-100 dark:text-white">
+                    Batal
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection

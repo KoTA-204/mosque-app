@@ -5,6 +5,9 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controller\DashboardController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\MenuController;
 
 // Landing Page
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -19,6 +22,30 @@ Route::prefix('kegiatan')->name('kegiatan.')->group(function () {
     Route::get('/{slug}', [KegiatanController::class, 'show'])->name('show');
 });
 Route::get('/laporan', [LaporanController::class, 'publicIndex'])->name('laporan.public');
+
+Route::resource('roles', RoleController::class);
+Route::resource('permissions', PermissionController::class);
+Route::resource('menus', MenuController::class);
+
+// dashboard pages
+Route::get('/', function () {
+    return view('pages.dashboard.ecommerce', ['title' => 'E-commerce Dashboard']);
+})->name('dashboard');
+
+// calender pages
+Route::get('/calendar', function () {
+    return view('pages.calender', ['title' => 'Calendar']);
+})->name('calendar');
+
+// profile pages
+Route::get('/profile', function () {
+    return view('pages.profile', ['title' => 'Profile']);
+})->name('profile');
+
+// form pages
+Route::get('/form-elements', function () {
+    return view('pages.form.form-elements', ['title' => 'Form Elements']);
+})->name('form-elements');
 
 // Authentication 
 Route::middleware('guest')->group(function () {
