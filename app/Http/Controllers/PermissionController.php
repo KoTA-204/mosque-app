@@ -37,7 +37,7 @@ class PermissionController extends Controller
     public function store(StorePermissionRequest $request)
     {
         $permission = $this->permissionService->create($request->validated());
-        return redirect()->route('permissions.index')
+        return redirect()->route('dashboard.permissions.index')
             ->with('success', 'Permission created successfully.');
     }
 
@@ -64,7 +64,7 @@ class PermissionController extends Controller
     public function update(UpdatePermissionRequest $request, Permission $permission)
     {
         $this->permissionService->update($permission, $request->validated());
-        return redirect()->route('permissions.index')
+        return redirect()->route('dashboard.permissions.index')
             ->with('success', 'Permission updated successfully.');
     }
 
@@ -79,7 +79,7 @@ class PermissionController extends Controller
             return redirect()->back()->with('error', $result);
         }
 
-        return redirect()->route('pages.permissions.index')
+        return redirect()->route('dashboard.permissions.index')
             ->with('success', 'Permission berhasil dihapus');
     }
 }

@@ -8,7 +8,7 @@
         <h2 class="text-2xl font-bold text-dark dark:text-white">
             Manajemen Role
         </h2>
-        <a href="{{ route('roles.create') }}"
+        <a href="{{ route('dashboard.roles.create') }}"
            class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-opacity-90">
             + Tambah Role
         </a>
@@ -58,15 +58,15 @@
                         </td>
                         <td class="px-4 py-4 text-sm">
                             <div class="flex items-center gap-2">
-                                <a href="{{ route('roles.show', $role) }}"
+                                <a href="{{ route('dashboard.roles.show', $role) }}"
                                    class="rounded bg-blue-100 px-3 py-1 text-xs text-blue-700 hover:bg-blue-200">
                                     Detail
                                 </a>
-                                <a href="{{ route('roles.edit', $role) }}"
+                                <a href="{{ route('dashboard.roles.edit', $role) }}"
                                    class="rounded bg-yellow-100 px-3 py-1 text-xs text-yellow-700 hover:bg-yellow-200">
                                     Edit
                                 </a>
-                                <form action="{{ route('roles.destroy', $role) }}" method="POST"
+                                <form action="{{ route('dashboard.roles.destroy', $role) }}" method="POST"
                                       onsubmit="return confirm('Yakin hapus role ini?')">
                                     @csrf
                                     @method('DELETE')

@@ -10,7 +10,6 @@ class MenuService
     public function getAll(): Collection
     {
         return Menu::with('children', 'parent')
-            ->whereNull('parent_id')
             ->orderBy('sort_order')
             ->get();
     }

@@ -94,7 +94,7 @@
                         class="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-opacity-90">
                     Update
                 </button>
-                <a href="{{ route('permissions.index') }}"
+                <a href="{{ route('dashboard.permissions.index') }}"
                    class="rounded-lg border border-stroke px-6 py-2.5 text-sm font-medium text-black hover:bg-gray-100 dark:text-white">
                     Batal
                 </a>

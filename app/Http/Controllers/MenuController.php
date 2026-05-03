@@ -7,6 +7,7 @@ use App\Models\Menu;
 use App\Http\Requests\StoreMenuRequest;
 use App\Http\Requests\UpdateMenuRequest;
 use App\Services\MenuService;
+use Illuminate\Support\Facades\Route;
 
 class MenuController extends Controller
 {
@@ -28,7 +29,8 @@ class MenuController extends Controller
     public function create()
     {
         $parentMenus = $this->menuService->getAllFlat();
-        return view('pages.menus.create', compact('parentMenus'));
+        $availableRoutes = $this->getAvailableRoutes();
+        return view('pages.menus.create', compact('parentMenus', 'availableRoutes'));
     }
 
     /**
@@ -37,7 +39,7 @@ class MenuController extends Controller
     public function store(StoreMenuRequest $request)
     {
         $this->menuService->create($request->validated());
-        return redirect()->route('menus.index')
+        return redirect()->route('dashboard.menus.index')
             ->with('success', 'Menu berhasil dibuat');
     }
 
@@ -56,7 +58,8 @@ class MenuController extends Controller
     public function edit(Menu $menu)
     {
         $parentMenus = $this->menuService->getAllFlat();
-        return view('pages.menus.edit', compact('menu', 'parentMenus'));
+        $availableRoutes = $this->getAvailableRoutes();
+        return view('pages.menus.edit', compact('menu', 'parentMenus', 'availableRoutes'));
     }
 
     /**
@@ -65,7 +68,7 @@ class MenuController extends Controller
     public function update(UpdateMenuRequest $request, Menu $menu)
     {
         $this->menuService->update($menu, $request->validated());
-        return redirect()->route('menus.index')
+        return redirect()->route('dashboard.menus.index')
             ->with('success', 'Menu berhasil diupdate');
     }
 
@@ -80,7 +83,23 @@ class MenuController extends Controller
             return redirect()->back()->with('error', $result);
         }
 
-        return redirect()->route('menus.index')
+        return redirect()->route('dashboard.menus.index')
             ->with('success', 'Menu berhasil dihapus');
+    }
+
+    private function getAvailableRoutes()
+    {
+        return collect(Route::getRoutes())
+            ->filter(fn($route) =>
+                $route->getName() &&
+                in_array('GET', $route->methods()) &&
+                str_starts_with($route->getName(), 'dashboard') &&
+                !str_ends_with($route->getName(), '.create') &&
+                !str_ends_with($route->getName(), '.edit') &&
+                !str_ends_with($route->getName(), '.show')
+            )
+            ->map(fn($route) => $route->getName())
+            ->sort()
+            ->values();
     }
 }

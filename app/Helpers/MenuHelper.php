@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Helpers;
+use App\Models\Menu;
 
 class MenuHelper
 {
@@ -83,18 +84,79 @@ class MenuHelper
         ];
     }
 
-    public static function getMenuGroups()
+    public static function getMenuGroups(): array
     {
+        if (!auth()->check()) {
+            return [];
+        }
+
+        $user = auth()->user();
+
+        // Ambil semua permission_code yang dimiliki user
+        $permissionCodes = $user->roles()
+            ->with('permissions')
+            ->get()
+            ->flatMap(fn($role) => $role->permissions)
+            ->where('is_active', true)
+            ->pluck('permission_code')
+            ->unique()
+            ->toArray();
+
+        // dd($permissionCodes);
+
+        // Ambil parent menu yang sesuai permission user
+        $parentMenus = Menu::with(['children' => function ($query) use ($permissionCodes) {
+                $query->whereHas('permissions', function ($q) use ($permissionCodes) {
+                        $q->whereIn('permission_code', $permissionCodes);
+                    })
+                    ->where('is_active', true)
+                    ->orderBy('sort_order');
+            }])
+            ->whereNull('parent_id')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->filter(function ($menu) {
+                return $menu->children->count() > 0;
+            });
+
+        // dd($parentMenus);
+
+        $items = $parentMenus->map(function ($menu) {
+            $item = [
+                'name' => $menu->menu_name,
+                'icon' => $menu->icon ?? 'dashboard',
+            ];
+
+            if ($menu->children->count() > 0) {
+                $item['subItems'] = $menu->children->map(fn($child) => [
+                    'name' => $child->menu_name,
+                    'path' => self::resolveRoutePath($child->route_name),
+                ])->toArray();
+            } else {
+                $item['path'] = self::resolveRoutePath($menu->route_name);
+            }
+
+            return $item;
+        })->toArray();
+
         return [
             [
                 'title' => 'Menu',
-                'items' => self::getMainNavItems()
-            ],
-            [
-                'title' => 'Others',
-                'items' => self::getOthersItems()
+                'items' => $items,
             ]
         ];
+    }
+
+    private static function resolveRoutePath(?string $routeName): string
+    {
+        if (!$routeName) return '#';
+
+        try {
+            return route($routeName, [], false);
+        } catch (\Exception $e) {
+            return '#';
+        }
     }
 
     public static function isActive($path)

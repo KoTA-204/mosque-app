@@ -27,6 +27,8 @@ class UpdateRoleRequest extends FormRequest
             'role_name' => 'sometimes|required|string|max:255|unique:roles,role_name,' . $roleId,
             'description' => 'sometimes|nullable|string|max:255',
             'is_active' => 'sometimes|nullable|boolean',
+            'permission_ids'   => 'nullable|array',
+            'permission_ids.*' => 'integer|exists:permissions,id',
         ];
     }
 }

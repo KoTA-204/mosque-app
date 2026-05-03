@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LandingController;
-use App\Http\Controller\DashboardController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\RoleController;
@@ -13,39 +13,11 @@ use App\Http\Controllers\MenuController;
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::view('/organisasi', 'landing.organisasi')->name('organisasi');
 Route::view('/tentang-kami', 'landing.tentang-kami')->name('tentang-kami');
-Route::prefix('donasi')->name('donasi.')->group(function () {
-    Route::get('/', [DonasiController::class, 'index'])->name('index');
-    Route::get('/{slug}', [DonasiController::class, 'show'])->name('show');
-});
-Route::prefix('kegiatan')->name('kegiatan.')->group(function () {
-    Route::get('/', [KegiatanController::class, 'index'])->name('index');
-    Route::get('/{slug}', [KegiatanController::class, 'show'])->name('show');
-});
-Route::get('/laporan', [LaporanController::class, 'publicIndex'])->name('laporan.public');
-
-Route::resource('roles', RoleController::class);
-Route::resource('permissions', PermissionController::class);
-Route::resource('menus', MenuController::class);
 
 // dashboard pages
-Route::get('/', function () {
+Route::get('/dashboard', function () {
     return view('pages.dashboard.ecommerce', ['title' => 'E-commerce Dashboard']);
 })->name('dashboard');
-
-// calender pages
-Route::get('/calendar', function () {
-    return view('pages.calender', ['title' => 'Calendar']);
-})->name('calendar');
-
-// profile pages
-Route::get('/profile', function () {
-    return view('pages.profile', ['title' => 'Profile']);
-})->name('profile');
-
-// form pages
-Route::get('/form-elements', function () {
-    return view('pages.form.form-elements', ['title' => 'Form Elements']);
-})->name('form-elements');
 
 // Authentication 
 Route::middleware('guest')->group(function () {
@@ -67,26 +39,22 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', function () {return view('pages.dashboard.index');})->name('dashboard');
+    Route::get('/dashboard', function () {return view('pages.dashboard.ecommerce');})->name('dashboard');
     Route::post('/logout', [LoginController::class, 'destroy'])->name('auth.logout');
 
 });
 
 Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\DashboardController::class, 'index'])->name('index');
-    Route::resource('banner', \App\Http\Controllers\Dashboard\BannerController::class);
-    Route::resource('keuangan', \App\Http\Controllers\KeuanganController::class);
-    Route::resource('transaksi', \App\Http\Controllers\TransaksiController::class);
-    Route::resource('program', \App\Http\Controllers\ProgramController::class);
-    Route::resource('kegiatan', \App\Http\Controllers\KegiatanDashboardController::class);
-    Route::resource('donatur', \App\Http\Controllers\DonaturController::class);
-    Route::prefix('laporan')->name('laporan.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Dashboard\LaporanController::class, 'index'])->name('index');
-        Route::get('/cetak', [\App\Http\Controllers\Dashboard\LaporanController::class, 'cetak'])->name('cetak');
-        Route::get('/export', [\App\Http\Controllers\Dashboard\LaporanController::class, 'export'])->name('export');
+    Route::get('/', [DashboardController::class, 'index'])->name('index');
+    Route::middleware('permission:VIEW_ROLES')->group(function () {
+        Route::resource('roles', RoleController::class);
     });
-    Route::prefix('pengaturan')->name('pengaturan.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Dashboard\PengaturanController::class, 'index'])->name('index');
-        Route::put('/', [\App\Http\Controllers\Dashboard\PengaturanController::class, 'update'])->name('update');
+
+    Route::middleware('permission:VIEW_PERMISSIONS')->group(function () {
+        Route::resource('permissions', PermissionController::class);
+    });
+
+    Route::middleware('permission:VIEW_MENUS')->group(function () {
+        Route::resource('menus', MenuController::class);
     });
 });

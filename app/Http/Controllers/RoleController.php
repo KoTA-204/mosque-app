@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Role;
+use App\Models\Menu;
 use App\Http\Requests\StoreRoleRequest;
 use App\Http\Requests\UpdateRoleRequest;
 use App\Services\RoleService;
@@ -28,7 +29,9 @@ class RoleController extends Controller
      */
     public function create()
     {
-        return view('pages.roles.create');
+        $menus       = $this->getMenusWithPermissions();
+        $actions     = ['view', 'create', 'update', 'delete', 'manage'];
+        return view('pages.roles.create', compact('menus', 'actions'));
     }
 
     /**
@@ -37,7 +40,7 @@ class RoleController extends Controller
     public function store(StoreRoleRequest $request)
     {
         $this->roleService->create($request->validated());
-        return redirect()->route('roles.index')
+        return redirect()->route('dashboard.roles.index')
             ->with('success', 'Role berhasil dibuat');
     }
 
@@ -55,7 +58,11 @@ class RoleController extends Controller
      */
     public function edit(Role $role)
     {
-        return view('pages.roles.edit', compact('role'));
+        $role        = $this->roleService->getById($role);
+        $menus       = $this->getMenusWithPermissions();
+        $actions     = ['view', 'create', 'update', 'delete', 'manage'];
+        $assignedIds = $role->permissions->pluck('id')->toArray();
+        return view('pages.roles.edit', compact('role', 'menus', 'actions', 'assignedIds'));
     }
 
     /**
@@ -64,7 +71,7 @@ class RoleController extends Controller
     public function update(UpdateRoleRequest $request, Role $role)
     {
         $this->roleService->update($role, $request->validated());
-        return redirect()->route('roles.index')
+        return redirect()->route('dashboard.roles.index')
             ->with('success', 'Role berhasil diperbarui');
     }
 
@@ -79,7 +86,21 @@ class RoleController extends Controller
             return redirect()->back()->with('error', $result);
         }
 
-        return redirect()->route('roles.index')
+        return redirect()->route('dashboard.roles.index')
             ->with('success', 'Role berhasil dihapus');
+    }
+
+    private function getMenusWithPermissions()
+    {
+        return Menu::with(['permissions'])
+            ->whereNull('parent_id')
+            ->where('is_active', true)
+            ->with(['children' => function ($query) {
+                $query->where('is_active', true)
+                    ->with('permissions')
+                    ->orderBy('sort_order');
+            }])
+            ->orderBy('sort_order')
+            ->get();
     }
 }

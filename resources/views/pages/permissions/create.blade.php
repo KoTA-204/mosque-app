@@ -8,7 +8,7 @@
     </div>
 
     <div class="rounded-xl border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
-        <form action="{{ route('permissions.store') }}" method="POST">
+        <form action="{{ route('dashboard.permissions.store') }}" method="POST">
             @csrf
 
             {{-- Permission Code --}}
@@ -94,7 +94,7 @@
                         class="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-opacity-90">
                     Simpan
                 </button>
-                <a href="{{ route('permissions.index') }}"
+                <a href="{{ route('dashboard.permissions.index') }}"
                    class="rounded-lg border border-stroke px-6 py-2.5 text-sm font-medium text-black hover:bg-gray-100 dark:text-white">
                     Batal
                 </a>

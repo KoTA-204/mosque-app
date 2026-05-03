@@ -59,4 +59,22 @@ class User extends Authenticatable implements CanResetPasswordContract
     {
         $this->notify(new ResetPassword($token));
     }
+
+    public function hasPermission(string $permissionCode): bool
+    {
+        return $this->roles()
+            ->whereHas('permissions', function ($query) use ($permissionCode) {
+                $query->where('permission_code', $permissionCode)
+                    ->where('is_active', true);
+            })
+            ->exists();
+    }
+
+    public function hasRole(string $roleSlug): bool
+    {
+        return $this->roles()
+            ->where('is_active', true)
+            ->get()
+            ->contains(fn($role) => $role->slug === $roleSlug);
+    }
 }

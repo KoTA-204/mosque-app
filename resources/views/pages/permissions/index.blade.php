@@ -5,7 +5,7 @@
 
     <div class="mb-6 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-dark dark:text-white">Manajemen Permission</h2>
-        <a href="{{ route('permissions.create') }}"
+        <a href="{{ route('dashboard.permissions.create') }}"
            class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-opacity-90">
             + Tambah Permission
         </a>
@@ -75,15 +75,15 @@
                         </td>
                         <td class="px-4 py-4 text-sm">
                             <div class="flex items-center gap-2">
-                                <a href="{{ route('permissions.show', $permission) }}"
+                                <a href="{{ route('dashboard.permissions.show', $permission) }}"
                                    class="rounded bg-blue-100 px-3 py-1 text-xs text-blue-700 hover:bg-blue-200">
                                     Detail
                                 </a>
-                                <a href="{{ route('permissions.edit', $permission) }}"
+                                <a href="{{ route('dashboard.permissions.edit', $permission) }}"
                                    class="rounded bg-yellow-100 px-3 py-1 text-xs text-yellow-700 hover:bg-yellow-200">
                                     Edit
                                 </a>
-                                <form action="{{ route('permissions.destroy', $permission) }}" method="POST"
+                                <form action="{{ route('dashboard.permissions.destroy', $permission) }}" method="POST"
                                       onsubmit="return confirm('Yakin hapus permission ini?')">
                                     @csrf
                                     @method('DELETE')

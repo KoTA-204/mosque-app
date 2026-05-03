@@ -5,7 +5,7 @@
 
     <div class="mb-6 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-dark dark:text-white">Detail Permission</h2>
-        <a href="{{ route('permissions.index') }}"
+        <a href="{{ route('dashboard.permissions.index') }}"
            class="rounded-lg border border-stroke px-4 py-2 text-sm text-black hover:bg-gray-100 dark:text-white">
             ← Kembali
         </a>
