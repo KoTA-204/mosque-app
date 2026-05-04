@@ -8,11 +8,13 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\UserController;
 
 // Landing Page
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::view('/organisasi', 'landing.organisasi')->name('organisasi');
 Route::view('/tentang-kami', 'landing.tentang-kami')->name('tentang-kami');
+
 
 // dashboard pages
 Route::get('/dashboard', function () {
@@ -46,6 +48,7 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('index');
+    Route::resource('users', UserController::class);
     Route::middleware('permission:VIEW_ROLES')->group(function () {
         Route::resource('roles', RoleController::class);
     });

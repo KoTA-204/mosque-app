@@ -78,4 +78,9 @@ class User extends Authenticatable implements CanResetPasswordContract
             ->get()
             ->contains(fn($role) => $role->slug === $roleSlug);
     }
+    
+    public function getUsernameAttribute()
+    {
+        return explode('@', $this->email)[0];
+    }
 }
