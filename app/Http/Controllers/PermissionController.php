@@ -17,10 +17,11 @@ class PermissionController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $permissions = $this->permissionService->getAll();
-        return view('pages.permissions.index', compact('permissions'));
+        $search = $request->get('search', '');
+        $permissions = $this->permissionService->getAll($search);
+        return view('pages.permissions.index', compact('permissions', 'search'));
     }
 
     /**

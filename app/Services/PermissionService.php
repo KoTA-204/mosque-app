@@ -7,9 +7,16 @@ use Illuminate\Database\Eloquent\Collection;
 
 class PermissionService
 {
-    public function getAll(): Collection
+    public function getAll(?string $search = null, int $perPage = 10)
     {
-        return Permission::with('roles')->get();
+        return Permission::with('roles')
+            ->when($search, function ($query) use ($search) {
+                $query->where('permission_name', 'ilike', "%{$search}%")
+                    ->orWhere('description', 'ilike', "%{$search}%");
+            })
+            ->orderBy('permission_name')
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     public function getById(Permission $permission): Permission

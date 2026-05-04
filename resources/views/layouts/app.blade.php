@@ -8,20 +8,14 @@
 
     <title>{{ $title ?? 'Dashboard' }} | MosQue</title>
 
-    <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <!-- Alpine.js -->
-    {{-- <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script> --}}
-
-    <!-- Theme Store -->
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.store('theme', {
                 init() {
                     const savedTheme = localStorage.getItem('theme');
-                    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' :
-                        'light';
+                    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
                     this.theme = savedTheme || systemTheme;
                     this.updateTheme();
                 },
@@ -44,10 +38,11 @@
                 }
             });
 
-            Alpine.store('sidebar', {
-                isExpanded: window.innerWidth >= 1280,
+           Alpine.store('sidebar', {
+                isExpanded: false,
                 isMobileOpen: false,
                 isHovered: false,
+                isMobile: false,
 
                 toggleExpanded() {
                     this.isExpanded = !this.isExpanded;
@@ -63,7 +58,7 @@
                 },
 
                 setHovered(val) {
-                    if (window.innerWidth >= 1280 && !this.isExpanded) {
+                    if (!this.isMobile && !this.isExpanded) {
                         this.isHovered = val;
                     }
                 }
@@ -71,7 +66,6 @@
         });
     </script>
 
-    <!-- Apply dark mode immediately to prevent flash -->
     <script>
         (function() {
             const savedTheme = localStorage.getItem('theme');
@@ -79,35 +73,38 @@
             const theme = savedTheme || systemTheme;
             if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
-                document.body.classList.add('dark', 'bg-gray-900');
+                if (document.body) document.body.classList.add('dark', 'bg-gray-900');
             } else {
                 document.documentElement.classList.remove('dark');
-                document.body.classList.remove('dark', 'bg-gray-900');
+                if (document.body) document.body.classList.remove('dark', 'bg-gray-900');
             }
         })();
     </script>
-    
 </head>
 
 <body
-    x-data="{ 'loaded': true}"
+    x-data="{ loaded: true }"
     x-init="
-        $store.sidebar.isExpanded = window.innerWidth >= 1280;
-        const checkMobile = () => {
-            if (window.innerWidth < 1280) {
-                $store.sidebar.setMobileOpen(false);
-                $store.sidebar.isExpanded = false;
-            } else {
-                $store.sidebar.isMobileOpen = false;
-                $store.sidebar.isExpanded = true;
-            }
-        };
-        window.addEventListener('resize', checkMobile);
+        $nextTick(() => {
+            $store.sidebar.isMobile = window.innerWidth < 1280;
+            $store.sidebar.isExpanded = window.innerWidth >= 1280;
+            
+            const checkMobile = () => {
+                if (window.innerWidth < 1280) {
+                    $store.sidebar.isMobile = true;
+                    $store.sidebar.setMobileOpen(false);
+                    $store.sidebar.isExpanded = false;
+                } else {
+                    $store.sidebar.isMobile = false;
+                    $store.sidebar.isMobileOpen = false;
+                    $store.sidebar.isExpanded = true;
+                }
+            };
+            window.addEventListener('resize', checkMobile);
+        });
     ">
 
-    {{-- preloader --}}
     <x-common.preloader/>
-    {{-- preloader end --}}
 
     <div class="min-h-screen xl:flex">
         @include('layouts.backdrop')
@@ -116,7 +113,7 @@
         <div class="flex-1 transition-all duration-300 ease-in-out"
             :class="{
                 'xl:ml-[280px]': $store.sidebar.isExpanded || $store.sidebar.isHovered,
-                'xl:ml-[72px]': !$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen
+                'xl:ml-[72px]': !$store.sidebar.isExpanded && !$store.sidebar.isHovered
             }">
             @include('layouts.app-header')
             <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">

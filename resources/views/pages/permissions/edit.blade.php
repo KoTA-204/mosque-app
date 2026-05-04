@@ -8,7 +8,7 @@
     </div>
 
     <div class="rounded-xl border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
-        <form action="{{ route('permissions.update', $permission) }}" method="POST">
+        <form action="{{ route('dashboard.permissions.update', $permission) }}" method="POST">
             @csrf
             @method('PUT')
 
@@ -91,7 +91,7 @@
             {{-- Buttons --}}
             <div class="flex items-center gap-3">
                 <button type="submit"
-                        class="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-opacity-90">
+                        class="rounded-lg bg-brand-500 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-600 transition-colors duration-150">
                     Update
                 </button>
                 <a href="{{ route('dashboard.permissions.index') }}"

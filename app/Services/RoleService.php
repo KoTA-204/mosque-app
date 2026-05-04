@@ -7,9 +7,17 @@ use Illuminate\Database\Eloquent\Collection;
 
 class RoleService
 {
-    public function getAll(): Collection
+    public function getAll(?string $search = null, int $perPage = 5)
     {
-        return Role::with('permissions')->get();
+        return Role::withCount('users')
+            ->with('permissions')
+            ->when($search, function ($query) use ($search) {
+                $query->where('role_name', 'ilike', "%{$search}%")
+                    ->orWhere('description', 'ilike', "%{$search}%");
+            })
+            ->orderBy('role_name')
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     public function getById(Role $role): Role

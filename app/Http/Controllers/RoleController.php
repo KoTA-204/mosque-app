@@ -18,10 +18,11 @@ class RoleController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $roles = $this->roleService->getAll();
-        return view('pages.roles.index', compact('roles'));
+        $search = $request->get('search', '');
+        $roles  = $this->roleService->getAll($search);
+        return view('pages.roles.index', compact('roles', 'search'));
     }
 
     /**
@@ -30,7 +31,7 @@ class RoleController extends Controller
     public function create()
     {
         $menus       = $this->getMenusWithPermissions();
-        $actions     = ['view', 'create', 'update', 'delete', 'manage'];
+        $actions     = ['view', 'create', 'update', 'delete'];
         return view('pages.roles.create', compact('menus', 'actions'));
     }
 
@@ -60,7 +61,7 @@ class RoleController extends Controller
     {
         $role        = $this->roleService->getById($role);
         $menus       = $this->getMenusWithPermissions();
-        $actions     = ['view', 'create', 'update', 'delete', 'manage'];
+        $actions     = ['view', 'create', 'update', 'delete'];
         $assignedIds = $role->permissions->pluck('id')->toArray();
         return view('pages.roles.edit', compact('role', 'menus', 'actions', 'assignedIds'));
     }

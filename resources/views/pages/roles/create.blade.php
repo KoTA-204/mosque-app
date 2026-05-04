@@ -64,70 +64,111 @@
                             @endforeach
                         </tr>
                     </thead>
-                    <tbody>
-                        @foreach($menus as $menu)
-                            {{-- Parent Menu Row --}}
-                            <tr class="border-t border-stroke bg-gray-50 dark:border-strokedark dark:bg-meta-4">
-                                <td class="px-4 py-3 text-sm font-semibold text-black dark:text-white" colspan="{{ count($actions) + 1 }}">
-                                    {{ $menu->menu_name }}
-                                </td>
-                            </tr>
 
-                            {{-- Child Menu Rows --}}
-                            @if($menu->children->count() > 0)
-                                @foreach($menu->children as $child)
-                                    <tr class="border-t border-stroke dark:border-strokedark">
-                                        <td class="px-4 py-3 text-sm text-black dark:text-white pl-8">
-                                            └ {{ $child->menu_name }}
-                                        </td>
-                                        @foreach($actions as $action)
-                                            @php
-                                                $permission = $child->permissions
-                                                    ->where('action', $action)
-                                                    ->first();
-                                            @endphp
-                                            <td class="px-4 py-3 text-center">
-                                                @if($permission)
-                                                    <input type="checkbox"
-                                                           name="permission_ids[]"
-                                                           value="{{ $permission->id }}"
-                                                           {{ in_array($permission->id, old('permission_ids', [])) ? 'checked' : '' }}
-                                                           class="h-4 w-4 rounded border-stroke">
-                                                @else
-                                                    <span class="text-gray-300 dark:text-gray-600">—</span>
-                                                @endif
-                                            </td>
-                                        @endforeach
-                                    </tr>
-                                @endforeach
-                            @else
-                                {{-- Parent tanpa child (misal Dashboard) --}}
-                                <tr class="border-t border-stroke dark:border-strokedark">
-                                    <td class="px-4 py-3 text-sm text-black dark:text-white pl-8">
-                                        └ {{ $menu->menu_name }}
+                    @foreach($menus as $menu)
+                    <tbody x-data="{ open: true }">
+                        {{-- Parent Row --}}
+                        <tr
+                            @click="open = !open"
+                            class="border-t border-stroke dark:border-strokedark bg-gray-50 dark:bg-meta-4 cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150">
+                            <td class="px-4 py-3 text-sm font-semibold text-black dark:text-white" colspan="{{ count($actions) + 1 }}">
+                                <div class="flex items-center gap-2">
+                                    <svg
+                                        class="w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0"
+                                        :class="{ 'rotate-90': open }"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                    {{ $menu->menu_name }}
+                                    @if($menu->children->count() > 0)
+                                        <span class="text-xs font-normal text-gray-400 dark:text-gray-500">
+                                            ({{ $menu->children->count() }} submenu)
+                                        </span>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+
+                        {{-- Child Rows --}}
+                        @if($menu->children->count() > 0)
+                            @foreach($menu->children as $child)
+                                <tr
+                                    x-show="open"
+                                    x-transition:enter="transition ease-out duration-150"
+                                    x-transition:enter-start="opacity-0"
+                                    x-transition:enter-end="opacity-100"
+                                    x-transition:leave="transition ease-in duration-100"
+                                    x-transition:leave-start="opacity-100"
+                                    x-transition:leave-end="opacity-0"
+                                    @click.stop
+                                    class="border-t border-stroke dark:border-strokedark hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-150">
+                                    <td class="px-4 py-3 text-sm text-black dark:text-white">
+                                        <div class="flex items-center gap-2 pl-6">
+                                            <div class="w-px h-4 bg-gray-200 dark:bg-gray-700 flex-shrink-0"></div>
+                                            <span>{{ $child->menu_name }}</span>
+                                        </div>
                                     </td>
                                     @foreach($actions as $action)
                                         @php
-                                            $permission = $menu->permissions
+                                            $permission = $child->permissions
                                                 ->where('action', $action)
                                                 ->first();
                                         @endphp
                                         <td class="px-4 py-3 text-center">
                                             @if($permission)
                                                 <input type="checkbox"
-                                                       name="permission_ids[]"
-                                                       value="{{ $permission->id }}"
-                                                       {{ in_array($permission->id, old('permission_ids', [])) ? 'checked' : '' }}
-                                                       class="h-4 w-4 rounded border-stroke">
+                                                    name="permission_ids[]"
+                                                    value="{{ $permission->id }}"
+                                                    {{ in_array($permission->id, old('permission_ids', [])) ? 'checked' : '' }}
+                                                    class="h-4 w-4 rounded border-stroke cursor-pointer">
                                             @else
                                                 <span class="text-gray-300 dark:text-gray-600">—</span>
                                             @endif
                                         </td>
                                     @endforeach
                                 </tr>
-                            @endif
-                        @endforeach
+                            @endforeach
+                        @else
+                            {{-- Parent tanpa child --}}
+                            <tr
+                                x-show="open"
+                                x-transition:enter="transition ease-out duration-150"
+                                x-transition:enter-start="opacity-0"
+                                x-transition:enter-end="opacity-100"
+                                x-transition:leave="transition ease-in duration-100"
+                                x-transition:leave-start="opacity-100"
+                                x-transition:leave-end="opacity-0"
+                                @click.stop
+                                class="border-t border-stroke dark:border-strokedark hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-150">
+                                <td class="px-4 py-3 text-sm text-black dark:text-white">
+                                    <div class="flex items-center gap-2 pl-6">
+                                        <div class="w-px h-4 bg-gray-200 dark:bg-gray-700 flex-shrink-0"></div>
+                                        <span>{{ $menu->menu_name }}</span>
+                                    </div>
+                                </td>
+                                @foreach($actions as $action)
+                                    @php
+                                        $permission = $menu->permissions
+                                            ->where('action', $action)
+                                            ->first();
+                                    @endphp
+                                    <td class="px-4 py-3 text-center">
+                                        @if($permission)
+                                            <input type="checkbox"
+                                                name="permission_ids[]"
+                                                value="{{ $permission->id }}"
+                                                {{ in_array($permission->id, old('permission_ids', [])) ? 'checked' : '' }}
+                                                class="h-4 w-4 rounded border-stroke cursor-pointer">
+                                        @else
+                                            <span class="text-gray-300 dark:text-gray-600">—</span>
+                                        @endif
+                                    </td>
+                                @endforeach
+                            </tr>
+                        @endif
                     </tbody>
+                    @endforeach
+
                 </table>
             </div>
         </div>
@@ -135,7 +176,7 @@
         {{-- Buttons --}}
         <div class="flex items-center gap-3">
             <button type="submit"
-                    class="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-opacity-90">
+                class="rounded-lg bg-brand-500 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-600 transition-colors duration-150">
                 Simpan
             </button>
             <a href="{{ route('dashboard.roles.index') }}"

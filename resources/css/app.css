@@ -4,6 +4,7 @@
 @import 'tailwindcss';
 
 
+@source inline("translate-x-0 -translate-x-full xl:translate-x-0 w-[280px] w-[72px] xl:ml-[280px] xl:ml-[72px]");
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';

@@ -6,7 +6,7 @@
 
 <aside id="sidebar"
     class="fixed flex flex-col top-0 left-0 bg-white dark:bg-gray-900 dark:border-gray-800
-           text-gray-900 h-screen transition-all duration-300 ease-in-out z-[40] border-r border-gray-200"
+           text-gray-900 h-screen transition-all duration-300 ease-in-out z-[40] border-r border-gray-200 xl:translate-x-0"
     x-data="{
         openSubmenus: {},
         init() {
@@ -47,14 +47,14 @@
     :class="{
         'w-[280px]': $store.sidebar.isExpanded || $store.sidebar.isMobileOpen || $store.sidebar.isHovered,
         'w-[72px]': !$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen,
-        'translate-x-0': $store.sidebar.isMobileOpen || $store.sidebar.isExpanded || $store.sidebar.isHovered,
-        '-translate-x-full xl:translate-x-0': !$store.sidebar.isMobileOpen && !$store.sidebar.isExpanded && !$store.sidebar.isHovered
+        'translate-x-0': $store.sidebar.isMobileOpen,
+        '-translate-x-full': !$store.sidebar.isMobileOpen
     }"
     @mouseenter="if (!$store.sidebar.isExpanded) $store.sidebar.setHovered(true)"
     @mouseleave="$store.sidebar.setHovered(false)">
 
     <!-- Logo + Toggle Section -->
-    <div class="flex items-center justify-between px-4 py-5 border-b border-gray-100 dark:border-gray-800">
+    <div class="flex items-center justify-between px-4 border-b border-gray-100 dark:border-gray-800 h-[72px]">
 
         <!-- Logo & Name (expanded) -->
         <a href="/" class="flex items-center gap-3 overflow-hidden"
@@ -71,30 +71,6 @@
             x-show="!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen">
             <img src="{{ asset('images/logo.png') }}" alt="Logo" width="36" height="36" />
         </a>
-
-        <!-- Toggle Button (expanded) -->
-        <button
-            @click="window.innerWidth >= 1280 ? $store.sidebar.toggleExpanded() : $store.sidebar.setMobileOpen(false)"
-            x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen"
-            class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="11 17 6 12 11 7"></polyline>
-                <polyline points="18 17 13 12 18 7"></polyline>
-            </svg>
-        </button>
-    </div>
-
-    <!-- Toggle button when collapsed (desktop only) -->
-    <div class="hidden xl:flex justify-center py-3"
-        x-show="!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen">
-        <button
-            @click="$store.sidebar.toggleExpanded()"
-            class="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="13 17 18 12 13 7"></polyline>
-                <polyline points="6 17 11 12 6 7"></polyline>
-            </svg>
-        </button>
     </div>
 
     <!-- Navigation Menu -->
