@@ -20,7 +20,7 @@
                     </div>
                 </div>
 
-                <form action="{{ route('users.update', $user) }}" method="POST">
+                <form action="{{ route('dashboard.users.update', $user) }}" method="POST">
                     @csrf
                     @method('PUT')
 
@@ -99,11 +99,16 @@
                         </div>
 
                         <!-- Button -->
-                        <div class="pt-3 text-center">
+                        <div class="pt-3 flex items-center justify-center gap-3">
                             <button type="submit"
                                 class="inline-flex items-center justify-center rounded-full bg-[#c8d300] px-8 py-3 text-sm font-medium text-gray-900 transition hover:bg-[#b3bd00]">
                                 Simpan Perubahan
                             </button>
+
+                            <a href="{{ route('dashboard.users.index') }}"
+                                class="inline-flex items-center justify-center rounded-full border border-gray-300 bg-white px-8 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700">
+                                Batal
+                            </a>
                         </div>
                     </div>
                 </form>

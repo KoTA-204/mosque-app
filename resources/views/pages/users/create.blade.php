@@ -20,7 +20,7 @@
                     </div>
                 </div>
 
-                <form action="{{ route('users.store') }}" method="POST">
+                <form action="{{ route('dashboard.users.store') }}" method="POST">
                     @csrf
                     <div class="space-y-5">
                         <!-- Nama Lengkap -->
@@ -109,11 +109,16 @@
                         </div>
 
                         <!-- Button -->
-                        <div class="pt-3 text-center">
+                        <div class="pt-3 flex items-center justify-center gap-3">
                             <button type="submit"
                                 class="inline-flex items-center justify-center rounded-full bg-[#c8d300] px-8 py-3 text-sm font-medium text-gray-900 transition hover:bg-[#b3bd00]">
                                 Simpan
                             </button>
+
+                            <a href="{{ route('dashboard.users.index') }}"
+                                class="inline-flex items-center justify-center rounded-full border border-gray-300 bg-white px-8 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700">
+                                Batal
+                            </a>
                         </div>
                     </div>
                 </form>

@@ -5,7 +5,7 @@
         <!-- Header -->
         <div class="flex items-center justify-between border-b border-gray-200 px-6 py-5 dark:border-gray-800">
             <h4 class="text-lg font-semibold text-gray-900 dark:text-white">User Management</h4>
-            <a href="{{ route('users.create') }}"
+            <a href="{{ route('dashboard.users.create') }}"
                 class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#c8d300] px-5 py-2.5 text-sm font-medium text-gray-900 transition hover:bg-[#b3bd00]">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -18,7 +18,7 @@
         <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
             <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <!-- Search -->
-                <form action="{{ route('users.index') }}" method="GET">
+                <form action="{{ route('dashboard.users.index') }}" method="GET">
                     <div class="relative">
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="Search"
                             class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pr-11 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800" />
@@ -33,7 +33,7 @@
                 </form>
 
                 <!-- Role Filter -->
-                <form action="{{ route('users.index') }}" method="GET">
+                <form action="{{ route('dashboard.users.index') }}" method="GET">
                     <select name="role" onchange="this.form.submit()"
                         class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800">
                         <option value="">All Roles</option>
@@ -101,14 +101,14 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
-                                    <a href="{{ route('users.edit', $user) }}"
+                                    <a href="{{ route('dashboard.users.edit', $user) }}"
                                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[#c8d300] text-gray-900 transition hover:bg-[#b3bd00]">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                         </svg>
                                     </a>
-                                    <form action="{{ route('users.destroy', $user) }}" method="POST"
+                                    <form action="{{ route('dashboard.users.destroy', $user) }}" method="POST"
                                         onsubmit="return confirm('Yakin ingin menghapus user ini?')">
                                         @csrf
                                         @method('DELETE')
