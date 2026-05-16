@@ -32,6 +32,8 @@ class DatabaseSeeder extends Seeder
             KenclengSeeder::class,
             KenclengDetailSeeder::class,
             BuktiTransaksiSeeder::class,
+            KategoriAkunSeeder::class,
+            AkunSeeder::class,
         ]);
     }
 }
