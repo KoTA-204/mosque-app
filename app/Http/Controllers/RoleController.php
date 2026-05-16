@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Role;
 use App\Models\Menu;
+use App\Models\Permission;
 use App\Http\Requests\StoreRoleRequest;
 use App\Http\Requests\UpdateRoleRequest;
 use App\Services\RoleService;
@@ -31,8 +32,17 @@ class RoleController extends Controller
     public function create()
     {
         $menus       = $this->getMenusWithPermissions();
-        $actions     = ['view', 'create', 'update', 'delete'];
-        return view('pages.roles.create', compact('menus', 'actions'));
+        $permissions = Permission::where('is_active', true)
+            ->get()
+            ->groupBy('module');
+
+        $actions = ['view', 'create', 'update', 'delete'];
+
+        return view('pages.roles.create', compact(
+            'menus',
+            'permissions',
+            'actions'
+        ));
     }
 
     /**
@@ -61,9 +71,23 @@ class RoleController extends Controller
     {
         $role        = $this->roleService->getById($role);
         $menus       = $this->getMenusWithPermissions();
-        $actions     = ['view', 'create', 'update', 'delete'];
-        $assignedIds = $role->permissions->pluck('id')->toArray();
-        return view('pages.roles.edit', compact('role', 'menus', 'actions', 'assignedIds'));
+        $permissions = Permission::where('is_active', true)
+            ->get()
+            ->groupBy('module');
+
+        $actions = ['view', 'create', 'update', 'delete'];
+
+        $assignedIds = $role->permissions
+            ->pluck('id')
+            ->toArray();
+
+        return view('pages.roles.edit', compact(
+            'role',
+            'menus',
+            'permissions',
+            'actions',
+            'assignedIds'
+        ));
     }
 
     /**
@@ -93,12 +117,10 @@ class RoleController extends Controller
 
     private function getMenusWithPermissions()
     {
-        return Menu::with(['permissions'])
-            ->whereNull('parent_id')
+        return Menu::whereNull('parent_id')
             ->where('is_active', true)
             ->with(['children' => function ($query) {
                 $query->where('is_active', true)
-                    ->with('permissions')
                     ->orderBy('sort_order');
             }])
             ->orderBy('sort_order')

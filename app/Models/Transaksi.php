@@ -16,7 +16,7 @@ class Transaksi extends Model
         'kegiatan_id',
         'user_id',
         'kategori_transaksi_id',
-        'tanggal',
+        'tanggal_transaksi',
         'jumlah',
         'deskripsi',
         'status_approval',
@@ -24,7 +24,7 @@ class Transaksi extends Model
     ];
 
     protected $casts = [
-        'tanggal' => 'date',
+        'tanggal_transaksi' => 'date',
         'jumlah' => 'decimal:2',
     ];
 

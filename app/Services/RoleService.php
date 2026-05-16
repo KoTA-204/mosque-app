@@ -27,7 +27,7 @@ class RoleService
 
     public function create(array $data): Role
     {
-        $permissionIds = $data['permission_ids'] ?? [];
+        $permissionIds = $data['permission_ids'] ?? null;
         unset($data['permission_ids']);
 
         $role = Role::create($data);
@@ -41,11 +41,13 @@ class RoleService
 
     public function update(Role $role, array $data): Role
     {
-        $permissionIds = $data['permission_ids'] ?? [];
+        $permissionIds = $data['permission_ids'] ?? null;
         unset($data['permission_ids']);
 
         $role->update($data);
-        $role->permissions()->sync($permissionIds);
+        if ($permissionIds !== null) {
+            $role->permissions()->sync($permissionIds);
+        }
 
         return $role->fresh()->load('permissions');
     }

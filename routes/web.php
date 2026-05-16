@@ -9,6 +9,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\KegiatanController;
 
 // Landing Page
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -59,5 +60,24 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
 
     Route::middleware('permission:VIEW_MENUS')->group(function () {
         Route::resource('menus', MenuController::class);
+    });
+
+    Route::middleware('permission:VIEW_KEGIATAN')->group(function () {
+        Route::get('/kegiatan', [KegiatanController::class, 'index'])->name('kegiatan.index');
+
+        Route::get('/kegiatan/{kegiatan}', [KegiatanController::class, 'show'])
+            ->name('kegiatan.show')
+            ->whereNumber('kegiatan');
+
+        Route::get('/kegiatan/{kegiatan}/transaksi/{transaksi}', [KegiatanController::class, 'showTransaksi'])
+            ->name('kegiatan.transaksi.show')
+            ->whereNumber('kegiatan')
+            ->whereNumber('transaksi');
+    });
+
+    Route::middleware('permission:CREATE_KEGIATAN')->group(function () {
+        Route::get('/kegiatan/{kegiatan}/transaksi/create', [KegiatanController::class, 'createTransaksi'])->name('kegiatan.transaksi.create');
+        Route::post('/kegiatan/{kegiatan}/transaksi', [KegiatanController::class, 'storeTransaksi'])->name('kegiatan.transaksi.store');
+        Route::delete('/kegiatan/{kegiatan}/transaksi/{transaksi}', [KegiatanController::class, 'destroyTransaksi'])->name('kegiatan.transaksi.destroy');
     });
 });
