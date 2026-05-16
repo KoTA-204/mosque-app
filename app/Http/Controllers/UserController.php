@@ -58,7 +58,7 @@ class UserController extends Controller
 
         $user->roles()->attach($request->role_id);
 
-        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan');
+        return redirect()->route('dashboard.users.index')->with('success', 'User berhasil ditambahkan');
     }
 
     public function edit(User $user)
@@ -85,12 +85,12 @@ class UserController extends Controller
 
         $user->roles()->sync([$request->role_id]);
 
-        return redirect()->route('users.index')->with('success', 'User berhasil diupdate');
+        return redirect()->route('dashboard.users.index')->with('success', 'User berhasil diupdate');
     }
 
     public function destroy(User $user)
     {
         $user->delete();
-        return redirect()->route('users.index')->with('success', 'User berhasil dihapus');
+        return redirect()->route('dashboard.users.index')->with('success', 'User berhasil dihapus');
     }
 }

@@ -20,7 +20,7 @@
                     </div>
                 </div>
 
-                <form action="{{ route('users.update', $user) }}" method="POST">
+                <form action="{{ route('dashboard.users.update', $user) }}" method="POST">
                     @csrf
                     @method('PUT')
 

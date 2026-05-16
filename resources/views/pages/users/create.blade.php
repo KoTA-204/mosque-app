@@ -20,7 +20,7 @@
                     </div>
                 </div>
 
-                <form action="{{ route('users.store') }}" method="POST">
+                <form action="{{ route('dashboard.users.store') }}" method="POST">
                     @csrf
                     <div class="space-y-5">
                         <!-- Nama Lengkap -->
