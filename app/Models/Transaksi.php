@@ -16,7 +16,7 @@ class Transaksi extends Model
         'kegiatan_id',
         'user_id',
         'kategori_transaksi_id',
-        'tanggal',
+        'tanggal_transaksi',
         'jumlah',
         'deskripsi',
         'status_approval',
