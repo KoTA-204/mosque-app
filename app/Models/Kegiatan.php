@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Kegiatan extends Model
 {
@@ -18,21 +18,17 @@ class Kegiatan extends Model
         'tanggal_selesai',
         'anggaran',
         'status',
-        'panitia_id',
+        'panitia_id'
     ];
 
     protected $casts = [
         'tanggal_mulai' => 'date',
         'tanggal_selesai' => 'date',
+        'anggaran' => 'decimal:2'
     ];
 
     public function panitia()
     {
         return $this->belongsTo(User::class, 'panitia_id');
-    }
-
-    public function transaksi()
-    {
-        return $this->hasMany(Transaksi::class);
     }
 }
