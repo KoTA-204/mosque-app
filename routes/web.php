@@ -9,6 +9,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\KenclengController;
 
 // Landing Page
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -59,5 +60,32 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
 
     Route::middleware('permission:VIEW_MENUS')->group(function () {
         Route::resource('menus', MenuController::class);
+    });
+
+    Route::middleware('permission:VIEW_KENCLENG')->group(function () {
+        Route::get('/kencleng', [KenclengController::class, 'index'])
+            ->name('kencleng.index');
+    });
+
+    Route::middleware('permission:CREATE_KENCLENG')->group(function () {
+        Route::get('/kencleng/create', [KenclengController::class, 'create'])
+            ->name('kencleng.create');
+
+        Route::post('/kencleng', [KenclengController::class, 'store'])
+            ->name('kencleng.store');
+
+        Route::get('/kencleng/{kencleng}/edit', [KenclengController::class, 'edit'])
+            ->name('kencleng.edit');
+
+        Route::put('/kencleng/{kencleng}', [KenclengController::class, 'update'])
+            ->name('kencleng.update');
+
+        Route::delete('/kencleng/{kencleng}', [KenclengController::class, 'destroy'])
+            ->name('kencleng.destroy');
+    });
+
+    Route::middleware('permission:VIEW_KENCLENG')->group(function () {
+        Route::get('/kencleng/{kencleng}', [KenclengController::class, 'show'])
+            ->name('kencleng.show');
     });
 });
