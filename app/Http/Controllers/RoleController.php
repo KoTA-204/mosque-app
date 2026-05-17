@@ -36,7 +36,7 @@ class RoleController extends Controller
             ->get()
             ->groupBy('module');
 
-        $actions = ['view', 'create', 'update', 'delete'];
+        $actions = ['view', 'create', 'update', 'delete', 'manage'];
 
         return view('pages.roles.create', compact(
             'menus',
@@ -75,7 +75,7 @@ class RoleController extends Controller
             ->get()
             ->groupBy('module');
 
-        $actions = ['view', 'create', 'update', 'delete'];
+        $actions = ['view', 'create', 'update', 'delete', 'manage'];
 
         $assignedIds = $role->permissions
             ->pluck('id')

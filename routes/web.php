@@ -79,5 +79,26 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         Route::get('/kegiatan/{kegiatan}/transaksi/create', [KegiatanController::class, 'createTransaksi'])->name('kegiatan.transaksi.create');
         Route::post('/kegiatan/{kegiatan}/transaksi', [KegiatanController::class, 'storeTransaksi'])->name('kegiatan.transaksi.store');
         Route::delete('/kegiatan/{kegiatan}/transaksi/{transaksi}', [KegiatanController::class, 'destroyTransaksi'])->name('kegiatan.transaksi.destroy');
+        Route::get('/kegiatan/{kegiatan}/transaksi/{transaksi}/edit', [KegiatanController::class, 'editTransaksi'])
+            ->name('kegiatan.transaksi.edit');
+        Route::put('/kegiatan/{kegiatan}/transaksi/{transaksi}', [KegiatanController::class, 'updateTransaksi'])
+            ->name('kegiatan.transaksi.update');
+    });
+
+    Route::middleware('permission:VIEW_APPROVAL')->group(function () {
+        Route::get('/approval/transaksi', [KegiatanController::class, 'approvalIndex'])
+            ->name('approval.index');
+        Route::post('/approval/transaksi/bulk-approve', [KegiatanController::class, 'bulkApprove'])
+            ->name('approval.bulk-approve');
+        Route::post('/approval/transaksi/bulk-reject', [KegiatanController::class, 'bulkReject'])
+            ->name('approval.bulk-reject');
+        Route::get('/approval/transaksi/{transaksi}', [KegiatanController::class, 'approvalShow'])
+            ->name('approval.show');
+        Route::post('/approval/transaksi/{transaksi}/approve', [KegiatanController::class, 'approve'])
+            ->name('approval.approve');
+        Route::post('/approval/transaksi/{transaksi}/reject', [KegiatanController::class, 'reject'])
+            ->name('approval.reject');
+        Route::post('/approval/transaksi/{transaksi}/revision', [KegiatanController::class, 'revision'])
+            ->name('approval.revision');
     });
 });
