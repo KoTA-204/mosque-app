@@ -53,7 +53,7 @@ class KegiatanController extends Controller
 
         Kegiatan::create($request->all());
 
-        return redirect()->route('kegiatan.index')->with('success', 'Kegiatan berhasil ditambahkan');
+        return redirect()->route('dashboard.kegiatan.index')->with('success', 'Kegiatan berhasil ditambahkan');
     }
 
     public function show(Kegiatan $kegiatan)
@@ -85,12 +85,12 @@ class KegiatanController extends Controller
 
         $kegiatan->update($request->all());
 
-        return redirect()->route('kegiatan.index')->with('success', 'Kegiatan berhasil diupdate');
+        return redirect()->route('dashboard.kegiatan.index')->with('success', 'Kegiatan berhasil diupdate');
     }
 
     public function destroy(Kegiatan $kegiatan)
     {
         $kegiatan->delete();
-        return redirect()->route('kegiatan.index')->with('success', 'Kegiatan berhasil dihapus');
+        return redirect()->route('dashboard.kegiatan.index')->with('success', 'Kegiatan berhasil dihapus');
     }
 }

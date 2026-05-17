@@ -9,6 +9,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\KegiatanController;
 
 // Landing Page
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -60,4 +61,7 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
     Route::middleware('permission:VIEW_MENUS')->group(function () {
         Route::resource('menus', MenuController::class);
     });
+
+    Route::resource('kegiatan', KegiatanController::class);
 });
+
