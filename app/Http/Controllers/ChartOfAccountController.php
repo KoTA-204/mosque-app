@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Dashboard;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Akun;
@@ -42,7 +42,7 @@ class ChartOfAccountController extends Controller
         $perPage   = (int) $request->get('per_page', 1);
         $kategori  = $kategoriQuery->paginate($perPage)->withQueryString();
 
-        return view('dashboard.chart-of-account.index', compact(
+        return view('pages.coa.index', compact(
             'totalKategori',
             'totalSubKategori',
             'totalAkun',
@@ -52,12 +52,11 @@ class ChartOfAccountController extends Controller
         ));
     }
 
-    // ──────────────────────────────────────────────
-    // KATEGORI — Create & Store
-    // ──────────────────────────────────────────────
+    // Kattegori
+    
     public function createKategori()
     {
-        return view('dashboard.chart-of-account.create-kategori');
+        return view('pages.coa.create-kategori');
     }
 
     public function storeKategori(Request $request)
@@ -74,13 +73,13 @@ class ChartOfAccountController extends Controller
         KategoriAkun::create($request->only('kode_kategori', 'nama_kategori'));
 
         return redirect()
-            ->route('dashboard.coa.index')
+            ->route('pages.coa.index')
             ->with('success', 'Kategori akun berhasil ditambahkan.');
     }
 
     public function editKategori(KategoriAkun $kategori)
     {
-        return view('dashboard.chart-of-account.edit-kategori', compact('kategori'));
+        return view('pages.coa.edit-kategori', compact('kategori'));
     }
 
     public function updateKategori(Request $request, KategoriAkun $kategori)
@@ -93,7 +92,7 @@ class ChartOfAccountController extends Controller
         $kategori->update($request->only('kode_kategori', 'nama_kategori'));
 
         return redirect()
-            ->route('dashboard.coa.index')
+            ->route('pages.coa.index')
             ->with('success', 'Kategori akun berhasil diperbarui.');
     }
 
@@ -108,14 +107,12 @@ class ChartOfAccountController extends Controller
         return back()->with('success', 'Kategori akun berhasil dihapus.');
     }
 
-    // ──────────────────────────────────────────────
-    // SUB KATEGORI — Create & Store
-    // Sub kategori = Akun level-1 (parent_id = null, punya kategori_akun_id)
-    // ──────────────────────────────────────────────
+    // Sub kategori
+
     public function createSubKategori()
     {
         $kategoriList = KategoriAkun::orderBy('kode_kategori')->get();
-        return view('dashboard.chart-of-account.create-sub-kategori', compact('kategoriList'));
+        return view('pages.coa.create-subkategori', compact('kategoriList'));
     }
 
     public function storeSubKategori(Request $request)
@@ -141,14 +138,14 @@ class ChartOfAccountController extends Controller
         ]);
 
         return redirect()
-            ->route('dashboard.coa.index')
+            ->route('pages.coa.index')
             ->with('success', 'Sub kategori akun berhasil ditambahkan.');
     }
 
     public function editSubKategori(Akun $subKategori)
     {
         $kategoriList = KategoriAkun::orderBy('kode_kategori')->get();
-        return view('dashboard.chart-of-account.edit-sub-kategori', compact('subKategori', 'kategoriList'));
+        return view('pages.coa.edit-subkategori', compact('subKategori', 'kategoriList'));
     }
 
     public function updateSubKategori(Request $request, Akun $subKategori)
@@ -162,7 +159,7 @@ class ChartOfAccountController extends Controller
         $subKategori->update($request->only('kategori_akun_id', 'kode_akun', 'nama_akun', 'saldo_normal'));
 
         return redirect()
-            ->route('dashboard.coa.index')
+            ->route('pages.coa.index')
             ->with('success', 'Sub kategori akun berhasil diperbarui.');
     }
 
@@ -176,10 +173,8 @@ class ChartOfAccountController extends Controller
         return back()->with('success', 'Sub kategori berhasil dihapus.');
     }
 
-    // ──────────────────────────────────────────────
-    // AKUN — Create & Store
-    // Akun = level-2 (parent_id menunjuk ke sub kategori)
-    // ──────────────────────────────────────────────
+    // Akun
+
     public function createAkun()
     {
         $subKategoriList = Akun::whereNull('parent_id')
@@ -187,7 +182,7 @@ class ChartOfAccountController extends Controller
             ->orderBy('kode_akun')
             ->get();
 
-        return view('dashboard.chart-of-account.create-akun', compact('subKategoriList'));
+        return view('pages.coa.create-akun', compact('subKategoriList'));
     }
 
     public function storeAkun(Request $request)
@@ -218,7 +213,7 @@ class ChartOfAccountController extends Controller
         ]);
 
         return redirect()
-            ->route('dashboard.coa.index')
+            ->route('pages.coa.index')
             ->with('success', 'Akun berhasil ditambahkan.');
     }
 
@@ -229,7 +224,7 @@ class ChartOfAccountController extends Controller
             ->orderBy('kode_akun')
             ->get();
 
-        return view('dashboard.chart-of-account.edit-akun', compact('akun', 'subKategoriList'));
+        return view('pages.coa.edit-akun', compact('akun', 'subKategoriList'));
     }
 
     public function updateAkun(Request $request, Akun $akun)
@@ -252,7 +247,7 @@ class ChartOfAccountController extends Controller
         ]);
 
         return redirect()
-            ->route('dashboard.coa.index')
+            ->route('pages.coa.index')
             ->with('success', 'Akun berhasil diperbarui.');
     }
 
