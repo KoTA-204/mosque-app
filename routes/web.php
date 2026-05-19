@@ -63,40 +63,6 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         Route::resource('menus', MenuController::class);
     });
 
-    Route::middleware('permission:VIEW_KEGIATAN')->group(function () {
-        Route::get('/kegiatan', [KegiatanController::class, 'index'])->name('kegiatan.index');
-
-        Route::get('/kegiatan/{kegiatan}', [KegiatanController::class, 'show'])
-            ->name('kegiatan.show')
-            ->whereNumber('kegiatan');
-
-        Route::get('/kegiatan/{kegiatan}/transaksi/{transaksi}', [KegiatanController::class, 'showTransaksi'])
-            ->name('kegiatan.transaksi.show')
-            ->whereNumber('kegiatan')
-            ->whereNumber('transaksi');
-    });
-
-    Route::middleware('permission:CREATE_KEGIATAN')->group(function () {
-        Route::get('/kegiatan/{kegiatan}/transaksi/create', [KegiatanController::class, 'createTransaksi'])->name('kegiatan.transaksi.create');
-        Route::post('/kegiatan/{kegiatan}/transaksi', [KegiatanController::class, 'storeTransaksi'])->name('kegiatan.transaksi.store');
-        Route::delete('/kegiatan/{kegiatan}/transaksi/{transaksi}', [KegiatanController::class, 'destroyTransaksi'])->name('kegiatan.transaksi.destroy');
-        Route::get('/kegiatan/{kegiatan}/transaksi/{transaksi}/edit', [KegiatanController::class, 'editTransaksi'])
-            ->name('kegiatan.transaksi.edit');
-        Route::put('/kegiatan/{kegiatan}/transaksi/{transaksi}', [KegiatanController::class, 'updateTransaksi'])
-            ->name('kegiatan.transaksi.update');
-    });Route::middleware('permission:VIEW_KEGIATAN')->group(function () {
-        Route::get('/kegiatan-panitia', [TransaksiKegiatanController::class, 'index'])->name('kegiatan-panitia.index');
- 
-        Route::get('/kegiatan-panitia/{kegiatan}', [TransaksiKegiatanController::class, 'show'])
-            ->name('kegiatan-panitia.show')
-            ->whereNumber('kegiatan');
- 
-        Route::get('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'showTransaksi'])
-            ->name('kegiatan-panitia.transaksi.show')
-            ->whereNumber('kegiatan')
-            ->whereNumber('transaksi');
-    });
- 
     Route::middleware('permission:CREATE_KEGIATAN')->group(function () {
         Route::get('/kegiatan-panitia/{kegiatan}/transaksi/create', [TransaksiKegiatanController::class, 'createTransaksi'])->name('kegiatan-panitia.transaksi.create');
         Route::post('/kegiatan-panitia/{kegiatan}/transaksi', [TransaksiKegiatanController::class, 'storeTransaksi'])->name('kegiatan-panitia.transaksi.store');
@@ -106,45 +72,46 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         Route::put('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'updateTransaksi'])
             ->name('kegiatan-panitia.transaksi.update');
     });
-
-    Route::middleware('permission:VIEW_APPROVAL')->group(function () {
-        Route::get('/approval/transaksi', [KegiatanController::class, 'approvalIndex'])
-            ->name('approval.index');
-        Route::post('/approval/transaksi/bulk-approve', [KegiatanController::class, 'bulkApprove'])
-            ->name('approval.bulk-approve');
-        Route::post('/approval/transaksi/bulk-reject', [KegiatanController::class, 'bulkReject'])
-            ->name('approval.bulk-reject');
-        Route::get('/approval/transaksi/{transaksi}', [KegiatanController::class, 'approvalShow'])
-            ->name('approval.show');
-        Route::post('/approval/transaksi/{transaksi}/approve', [KegiatanController::class, 'approve'])
-            ->name('approval.approve');
-        Route::post('/approval/transaksi/{transaksi}/reject', [KegiatanController::class, 'reject'])
-            ->name('approval.reject');
-        Route::post('/approval/transaksi/{transaksi}/revision', [KegiatanController::class, 'revision'])
-            ->name('approval.revision');
-    });
     
     Route::middleware('permission:VIEW_KEGIATAN')->group(function () {
-        Route::get('/kegiatan', [TransaksiKegiatanController::class, 'index'])->name('kegiatan.index');
- 
-        Route::get('/kegiatan/{kegiatan}', [TransaksiKegiatanController::class, 'show'])
-            ->name('kegiatan.show')
-            ->whereNumber('kegiatan');
- 
-        Route::get('/kegiatan/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'showTransaksi'])
-            ->name('kegiatan.transaksi.show')
+
+        Route::get('/kegiatan-panitia', [TransaksiKegiatanController::class, 'index'])
+            ->name('kegiatan-panitia.index');
+
+        Route::get('/kegiatan-panitia/{kegiatan}', [TransaksiKegiatanController::class, 'show'])
             ->whereNumber('kegiatan')
-            ->whereNumber('transaksi');
+            ->name('kegiatan-panitia.show');
+
+        Route::get('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'showTransaksi'])
+            ->whereNumber('kegiatan')
+            ->whereNumber('transaksi')
+            ->name('kegiatan-panitia.transaksi.show');
     });
- 
+
     Route::middleware('permission:CREATE_KEGIATAN')->group(function () {
-        Route::get('/kegiatan/{kegiatan}/transaksi/create', [TransaksiKegiatanController::class, 'createTransaksi'])->name('kegiatan.transaksi.create');
-        Route::post('/kegiatan/{kegiatan}/transaksi', [TransaksiKegiatanController::class, 'storeTransaksi'])->name('kegiatan.transaksi.store');
-        Route::delete('/kegiatan/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'destroyTransaksi'])->name('kegiatan.transaksi.destroy');
-        Route::get('/kegiatan/{kegiatan}/transaksi/{transaksi}/edit', [TransaksiKegiatanController::class, 'editTransaksi'])
-            ->name('kegiatan.transaksi.edit');
-        Route::put('/kegiatan/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'updateTransaksi'])
-            ->name('kegiatan.transaksi.update');
+
+        Route::get('/kegiatan-panitia/{kegiatan}/transaksi/create', [TransaksiKegiatanController::class, 'createTransaksi'])
+            ->whereNumber('kegiatan')
+            ->name('kegiatan-panitia.transaksi.create');
+
+        Route::post('/kegiatan-panitia/{kegiatan}/transaksi', [TransaksiKegiatanController::class, 'storeTransaksi'])
+            ->whereNumber('kegiatan')
+            ->name('kegiatan-panitia.transaksi.store');
+
+        Route::get('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}/edit', [TransaksiKegiatanController::class, 'editTransaksi'])
+            ->whereNumber('kegiatan')
+            ->whereNumber('transaksi')
+            ->name('kegiatan-panitia.transaksi.edit');
+
+        Route::put('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'updateTransaksi'])
+            ->whereNumber('kegiatan')
+            ->whereNumber('transaksi')
+            ->name('kegiatan-panitia.transaksi.update');
+
+        Route::delete('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'destroyTransaksi'])
+            ->whereNumber('kegiatan')
+            ->whereNumber('transaksi')
+            ->name('kegiatan-panitia.transaksi.destroy');
     });
  
     Route::middleware('permission:VIEW_APPROVAL')->group(function () {
