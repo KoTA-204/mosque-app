@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Kegiatan extends Model
 {
@@ -18,7 +18,7 @@ class Kegiatan extends Model
         'tanggal_selesai',
         'anggaran',
         'status',
-        'panitia_id',
+        'panitia_id'
     ];
 
     protected $casts = [

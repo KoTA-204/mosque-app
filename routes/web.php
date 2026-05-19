@@ -11,6 +11,7 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TransaksiKegiatanController;
 use App\Http\Controllers\ApprovalController;
+use App\Http\Controllers\KegiatanController;
 
 // Landing Page
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -139,4 +140,7 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         Route::post('/approval/transaksi/{transaksi}/revision', [ApprovalController::class, 'revision'])
             ->name('approval.revision');
     });
+
+    Route::resource('kegiatan', KegiatanController::class);
 });
+
