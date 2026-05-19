@@ -114,9 +114,19 @@
 
                                     @foreach($actions as $action)
                                         @php
-                                            $permission = $child->permissions
-                                                ->where('action', $action)
-                                                ->first();
+                                            $routeParts = $child->route_name
+                                                ? explode('.', $child->route_name)
+                                                : [];
+
+                                            $module = count($routeParts) === 2
+                                                ? 'dashboard'
+                                                : ($routeParts[1] ?? null);
+
+                                            $permission = $module
+                                                ? ($permissions[$module] ?? collect())
+                                                    ->where('action', $action)
+                                                    ->first()
+                                                : null;
                                         @endphp
 
                                         <td class="px-4 py-3 text-center">
@@ -155,9 +165,19 @@
 
                                 @foreach($actions as $action)
                                     @php
-                                        $permission = $menu->permissions
-                                            ->where('action', $action)
-                                            ->first();
+                                        $routeParts = $menu->route_name
+                                            ? explode('.', $menu->route_name)
+                                            : [];
+
+                                        $module = count($routeParts) === 2
+                                            ? 'dashboard'
+                                            : ($routeParts[1] ?? null);
+
+                                        $permission = $module
+                                            ? ($permissions[$module] ?? collect())
+                                                ->where('action', $action)
+                                                ->first()
+                                            : null;
                                     @endphp
 
                                     <td class="px-4 py-3 text-center">
