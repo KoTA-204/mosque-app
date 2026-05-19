@@ -2,22 +2,48 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\Menu;
+use App\Models\Permission;
 use Illuminate\Support\Facades\DB;
 
 class MenuPermissionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        DB::table('menu_permission')->insert([
-            ['menu_id'=>3,'permission_id'=>1],
-            ['menu_id'=>4,'permission_id'=>3],
-            ['menu_id'=>5,'permission_id'=>5],
-            ['menu_id'=>6,'permission_id'=>7],
-        ]);
+        $map = [
+            // Manajemen User
+            'dashboard.users.index'              => 'VIEW_USERS',
+            'dashboard.roles.index'              => 'VIEW_ROLES',
+            'dashboard.permissions.index'        => 'VIEW_PERMISSIONS',
+
+            // Pencatatan
+            'dashboard.pemasukan.index'          => 'VIEW_PEMASUKAN',
+            'dashboard.pengeluaran.index'        => 'VIEW_PENGELUARAN',
+            'dashboard.kencleng.index'           => 'VIEW_KENCLENG',
+
+            // Kegiatan Khusus
+            'dashboard.kegiatan.index'           => 'VIEW_KEGIATAN',
+            'dashboard.kegiatan-panitia.index'   => 'VIEW_TRANSAKSI_KEGIATAN',
+
+            // Approval
+            'dashboard.approval.index'           => 'VIEW_APPROVAL',
+
+            // Master Data
+            'dashboard.coa.index'                => 'VIEW_COA',
+            'dashboard.kategori-transaksi.index' => 'VIEW_KATEGORI',
+        ];
+
+        foreach ($map as $routeName => $permissionCode) {
+            $menu       = Menu::where('route_name', $routeName)->first();
+            $permission = Permission::where('permission_code', $permissionCode)->first();
+
+            if ($menu && $permission) {
+                DB::table('menu_permission')->insert([
+                    'menu_id'       => $menu->id,
+                    'permission_id' => $permission->id,
+                ]);
+            }
+        }
     }
 }
