@@ -1,4 +1,3 @@
-{{-- dashboard/chart-of-account/edit-sub-kategori.blade.php --}}
 @extends('layouts.app')
 @section('title', 'Edit Sub Kategori Akun')
 @section('content')
@@ -9,10 +8,9 @@
         </a>
         <div>
             <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Chart of Account</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Edit Sub Kategori Akun</p>
         </div>
-    </div>
-    <div class="max-w-2xl">
+    </div><br>
+    <div class="max-w-2xl mx-auto">
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
             <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-6">Edit Sub Kategori Akun</h2>
             <form method="POST" action="{{ route('dashboard.coa.sub-kategori.update', $subKategori) }}" class="space-y-5">
@@ -44,7 +42,6 @@
                 </div>
                 <div class="flex items-center gap-3 pt-2">
                     <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors">Simpan Perubahan</button>
-                    <a href="{{ route('dashboard.coa.index') }}" class="px-6 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Batal</a>
                 </div>
             </form>
         </div>
