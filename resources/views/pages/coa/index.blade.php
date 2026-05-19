@@ -6,7 +6,6 @@
 @section('content')
 <div class="p-6 space-y-6">
 
-    {{-- ── PAGE HEADER ──────────────────────────────────────────── --}}
     <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
         <div>
             <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Chart of Account</h1>
@@ -19,7 +18,6 @@
         </button>
     </div>
 
-    {{-- ── FLASH MESSAGES ───────────────────────────────────────── --}}
     @if(session('success'))
     <div class="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-sm text-green-700 dark:text-green-400">
         <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -37,7 +35,6 @@
     </div>
     @endif
 
-    {{-- ── STAT CARDS ────────────────────────────────────────────── --}}
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
         {{-- Kategori Akun --}}
@@ -99,28 +96,26 @@
 
     </div>
 
-    {{-- ── TABEL TREE ────────────────────────────────────────────── --}}
     <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
 
         {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-wrap">
+            @if($isFiltered)
             <div class="flex items-center gap-2">
                 <span class="text-sm text-gray-500 dark:text-gray-400">Tampil</span>
-                <form method="GET" id="per-page-form">
-                    <input type="hidden" name="kategori" value="{{ request('kategori') }}">
-                    <select name="per_page" onchange="document.getElementById('per-page-form').submit()"
-                        class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
-                        @foreach([1,2,3,5] as $n)
-                        <option value="{{ $n }}" {{ $perPage == $n ? 'selected' : '' }}>{{ $n }}</option>
-                        @endforeach
-                    </select>
-                </form>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">1</span>
                 <span class="text-sm text-gray-500 dark:text-gray-400">kategori</span>
             </div>
+            @else
+            <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-500 dark:text-gray-400">
+                    Menampilkan semua <strong>{{ $kategori->count() }}</strong> kategori
+                </span>
+            </div>
+            @endif
 
             {{-- Search / Filter kategori --}}
             <form method="GET" class="flex items-center gap-2">
-                <input type="hidden" name="per_page" value="{{ $perPage }}">
                 <div class="relative">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -287,7 +282,7 @@
         </div>
 
         {{-- Pagination --}}
-        @if($kategori->hasPages())
+        @if($isFiltered && $kategori->hasPages())
         <div class="flex items-center justify-between px-5 py-4 border-t border-gray-100 dark:border-gray-800">
             <div class="flex items-center gap-1">
                 {{-- Previous --}}

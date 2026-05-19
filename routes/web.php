@@ -10,6 +10,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ChartOfAccountController;
+use App\Http\Controllers\KategoriTransaksiController;
 
 // Landing Page
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -52,6 +53,7 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
     Route::resource('roles', RoleController::class);
     Route::resource('permissions', PermissionController::class);
     Route::resource('menus', MenuController::class);
+    Route::resource('kategori-transaksi', KategoriTransaksiController::class)->except(['show'])->names('kategori-transaksi');
 
     Route::prefix('chart-of-account')->name('coa.')->group(function () {
         Route::get('/', [ChartOfAccountController::class, 'index'])->name('index');
