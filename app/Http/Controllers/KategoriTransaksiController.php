@@ -41,7 +41,7 @@ class KategoriTransaksiController extends Controller
         $request->validate([
             'nama_kategori'   => 'required|string|max:100|unique:kategori_transaksi,nama_kategori',
             'jenis_transaksi' => 'required|in:PEMASUKAN,PENGELUARAN',
-            'status'          => 'required|in:AKTIF,tidak_aktif',
+            'status'          => 'required|in:aktif,tidak_aktif',
             'deskripsi'       => 'nullable|string|max:500',
         ], [
             'nama_kategori.required'   => 'Nama kategori wajib diisi.',
