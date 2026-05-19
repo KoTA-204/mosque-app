@@ -12,7 +12,7 @@
 
         {{-- Kembali + Status --}}
         <div class="mb-6 flex items-center justify-between">
-            <a href="{{ route('dashboard.kegiatan.show', $kegiatan) }}"
+            <a href="{{ route('dashboard.kegiatan-panitia.show', $kegiatan) }}"
                class="text-sm text-body hover:text-primary dark:text-bodydark">
                 Kembali
             </a>

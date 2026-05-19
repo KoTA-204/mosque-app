@@ -9,9 +9,8 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\KegiatanController;
-use App\Http\Controllers\KenclengController;
-use App\Http\Controllers\ChartOfAccountController;
+use App\Http\Controllers\TransaksiKegiatanController;
+use App\Http\Controllers\ApprovalController;
 
 // Landing Page
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -73,47 +72,30 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         Route::put('/akun/{akun}', [ChartOfAccountController::class, 'updateAkun'])->name('akun.update');
         Route::delete('/akun/{akun}', [ChartOfAccountController::class, 'destroyAkun'])->name('akun.destroy');
     });
-
+ 
     Route::middleware('permission:VIEW_KEGIATAN')->group(function () {
-        Route::get('/kegiatan', [KegiatanController::class, 'index'])->name('kegiatan.index');
-
-        Route::get('/kegiatan/{kegiatan}', [KegiatanController::class, 'show'])
-            ->name('kegiatan.show')
+        Route::get('/kegiatan-panitia', [TransaksiKegiatanController::class, 'index'])->name('kegiatan-panitia.index');
+ 
+        Route::get('/kegiatan-panitia/{kegiatan}', [TransaksiKegiatanController::class, 'show'])
+            ->name('kegiatan-panitia.show')
             ->whereNumber('kegiatan');
-
-        Route::get('/kegiatan/{kegiatan}/transaksi/{transaksi}', [KegiatanController::class, 'showTransaksi'])
-            ->name('kegiatan.transaksi.show')
+ 
+        Route::get('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'showTransaksi'])
+            ->name('kegiatan-panitia.transaksi.show')
             ->whereNumber('kegiatan')
             ->whereNumber('transaksi');
     });
-
+ 
     Route::middleware('permission:CREATE_KEGIATAN')->group(function () {
-        Route::get('/kegiatan/{kegiatan}/transaksi/create', [KegiatanController::class, 'createTransaksi'])->name('kegiatan.transaksi.create');
-        Route::post('/kegiatan/{kegiatan}/transaksi', [KegiatanController::class, 'storeTransaksi'])->name('kegiatan.transaksi.store');
-        Route::delete('/kegiatan/{kegiatan}/transaksi/{transaksi}', [KegiatanController::class, 'destroyTransaksi'])->name('kegiatan.transaksi.destroy');
-        Route::get('/kegiatan/{kegiatan}/transaksi/{transaksi}/edit', [KegiatanController::class, 'editTransaksi'])
-            ->name('kegiatan.transaksi.edit');
-        Route::put('/kegiatan/{kegiatan}/transaksi/{transaksi}', [KegiatanController::class, 'updateTransaksi'])
-            ->name('kegiatan.transaksi.update');
+        Route::get('/kegiatan-panitia/{kegiatan}/transaksi/create', [TransaksiKegiatanController::class, 'createTransaksi'])->name('kegiatan-panitia.transaksi.create');
+        Route::post('/kegiatan-panitia/{kegiatan}/transaksi', [TransaksiKegiatanController::class, 'storeTransaksi'])->name('kegiatan-panitia.transaksi.store');
+        Route::delete('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'destroyTransaksi'])->name('kegiatan-panitia.transaksi.destroy');
+        Route::get('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}/edit', [TransaksiKegiatanController::class, 'editTransaksi'])
+            ->name('kegiatan-panitia.transaksi.edit');
+        Route::put('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'updateTransaksi'])
+            ->name('kegiatan-panitia.transaksi.update');
     });
-
-    Route::middleware('permission:VIEW_APPROVAL')->group(function () {
-        Route::get('/approval/transaksi', [KegiatanController::class, 'approvalIndex'])
-            ->name('approval.index');
-        Route::post('/approval/transaksi/bulk-approve', [KegiatanController::class, 'bulkApprove'])
-            ->name('approval.bulk-approve');
-        Route::post('/approval/transaksi/bulk-reject', [KegiatanController::class, 'bulkReject'])
-            ->name('approval.bulk-reject');
-        Route::get('/approval/transaksi/{transaksi}', [KegiatanController::class, 'approvalShow'])
-            ->name('approval.show');
-        Route::post('/approval/transaksi/{transaksi}/approve', [KegiatanController::class, 'approve'])
-            ->name('approval.approve');
-        Route::post('/approval/transaksi/{transaksi}/reject', [KegiatanController::class, 'reject'])
-            ->name('approval.reject');
-        Route::post('/approval/transaksi/{transaksi}/revision', [KegiatanController::class, 'revision'])
-            ->name('approval.revision');
-    });
-
+ 
     Route::middleware('permission:VIEW_KENCLENG')->group(function () {
         Route::get('/kencleng', [KenclengController::class, 'index'])
             ->name('kencleng.index');
@@ -139,5 +121,22 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
     Route::middleware('permission:VIEW_KENCLENG')->group(function () {
         Route::get('/kencleng/{kencleng}', [KenclengController::class, 'show'])
             ->name('kencleng.show');
+    });
+ 
+    Route::middleware('permission:VIEW_APPROVAL')->group(function () {
+        Route::get('/approval/transaksi', [ApprovalController::class, 'approvalIndex'])
+            ->name('approval.index');
+        Route::post('/approval/transaksi/bulk-approve', [ApprovalController::class, 'bulkApprove'])
+            ->name('approval.bulk-approve');
+        Route::post('/approval/transaksi/bulk-reject', [ApprovalController::class, 'bulkReject'])
+            ->name('approval.bulk-reject');
+        Route::get('/approval/transaksi/{transaksi}', [ApprovalController::class, 'approvalShow'])
+            ->name('approval.show');
+        Route::post('/approval/transaksi/{transaksi}/approve', [ApprovalController::class, 'approve'])
+            ->name('approval.approve');
+        Route::post('/approval/transaksi/{transaksi}/reject', [ApprovalController::class, 'reject'])
+            ->name('approval.reject');
+        Route::post('/approval/transaksi/{transaksi}/revision', [ApprovalController::class, 'revision'])
+            ->name('approval.revision');
     });
 });

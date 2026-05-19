@@ -28,7 +28,7 @@
             </div>
         </div>
 
-        <form action="{{ route('dashboard.kegiatan.transaksi.store', $kegiatan) }}" method="POST"
+        <form action="{{ route('dashboard.kegiatan-panitia.transaksi.store', $kegiatan) }}" method="POST"
               enctype="multipart/form-data">
             @csrf
 
@@ -160,7 +160,7 @@
 
             {{-- Buttons --}}
             <div class="flex items-center justify-end gap-3">
-                <a href="{{ route('dashboard.kegiatan.show', $kegiatan) }}"
+                <a href="{{ route('dashboard.kegiatan-panitia.show', $kegiatan) }}"
                    class="rounded-lg border border-stroke px-6 py-2.5 text-sm font-medium text-black hover:bg-gray-50 dark:border-strokedark dark:text-white">
                     Batal
                 </a>

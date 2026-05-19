@@ -4,7 +4,7 @@
 <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
 
     {{-- Back --}}
-    <a href="{{ route('dashboard.kegiatan.index') }}"
+    <a href="{{ route('dashboard.kegiatan-panitia.index') }}"
        class="mb-4 inline-flex items-center text-sm text-gray-500 hover:text-primary">
         Kembali
     </a>
@@ -80,7 +80,7 @@
 
             @if($kegiatan->status === 'BERJALAN')
                 @if(auth()->user()->hasPermission('CREATE_KEGIATAN'))
-                    <a href="{{ route('dashboard.kegiatan.transaksi.create', $kegiatan) }}"
+                    <a href="{{ route('dashboard.kegiatan-panitia.transaksi.create', $kegiatan) }}"
                        class="inline-flex items-center rounded-xl bg-green-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-green-700">
                         Catat transaksi
                     </a>
@@ -180,7 +180,7 @@
                                 <div class="flex items-center justify-center gap-2">
 
                                     {{-- DETAIL --}}
-                                    <a href="{{ route('dashboard.kegiatan.transaksi.show', [$kegiatan, $item]) }}"
+                                    <a href="{{ route('dashboard.kegiatan-panitia.transaksi.show', [$kegiatan, $item]) }}"
                                     class="rounded-lg border border-gray-200 p-2 text-gray-500 hover:bg-gray-100"
                                     title="Detail">
 
@@ -200,7 +200,7 @@
 
                                     {{-- EDIT --}}
                                     @if(in_array($item->status_approval, ['PENDING', 'REVISION']))
-                                        <a href="{{ route('dashboard.kegiatan.transaksi.show', [$kegiatan, $item]) }}"
+                                        <a href="{{ route('dashboard.kegiatan-panitia.transaksi.show', [$kegiatan, $item]) }}"
                                         class="rounded-lg border border-blue-200 p-2 text-blue-600 hover:bg-blue-50"
                                         title="Edit">
 
@@ -221,7 +221,7 @@
 
                                     {{-- HAPUS --}}
                                     @if($item->status_approval === 'PENDING')
-                                        <form action="{{ route('dashboard.kegiatan.transaksi.destroy', [$kegiatan, $item]) }}"
+                                        <form action="{{ route('dashboard.kegiatan-panitia.transaksi.destroy', [$kegiatan, $item]) }}"
                                             method="POST"
                                             onsubmit="return confirm('Yakin hapus transaksi ini?')">
 

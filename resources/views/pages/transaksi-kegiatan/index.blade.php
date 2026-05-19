@@ -41,7 +41,7 @@
                     $isActive = ($status ?? '') == $tab;
                 @endphp
 
-                <a href="{{ route('dashboard.kegiatan.index', [
+                <a href="{{ route('dashboard.kegiatan-panitia.index', [
                         'status' => $tab,
                         'search' => $search
                     ]) }}"
@@ -57,7 +57,7 @@
         </div>
 
         {{-- Search --}}
-        <form method="GET" action="{{ route('dashboard.kegiatan.index') }}" class="relative w-64">
+        <form method="GET" action="{{ route('dashboard.kegiatan-panitia.index') }}" class="relative w-64">
             <input type="hidden" name="status" value="{{ $status }}">
 
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -103,7 +103,7 @@
                 default      => $item->status,
             };
         @endphp
-        <a href="{{ route('dashboard.kegiatan.show', $item) }}"
+        <a href="{{ route('dashboard.kegiatan-panitia.show', $item) }}"
            class="rounded-xl border border-stroke bg-white p-5 shadow-default hover:border-primary dark:border-strokedark dark:bg-boxdark">
             <div class="flex items-center justify-between">
                 {{-- Kiri --}}
