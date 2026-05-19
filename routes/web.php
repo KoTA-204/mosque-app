@@ -12,6 +12,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\TransaksiKegiatanController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\KegiatanController;
+use App\Http\Controllers\ChartOfAccountController;
 
 // Landing Page
 Route::get('/', [LandingController::class, 'index'])->name('landing');
