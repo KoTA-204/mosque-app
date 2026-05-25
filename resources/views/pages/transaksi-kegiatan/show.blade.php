@@ -79,7 +79,7 @@
             </h3>
 
             @if($kegiatan->status === 'BERJALAN')
-                @if(auth()->user()->hasPermission('CREATE_KEGIATAN'))
+                @if(auth()->user()->hasPermission('CREATE_TRANSAKSI_KEGIATAN'))
                     <a href="{{ route('dashboard.kegiatan-panitia.transaksi.create', $kegiatan) }}"
                        class="inline-flex items-center rounded-xl bg-green-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-green-700">
                         Catat transaksi
