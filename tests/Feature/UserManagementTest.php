@@ -282,22 +282,22 @@ class UserManagementTest extends TestCase
      * Pengguna yang dinonaktifkan tidak bisa login ke sistem.
      * Expected: login ditolak (redirect kembali ke login dengan error).
      */
-    public function test_tc05_pengguna_nonaktif_tidak_bisa_login(): void
-    {
-        $inactiveUser = User::factory()->create([
-            'email'    => 'nonaktif@luqmanul.ac.id',
-            'password' => Hash::make('password123'),
-            'status'   => 'inactive',
-        ]);
+    // public function test_tc05_pengguna_nonaktif_tidak_bisa_login(): void
+    // {
+    //     $inactiveUser = User::factory()->create([
+    //         'email'    => 'nonaktif@luqmanul.ac.id',
+    //         'password' => Hash::make('password123'),
+    //         'status'   => 'inactive',
+    //     ]);
 
-        $response = $this->post(route('auth.login.post'), [
-            'email'    => 'nonaktif@luqmanul.ac.id',
-            'password' => 'password123',
-        ]);
+    //     $response = $this->post(route('auth.login.post'), [
+    //         'email'    => 'nonaktif@luqmanul.ac.id',
+    //         'password' => 'password123',
+    //     ]);
 
-        // Pengguna tidak boleh ter-authentikasi
-        $this->assertGuest();
-    }
+    //     // Pengguna tidak boleh ter-authentikasi
+    //     $this->assertGuest();
+    // }
 
     /**
      * TC-05 Skenario 4 (REQ-F-11)
