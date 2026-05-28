@@ -386,11 +386,11 @@
 </script>
 @endpush
 
-@include('pages.coa.modals.create-kategori')
-@include('pages.coa.modals.edit-kategori')
+@include('pages.coa.create-kategori')
+@include('pages.coa.edit-kategori')
 
-@include('pages.coa.modals.create-subkategori')
-@include('pages.coa.modals.edit-subkategori')
+@include('pages.coa.create-subkategori')
+@include('pages.coa.edit-subkategori')
 
-@include('pages.coa.modals.create-akun')
-@include('pages.coa.modals.edit-akun')
+@include('pages.coa.create-akun')
+@include('pages.coa.edit-akun')
