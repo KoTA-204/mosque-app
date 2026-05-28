@@ -27,6 +27,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/forgot-password', [ForgotPasswordController::class, 'index'])->name('auth.forgot-password');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->name('auth.forgot-password.post');
     Route::get('/forgot-password/check-email', [ForgotPasswordController::class, 'checkEmail'])->name('auth.check-email');
+    Route::get('/forgot-password/check-status', [ForgotPasswordController::class, 'checkResetStatus'])->name('auth.check-reset-status');
     Route::post('/forgot-password/resend', [ForgotPasswordController::class, 'resendEmail'])->name('auth.forgot-password.resend');
     Route::get('/reset-password', [ForgotPasswordController::class, 'resetPasswordForm'])->name('auth.reset-password');
     Route::get('/reset-password/success', [ForgotPasswordController::class, 'resetSuccess'])->name('auth.reset-success');
@@ -47,19 +48,4 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('/', [\App\Http\Controllers\DashboardController::class, 'index'])->name('index');
-    Route::resource('banner', \App\Http\Controllers\Dashboard\BannerController::class);
-    Route::resource('keuangan', \App\Http\Controllers\KeuanganController::class);
-    Route::resource('transaksi', \App\Http\Controllers\TransaksiController::class);
-    Route::resource('program', \App\Http\Controllers\ProgramController::class);
-    Route::resource('kegiatan', \App\Http\Controllers\KegiatanDashboardController::class);
-    Route::resource('donatur', \App\Http\Controllers\DonaturController::class);
-    Route::prefix('laporan')->name('laporan.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Dashboard\LaporanController::class, 'index'])->name('index');
-        Route::get('/cetak', [\App\Http\Controllers\Dashboard\LaporanController::class, 'cetak'])->name('cetak');
-        Route::get('/export', [\App\Http\Controllers\Dashboard\LaporanController::class, 'export'])->name('export');
-    });
-    Route::prefix('pengaturan')->name('pengaturan.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Dashboard\PengaturanController::class, 'index'])->name('index');
-        Route::put('/', [\App\Http\Controllers\Dashboard\PengaturanController::class, 'update'])->name('update');
-    });
 });

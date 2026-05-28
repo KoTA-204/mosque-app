@@ -10,7 +10,7 @@ use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-    public function index(): View|RedirectResponse
+    public function index(Request $request): View|RedirectResponse
     {
         if (Auth::check()) {
             return redirect()->route('dashboard.index');
@@ -32,10 +32,9 @@ class LoginController extends Controller
             ]);
         }
 
-        // regenerate session (security)
         $request->session()->regenerate();
 
-        return redirect()->route('dashboard.index');
+        return redirect()->intended(route('dashboard.index'));
     }
 
     public function destroy(Request $request): RedirectResponse

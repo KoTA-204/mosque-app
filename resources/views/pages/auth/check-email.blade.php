@@ -51,3 +51,14 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'reset_link_opened') {
+            localStorage.removeItem('reset_link_opened');
+            window.location.href = '{{ route("auth.login") }}';
+        }
+    });
+</script>
+@endpush
