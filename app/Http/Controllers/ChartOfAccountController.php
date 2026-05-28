@@ -41,17 +41,6 @@ class ChartOfAccountController extends Controller
             $isFiltered = false;
         }
 
-        $subKategoriList = Akun::whereNull('parent_id')
-            ->with('kategoriAkun')
-            ->orderBy('kode_akun')
-            ->get();
-
-        $akunList = Akun::whereNotNull('parent_id')
-            ->whereHas('parent', fn($q) => $q->whereNull('parent_id'))
-            ->with(['parent', 'kategoriAkun'])
-            ->orderBy('kode_akun')
-            ->get();
-
         return view('pages.coa.index', compact(
             'totalKategori',
             'totalSubKategori',
@@ -60,8 +49,6 @@ class ChartOfAccountController extends Controller
             'allKategori',
             'perPage',
             'isFiltered',
-            'subKategoriList',
-            'akunList',
         ));
     }
 

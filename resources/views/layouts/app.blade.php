@@ -64,21 +64,6 @@
                 }
             });
         });
-
-        function openDeleteModal(actionUrl, modalId = 'deleteModal') {
-            const modal = document.getElementById(modalId);
-            const form = document.getElementById(modalId + 'Form');
-
-            form.action = actionUrl;
-
-            modal.style.display = 'flex';
-        }
-
-        function closeModal(modalId = 'deleteModal') {
-            const modal = document.getElementById(modalId);
-
-            modal.style.display = 'none';
-        }
     </script>
 
     <script>

@@ -1,11 +1,15 @@
+{{-- dashboard/chart-of-account/index.blade.php --}}
 @extends('layouts.app')
+
 @section('title', 'Chart of Account')
+
 @section('content')
 <div class="p-6 space-y-6">
 
     <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
         <div>
             <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Chart of Account</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Kelola struktur akun keuangan masjid</p>
         </div>
         <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -15,24 +19,17 @@
     </div>
 
     @if(session('success'))
-    <div id="success-alert"
-        class="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-sm text-green-700 dark:text-green-400 transition-all duration-500">
+    <div class="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-sm text-green-700 dark:text-green-400">
         <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
         </svg>
         {{ session('success') }}
     </div>
     @endif
-
     @if(session('error'))
-    <div id="error-alert"
-        class="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400 transition-all duration-500">
+    <div class="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400">
         <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
         </svg>
         {{ session('error') }}
     </div>
@@ -53,12 +50,10 @@
                     Kelompok utama dalam struktur Chart of Account (CoA) yang digunakan untuk mengelompokkan akun berdasarkan jenis unsur laporan keuangan
                 </p>
             </div>
-            <button
-                type="button"
-                onclick="openModal('createKategoriModal')"
-                class="inline-flex items-center justify-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors w-fit">
+            <a href="{{ route('dashboard.coa.kategori.create') }}"
+               class="inline-flex items-center justify-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors w-fit">
                 Tambah Kategori
-            </button>
+            </a>
         </div>
 
         {{-- Sub Kategori --}}
@@ -74,12 +69,10 @@
                     Pengelompokan turunan dari kategori yang digunakan untuk mengelompokkan akun dengan karakteristik yang lebih spesifik.
                 </p>
             </div>
-            <button
-                type="button"
-                onclick="openModal('createSubKategoriModal')"
+            <a href="{{ route('dashboard.coa.sub-kategori.create') }}"
                class="inline-flex items-center justify-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors w-fit">
                 Tambah Sub Kategori
-            </button>
+            </a>
         </div>
 
         {{-- Akun --}}
@@ -95,12 +88,10 @@
                     Unit pencatatan transaksi keuangan yang digunakan dalam proses akuntansi untuk mencatat saldo dan mutasi transaksi tertentu.
                 </p>
             </div>
-            <button
-                type="button"
-                onclick="openModal('createAkunModal')"
-                class="inline-flex items-center justify-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors w-fit">
+            <a href="{{ route('dashboard.coa.akun.create') }}"
+               class="inline-flex items-center justify-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors w-fit">
                 Tambah Akun
-            </button>
+            </a>
         </div>
 
     </div>
@@ -166,24 +157,18 @@
                                     ({{ $kat->kode_kategori }}) {{ $kat->nama_kategori }}
                                 </span>
                                 <div class="flex items-center gap-1">
-                                    <button onclick="openModal('editKategoriModal{{ $kat->id }}')" class="px-3 py-2 bg-green-700 text-white rounded-lg">
+                                    <a href="{{ route('dashboard.coa.kategori.edit', $kat) }}"
+                                       class="p-1.5 text-green-200 hover:text-white hover:bg-green-600 rounded-lg transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                         </svg>
-                                    </button>
+                                    </a>
                                     <form method="POST" action="{{ route('dashboard.coa.kategori.destroy', $kat) }}"
                                           onsubmit="return confirm('Hapus kategori {{ $kat->nama_kategori }}?')">
                                         @csrf @method('DELETE')
-                                        <button type="button"
-                                            onclick="openDeleteModal(
-                                                '{{ route('dashboard.coa.kategori.destroy', $kat) }}',
-                                                'deleteKategoriModal'
-                                            )"
-                                            class="p-1.5 text-green-200 hover:text-red-300 hover:bg-green-600 rounded-lg transition-colors">
-
+                                        <button type="submit" class="p-1.5 text-green-200 hover:text-red-300 hover:bg-green-600 rounded-lg transition-colors">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                             </svg>
                                         </button>
                                     </form>
@@ -210,27 +195,18 @@
                             </td>
                             <td class="px-5 py-3">
                                 <div class="flex items-center justify-end gap-1">
-                                    <button onclick="openModal('editSubKategoriModal{{ $subKat->id }}')"
-                                        class="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors">
-
+                                    <a href="{{ route('dashboard.coa.sub-kategori.edit', $subKat) }}"
+                                       class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                         </svg>
-                                    </button>
+                                    </a>
                                     <form method="POST" action="{{ route('dashboard.coa.sub-kategori.destroy', $subKat) }}"
                                           onsubmit="return confirm('Hapus sub kategori {{ $subKat->nama_akun }}?')">
                                         @csrf @method('DELETE')
-                                        <button type="button"
-                                            onclick="openDeleteModal(
-                                                '{{ route('dashboard.coa.sub-kategori.destroy', $subKat) }}',
-                                                'deleteSubKategoriModal'
-                                            )"
-                                            class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-
+                                        <button type="submit" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                             </svg>
                                         </button>
                                     </form>
@@ -258,24 +234,18 @@
                             </td>
                             <td class="px-5 py-3">
                                 <div class="flex items-center justify-end gap-1">
-                                    <button type="button" onclick="openModal('editAkunModal{{ $akun->id }}')" class="p-1.5 text-gray-400 hover:text-yellow-700 hover:bg-amber-100 rounded-lg transition-colors">
+                                    <a href="{{ route('dashboard.coa.akun.edit', $akun) }}"
+                                       class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                         </svg>
-                                    </button>
+                                    </a>
                                     <form method="POST" action="{{ route('dashboard.coa.akun.destroy', $akun) }}"
                                           onsubmit="return confirm('Hapus akun {{ $akun->nama_akun }}?')">
                                         @csrf @method('DELETE')
-                                        <button type="button"
-                                            onclick="openDeleteModal(
-                                                '{{ route('dashboard.coa.akun.destroy', $akun) }}',
-                                                'deleteAkunModal'
-                                            )"
-                                            class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-
+                                        <button type="submit" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                             </svg>
                                         </button>
                                     </form>
@@ -349,48 +319,3 @@
     </div>
 </div>
 @endsection
-
-<x-confirm-modal
-    id="deleteKategoriModal"
-    title="Hapus Kategori"
-    message="Kategori yang dihapus tidak dapat dikembalikan."
-/>
-
-<x-confirm-modal
-    id="deleteSubKategoriModal"
-    title="Hapus Sub Kategori"
-    message="Sub kategori yang dihapus tidak dapat dikembalikan."
-/>
-
-<x-confirm-modal
-    id="deleteAkunModal"
-    title="Hapus Akun"
-    message="Akun yang dihapus tidak dapat dikembalikan."
-/>
-
-@push('scripts') 
-<script>
-    function openModal(id) {
-        const modal = document.getElementById(id);
-
-        modal.style.display = 'flex';
-        modal.classList.remove('hidden');
-    }
-
-    function closeModal(id) {
-        const modal = document.getElementById(id);
-
-        modal.style.display = 'none';
-        modal.classList.add('hidden');
-    }
-</script>
-@endpush
-
-@include('pages.coa.modals.create-kategori')
-@include('pages.coa.modals.edit-kategori')
-
-@include('pages.coa.modals.create-subkategori')
-@include('pages.coa.modals.edit-subkategori')
-
-@include('pages.coa.modals.create-akun')
-@include('pages.coa.modals.edit-akun')

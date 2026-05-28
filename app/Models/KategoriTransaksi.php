@@ -15,7 +15,6 @@ class KategoriTransaksi extends Model
         'nama_kategori',
         'jenis_transaksi',
         'deskripsi',
-        'status',
     ];
 
     public function transaksi()

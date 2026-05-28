@@ -15,6 +15,11 @@
             </a>
             <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Kategori Transaksi</h1>
         </div>
+        <!-- <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/>
+            </svg>
+        </button> -->
     </div>
 
     <div class="max-w-2xl mx-auto">
@@ -69,8 +74,8 @@
                                 class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none appearance-none transition-colors
                                     {{ $errors->has('status') ? 'border-red-400' : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }}
                                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                                <option value="aktif" {{ old('status', 'aktif') === 'aktif' ? 'selected' : '' }}>Aktif</option>
-                                <option value="tidak_aktif" {{ old('status', 'aktif') === 'tidak_aktif' ? 'selected' : '' }}>Tidak Aktif</option>
+                                <option value="aktif"       {{ old('status', 'aktif') === 'aktif'       ? 'selected' : '' }}>Aktif</option>
+                                <option value="tidak_aktif" {{ old('status') === 'tidak_aktif' ? 'selected' : '' }}>Tidak Aktif</option>
                             </select>
                             <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
                                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
