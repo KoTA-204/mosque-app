@@ -4,15 +4,17 @@
 <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
 
     {{-- Header --}}
-    <div class="mb-6 rounded-xl border border-stroke bg-white px-6 py-4 shadow-default dark:border-strokedark dark:bg-boxdark">
-        <h2 class="text-2xl font-bold text-dark dark:text-white">Detail Kencleng</h2>
+    <div class="mb-6 flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
+        <div class="flex items-center gap-3">
+            <a href="{{ route('dashboard.kencleng.index') }}"
+               class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Detail Kencleng</h1>
+        </div>
     </div>
-
-    {{-- Kembali --}}
-    <a href="{{ route('dashboard.kencleng.index') }}"
-       class="mb-4 inline-block text-sm text-body hover:text-primary dark:text-bodydark">
-        Kembali
-    </a>
 
     {{-- Catatan Revisi --}}
     @if($kencleng->transaksi->catatan_revisi && $kencleng->transaksi->status_approval === 'REVISION')

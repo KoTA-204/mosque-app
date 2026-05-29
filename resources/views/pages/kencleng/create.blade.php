@@ -21,6 +21,9 @@
     <form action="{{ route('dashboard.kencleng.store') }}" method="POST" enctype="multipart/form-data" id="kenclengForm">
         @csrf
 
+        {{-- Input hidden jumlah_disetor, nilainya diisi otomatis dari JS --}}
+        <input type="hidden" name="jumlah_disetor" id="jumlahDisetor" value="{{ old('jumlah_disetor', 0) }}">
+
         {{-- Informasi Periode --}}
         <div class="mb-4 rounded-xl border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
             <div class="mb-4 flex items-center gap-2">
@@ -104,20 +107,6 @@
                 <p class="text-sm font-medium text-green-700 dark:text-white">Total fisik terhitung</p>
                 <p id="totalFisik" class="text-lg font-bold text-green-700 dark:text-white">Rp 0</p>
             </div>
-
-            {{-- Jumlah Disetor --}}
-            <div class="mt-4">
-                <label class="mb-2 block text-sm font-medium text-black dark:text-white">
-                    Jumlah disetor ke kas <span class="text-red-500">*</span>
-                </label>
-                <input type="text" name="jumlah_disetor" id="jumlahDisetor"
-                       value="{{ old('jumlah_disetor') }}"
-                       placeholder="cth: 500.000"
-                       class="w-64 rounded-lg border border-stroke px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white @error('jumlah_disetor') border-red-500 @enderror">
-                <p class="mt-1 text-xs text-body dark:text-bodydark">
-                    Boleh berbeda dari total fisik — sisanya dicatat sebagai transfer ke rekening
-                </p>
-            </div>
         </div>
 
         {{-- Berita Acara --}}
@@ -168,14 +157,9 @@
         {{-- Buttons --}}
         <div class="flex items-center justify-end gap-3 rounded-xl border border-stroke bg-white px-6 py-4 shadow-default dark:border-strokedark dark:bg-boxdark">
             <a href="{{ route('dashboard.kencleng.index') }}"
-            class="rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors dark:border-strokedark dark:bg-boxdark dark:text-white">
+               class="rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors dark:border-strokedark dark:bg-boxdark dark:text-white">
                 Batal
             </a>
-
-            <button type="submit" name="submit_type" value="draf"
-                    class="rounded-lg border border-green-600 bg-white px-6 py-2.5 text-sm font-medium text-green-600 hover:bg-green-600 hover:text-white transition-colors">
-                Simpan Draf
-            </button>
 
             <button type="submit" name="submit_type" value="ajukan"
                     class="rounded-lg bg-green-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-green-700 transition-colors">
@@ -200,9 +184,8 @@ function changeCount(p, delta) {
 }
 
 function updateSubtotal(p, count) {
-    const subtotal = p * count;
     document.getElementById('subtotal_' + p).textContent =
-        'Rp ' + subtotal.toLocaleString('id-ID');
+        'Rp ' + (p * count).toLocaleString('id-ID');
 }
 
 function recalcTotal() {
@@ -214,6 +197,9 @@ function recalcTotal() {
     });
     document.getElementById('totalFisik').textContent =
         'Rp ' + total.toLocaleString('id-ID');
+
+    // Sinkronkan hidden input jumlah_disetor dengan total fisik
+    document.getElementById('jumlahDisetor').value = total;
 }
 
 function showBAName(input) {
@@ -223,13 +209,6 @@ function showBAName(input) {
     }
 }
 
-// Format jumlah disetor input
-document.getElementById('jumlahDisetor').addEventListener('input', function () {
-    let val = this.value.replace(/\D/g, '');
-    this.value = parseInt(val || 0).toLocaleString('id-ID');
-});
-
-// Init
 recalcTotal();
 </script>
 @endpush

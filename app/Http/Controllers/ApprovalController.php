@@ -16,26 +16,30 @@ class ApprovalController extends Controller
 
     public function approvalIndex(Request $request)
     {
-        $search  = $request->get('search', '');
-        $sumber  = $request->get('sumber', '');  
-        $dari    = $request->get('dari', '');
-        $sampai  = $request->get('sampai', '');
+        $search  = $request->get('search', '') ?? '';
+        $sumber  = $request->get('sumber', '') ?? '';
+        $dari    = $request->get('dari', '') ?? '';
+        $sampai  = $request->get('sampai', '') ?? '';
+        $urut    = $request->get('urut', 'asc') ?? 'asc';
+        $perPage = (int) ($request->get('per_page', 10) ?? 10);
 
-        $transaksi = $this->approvalService->getTransaksiPending($search, $sumber, $dari, $sampai);
+        $transaksi = $this->approvalService->getTransaksiPending(
+            $search, $sumber, $dari, $sampai, $urut, $perPage
+        );
 
-        return view('pages.approval.index', compact('transaksi', 'search', 'sumber', 'dari', 'sampai'));
+        return view('pages.approval.index', compact(
+            'transaksi', 'search', 'sumber', 'dari', 'sampai', 'urut', 'perPage'
+        ));
     }
 
     public function approvalShow(Transaksi $transaksi)
     {
         $transaksi = $this->approvalService->getTransaksiById($transaksi);
 
-        // Kencleng → view khusus kencleng
         if ($transaksi->kencleng !== null) {
             return view('pages.approval.show-kencleng', compact('transaksi'));
         }
 
-        // Kegiatan → view biasa
         return view('pages.approval.show', compact('transaksi'));
     }
 

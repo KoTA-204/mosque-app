@@ -8,26 +8,34 @@ use App\Models\KategoriTransaksi;
 use App\Models\KenclengDetail;
 use App\Models\Transaksi;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class KenclengService
 {
-    // Pecahan yang tersedia
     const PECAHAN = [100, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000];
 
-    public function getList(string $search = '', int $perPage = 10)
+    public function getList(?string $search = '', int $perPage = 10, ?string $sort = 'terbaru', ?string $status = '')
     {
+        $search = $search ?? '';
+        $sort   = $sort   ?? 'terbaru';
+        $status = $status ?? '';
+        $order  = $sort === 'terlama' ? 'asc' : 'desc';
+
         return Kencleng::with(['transaksi.user', 'transaksi.dompet', 'detail'])
-            ->whereHas('transaksi', fn($q) =>
-                $q->where('user_id', auth()->id())
-            )
+            ->whereHas('transaksi', fn($q) => $q->where('user_id', auth()->id()))
             ->when($search, fn($q) =>
                 $q->where('nomor_kwitansi', 'ilike', "%{$search}%")
-                ->orWhereHas('transaksi', fn($q) =>
-                    $q->where('deskripsi', 'ilike', "%{$search}%")
+                  ->orWhereHas('transaksi', fn($q) =>
+                      $q->where('deskripsi', 'ilike', "%{$search}%")
+                  )
+            )
+            ->when($status, fn($q) =>
+                $q->whereHas('transaksi', fn($q) =>
+                    $q->where('status_approval', $status)
                 )
             )
-            ->orderBy('created_at', 'desc')
+            ->orderBy('created_at', $order)
             ->paginate($perPage);
     }
 
@@ -55,111 +63,144 @@ class KenclengService
         return 'KWT-' . $year . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
     }
 
-    public function store(array $data, string $statusApproval = 'PENDING'): Kencleng
+    /**
+     * Simpan kencleng baru. Seluruh operasi dibungkus dalam satu transaksi DB
+     * sehingga jika salah satu gagal, semua perubahan di-rollback secara otomatis.
+     */
+    public function store(array $data): Kencleng
     {
-        return DB::transaction(function () use ($data, $statusApproval) {
+        return DB::transaction(function () use ($data) {
             $kategori = $this->getKategoriKencleng();
 
-            // Hitung total fisik dari pecahan
+            // Hitung total fisik = jumlah disetor
             $totalFisik = 0;
             foreach (self::PECAHAN as $pecahan) {
-                $jumlah = (int) ($data['pecahan'][$pecahan] ?? 0);
+                $jumlah      = (int) ($data['pecahan'][$pecahan] ?? 0);
                 $totalFisik += $pecahan * $jumlah;
             }
 
-            $jumlahSetor = (int) str_replace('.', '', $data['jumlah_disetor']);
-
-            // Upload berita acara
+            // Upload berita acara — dilakukan di dalam transaksi supaya
+            // jika DB gagal, file yang ter-upload bisa kita track & hapus
             $pathBA = null;
             if (!empty($data['berita_acara'])) {
                 $pathBA = $data['berita_acara']->store('berita_acara', 'public');
             }
 
-            // Buat transaksi induk
-            $transaksi = Transaksi::create([
-                'dompet_id'             => $data['dompet_id'],
-                'kegiatan_id'           => null,
-                'user_id'               => auth()->id(),
-                'kategori_transaksi_id' => $kategori?->id,
-                'tanggal_transaksi'     => $data['tanggal_hitung'],
-                'jumlah'                => $jumlahSetor,
-                'deskripsi'             => $data['keterangan'] ?? null,
-                'status_approval'       => $statusApproval,
-                'status_jurnal'         => 'UNMAPPED',
-            ]);
+            try {
+                $transaksi = Transaksi::create([
+                    'dompet_id'             => $data['dompet_id'],
+                    'kegiatan_id'           => null,
+                    'user_id'               => auth()->id(),
+                    'kategori_transaksi_id' => $kategori?->id,
+                    'tanggal_transaksi'     => $data['tanggal_hitung'],
+                    'jumlah'                => $totalFisik,
+                    'deskripsi'             => $data['keterangan'] ?? null,
+                    'status_approval'       => 'PENDING',
+                    'status_jurnal'         => 'UNMAPPED',
+                ]);
 
-            // Buat kencleng
-            $kencleng = Kencleng::create([
-                'transaksi_id'      => $transaksi->id,
-                'nomor_kwitansi'    => $this->generateNomorKwitansi(),
-                'berita_acara'      => $pathBA,
-            ]);
+                $kencleng = Kencleng::create([
+                    'transaksi_id'   => $transaksi->id,
+                    'nomor_kwitansi' => $this->generateNomorKwitansi(),
+                    'berita_acara'   => $pathBA,
+                ]);
 
-            // Buat detail pecahan
-            foreach (self::PECAHAN as $pecahan) {
-                $jumlah = (int) ($data['pecahan'][$pecahan] ?? 0);
-                if ($jumlah > 0) {
-                    KenclengDetail::create([
-                        'kencleng_id'    => $kencleng->id,
-                        'pecahan'        => $pecahan,
-                        'jumlah_pecahan' => $jumlah,
-                    ]);
+                foreach (self::PECAHAN as $pecahan) {
+                    $jumlah = (int) ($data['pecahan'][$pecahan] ?? 0);
+                    if ($jumlah > 0) {
+                        KenclengDetail::create([
+                            'kencleng_id'    => $kencleng->id,
+                            'pecahan'        => $pecahan,
+                            'jumlah_pecahan' => $jumlah,
+                        ]);
+                    }
                 }
-            }
 
-            return $kencleng->load('transaksi', 'detail');
+                return $kencleng->load('transaksi', 'detail');
+            } catch (\Throwable $e) {
+                // Hapus file yang sudah ter-upload jika DB gagal
+                if ($pathBA) {
+                    Storage::disk('public')->delete($pathBA);
+                }
+                Log::error('KenclengService::store gagal', ['error' => $e->getMessage()]);
+                throw $e; // re-throw supaya DB::transaction melakukan rollback
+            }
         });
     }
 
+    /**
+     * Update kencleng. Seluruh operasi dibungkus dalam satu transaksi DB.
+     */
     public function update(Kencleng $kencleng, array $data): Kencleng
     {
         return DB::transaction(function () use ($kencleng, $data) {
-            $transaksi  = $kencleng->transaksi;
-            $jumlahSetor = (int) str_replace('.', '', $data['jumlah_disetor']);
+            $transaksi = $kencleng->transaksi;
 
-            // Update berita acara kalau ada file baru
-            $pathBA = $kencleng->berita_acara;
-            if (!empty($data['berita_acara'])) {
-                if ($pathBA) Storage::disk('public')->delete($pathBA);
-                $pathBA = $data['berita_acara']->store('berita_acara', 'public');
-            }
-
-            // Update transaksi
-            $transaksi->update([
-                'dompet_id'         => $data['dompet_id'],
-                'tanggal_transaksi' => $data['tanggal_hitung'],
-                'jumlah'            => $jumlahSetor,
-                'deskripsi'         => $data['keterangan'] ?? null,
-                'status_approval'   => 'PENDING', // reset ke pending
-            ]);
-
-            // Update kencleng
-            $kencleng->update([
-                'berita_acara' => $pathBA,
-            ]);
-
-            // Hapus detail lama & buat ulang
-            $kencleng->detail()->delete();
+            // Hitung ulang total fisik = jumlah disetor
+            $totalFisik = 0;
             foreach (self::PECAHAN as $pecahan) {
-                $jumlah = (int) ($data['pecahan'][$pecahan] ?? 0);
-                if ($jumlah > 0) {
-                    KenclengDetail::create([
-                        'kencleng_id'    => $kencleng->id,
-                        'pecahan'        => $pecahan,
-                        'jumlah_pecahan' => $jumlah,
-                    ]);
-                }
+                $jumlah      = (int) ($data['pecahan'][$pecahan] ?? 0);
+                $totalFisik += $pecahan * $jumlah;
             }
 
-            return $kencleng->fresh()->load('transaksi', 'detail');
+            $pathBA    = $kencleng->berita_acara;
+            $oldPathBA = $pathBA;
+            $newPathBA = null;
+
+            if (!empty($data['berita_acara'])) {
+                $newPathBA = $data['berita_acara']->store('berita_acara', 'public');
+                $pathBA    = $newPathBA;
+            }
+
+            try {
+                $transaksi->update([
+                    'dompet_id'         => $data['dompet_id'],
+                    'tanggal_transaksi' => $data['tanggal_hitung'],
+                    'jumlah'            => $totalFisik,
+                    'deskripsi'         => $data['keterangan'] ?? null,
+                    'status_approval'   => 'PENDING',
+                ]);
+
+                $kencleng->update(['berita_acara' => $pathBA]);
+
+                // Hapus detail lama & buat ulang
+                $kencleng->detail()->delete();
+                foreach (self::PECAHAN as $pecahan) {
+                    $jumlah = (int) ($data['pecahan'][$pecahan] ?? 0);
+                    if ($jumlah > 0) {
+                        KenclengDetail::create([
+                            'kencleng_id'    => $kencleng->id,
+                            'pecahan'        => $pecahan,
+                            'jumlah_pecahan' => $jumlah,
+                        ]);
+                    }
+                }
+
+                // Hapus file lama hanya setelah DB berhasil
+                if ($newPathBA && $oldPathBA) {
+                    Storage::disk('public')->delete($oldPathBA);
+                }
+
+                return $kencleng->fresh()->load('transaksi', 'detail');
+            } catch (\Throwable $e) {
+                // Hapus file baru yang sudah ter-upload jika DB gagal
+                if ($newPathBA) {
+                    Storage::disk('public')->delete($newPathBA);
+                }
+                Log::error('KenclengService::update gagal', ['id' => $kencleng->id, 'error' => $e->getMessage()]);
+                throw $e;
+            }
         });
     }
 
+    /**
+     * Hapus kencleng beserta transaksi & file-nya secara atomik.
+     */
     public function delete(Kencleng $kencleng): bool|string
     {
         $transaksi = $kencleng->transaksi;
 
-        if (!in_array($transaksi->status_approval, ['PENDING', 'REVISION'])) {
+        if (!in_array($transaksi->status_approval, ['PENDING', 'REVISION', 'DRAFT'])) {
             return 'Kencleng yang sudah diapprove tidak bisa dihapus';
         }
 
@@ -168,12 +209,17 @@ class KenclengService
         }
 
         DB::transaction(function () use ($kencleng) {
-            if ($kencleng->berita_acara) {
-                Storage::disk('public')->delete($kencleng->berita_acara);
-            }
+            $pathBA = $kencleng->berita_acara;
+
+            // Hapus data DB dulu — jika gagal, rollback & file tetap aman
             $kencleng->detail()->delete();
             $kencleng->delete();
             $kencleng->transaksi()->delete();
+
+            // Hapus file hanya setelah DB berhasil
+            if ($pathBA) {
+                Storage::disk('public')->delete($pathBA);
+            }
         });
 
         return true;

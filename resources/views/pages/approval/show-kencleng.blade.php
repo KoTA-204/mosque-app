@@ -1,39 +1,41 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+<div class="p-6 space-y-6">
 
     {{-- Header --}}
-    <div class="mb-6 rounded-xl border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
-        <h2 class="text-2xl font-bold text-dark dark:text-white">Detail Kencleng</h2>
+    <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
+        <div class="flex items-center gap-3">
+            <a href="{{ route('dashboard.approval.index') }}"
+               class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Detail Kencleng</h1>
+        </div>
     </div>
 
-    {{-- Kembali --}}
-    <a href="{{ route('dashboard.approval.index') }}"
-       class="mb-4 inline-block text-sm text-body hover:text-primary dark:text-bodydark">
-        Kembali
-    </a>
-
     {{-- Action Bar --}}
-    <div class="mb-4 flex items-center justify-between rounded-xl border border-stroke bg-white px-5 py-4 shadow-default dark:border-strokedark dark:bg-boxdark">
+    <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-6 py-4 flex items-center justify-between flex-wrap gap-4">
         <div>
-            <p class="font-medium text-black dark:text-white">Transaksi ini menunggu persetujuan kamu</p>
-            <p class="text-sm text-body dark:text-bodydark">Periksa detail di bawah sebelum approve, revisi, atau reject</p>
+            <p class="font-medium text-gray-900 dark:text-white">Transaksi ini menunggu persetujuan kamu</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Periksa detail di bawah sebelum approve, revisi, atau reject</p>
         </div>
         <div class="flex items-center gap-2">
             <button type="button" onclick="togglePanel('panel-revision')"
-                    class="rounded-lg border border-blue-500 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors dark:hover:bg-meta-4">
+                    class="inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg border border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
                 Minta Revisi
             </button>
             <button type="button" onclick="togglePanel('panel-reject')"
-                    class="rounded-lg border border-red-500 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors dark:hover:bg-meta-4">
+                    class="inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg border border-red-500 text-red-600 dark:text-red-400 dark:border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                 Reject
             </button>
             <form action="{{ route('dashboard.approval.approve', $transaksi) }}" method="POST"
                   onsubmit="return confirm('Yakin menyetujui transaksi kencleng ini?')">
                 @csrf
                 <button type="submit"
-                        class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors">
+                        class="inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
                     Approve
                 </button>
             </form>
@@ -42,20 +44,20 @@
 
     {{-- Inline Panel: Reject --}}
     <div id="panel-reject"
-         class="mb-4 hidden rounded-xl border border-red-200 bg-red-50 p-5 dark:border-red-900/50 dark:bg-red-900/20">
+         class="hidden bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-5">
         <p class="mb-3 font-medium text-red-700 dark:text-red-400">Alasan penolakan</p>
         <form action="{{ route('dashboard.approval.reject', $transaksi) }}" method="POST">
             @csrf
             <textarea name="catatan" rows="3"
                       placeholder="Tuliskan alasan reject transaksi ini..."
-                      class="mb-3 w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-sm focus:border-red-400 focus:outline-none dark:border-red-900/50 dark:bg-boxdark dark:text-white"></textarea>
+                      class="mb-3 w-full rounded-xl border border-red-200 dark:border-red-800 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 focus:border-red-400 focus:outline-none placeholder-gray-400"></textarea>
             <div class="flex justify-end gap-2">
                 <button type="button" onclick="togglePanel('panel-reject')"
-                        class="rounded-lg border border-stroke px-4 py-2 text-sm hover:bg-gray-100 dark:border-strokedark dark:hover:bg-meta-4">
+                        class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                     Batal
                 </button>
                 <button type="submit"
-                        class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
+                        class="px-4 py-2 text-sm font-medium border border-red-500 text-red-600 dark:text-red-400 dark:border-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                     Konfirmasi Reject
                 </button>
             </div>
@@ -64,20 +66,20 @@
 
     {{-- Inline Panel: Revisi --}}
     <div id="panel-revision"
-         class="mb-4 hidden rounded-xl border border-blue-200 bg-blue-50 p-5 dark:border-blue-900/50 dark:bg-blue-900/20">
+         class="hidden bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-5">
         <p class="mb-3 font-medium text-blue-700 dark:text-blue-400">Catatan revisi</p>
         <form action="{{ route('dashboard.approval.revision', $transaksi) }}" method="POST">
             @csrf
             <textarea name="catatan" rows="3" required
                       placeholder="Tuliskan catatan yang perlu diperbaiki..."
-                      class="mb-3 w-full rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm focus:border-blue-400 focus:outline-none dark:border-blue-900/50 dark:bg-boxdark dark:text-white"></textarea>
+                      class="mb-3 w-full rounded-xl border border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 focus:border-blue-400 focus:outline-none placeholder-gray-400"></textarea>
             <div class="flex justify-end gap-2">
                 <button type="button" onclick="togglePanel('panel-revision')"
-                        class="rounded-lg border border-stroke px-4 py-2 text-sm hover:bg-gray-100 dark:border-strokedark dark:hover:bg-meta-4">
+                        class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                     Batal
                 </button>
                 <button type="submit"
-                        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                        class="px-4 py-2 text-sm font-medium border border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
                     Kirim Permintaan Revisi
                 </button>
             </div>
@@ -85,46 +87,48 @@
     </div>
 
     {{-- Informasi Transaksi --}}
-    <div class="mb-6 rounded-xl border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
+    <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
         <div class="mb-5 flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-black dark:text-white">Informasi transaksi</h3>
-            <span class="rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-700">Pending</span>
+            <h2 class="text-base font-semibold text-gray-900 dark:text-white">Informasi transaksi</h2>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400">
+                Pending
+            </span>
         </div>
 
         <div class="grid grid-cols-2 gap-x-8 gap-y-5 md:grid-cols-3">
             <div>
-                <p class="mb-1 text-xs text-body dark:text-bodydark">Kode transaksi</p>
-                <p class="font-mono text-sm font-medium text-black dark:text-white">
+                <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">Kode transaksi</p>
+                <p class="font-mono text-sm font-medium text-gray-800 dark:text-gray-200">
                     TRX-{{ now()->year }}-{{ str_pad($transaksi->id, 3, '0', STR_PAD_LEFT) }}
                 </p>
             </div>
             <div>
-                <p class="mb-1 text-xs text-body dark:text-bodydark">Tanggal hitung</p>
-                <p class="text-sm text-black dark:text-white">
+                <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">Tanggal hitung</p>
+                <p class="text-sm text-gray-800 dark:text-gray-200">
                     {{ $transaksi->tanggal_transaksi->format('j F Y') }}
                 </p>
             </div>
             @if($transaksi->kencleng->nomor_kwitansi ?? null)
             <div>
-                <p class="mb-1 text-xs text-body dark:text-bodydark">Nomor kwitansi</p>
-                <p class="font-mono text-sm font-medium text-black dark:text-white">
+                <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">Nomor kwitansi</p>
+                <p class="font-mono text-sm font-medium text-gray-800 dark:text-gray-200">
                     {{ $transaksi->kencleng->nomor_kwitansi }}
                 </p>
             </div>
             @endif
             <div>
-                <p class="mb-1 text-xs text-body dark:text-bodydark">Dompet</p>
-                <p class="text-sm text-black dark:text-white">{{ $transaksi->dompet->nama_dompet }}</p>
+                <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">Dompet</p>
+                <p class="text-sm text-gray-800 dark:text-gray-200">{{ $transaksi->dompet->nama_dompet }}</p>
             </div>
             <div>
-                <p class="mb-1 text-xs text-body dark:text-bodydark">Dicatat oleh</p>
-                <p class="text-sm text-black dark:text-white">
+                <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">Dicatat oleh</p>
+                <p class="text-sm text-gray-800 dark:text-gray-200">
                     {{ $transaksi->user->name }} · {{ $transaksi->created_at->format('j M Y H.i') }}
                 </p>
             </div>
             <div>
-                <p class="mb-1 text-xs text-body dark:text-bodydark">Jumlah disetor</p>
-                <p class="text-sm font-semibold text-green-600">
+                <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">Jumlah disetor</p>
+                <p class="text-sm font-semibold text-green-600 dark:text-green-400">
                     Rp {{ number_format($transaksi->jumlah, 0, ',', '.') }}
                 </p>
             </div>
@@ -138,26 +142,22 @@
         $totalFisik = $details->sum(fn($d) => $d->pecahan * $d->jumlah_pecahan);
         $jumlahSetor= (float) $transaksi->jumlah;
         $selisih    = $totalFisik - $jumlahSetor;
-
-        // urut pecahan dari terkecil
-        $sorted = $details->sortBy('pecahan');
+        $sorted     = $details->sortBy('pecahan');
     @endphp
-    <div class="mb-6 rounded-xl border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
-        <h3 class="mb-5 text-lg font-semibold text-black dark:text-white">Rincian pecahan uang</h3>
+    <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+        <h2 class="mb-5 text-base font-semibold text-gray-900 dark:text-white">Rincian pecahan uang</h2>
 
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
             @foreach($sorted as $detail)
-            @php
-                $subtotal = $detail->pecahan * $detail->jumlah_pecahan;
-            @endphp
-            <div class="rounded-lg border border-stroke p-4 dark:border-strokedark">
-                <p class="text-xs text-body dark:text-bodydark">
+            @php $subtotal = $detail->pecahan * $detail->jumlah_pecahan; @endphp
+            <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                <p class="text-xs text-gray-500 dark:text-gray-400">
                     Rp {{ number_format($detail->pecahan, 0, ',', '.') }}
                 </p>
-                <p class="text-sm font-medium text-green-600">
+                <p class="text-sm font-medium text-green-600 dark:text-green-400">
                     Rp {{ number_format($subtotal, 0, ',', '.') }}
                 </p>
-                <p class="mt-1 text-right text-sm font-semibold text-black dark:text-white">
+                <p class="mt-1 text-right text-sm font-semibold text-gray-800 dark:text-gray-200">
                     {{ number_format($detail->jumlah_pecahan, 0, ',', '.') }}
                     {{ $detail->pecahan < 1000 ? 'keping' : 'lembar' }}
                 </p>
@@ -165,8 +165,7 @@
             @endforeach
         </div>
 
-        {{-- Ringkasan total --}}
-        <div class="mt-5 rounded-lg border border-green-200 bg-green-50 px-5 py-4 dark:border-green-900/50 dark:bg-green-900/20">
+        <div class="mt-5 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-5 py-4">
             <div class="flex items-center justify-between">
                 <p class="text-sm font-medium text-green-700 dark:text-green-400">Total fisik terhitung</p>
                 <p class="text-lg font-bold text-green-700 dark:text-green-400">
@@ -175,17 +174,17 @@
             </div>
         </div>
 
-        <div class="mt-3 space-y-2 border-t border-stroke pt-4 dark:border-strokedark">
+        <div class="mt-4 space-y-2 border-t border-gray-100 dark:border-gray-800 pt-4">
             <div class="flex items-center justify-between text-sm">
-                <p class="text-body dark:text-bodydark">Jumlah disetor ke kas</p>
-                <p class="font-medium text-black dark:text-white">
+                <p class="text-gray-500 dark:text-gray-400">Jumlah disetor ke kas</p>
+                <p class="font-medium text-gray-800 dark:text-gray-200">
                     Rp {{ number_format($jumlahSetor, 0, ',', '.') }}
                 </p>
             </div>
             @if($selisih != 0)
             <div class="flex items-center justify-between text-xs">
-                <p class="text-body dark:text-bodydark">Selisih</p>
-                <p class="{{ $selisih > 0 ? 'text-blue-600' : 'text-red-600' }}">
+                <p class="text-gray-500 dark:text-gray-400">Selisih</p>
+                <p class="{{ $selisih > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-500 dark:text-red-400' }}">
                     Rp {{ number_format(abs($selisih), 0, ',', '.') }}
                     — {{ $selisih > 0 ? 'dicatat sebagai transfer ke rekening' : 'kekurangan' }}
                 </p>
@@ -197,21 +196,21 @@
 
     {{-- Berita Acara --}}
     @if($transaksi->kencleng && $transaksi->kencleng->berita_acara)
-    <div class="rounded-xl border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark">
-        <h3 class="mb-4 text-lg font-semibold text-black dark:text-white">Berita acara</h3>
+    <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+        <h2 class="mb-4 text-base font-semibold text-gray-900 dark:text-white">Berita acara</h2>
         @php
             $ba  = $transaksi->kencleng->berita_acara;
             $ext = strtoupper(pathinfo($ba, PATHINFO_EXTENSION));
         @endphp
         <a href="{{ Storage::url($ba) }}" target="_blank"
-           class="flex items-center gap-3 rounded-lg border border-stroke px-4 py-3 hover:bg-gray-50 dark:border-strokedark dark:hover:bg-meta-4 transition-colors">
-            <svg class="h-4 w-4 shrink-0 text-body dark:text-bodydark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+           class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+            <svg class="h-4 w-4 shrink-0 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
             </svg>
-            <span class="text-sm text-black dark:text-white">{{ basename($ba) }}</span>
-            <span class="ml-auto rounded px-2 py-0.5 text-xs font-medium
-                {{ $ext === 'PDF' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700' }}">
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{ basename($ba) }}</span>
+            <span class="ml-auto inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                {{ $ext === 'PDF' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' }}">
                 {{ $ext }}
             </span>
         </a>
