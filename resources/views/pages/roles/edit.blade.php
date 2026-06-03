@@ -3,8 +3,17 @@
 @section('content')
 <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
 
-    <div class="mb-6">
-        <h2 class="text-2xl font-bold text-dark dark:text-white">Edit Role</h2>
+    {{-- Header --}}
+    <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4 mb-6">
+        <div class="flex items-center gap-3">
+            <a href="{{ route('dashboard.roles.index') }}"
+               class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Edit Role</h1>
+        </div>
     </div>
 
     <form action="{{ route('dashboard.roles.update', $role) }}" method="POST">
@@ -40,10 +49,7 @@
             {{-- Is Active --}}
             <div>
                 <label class="flex items-center gap-2 text-sm font-medium text-black dark:text-white">
-                    <input type="checkbox" name="is_active" value="1"
-                           {{ old('is_active', $role->is_active) ? 'checked' : '' }}
-                           class="h-4 w-4 rounded border-stroke">
-                    Aktif
+                    <input type="hidden" name="is_active" value="1">
                 </label>
             </div>
         </div>

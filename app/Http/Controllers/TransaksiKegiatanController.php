@@ -122,8 +122,11 @@ class TransaksiKegiatanController extends Controller
 
     public function editTransaksi(Kegiatan $kegiatan, Transaksi $transaksi)
     {
-        if ($transaksi->status_approval !== 'REVISION') {
-            return redirect()->back()->with('error', 'Transaksi tidak dalam status revisi');
+        if (!in_array($transaksi->status_approval, ['REVISION', 'PENDING'])) {
+            return redirect()->back()->with(
+                'error',
+                'Transaksi tidak dapat diedit'
+            );
         }
 
         if ($transaksi->user_id !== auth()->id()) {
@@ -134,13 +137,27 @@ class TransaksiKegiatanController extends Controller
         $dompetList   = $this->transaksiKegiatanService->getDompetList();
         $kategoriList = $this->transaksiKegiatanService->getKategoriList();
 
-        return view('pages.transaksi-kegiatan.edit-transaksi', compact('kegiatan', 'transaksi', 'dompetList', 'kategoriList'));
+        return view(
+            'pages.transaksi-kegiatan.edit-transaksi',
+            compact(
+                'kegiatan',
+                'transaksi',
+                'dompetList',
+                'kategoriList'
+            )
+        );
     }
 
-    public function updateTransaksi(Request $request, Kegiatan $kegiatan, Transaksi $transaksi)
-    {
-        if ($transaksi->status_approval !== 'REVISION') {
-            return redirect()->back()->with('error', 'Transaksi tidak dalam status revisi');
+    public function updateTransaksi(
+        Request $request,
+        Kegiatan $kegiatan,
+        Transaksi $transaksi
+    ) {
+        if (!in_array($transaksi->status_approval, ['REVISION', 'PENDING'])) {
+            return redirect()->back()->with(
+                'error',
+                'Transaksi tidak dapat diedit'
+            );
         }
 
         if ($transaksi->user_id !== auth()->id()) {
@@ -159,9 +176,16 @@ class TransaksiKegiatanController extends Controller
             'hapus_bukti.*'         => 'integer|exists:bukti_transaksi,id',
         ]);
 
-        $this->transaksiKegiatanService->updateTransaksi($transaksi, $request->all());
+        $this->transaksiKegiatanService->updateTransaksi(
+            $transaksi,
+            $request->all()
+        );
 
-        return redirect()->route('dashboard.kegiatan-panitia.show', $kegiatan)
-            ->with('success', 'Transaksi berhasil diperbaiki dan dikirim ulang');
+        return redirect()
+            ->route('dashboard.kegiatan-panitia.show', $kegiatan)
+            ->with(
+                'success',
+                'Transaksi berhasil diperbarui'
+            );
     }
 }

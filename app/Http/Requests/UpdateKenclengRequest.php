@@ -14,14 +14,26 @@ class UpdateKenclengRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tanggal_hitung'  => 'required|date',
-            'dompet_id'       => 'required|exists:dompet,id',
-            'pecahan'         => 'nullable|array',
-            'pecahan.*'       => 'nullable|integer|min:0',
-            'jumlah_disetor'  => 'required|string',
-            'berita_acara'    => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'keterangan'      => 'nullable|string|max:500',
-            'submit_type'     => 'required|in:draf,ajukan',
+            'tanggal_hitung' => 'required|date',
+            'dompet_id'      => 'required|exists:dompet,id',
+            'pecahan'        => 'nullable|array',
+            'pecahan.*'      => 'nullable|integer|min:0',
+            'jumlah_disetor' => 'required|string',
+            'berita_acara'   => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'keterangan'     => 'nullable|string|max:500',
+            'submit_type'    => 'required|in:ajukan',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'tanggal_hitung.required' => 'Tanggal hitung wajib diisi',
+            'dompet_id.required'      => 'Dompet wajib dipilih',
+            'dompet_id.exists'        => 'Dompet tidak ditemukan',
+            'jumlah_disetor.required' => 'Jumlah disetor wajib diisi',
+            'berita_acara.mimes'      => 'File harus berformat JPG, PNG, atau PDF',
+            'berita_acara.max'        => 'Ukuran file maksimal 5MB',
         ];
     }
 }

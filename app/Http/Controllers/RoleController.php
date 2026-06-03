@@ -23,6 +23,7 @@ class RoleController extends Controller
     {
         $search = $request->get('search', '');
         $roles  = $this->roleService->getAll($search);
+
         return view('pages.roles.index', compact('roles', 'search'));
     }
 
@@ -50,9 +51,16 @@ class RoleController extends Controller
      */
     public function store(StoreRoleRequest $request)
     {
-        $this->roleService->create($request->validated());
-        return redirect()->route('dashboard.roles.index')
-            ->with('success', 'Role berhasil dibuat');
+        try {
+            $this->roleService->create($request->validated());
+
+            return redirect()->route('dashboard.roles.index')
+                ->with('success', 'Role berhasil dibuat');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Gagal membuat role. Silakan coba lagi.');
+        }
     }
 
     /**
@@ -61,6 +69,7 @@ class RoleController extends Controller
     public function show(Role $role)
     {
         $role = $this->roleService->getById($role);
+
         return view('pages.roles.show', compact('role'));
     }
 
@@ -95,9 +104,16 @@ class RoleController extends Controller
      */
     public function update(UpdateRoleRequest $request, Role $role)
     {
-        $this->roleService->update($role, $request->validated());
-        return redirect()->route('dashboard.roles.index')
-            ->with('success', 'Role berhasil diperbarui');
+        try {
+            $this->roleService->update($role, $request->validated());
+
+            return redirect()->route('dashboard.roles.index')
+                ->with('success', 'Role berhasil diperbarui');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Gagal memperbarui role. Silakan coba lagi.');
+        }
     }
 
     /**
@@ -105,14 +121,19 @@ class RoleController extends Controller
      */
     public function destroy(Role $role)
     {
-        $result = $this->roleService->delete($role);
+        try {
+            $result = $this->roleService->delete($role);
 
-        if ($result !== true) {
-            return redirect()->back()->with('error', $result);
+            if ($result !== true) {
+                return redirect()->back()->with('error', $result);
+            }
+
+            return redirect()->route('dashboard.roles.index')
+                ->with('success', 'Role berhasil dihapus');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Gagal menghapus role. Silakan coba lagi.');
         }
-
-        return redirect()->route('dashboard.roles.index')
-            ->with('success', 'Role berhasil dihapus');
     }
 
     private function getMenusWithPermissions()

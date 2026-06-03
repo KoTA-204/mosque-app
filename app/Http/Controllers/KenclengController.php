@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateKenclengRequest;
 use App\Models\Kencleng;
 use App\Services\KenclengService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class KenclengController extends Controller
 {
@@ -16,45 +17,42 @@ class KenclengController extends Controller
 
     public function index(Request $request)
     {
-        $search   = $request->get('search', '');
-        $perPage  = $request->get('per_page', 10);
-        $kencleng = $this->kenclengService->getList($search, $perPage);
+        $search  = $request->get('search') ?? '';
+        $perPage = (int) ($request->get('per_page') ?? 10);
+        $sort    = $request->get('sort') ?? 'terbaru';
+        $status  = $request->get('status') ?? '';
 
-        return view('pages.kencleng.index', compact('kencleng', 'search', 'perPage'));
+        $kencleng = $this->kenclengService->getList($search, $perPage, $sort, $status);
+
+        return view('pages.kencleng.index', compact('kencleng', 'search', 'perPage', 'sort', 'status'));
     }
 
     public function create()
     {
-        $dompetList   = $this->kenclengService->getDompetList();
-        $pecahan      = KenclengService::PECAHAN;
+        $dompetList = $this->kenclengService->getDompetList();
+        $pecahan    = KenclengService::PECAHAN;
 
         return view('pages.kencleng.create', compact('dompetList', 'pecahan'));
     }
 
     public function store(StoreKenclengRequest $request)
     {
-        $statusApproval = $request->submit_type === 'ajukan' ? 'PENDING' : 'DRAFT';
+        try {
+            $this->kenclengService->store($request->validated());
 
-        // Validasi berita acara wajib saat ajukan
-        if ($request->submit_type === 'ajukan' && !$request->hasFile('berita_acara')) {
+            return redirect()->route('dashboard.kencleng.index')
+                ->with('success', 'Kencleng berhasil diajukan');
+        } catch (\Throwable $e) {
+            Log::error('Gagal menyimpan kencleng', ['error' => $e->getMessage()]);
+
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['berita_acara' => 'Berita acara wajib diupload saat mengajukan']);
+                ->with('error', 'Terjadi kesalahan saat menyimpan kencleng. Silakan coba lagi.');
         }
-
-        $this->kenclengService->store($request->validated(), $statusApproval);
-
-        $message = $request->submit_type === 'ajukan'
-            ? 'Kencleng berhasil diajukan'
-            : 'Kencleng berhasil disimpan sebagai draf';
-
-        return redirect()->route('dashboard.kencleng.index')
-            ->with('success', $message);
     }
 
     public function show(Kencleng $kencleng)
     {
-        // Pastikan hanya pemilik yang bisa lihat
         if ($kencleng->transaksi->user_id !== auth()->id()) {
             abort(403);
         }
@@ -76,11 +74,9 @@ class KenclengController extends Controller
                 ->with('error', 'Kencleng yang sudah diapprove tidak bisa diedit');
         }
 
-        $kencleng   = $this->kenclengService->getById($kencleng);
+        $kencleng  = $this->kenclengService->getById($kencleng);
         $dompetList = $this->kenclengService->getDompetList();
-        $pecahan    = KenclengService::PECAHAN;
-
-        // Map detail ke array pecahan
+        $pecahan   = KenclengService::PECAHAN;
         $detailMap = $kencleng->detail->pluck('jumlah_pecahan', 'pecahan')->toArray();
 
         return view('pages.kencleng.edit', compact('kencleng', 'dompetList', 'pecahan', 'detailMap'));
@@ -97,25 +93,36 @@ class KenclengController extends Controller
                 ->with('error', 'Kencleng yang sudah diapprove tidak bisa diedit');
         }
 
-        $this->kenclengService->update($kencleng, $request->validated());
+        try {
+            $this->kenclengService->update($kencleng, $request->validated());
 
-        $message = $request->submit_type === 'ajukan'
-            ? 'Kencleng berhasil diperbarui dan diajukan'
-            : 'Kencleng berhasil disimpan sebagai draf';
+            return redirect()->route('dashboard.kencleng.index')
+                ->with('success', 'Kencleng berhasil diperbarui dan diajukan');
+        } catch (\Throwable $e) {
+            Log::error('Gagal memperbarui kencleng', ['id' => $kencleng->id, 'error' => $e->getMessage()]);
 
-        return redirect()->route('dashboard.kencleng.index')
-            ->with('success', $message);
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat memperbarui kencleng. Silakan coba lagi.');
+        }
     }
 
     public function destroy(Kencleng $kencleng)
     {
-        $result = $this->kenclengService->delete($kencleng);
+        try {
+            $result = $this->kenclengService->delete($kencleng);
 
-        if ($result !== true) {
-            return redirect()->back()->with('error', $result);
+            if ($result !== true) {
+                return redirect()->back()->with('error', $result);
+            }
+
+            return redirect()->route('dashboard.kencleng.index')
+                ->with('success', 'Kencleng berhasil dihapus');
+        } catch (\Throwable $e) {
+            Log::error('Gagal menghapus kencleng', ['id' => $kencleng->id, 'error' => $e->getMessage()]);
+
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat menghapus kencleng. Silakan coba lagi.');
         }
-
-        return redirect()->route('dashboard.kencleng.index')
-            ->with('success', 'Kencleng berhasil dihapus');
     }
 }
