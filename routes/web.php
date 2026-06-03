@@ -93,7 +93,9 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
     // ── Kegiatan Khusus - Data Kegiatan ────────────────────────────────────
     Route::middleware('permission:VIEW_KEGIATAN')->group(function () {
         Route::get('/kegiatan', [KegiatanController::class, 'index'])->name('kegiatan.index');
-        Route::get('/kegiatan/{kegiatan}', [KegiatanController::class, 'show'])->name('kegiatan.show');
+        Route::get('/kegiatan/{kegiatan}', [KegiatanController::class, 'show'])
+            ->name('kegiatan.show')
+            ->whereNumber('kegiatan');
     });
 
     Route::middleware('permission:CREATE_KEGIATAN')->group(function () {
