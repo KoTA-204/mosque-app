@@ -71,7 +71,7 @@
                                     class="h-11 w-full rounded-full border border-green-500 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:border-green-500 focus:outline-hidden focus:ring-3 focus:ring-green-500/10 dark:border-green-500 dark:bg-gray-900 dark:text-white/90 @error('role_id') border-red-500 @enderror">
                                     @foreach ($roles as $role)
                                         <option value="{{ $role->id }}"
-                                            {{ $user->roles->contains($role->id) ? 'selected' : '' }}>
+                                            {{ $user->role_id == $role->id ? 'selected' : '' }}>
                                             {{ $role->role_name }}
                                         </option>
                                     @endforeach

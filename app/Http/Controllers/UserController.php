@@ -53,10 +53,9 @@ class UserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'status' => $request->status
+            'role_id' => $request->role_id,
+            'status' => $request->status,
         ]);
-
-        $user->roles()->attach($request->role_id);
 
         return redirect()->route('dashboard.users.index')->with('success', 'User berhasil ditambahkan');
     }
@@ -80,10 +79,9 @@ class UserController extends Controller
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
+            'role_id' => $request->role_id,
             'status' => $request->status
         ]);
-
-        $user->roles()->sync([$request->role_id]);
 
         return redirect()->route('dashboard.users.index')->with('success', 'User berhasil diupdate');
     }

@@ -73,7 +73,7 @@ class User extends Authenticatable implements CanResetPasswordContract
 
     public function hasRole(string $roleSlug): bool
     {
-        return $this->roles?->slug === $roleSlug;
+        return optional($this->roles)->slug === $roleSlug;
     }
     
     public function getUsernameAttribute()
