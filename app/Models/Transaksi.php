@@ -17,10 +17,11 @@ class Transaksi extends Model
         'user_id',
         'kategori_transaksi_id',
         'tanggal_transaksi',
+        'jenis_transaksi',
         'jumlah',
         'deskripsi',
         'status_approval',
-        'catatan_revisi',
+        'catatan',
         'status_jurnal',
     ];
 

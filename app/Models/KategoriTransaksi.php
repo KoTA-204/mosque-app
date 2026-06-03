@@ -13,7 +13,6 @@ class KategoriTransaksi extends Model
 
     protected $fillable = [
         'nama_kategori',
-        'jenis_transaksi',
         'deskripsi',
     ];
 

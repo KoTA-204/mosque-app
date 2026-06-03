@@ -29,8 +29,8 @@ class Aset extends Model
     protected $casts = [
         'tanggal_perolehan' => 'date',
         'nilai_tercatat' => 'decimal:2',
-        'nilai_buku' => 'integer',
-        'akumulasi_penyusutan' => 'integer',
+        'nilai_buku' => 'decimal:2',
+        'akumulasi_penyusutan' => 'decimal:2',
         'umur_manfaat' => 'integer',
     ];
 

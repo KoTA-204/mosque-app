@@ -7,7 +7,8 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Run the
+     *  migrations.
      */
     public function up(): void
     {
@@ -26,7 +27,7 @@ return new class extends Migration
             $table->integer('umur_manfaat')->nullable();
             $table->enum('kondisi_aset', ['BAIK', 'RUSAK RINGAN', 'RUSAK BERAT']);
             $table->string('lokasi_aset');
-            $table->string('nama_pemberi');
+            $table->string('nama_pemberi')->nullable();
             $table->enum('status_aset', ['DRAFT', 'AKTIF', 'TIDAK AKTIF'])->default('AKTIF');
             $table->decimal('nilai_buku', 15, 2);
             $table->decimal('akumulasi_penyusutan', 15, 2)->nullable();

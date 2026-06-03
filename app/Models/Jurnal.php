@@ -16,6 +16,7 @@ class Jurnal extends Model
         'transaksi_id',
         'jurnal_ref_id',
         'jenis_jurnal',
+        'tipe_penyesuaian',
         'tanggal',
         'keterangan',
         'status',
