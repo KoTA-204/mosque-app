@@ -92,12 +92,10 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4">
-                                @foreach ($user->roles as $role)
-                                    <span
-                                        class="inline-flex rounded-full border border-gray-900 px-3 py-1 text-xs text-gray-900 dark:border-white/90 dark:text-white/90">
-                                        {{ $role->role_name }}
-                                    </span>
-                                @endforeach
+                                <span
+                                    class="inline-flex rounded-full border border-gray-900 px-3 py-1 text-xs text-gray-900 dark:border-white/90 dark:text-white/90">
+                                    {{ $user->roles?->role_name }}
+                                </span>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">

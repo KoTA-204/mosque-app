@@ -186,7 +186,7 @@
                         {{ auth()->user()->name ?? 'Wulan bin Fulan' }}
                     </p>
                     <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {{ auth()->user()->roles->first()->name ?? 'Admin' }}
+                        {{ auth()->user()->roles->role_name ?? 'Admin' }}
                     </p>
                 </div>
             </div>

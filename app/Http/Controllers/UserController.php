@@ -28,15 +28,15 @@ class UserController extends Controller
         }
 
         $users = $query->paginate(10);
-        $roles = Role::where('is_active', true)->get();
+        $roles = Role::get();
 
-        return view('pages.users.index', compact('users', 'roles')); // ← UBAH INI
+        return view('pages.users.index', compact('users', 'roles')); 
     }
 
     public function create()
     {
-        $roles = Role::where('is_active', true)->get();
-        return view('pages.users.create', compact('roles')); // ← UBAH INI
+        $roles = Role::get();
+        return view('pages.users.create', compact('roles'));
     }
 
     public function store(Request $request)
@@ -64,8 +64,8 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $user->load('roles');
-        $roles = Role::where('is_active', true)->get();
-        return view('pages.users.edit', compact('user', 'roles')); // ← UBAH INI
+        $roles = Role::get();
+        return view('pages.users.edit', compact('user', 'roles')); 
     }
 
     public function update(Request $request, User $user)

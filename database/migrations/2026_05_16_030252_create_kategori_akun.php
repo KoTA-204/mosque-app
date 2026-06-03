@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('kode_kategori')->unique();
             $table->string('nama_kategori');
+            $table->boolean('status')->default(true);
             $table->timestamps();
         });
     }

@@ -10,66 +10,67 @@ class PermissionRoleSeeder extends Seeder
 {
     public function run(): void
     {
-        $roles = Role::pluck('id', 'role_name');
-        $perms = Permission::pluck('id', 'permission_code');
+        $superAdmin    = Role::where('role_name', 'Super Admin')->first();
+        $bendahara1    = Role::where('role_name', 'Bendahara 1')->first();
+        $bendahara2    = Role::where('role_name', 'Bendahara 2')->first();
+        $phm           = Role::where('role_name', 'PHM')->first();
+        $panitiaKhusus = Role::where('role_name', 'Panitia Khusus')->first();
 
-        $map = [
-            'Super Admin' => $perms->keys()->all(), // semua permission
+        // Super Admin → semua permission
+        $superAdmin->permissions()->sync(
+            Permission::pluck('id')
+        );
 
-            'Bendahara 1' => [
-                // Pencatatan
-                'VIEW_PEMASUKAN', 'CREATE_PEMASUKAN', 'EDIT_PEMASUKAN', 'DELETE_PEMASUKAN',
-                'VIEW_PENGELUARAN', 'CREATE_PENGELUARAN', 'EDIT_PENGELUARAN', 'DELETE_PENGELUARAN',
+        // Bendahara 1 → akses penuh keuangan + approval + jurnal
+        $bendahara1->permissions()->sync(
+            Permission::whereIn('permission_code', [
+                'VIEW_DASHBOARD',
+                'VIEW_COA',
+                'MANAGE_COA',
+                'VIEW_KATEGORI',
+                'MANAGE_KATEGORI',
+                'VIEW_KEGIATAN',
+                'MANAGE_KEGIATAN',
+                'CREATE_KEGIATAN',
                 'VIEW_KENCLENG',
-                // Transaksi Kegiatan (bisa lihat untuk keperluan approval)
-                'VIEW_TRANSAKSI_KEGIATAN',
-                // Approval
                 'VIEW_APPROVAL',
-                // Master Data
-                'VIEW_COA', 'CREATE_COA', 'EDIT_COA', 'DELETE_COA',
-                'VIEW_KATEGORI', 'CREATE_KATEGORI', 'EDIT_KATEGORI', 'DELETE_KATEGORI',
-            ],
+                'MANAGE_APPROVAL',
+                'VIEW_JURNAL',
+                'MANAGE_JURNAL',
+                'VIEW_ASET',
+                'MANAGE_ASET',
+                'VIEW_LAPORAN',
+                'MANAGE_PERIODE',
+            ])->pluck('id')
+        );
 
-            'Bendahara 2' => [
-                // Pencatatan
-                'VIEW_PEMASUKAN', 'CREATE_PEMASUKAN', 'EDIT_PEMASUKAN', 'DELETE_PEMASUKAN',
-                'VIEW_PENGELUARAN', 'CREATE_PENGELUARAN', 'EDIT_PENGELUARAN', 'DELETE_PENGELUARAN',
-                // Master Data
-                'VIEW_COA', 'CREATE_COA', 'EDIT_COA', 'DELETE_COA',
-                'VIEW_KATEGORI', 'CREATE_KATEGORI', 'EDIT_KATEGORI', 'DELETE_KATEGORI',
-            ],
+        // Bendahara 2 → akses terbatas keuangan
+        $bendahara2->permissions()->sync(
+            Permission::whereIn('permission_code', [
+                'VIEW_DASHBOARD',
+                'VIEW_KEGIATAN',
+                'CREATE_KEGIATAN',
+                'VIEW_KENCLENG',
+                'VIEW_LAPORAN',
+            ])->pluck('id')
+        );
 
-            'PHM' => [
-                'VIEW_KENCLENG', 'CREATE_KENCLENG', 'EDIT_KENCLENG', 'DELETE_KENCLENG',
-            ],
+        // PHM → hanya kencleng
+        $phm->permissions()->sync(
+            Permission::whereIn('permission_code', [
+                'VIEW_DASHBOARD',
+                'VIEW_KENCLENG',
+                'CREATE_KENCLENG',
+            ])->pluck('id')
+        );
 
-            'Panitia' => [
-                'VIEW_TRANSAKSI_KEGIATAN',
-                'CREATE_TRANSAKSI_KEGIATAN', 'EDIT_TRANSAKSI_KEGIATAN', 'DELETE_TRANSAKSI_KEGIATAN',
-            ],
-        ];
-
-        foreach ($map as $roleName => $permissionCodes) {
-            $roleId = $roles[$roleName] ?? null;
-
-            if (!$roleId) {
-                $this->command->warn("Role '{$roleName}' tidak ditemukan, dilewati.");
-                continue;
-            }
-
-            foreach ($permissionCodes as $code) {
-                $permId = $perms[$code] ?? null;
-
-                if (!$permId) {
-                    $this->command->warn("Permission '{$code}' tidak ditemukan, dilewati.");
-                    continue;
-                }
-
-                \Illuminate\Support\Facades\DB::table('permission_role')->insert([
-                    'role_id'       => $roleId,
-                    'permission_id' => $permId,
-                ]);
-            }
-        }
+        // Panitia Khusus → hanya kegiatan miliknya
+        $panitiaKhusus->permissions()->sync(
+            Permission::whereIn('permission_code', [
+                'VIEW_DASHBOARD',
+                'VIEW_KEGIATAN',
+                'CREATE_KEGIATAN',
+            ])->pluck('id')
+        );
     }
 }

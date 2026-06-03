@@ -25,7 +25,7 @@ class User extends Authenticatable implements CanResetPasswordContract
         'email',
         'password',
         'status',
-        'status',
+        'role_id',
     ];
 
     /**
@@ -53,7 +53,7 @@ class User extends Authenticatable implements CanResetPasswordContract
 
     public function roles()
     {
-        return $this->belongsToMany(Role::class);
+        return $this->belongsTo(Role::class, 'role_id');
     }
 
     public function sendPasswordResetNotification($token)
@@ -73,10 +73,7 @@ class User extends Authenticatable implements CanResetPasswordContract
 
     public function hasRole(string $roleSlug): bool
     {
-        return $this->roles()
-            ->where('is_active', true)
-            ->get()
-            ->contains(fn($role) => $role->slug === $roleSlug);
+        return $this->roles?->slug === $roleSlug;
     }
     
     public function getUsernameAttribute()
