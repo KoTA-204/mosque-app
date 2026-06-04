@@ -62,6 +62,7 @@
                     <option value="create" {{ old('action') == 'create' ? 'selected' : '' }}>Create</option>
                     <option value="update" {{ old('action') == 'update' ? 'selected' : '' }}>Update</option>
                     <option value="delete" {{ old('action') == 'delete' ? 'selected' : '' }}>Delete</option>
+                    <option value="manage" {{ old('action') == 'manage' ? 'selected' : '' }}>Manage</option>
                 </select>
                 @error('action')
                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>

@@ -30,16 +30,16 @@ class MenuObserver
 
     private function attachViewPermission(Menu $menu): void
     {
-        // pemasukan.index → pemasukan
-        $module = explode('.', $menu->route_name)[0];
+        $parts = explode('.', $menu->route_name);
 
+        $module = $parts[1] ?? $parts[0];
         $permission = Permission::where('module', $module)
             ->where('action', 'view')
             ->where('is_active', true)
             ->first();
 
         if ($permission) {
-            $menu->permissions()->sync([$permission->id]);
+            $menu->permissions()->syncWithoutDetaching([$permission->id]);
         }
     }
 

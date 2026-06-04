@@ -20,11 +20,12 @@ class Transaksi extends Model
         'jumlah',
         'deskripsi',
         'status_approval',
+        'catatan_revisi',
         'status_jurnal',
     ];
 
     protected $casts = [
-        'tanggal' => 'date',
+        'tanggal_transaksi' => 'date',
         'jumlah' => 'decimal:2',
     ];
 
