@@ -8,23 +8,34 @@
     <form action="{{ route('dashboard.kegiatan.store') }}" method="POST">
         @csrf
         <div class="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+
+            @if($errors->any())
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm text-red-600 dark:text-red-400 space-y-1">
+                @foreach($errors->all() as $error)
+                <div>• {{ $error }}</div>
+                @endforeach
+            </div>
+            @endif
+
             <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Nama Kegiatan <span class="text-red-500">*</span></label>
-                <input type="text" name="nama_kegiatan" placeholder="Masukkan nama kegiatan"
-                    class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors placeholder-gray-400">
+                <input type="text" name="nama_kegiatan" value="{{ old('nama_kegiatan') }}" placeholder="Masukkan nama kegiatan"
+                    class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors placeholder-gray-400 {{ $errors->has('nama_kegiatan') ? 'border-red-400' : '' }}">
             </div>
+
             <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Jenis Kegiatan <span class="text-red-500">*</span></label>
                 <select name="jenis_kegiatan"
-                    class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors">
+                    class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors {{ $errors->has('jenis_kegiatan') ? 'border-red-400' : '' }}">
                     <option value="">Pilih Jenis</option>
-                    <option value="QURBAN">Qurban</option>
-                    <option value="ZAKAT">Zakat</option>
-                    <option value="KAJIAN">Kajian</option>
-                    <option value="SOSIAL">Sosial</option>
-                    <option value="LAINNYA">Lainnya</option>
+                    <option value="QURBAN"  {{ old('jenis_kegiatan') == 'QURBAN'  ? 'selected' : '' }}>Qurban</option>
+                    <option value="ZAKAT"   {{ old('jenis_kegiatan') == 'ZAKAT'   ? 'selected' : '' }}>Zakat</option>
+                    <option value="KAJIAN"  {{ old('jenis_kegiatan') == 'KAJIAN'  ? 'selected' : '' }}>Kajian</option>
+                    <option value="SOSIAL"  {{ old('jenis_kegiatan') == 'SOSIAL'  ? 'selected' : '' }}>Sosial</option>
+                    <option value="LAINNYA" {{ old('jenis_kegiatan') == 'LAINNYA' ? 'selected' : '' }}>Lainnya</option>
                 </select>
             </div>
+
             <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Tanggal Kegiatan <span class="text-red-500">*</span></label>
                 <div class="relative">
@@ -32,26 +43,29 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
                     <input type="text" id="create_daterange" placeholder="Pilih rentang tanggal"
-                        class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pl-9 pr-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors placeholder-gray-400">
+                        class="w-full h-10 rounded-lg border {{ $errors->has('tanggal_mulai') ? 'border-red-400' : 'border-gray-200 dark:border-gray-700' }} bg-white dark:bg-gray-800 pl-9 pr-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors placeholder-gray-400">
                 </div>
-                <input type="hidden" name="tanggal_mulai"   id="create_tanggal_mulai">
-                <input type="hidden" name="tanggal_selesai" id="create_tanggal_selesai">
+                <input type="hidden" name="tanggal_mulai"   id="create_tanggal_mulai"   value="{{ old('tanggal_mulai') }}">
+                <input type="hidden" name="tanggal_selesai" id="create_tanggal_selesai" value="{{ old('tanggal_selesai') }}">
             </div>
+
             <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Anggaran (Rp) <span class="text-red-500">*</span></label>
-                <input type="number" name="anggaran" min="0" placeholder="0"
-                    class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors placeholder-gray-400">
+                <input type="number" name="anggaran" value="{{ old('anggaran') }}" min="0" placeholder="0"
+                    class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors placeholder-gray-400 {{ $errors->has('anggaran') ? 'border-red-400' : '' }}">
             </div>
+
             <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Panitia <span class="text-red-500">*</span></label>
                 <select name="panitia_id"
-                    class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors">
+                    class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors {{ $errors->has('panitia_id') ? 'border-red-400' : '' }}">
                     <option value="">Pilih Panitia</option>
                     @foreach($panitias as $panitia)
-                    <option value="{{ $panitia->id }}">{{ $panitia->name }}</option>
+                    <option value="{{ $panitia->id }}" {{ old('panitia_id') == $panitia->id ? 'selected' : '' }}>{{ $panitia->name }}</option>
                     @endforeach
                 </select>
             </div>
+
         </div>
         <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex gap-3">
             <button type="button" onclick="closeAllModals()"

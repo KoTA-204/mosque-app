@@ -26,34 +26,48 @@
 
     <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
 
-        {{-- Toolbar --}}
-        <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-wrap">
+    {{-- Toolbar --}}
+    <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-wrap">
+        
+        {{-- Kiri: Show entries --}}
+        <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            Show
+            <select id="perPage" onchange="applyFilters()"
+                class="border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 text-sm">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+            entries
+        </div>
+
+        {{-- Kanan: Filter Role, Status, Search --}}
+        <div class="flex items-center gap-2 flex-wrap">
+            <select id="filterRole" onchange="applyFilters()"
+                class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                <option value="">Semua Role</option>
+                @foreach($roles as $role)
+                <option value="{{ $role->role_name }}">{{ $role->role_name }}</option>
+                @endforeach
+            </select>
+            <select id="filterStatus" onchange="applyFilters()"
+                class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                <option value="">Semua Status</option>
+                <option value="active">Aktif</option>
+                <option value="inactive">Tidak Aktif</option>
+            </select>
             <div class="relative">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
                 <input type="text" id="filterSearch"
-                    placeholder="Search nama / email..."
+                    placeholder="Search..."
                     autocomplete="off"
-                    class="pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 w-56 placeholder-gray-400">
-            </div>
-
-            <div class="flex items-center gap-2">
-                <select id="filterRole"
-                    class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
-                    <option value="">Semua Role</option>
-                    @foreach($roles as $role)
-                    <option value="{{ $role->role_name }}">{{ $role->role_name }}</option>
-                    @endforeach
-                </select>
-                <select id="filterStatus"
-                    class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
-                    <option value="">Semua Status</option>
-                    <option value="active">Aktif</option>
-                    <option value="inactive">Tidak Aktif</option>
-                </select>
+                    class="pl-9 pr-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 w-48 placeholder-gray-400">
             </div>
         </div>
+    </div>
 
         <div id="tableWrapper">
             @include('pages.users.table')
@@ -100,9 +114,10 @@ function openEditModal(user, roles) {
     document.getElementById('edit_email').value    = user.email;
     document.getElementById('edit_status').value   = user.status;
 
-    const sel        = document.getElementById('edit_role_id');
-    const userRoleId = user.roles && user.roles.length ? user.roles[0].id : null;
-    sel.innerHTML    = roles.map(r =>
+    // belongsTo: user.roles adalah object tunggal, bukan array
+    const userRoleId = user.roles ? user.roles.id : null;
+    const sel = document.getElementById('edit_role_id');
+    sel.innerHTML = roles.map(r =>
         `<option value="${r.id}" ${r.id == userRoleId ? 'selected' : ''}>${r.role_name}</option>`
     ).join('');
 
@@ -125,7 +140,6 @@ document.addEventListener('keydown', e => {
     }
 });
 
-// Auto-open create modal jika ada validation error
 @if($errors->any())
 document.addEventListener('DOMContentLoaded', () => openCreateModal());
 @endif
@@ -135,14 +149,16 @@ const filterUrl = "{{ route('dashboard.users.index') }}";
 let filterDebounce;
 
 function applyFilters() {
-    const search = document.getElementById('filterSearch').value;
-    const role   = document.getElementById('filterRole').value;
-    const status = document.getElementById('filterStatus').value;
+    const search  = document.getElementById('filterSearch').value;
+    const role    = document.getElementById('filterRole').value;
+    const status  = document.getElementById('filterStatus').value;
+    const perPage = document.getElementById('perPage').value;
 
     const params = new URLSearchParams();
-    if (search) params.set('search', search);
-    if (role)   params.set('role', role);
-    if (status) params.set('status', status);
+    if (search)  params.set('search', search);
+    if (role)    params.set('role', role);
+    if (status)  params.set('status', status);
+    params.set('per_page', perPage);
 
     fetch(`${filterUrl}?${params.toString()}`, {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }

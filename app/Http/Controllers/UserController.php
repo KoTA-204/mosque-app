@@ -16,8 +16,8 @@ class UserController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
+                $q->where('name', 'ilike', "%{$search}%")
+                  ->orWhere('email', 'ilike', "%{$search}%");
             });
         }
 
@@ -31,10 +31,17 @@ class UserController extends Controller
             $query->where('status', $request->status);
         }
 
-        $users = $query->paginate(10);
+        $perPage = in_array($request->per_page, [10, 25, 50, 100]) ? $request->per_page : 10;
+        $users = $query->paginate($perPage)->withQueryString();
         $roles = Role::get();
 
-        return view('pages.users.index', compact('users', 'roles')); 
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('pages.users.table', compact('users', 'roles'))->render(),
+            ]);
+        }
+
+        return view('pages.users.index', compact('users', 'roles'));
     }
 
     public function create()
@@ -53,22 +60,23 @@ class UserController extends Controller
             'status'   => 'required|in:active,inactive',
         ]);
 
-        $user = User::create([
+        User::create([
             'name'     => $request->name,
             'email'    => $request->email,
             'password' => Hash::make($request->password),
-            'role_id' => $request->role_id,
-            'status' => $request->status,
+            'role_id'  => $request->role_id,
+            'status'   => $request->status,
         ]);
 
-        return redirect()->route('dashboard.users.index')->with('success', 'User berhasil ditambahkan');
+        return redirect()->route('dashboard.users.index')
+            ->with('success', 'User berhasil ditambahkan');
     }
 
     public function edit(User $user)
     {
         $user->load('roles');
         $roles = Role::get();
-        return view('pages.users.edit', compact('user', 'roles')); 
+        return view('pages.users.edit', compact('user', 'roles'));
     }
 
     public function update(Request $request, User $user)
@@ -81,18 +89,18 @@ class UserController extends Controller
         ]);
 
         $user->update([
-            'name' => $request->name,
-            'email' => $request->email,
+            'name'    => $request->name,
+            'email'   => $request->email,
             'role_id' => $request->role_id,
-            'status' => $request->status
+            'status'  => $request->status,
         ]);
 
-        return redirect()->route('dashboard.users.index')->with('success', 'User berhasil diupdate');
+        return redirect()->route('dashboard.users.index')
+            ->with('success', 'User berhasil diupdate');
     }
 
     public function destroy(User $user)
     {
-        $user->roles()->detach();
         $user->delete();
 
         return redirect()->route('dashboard.users.index')

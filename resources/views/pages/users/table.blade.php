@@ -16,7 +16,7 @@
         @forelse($users as $index => $user)
         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors table-row"
             data-nama="{{ strtolower($user->name) }}"
-            data-role="{{ $user->roles->pluck('role_name')->join(',') }}"
+            data-role="{{ $user->roles?->role_name }}"
             data-status="{{ $user->status }}">
             <td class="px-5 py-3.5 text-center text-gray-500 dark:text-gray-400">
                 {{ $users->firstItem() + $index }}
@@ -32,17 +32,15 @@
                 @endif
             </td>
             <td class="px-4 py-3.5">
-                <div class="flex flex-wrap gap-1">
-                    @foreach($user->roles as $role)
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
-                        {{ $role->role_name }}
-                    </span>
-                    @endforeach
-                </div>
+                @if($user->roles)
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+                    {{ $user->roles->role_name }}
+                </span>
+                @endif
             </td>
             <td class="px-5 py-3.5">
                 <div class="flex items-center justify-center gap-1">
-                    <button onclick='openEditModal(@json($user), @json($roles))'
+                    <button onclick='openEditModal(@json($user->load("roles")), @json($roles))'
                         class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     </button>
@@ -73,6 +71,27 @@
 {{-- Pagination --}}
 @if($users->hasPages())
 <div class="flex items-center justify-between px-5 py-4 border-t border-gray-100 dark:border-gray-800 flex-wrap gap-3">
-    {{-- ... pagination tetap sama ... --}}
+    <div class="flex items-center gap-1">
+        @if($users->onFirstPage())
+        <span class="px-3 py-1.5 text-sm text-gray-300 dark:text-gray-600 border border-gray-200 dark:border-gray-700 rounded-lg">Previous</span>
+        @else
+        <a href="{{ $users->previousPageUrl() }}" class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Previous</a>
+        @endif
+
+        @foreach($users->getUrlRange(1, $users->lastPage()) as $page => $url)
+        <a href="{{ $url }}" class="w-8 h-8 flex items-center justify-center text-sm rounded-lg transition-colors {{ $page === $users->currentPage() ? 'bg-green-600 text-white font-medium' : 'text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
+            {{ $page }}
+        </a>
+        @endforeach
+
+        @if($users->hasMorePages())
+        <a href="{{ $users->nextPageUrl() }}" class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Next</a>
+        @else
+        <span class="px-3 py-1.5 text-sm text-gray-300 dark:text-gray-600 border border-gray-200 dark:border-gray-700 rounded-lg">Next</span>
+        @endif
+    </div>
+    <span class="text-xs text-gray-400 dark:text-gray-600">
+        Showing {{ $users->firstItem() }} to {{ $users->lastItem() }} of {{ $users->total() }} entries
+    </span>
 </div>
 @endif

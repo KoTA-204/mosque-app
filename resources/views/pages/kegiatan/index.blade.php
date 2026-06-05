@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-{{-- Flatpickr --}}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/id.js"></script>
@@ -33,16 +32,22 @@
 
         {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-wrap">
-            <div class="relative">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-                <input type="text" id="filterSearch" placeholder="Search..."
-                    class="pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 w-56 placeholder-gray-400">
+
+            {{-- Kiri: Show entries --}}
+            <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                Show
+                <select id="perPage" onchange="applyFilters()"
+                    class="border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 text-sm">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                </select>
+                entries
             </div>
 
-            <div class="flex items-center gap-2">
-                <select id="filterJenis"
+            {{-- Kanan: Filter --}}
+            <div class="flex items-center gap-2 flex-wrap">
+                <select id="filterJenis" onchange="applyFilters()"
                     class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
                     <option value="">Semua Jenis</option>
                     <option value="QURBAN">Qurban</option>
@@ -51,120 +56,26 @@
                     <option value="SOSIAL">Sosial</option>
                     <option value="LAINNYA">Lainnya</option>
                 </select>
-                <select id="filterStatus"
+                <select id="filterStatus" onchange="applyFilters()"
                     class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
                     <option value="">Semua Status</option>
                     <option value="AKTIF">Aktif</option>
                     <option value="DITUTUP">Ditutup</option>
                 </select>
+                <div class="relative">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" id="filterSearch" placeholder="Search..." autocomplete="off"
+                        class="pl-9 pr-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 w-48 placeholder-gray-400">
+                </div>
             </div>
         </div>
 
-        {{-- Table --}}
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="border-b border-gray-100 dark:border-gray-800">
-                        <th class="text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-5 py-3 w-12">No</th>
-                        <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3">Nama Kegiatan</th>
-                        <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3">Jenis</th>
-                        <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3">Tanggal</th>
-                        <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3">Anggaran</th>
-                        <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3">Panitia</th>
-                        <th class="text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3">Status</th>
-                        <th class="text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-5 py-3">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody" class="divide-y divide-gray-50 dark:divide-gray-800">
-                @forelse($kegiatan as $index => $item)
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors table-row"
-                    data-nama="{{ strtolower($item->nama_kegiatan) }}"
-                    data-jenis="{{ $item->jenis_kegiatan }}"
-                    data-status="{{ $item->status }}">
-                    <td class="px-5 py-3.5 text-center text-gray-500 dark:text-gray-400">
-                        {{ $kegiatan->firstItem() + $index }}
-                    </td>
-                    <td class="px-4 py-3.5 font-medium text-gray-800 dark:text-gray-200">{{ $item->nama_kegiatan }}</td>
-                    <td class="px-4 py-3.5">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
-                            {{ $item->jenis_kegiatan }}
-                        </span>
-                    </td>
-                    <td class="px-4 py-3.5 text-gray-500 dark:text-gray-400">
-                        {{ $item->tanggal_mulai->format('d/m/Y') }}
-                        @if($item->tanggal_selesai) – {{ $item->tanggal_selesai->format('d/m/Y') }} @endif
-                    </td>
-                    <td class="px-4 py-3.5 text-gray-500 dark:text-gray-400">
-                        Rp {{ number_format($item->anggaran, 0, ',', '.') }}
-                    </td>
-                    <td class="px-4 py-3.5 text-gray-500 dark:text-gray-400">{{ $item->panitia->name }}</td>
-                    <td class="px-4 py-3.5 text-center">
-                        @if($item->status === 'AKTIF')
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">Aktif</span>
-                        @else
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">Ditutup</span>
-                        @endif
-                    </td>
-                    <td class="px-5 py-3.5">
-                        <div class="flex items-center justify-center gap-1">
-                            <button onclick='openShowModal(@json($item->load("panitia")))'
-                                class="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                            </button>
-                            <button onclick='openEditModal(@json($item), @json($panitias))'
-                                class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                            </button>
-                            <button onclick="openDeleteModal({{ $item->id }}, '{{ addslashes($item->nama_kegiatan) }}')"
-                                class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="8" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-600">
-                        Tidak ada data kegiatan.
-                        <button onclick="openCreateModal()" class="text-green-600 hover:underline ml-1">Tambah sekarang</button>
-                    </td>
-                </tr>
-                @endforelse
-                </tbody>
-            </table>
+        <div id="tableWrapper">
+            @include('pages.kegiatan.table')
         </div>
 
-        <div id="emptyFilter" class="hidden px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-600">
-            Tidak ada data yang sesuai filter.
-        </div>
-
-        {{-- Pagination --}}
-        @if($kegiatan->hasPages())
-        <div class="flex items-center justify-between px-5 py-4 border-t border-gray-100 dark:border-gray-800 flex-wrap gap-3">
-            <div class="flex items-center gap-1">
-                @if($kegiatan->onFirstPage())
-                <span class="px-3 py-1.5 text-sm text-gray-300 dark:text-gray-600 border border-gray-200 dark:border-gray-700 rounded-lg">Previous</span>
-                @else
-                <a href="{{ $kegiatan->previousPageUrl() }}" class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Previous</a>
-                @endif
-
-                @foreach($kegiatan->getUrlRange(1, $kegiatan->lastPage()) as $page => $url)
-                <a href="{{ $url }}" class="w-8 h-8 flex items-center justify-center text-sm rounded-lg transition-colors {{ $page === $kegiatan->currentPage() ? 'bg-green-600 text-white font-medium' : 'text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
-                    {{ $page }}
-                </a>
-                @endforeach
-
-                @if($kegiatan->hasMorePages())
-                <a href="{{ $kegiatan->nextPageUrl() }}" class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Next</a>
-                @else
-                <span class="px-3 py-1.5 text-sm text-gray-300 dark:text-gray-600 border border-gray-200 dark:border-gray-700 rounded-lg">Next</span>
-                @endif
-            </div>
-            <span class="text-xs text-gray-400 dark:text-gray-600">
-                Showing {{ $kegiatan->firstItem() }} to {{ $kegiatan->lastItem() }} of {{ $kegiatan->total() }} entries
-            </span>
-        </div>
-        @endif
     </div>
 </div>
 
@@ -199,6 +110,47 @@ function openModal(modal) {
     showBackdrop();
 }
 
+// ── Flatpickr — inisialisasi sekali saat DOM ready ────────────
+let createPicker, editPicker;
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Create picker
+    createPicker = flatpickr('#create_daterange', {
+        mode: 'range',
+        dateFormat: 'Y-m-d',
+        locale: 'id',
+        onChange(dates) {
+            document.getElementById('create_tanggal_mulai').value   = dates[0] ? flatpickr.formatDate(dates[0], 'Y-m-d') : '';
+            document.getElementById('create_tanggal_selesai').value = dates[1] ? flatpickr.formatDate(dates[1], 'Y-m-d') : '';
+        }
+    });
+
+    // Kalau ada old value (setelah validation fail), set kembali
+    const oldMulai   = document.getElementById('create_tanggal_mulai').value;
+    const oldSelesai = document.getElementById('create_tanggal_selesai').value;
+    if (oldMulai) {
+        createPicker.setDate(oldSelesai ? [oldMulai, oldSelesai] : [oldMulai]);
+    }
+
+    // Edit picker
+    editPicker = flatpickr('#edit_daterange', {
+        mode: 'range',
+        dateFormat: 'Y-m-d',
+        locale: 'id',
+        onChange(dates) {
+            document.getElementById('edit_tanggal_mulai').value   = dates[0] ? flatpickr.formatDate(dates[0], 'Y-m-d') : '';
+            document.getElementById('edit_tanggal_selesai').value = dates[1] ? flatpickr.formatDate(dates[1], 'Y-m-d') : '';
+        }
+    });
+
+    // Buka modal create otomatis kalau ada validation error
+    @if($errors->any())
+    openCreateModal();
+    @endif
+});
+
+// ── Modal functions ───────────────────────────────────────────
 function statusBadge(status) {
     if (status === 'AKTIF') {
         return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">Aktif</span>`;
@@ -216,7 +168,6 @@ function fmtDateInput(str) {
     return str.substring(0, 10);
 }
 
-// SHOW
 function openShowModal(item) {
     document.getElementById('show_nama').textContent          = item.nama_kegiatan;
     document.getElementById('show_jenis').textContent         = item.jenis_kegiatan;
@@ -229,45 +180,29 @@ function openShowModal(item) {
     openModal(showModal);
 }
 
-// EDIT
-let editDatePicker = null;
-
 function openEditModal(item, panitias) {
     const route = "{{ route('dashboard.kegiatan.update', ':id') }}".replace(':id', item.id);
-    document.getElementById('editForm').action        = route;
-    document.getElementById('edit_nama').value        = item.nama_kegiatan;
-    document.getElementById('edit_jenis').value       = item.jenis_kegiatan;
-    document.getElementById('edit_anggaran').value    = item.anggaran;
+    document.getElementById('editForm').action         = route;
+    document.getElementById('edit_nama').value         = item.nama_kegiatan;
+    document.getElementById('edit_jenis').value        = item.jenis_kegiatan;
+    document.getElementById('edit_anggaran').value     = item.anggaran;
 
     const sel = document.getElementById('edit_panitia');
     sel.innerHTML = panitias.map(p =>
         `<option value="${p.id}" ${p.id == item.panitia_id ? 'selected' : ''}>${p.name}</option>`
     ).join('');
 
-    // Set date range
     const mulai   = fmtDateInput(item.tanggal_mulai);
     const selesai = fmtDateInput(item.tanggal_selesai);
 
-    if (editDatePicker) editDatePicker.destroy();
-    editDatePicker = flatpickr('#edit_daterange', {
-        mode: 'range',
-        dateFormat: 'Y-m-d',
-        locale: 'id',
-        defaultDate: selesai ? [mulai, selesai] : [mulai],
-        onChange: function(selectedDates) {
-            document.getElementById('edit_tanggal_mulai').value   = selectedDates[0] ? flatpickr.formatDate(selectedDates[0], 'Y-m-d') : '';
-            document.getElementById('edit_tanggal_selesai').value = selectedDates[1] ? flatpickr.formatDate(selectedDates[1], 'Y-m-d') : '';
-        }
-    });
-
-    // Set hidden inputs
     document.getElementById('edit_tanggal_mulai').value   = mulai;
     document.getElementById('edit_tanggal_selesai').value = selesai;
+
+    editPicker.setDate(selesai ? [mulai, selesai] : [mulai]);
 
     openModal(editModal);
 }
 
-// DELETE
 function openDeleteModal(id, nama) {
     const route = "{{ route('dashboard.kegiatan.destroy', ':id') }}".replace(':id', id);
     document.getElementById('deleteForm').action       = route;
@@ -275,24 +210,15 @@ function openDeleteModal(id, nama) {
     openModal(deleteModal);
 }
 
-// CREATE
-let createDatePicker = null;
-
 function openCreateModal() {
-    if (createDatePicker) createDatePicker.destroy();
-    createDatePicker = flatpickr('#create_daterange', {
-        mode: 'range',
-        dateFormat: 'Y-m-d',
-        locale: 'id',
-        onChange: function(selectedDates) {
-            document.getElementById('create_tanggal_mulai').value   = selectedDates[0] ? flatpickr.formatDate(selectedDates[0], 'Y-m-d') : '';
-            document.getElementById('create_tanggal_selesai').value = selectedDates[1] ? flatpickr.formatDate(selectedDates[1], 'Y-m-d') : '';
-        }
-    });
+    // Reset form & picker
+    createModal.querySelector('form').reset();
+    createPicker.clear();
+    document.getElementById('create_tanggal_mulai').value   = '';
+    document.getElementById('create_tanggal_selesai').value = '';
     openModal(createModal);
 }
 
-// ESC
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
         [showModal, editModal, deleteModal, createModal].forEach(m => m.classList.add('hidden'));
@@ -300,31 +226,60 @@ document.addEventListener('keydown', e => {
     }
 });
 
-// Real-time filter
+// ── AJAX Filter ───────────────────────────────────────────────
+const filterUrl = "{{ route('dashboard.kegiatan.index') }}";
+let filterDebounce;
+
 function applyFilters() {
-    const search = document.getElementById('filterSearch').value.toLowerCase();
-    const jenis  = document.getElementById('filterJenis').value;
-    const status = document.getElementById('filterStatus').value;
-    const rows   = document.querySelectorAll('#tableBody .table-row');
-    let visible  = 0;
+    const search  = document.getElementById('filterSearch').value;
+    const jenis   = document.getElementById('filterJenis').value;
+    const status  = document.getElementById('filterStatus').value;
+    const perPage = document.getElementById('perPage').value;
 
-    rows.forEach(row => {
-        const match = row.dataset.nama.includes(search)
-            && (!jenis  || row.dataset.jenis  === jenis)
-            && (!status || row.dataset.status === status);
-        row.classList.toggle('hidden', !match);
-        if (match) visible++;
+    const params = new URLSearchParams();
+    if (search)  params.set('search', search);
+    if (jenis)   params.set('jenis', jenis);
+    if (status)  params.set('status', status);
+    params.set('per_page', perPage);
+
+    fetch(`${filterUrl}?${params.toString()}`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('tableWrapper').innerHTML = data.html;
     });
-
-    document.getElementById('emptyFilter').classList.toggle('hidden', visible > 0);
 }
 
-let debounce;
+function loadPage(e, url) {
+    e.preventDefault();
+    const current = new URLSearchParams(url.split('?')[1] || '');
+    const params  = new URLSearchParams();
+
+    // Pertahankan filter aktif
+    const search  = document.getElementById('filterSearch').value;
+    const jenis   = document.getElementById('filterJenis').value;
+    const status  = document.getElementById('filterStatus').value;
+    const perPage = document.getElementById('perPage').value;
+
+    if (search)  params.set('search', search);
+    if (jenis)   params.set('jenis', jenis);
+    if (status)  params.set('status', status);
+    params.set('per_page', perPage);
+    params.set('page', current.get('page') || 1);
+
+    fetch(`${filterUrl}?${params.toString()}`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('tableWrapper').innerHTML = data.html;
+    });
+}
+
 document.getElementById('filterSearch').addEventListener('input', () => {
-    clearTimeout(debounce);
-    debounce = setTimeout(applyFilters, 200);
+    clearTimeout(filterDebounce);
+    filterDebounce = setTimeout(applyFilters, 400);
 });
-document.getElementById('filterJenis').addEventListener('change', applyFilters);
-document.getElementById('filterStatus').addEventListener('change', applyFilters);
 </script>
 @endsection
