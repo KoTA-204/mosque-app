@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes; // ← tambah
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Aset extends Model
 {
-    use SoftDeletes; 
+    use SoftDeletes;
 
     protected $table = 'aset';
 
@@ -75,15 +75,19 @@ class Aset extends Model
         return (float) $this->nilai_tercatat / $this->umur_manfaat;
     }
 
-    public static function generateKode(): string
+    /**
+     * Format: ASET-{YYYY}-{NNN} — nomor urut per tahun perolehan.
+     * Tahun diambil dari tanggal_perolehan yang dikirim, bukan now().
+     */
+    public static function generateKode(string $tanggalPerolehan): string
     {
-        $tahun  = now()->year;
-        $prefix = "ACC-ASS-{$tahun}-";
+        $tahun  = date('Y', strtotime($tanggalPerolehan));
+        $prefix = "ASET-{$tahun}-";
         $last   = self::where('kode_aset', 'like', "{$prefix}%")
                       ->orderByDesc('kode_aset')
                       ->value('kode_aset');
-        $no = $last ? ((int) substr($last, -5)) + 1 : 1;
-        return $prefix . str_pad($no, 5, '0', STR_PAD_LEFT);
+        $no = $last ? ((int) substr($last, -3)) + 1 : 1;
+        return $prefix . str_pad($no, 3, '0', STR_PAD_LEFT);
     }
 
     public function getLabelPemberiAttribute(): string

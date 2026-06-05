@@ -4,8 +4,8 @@
     {{-- Header --}}
     <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
         <div>
-            <h2 class="text-base font-semibold text-gray-900 dark:text-white">Detail Aset {{ $aset->kode_aset }}</h2>
-            <p class="text-xs text-gray-400 mt-0.5">{{ $aset->nama_aset }}</p>
+            <h2 class="text-base font-semibold text-gray-900 dark:text-white">Detail Aset</h2>
+            <p class="text-xs text-gray-400 mt-0.5">{{ $aset->kode_aset }} · {{ $aset->nama_aset }}</p>
         </div>
         <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,28 +14,15 @@
         </button>
     </div>
 
-    {{-- Tabs --}}
-    <div class="flex gap-6 border-b border-gray-200 dark:border-gray-800 px-6">
-        <button type="button" onclick="switchShowTab('details')" id="show-tab-details"
-            class="pb-3 pt-1 text-sm font-medium border-b-2 border-gray-900 dark:border-white text-gray-900 dark:text-white -mb-px transition-colors">
-            Details
-        </button>
-        <button type="button" onclick="switchShowTab('depresiasi')" id="show-tab-depresiasi"
-            class="pb-3 pt-1 text-sm font-medium border-b-2 border-transparent text-gray-400 dark:text-gray-500 -mb-px transition-colors">
-            Depresiasi
-        </button>
-    </div>
+    <div class="px-6 py-5 max-h-[72vh] overflow-y-auto space-y-7">
 
-    <div class="px-6 py-5 max-h-[70vh] overflow-y-auto">
-
-        {{-- ── Panel Details ──────────────────────────────────── --}}
-        <div id="show-panel-details">
-
+        {{-- Identitas Aset --}}
+        <div>
             <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Identitas Aset</p>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5 mb-7">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5">
                 <div>
                     <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Nomor Aset</p>
-                    <p class="text-sm font-semibold text-gray-900 dark:text-white font-mono">{{ $aset->kode_aset ?? '-' }}</p>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white font-mono">{{ $aset->kode_aset ?? '–' }}</p>
                 </div>
                 <div>
                     <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Nama Aset</p>
@@ -77,9 +64,12 @@
                     <p class="text-sm text-gray-700 dark:text-gray-300">Masjid Lukmanul Hakim</p>
                 </div>
             </div>
+        </div>
 
+        {{-- Nilai Aset --}}
+        <div>
             <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Nilai Aset</p>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5 mb-7">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5">
                 <div>
                     <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Nilai Perolehan</p>
                     <p class="text-sm font-semibold text-gray-900 dark:text-white">Rp {{ number_format($aset->nilai_tercatat, 0, ',', '.') }}</p>
@@ -97,9 +87,12 @@
                     <p class="text-sm font-semibold text-green-600">Rp {{ number_format($aset->nilai_buku_real_time, 0, ',', '.') }}</p>
                 </div>
             </div>
+        </div>
 
+        {{-- Informasi Perolehan --}}
+        <div>
             <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Informasi Perolehan</p>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5 mb-7">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5">
                 <div>
                     <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Sumber Perolehan</p>
                     @php
@@ -117,7 +110,7 @@
                 </div>
                 <div>
                     <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Tanggal Perolehan</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">{{ $aset->tanggal_perolehan?->translatedFormat('d F Y') ?? '-' }}</p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">{{ $aset->tanggal_perolehan?->translatedFormat('d F Y') ?? '–' }}</p>
                 </div>
                 @if($aset->nama_pemberi && $aset->nama_pemberi !== '-')
                 <div>
@@ -139,17 +132,19 @@
                     @endif
                 </div>
             </div>
+        </div>
 
-            {{-- Blok penyusutan hanya tampil jika aset bisa disusutkan --}}
-            @if($aset->umur_manfaat && $aset->tanggal_mulai_penyusutan)
+        {{-- Penyusutan — hanya tampil jika disusutkan --}}
+        @if($aset->umur_manfaat && $aset->tanggal_mulai_penyusutan)
+        <div>
             <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Informasi Penyusutan</p>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5 mb-5">
                 <div>
                     <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Penyusutan / Bulan</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">Rp {{ number_format($aset->penyusutan_per_bulan, 2, ',', '.') }}</p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Rp {{ number_format($aset->penyusutan_per_bulan, 0, ',', '.') }}</p>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Tanggal Mulai Penyusutan</p>
+                    <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Tanggal Mulai</p>
                     <p class="text-sm text-gray-700 dark:text-gray-300">{{ $aset->tanggal_mulai_penyusutan->translatedFormat('d F Y') }}</p>
                 </div>
                 <div>
@@ -157,43 +152,26 @@
                     <p class="text-sm text-gray-700 dark:text-gray-300">{{ $aset->umur_manfaat }} Tahun</p>
                 </div>
             </div>
-            <div class="mb-2">
+
+            {{-- Progress bar --}}
+            <div class="mb-5">
                 <div class="flex justify-between text-xs text-gray-400 mb-1.5">
                     <span>Progress Penyusutan</span>
-                    <span>{{ number_format($aset->progress_penyusutan, 1) }}% dari nilai perolehan telah disusutkan</span>
+                    <span>{{ number_format($aset->progress_penyusutan, 1) }}%</span>
                 </div>
                 <div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
-                    <div class="bg-green-500 h-2 rounded-full transition-all duration-500"
-                        style="width: {{ min($aset->progress_penyusutan, 100) }}%"></div>
+                    <div class="bg-green-500 h-2 rounded-full" style="width: {{ min($aset->progress_penyusutan, 100) }}%"></div>
                 </div>
             </div>
-            @else
-            <div class="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg mb-4">
-                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Aset ini tidak disusutkan (tidak ada umur manfaat yang ditetapkan).</p>
-            </div>
-            @endif
 
-            @if($aset->keterangan)
-            <div class="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Keterangan</p>
-                <p class="text-sm text-gray-700 dark:text-gray-300">{{ $aset->keterangan }}</p>
-            </div>
-            @endif
-        </div>
-
-        {{-- ── Panel Depresiasi ───────────────────────────────── --}}
-        <div id="show-panel-depresiasi" class="hidden">
-            @if($aset->umur_manfaat && $aset->tanggal_mulai_penyusutan)
+            {{-- Jadwal penyusutan (inline, bukan tab) --}}
             <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800">
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-800">
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Tahun</th>
                             <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Nilai Awal</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Penyusutan/Thn</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Penyusutan</th>
                             <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Akumulasi</th>
                             <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Nilai Buku</th>
                         </tr>
@@ -214,41 +192,41 @@
                             $isCurrent     = $tahun == now()->year;
                             $isPast        = $tahun < now()->year;
                         @endphp
-                        <tr class="{{ $isCurrent ? 'bg-green-50 dark:bg-green-900/10' : ($isPast ? 'opacity-60' : '') }} hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <tr class="{{ $isCurrent ? 'bg-green-50 dark:bg-green-900/10' : '' }} {{ $isPast ? 'opacity-50' : '' }} hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                             <td class="px-4 py-2.5 text-xs {{ $isCurrent ? 'font-semibold text-green-700 dark:text-green-400' : 'text-gray-700 dark:text-gray-300' }}">
                                 {{ $tahun }}
                                 @if($isCurrent)
-                                <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Tahun Ini</span>
+                                    <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Tahun Ini</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-2.5 text-right text-xs text-gray-600 dark:text-gray-400">
-                                Rp {{ number_format($nilaiBukuAwal, 0, ',', '.') }}
-                            </td>
-                            <td class="px-4 py-2.5 text-right text-xs text-red-500">
-                                Rp {{ number_format($penyTahunan, 0, ',', '.') }}
-                            </td>
-                            <td class="px-4 py-2.5 text-right text-xs text-gray-600 dark:text-gray-400">
-                                Rp {{ number_format($akumulasi, 0, ',', '.') }}
-                            </td>
-                            <td class="px-4 py-2.5 text-right text-xs font-semibold text-gray-900 dark:text-white">
-                                Rp {{ number_format($nilaiBuku, 0, ',', '.') }}
-                            </td>
+                            <td class="px-4 py-2.5 text-right text-xs text-gray-600 dark:text-gray-400">Rp {{ number_format($nilaiBukuAwal, 0, ',', '.') }}</td>
+                            <td class="px-4 py-2.5 text-right text-xs text-red-500">Rp {{ number_format($penyTahunan, 0, ',', '.') }}</td>
+                            <td class="px-4 py-2.5 text-right text-xs text-gray-600 dark:text-gray-400">Rp {{ number_format($akumulasi, 0, ',', '.') }}</td>
+                            <td class="px-4 py-2.5 text-right text-xs font-semibold text-gray-900 dark:text-white">Rp {{ number_format($nilaiBuku, 0, ',', '.') }}</td>
                         </tr>
                         @endfor
                     </tbody>
                 </table>
             </div>
-            <p class="text-xs text-gray-400 mt-3">* Metode penyusutan: Garis Lurus (Straight-Line Method)</p>
-            @else
-            <div class="py-16 text-center text-gray-400">
-                <svg class="w-10 h-10 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                <p class="text-sm">Aset ini tidak memiliki jadwal penyusutan.</p>
-                <p class="text-xs mt-1">Isi umur manfaat dan tanggal mulai penyusutan untuk mengaktifkan fitur ini.</p>
-            </div>
-            @endif
+            <p class="text-xs text-gray-400 mt-2">* Metode: Garis Lurus (Straight-Line)</p>
         </div>
+        @else
+        <div class="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Aset ini tidak disusutkan.</p>
+        </div>
+        @endif
+
+        {{-- Keterangan --}}
+        @if($aset->keterangan)
+        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+            <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Keterangan</p>
+            <p class="text-sm text-gray-700 dark:text-gray-300">{{ $aset->keterangan }}</p>
+        </div>
+        @endif
+
     </div>
 
     {{-- Footer --}}
@@ -266,16 +244,3 @@
         </button>
     </div>
 </div>
-
-<script>
-function switchShowTab(tab) {
-    ['details','depresiasi'].forEach(t => {
-        document.getElementById(`show-panel-${t}`).classList.add('hidden');
-        const btn = document.getElementById(`show-tab-${t}`);
-        btn.className = 'pb-3 pt-1 text-sm font-medium border-b-2 border-transparent text-gray-400 dark:text-gray-500 -mb-px transition-colors';
-    });
-    document.getElementById(`show-panel-${tab}`).classList.remove('hidden');
-    document.getElementById(`show-tab-${tab}`).className =
-        'pb-3 pt-1 text-sm font-medium border-b-2 border-gray-900 dark:border-white text-gray-900 dark:text-white -mb-px transition-colors';
-}
-</script>
