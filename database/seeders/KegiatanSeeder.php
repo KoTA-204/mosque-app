@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Models\Kegiatan;
@@ -10,9 +9,6 @@ use App\Models\User;
 
 class KegiatanSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $panitia = User::where('email', 'panitia@masjid.id')->first();
@@ -24,7 +20,7 @@ class KegiatanSeeder extends Seeder
                 'tanggal_mulai'   => '2026-05-01',
                 'tanggal_selesai' => '2026-06-30',
                 'anggaran'        => 50000000,
-                'status'          => 'BERJALAN',
+                'status'          => 'AKTIF',
                 'panitia_id'      => $panitia->id,
             ],
             [
@@ -33,7 +29,7 @@ class KegiatanSeeder extends Seeder
                 'tanggal_mulai'   => '2026-03-20',
                 'tanggal_selesai' => '2026-04-10',
                 'anggaran'        => 20000000,
-                'status'          => 'SELESAI',
+                'status'          => 'DITUTUP',
                 'panitia_id'      => $panitia->id,
             ],
             [
@@ -42,7 +38,7 @@ class KegiatanSeeder extends Seeder
                 'tanggal_mulai'   => '2026-02-28',
                 'tanggal_selesai' => '2026-03-30',
                 'anggaran'        => 5000000,
-                'status'          => 'SELESAI',
+                'status'          => 'DITUTUP',
                 'panitia_id'      => $panitia->id,
             ],
             [
@@ -51,7 +47,7 @@ class KegiatanSeeder extends Seeder
                 'tanggal_mulai'   => '2026-06-01',
                 'tanggal_selesai' => '2026-06-15',
                 'anggaran'        => 10000000,
-                'status'          => 'DRAFT',
+                'status'          => 'AKTIF',
                 'panitia_id'      => $panitia->id,
             ],
         ];

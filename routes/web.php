@@ -119,9 +119,9 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
             ->name('kegiatan-panitia.show')
             ->whereNumber('kegiatan');
         Route::get('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'showTransaksi'])
-            ->name('kegiatan-panitia.transaksi.show')
             ->whereNumber('kegiatan')
-            ->whereNumber('transaksi');
+            ->whereNumber('transaksi')
+            ->name('kegiatan-panitia.transaksi.show');
     });
 
     Route::middleware('permission:CREATE_TRANSAKSI_KEGIATAN')->group(function () {
@@ -133,8 +133,13 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
 
     Route::middleware('permission:EDIT_TRANSAKSI_KEGIATAN')->group(function () {
         Route::get('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}/edit', [TransaksiKegiatanController::class, 'editTransaksi'])
+            ->whereNumber('kegiatan')
+            ->whereNumber('transaksi')
             ->name('kegiatan-panitia.transaksi.edit');
+
         Route::put('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'updateTransaksi'])
+            ->whereNumber('kegiatan')
+            ->whereNumber('transaksi')
             ->name('kegiatan-panitia.transaksi.update');
     });
 

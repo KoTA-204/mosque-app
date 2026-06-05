@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('kegiatan', function (Blueprint $table) {
@@ -16,7 +13,7 @@ return new class extends Migration
 
             $table->string('nama_kegiatan');
             $table->enum('jenis_kegiatan', [
-                'QURBAN', 
+                'QURBAN',
                 'ZAKAT',
                 'KAJIAN',
                 'SOSIAL',
@@ -26,13 +23,11 @@ return new class extends Migration
             $table->date('tanggal_mulai');
             $table->date('tanggal_selesai')->nullable();
             $table->decimal('anggaran', 18, 2)->default(0);
-        
+
             $table->enum('status', [
-                'DRAFT', 
-                'BERJALAN', 
-                'SELESAI',
-                'DIBATALKAN'
-            ])->default('DRAFT');
+                'AKTIF',
+                'DITUTUP',
+            ])->default('AKTIF');
 
             $table->foreignId('panitia_id')
                 ->constrained('users')
@@ -43,9 +38,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('kegiatan');

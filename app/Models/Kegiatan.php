@@ -22,26 +22,22 @@ class Kegiatan extends Model
     ];
 
     protected $casts = [
-        'tanggal_mulai' => 'date',
+        'tanggal_mulai'   => 'date',
         'tanggal_selesai' => 'date',
-        'anggaran' => 'decimal:2',
+        'anggaran'        => 'decimal:2',
     ];
 
     // ── Konstanta ──────────────────────────────────────────────
     const JENIS = ['QURBAN', 'ZAKAT', 'KAJIAN', 'SOSIAL', 'LAINNYA'];
- 
-    const STATUS_DRAFT      = 'DRAFT';
-    const STATUS_BERJALAN   = 'BERJALAN';
-    const STATUS_SELESAI    = 'SELESAI';
-    const STATUS_DIBATALKAN = 'DIBATALKAN';
- 
+
+    const STATUS_AKTIF   = 'AKTIF';
+    const STATUS_DITUTUP = 'DITUTUP';
+
     const STATUS = [
-        self::STATUS_DRAFT,
-        self::STATUS_BERJALAN,
-        self::STATUS_SELESAI,
-        self::STATUS_DIBATALKAN,
+        self::STATUS_AKTIF,
+        self::STATUS_DITUTUP,
     ];
- 
+
     // ── Relationships ──────────────────────────────────────────
     public function panitia()
     {
@@ -54,55 +50,64 @@ class Kegiatan extends Model
     }
 
     // ── Scopes ─────────────────────────────────────────────────
- 
-    /**
-     * Hanya kegiatan yang aktif (tidak dibatalkan).
-     */
+
     public function scopeAktif($query)
     {
-        return $query->where('status', '!=', self::STATUS_DIBATALKAN);
+        return $query->where('status', self::STATUS_AKTIF);
     }
- 
-    /**
-     * Filter kegiatan berdasarkan panitia — untuk role Panitia Khusus.
-     */
+
     public function scopeMilikPanitia($query, int $userId)
     {
         return $query->where('panitia_id', $userId);
     }
- 
+
     // ── Helpers ────────────────────────────────────────────────
- 
+
     public function hasTransaksi(): bool
     {
         return $this->transaksi()->exists();
     }
- 
-    public function isDibatalkan(): bool
+
+    public function isAktif(): bool
     {
-        return $this->status === self::STATUS_DIBATALKAN;
+        return $this->status === self::STATUS_AKTIF;
     }
- 
-    public function isSelesai(): bool
+
+    public function isDitutup(): bool
     {
-        return $this->status === self::STATUS_SELESAI;
+        return $this->status === self::STATUS_DITUTUP;
     }
- 
-    /**
-     * Kegiatan masih bisa menerima transaksi baru.
-     */
+
     public function bisaInputTransaksi(): bool
     {
-        return $this->status === self::STATUS_BERJALAN;
+        return $this->status === self::STATUS_AKTIF;
     }
- 
-    /**
-     * Total realisasi transaksi approved.
-     */
+
     public function totalRealisasi(): float
     {
         return (float) $this->transaksi()
             ->where('status_approval', 'APPROVED')
             ->sum('jumlah');
+    }
+
+    /**
+     * Tutup kegiatan otomatis jika semua transaksi sudah APPROVED.
+     * Dipanggil setiap kali bendahara approve sebuah transaksi.
+     */
+    public function tutupJikaSelesai(): void
+    {
+        if ($this->status === self::STATUS_DITUTUP) return;
+
+        // Harus ada minimal 1 transaksi
+        if (! $this->transaksi()->exists()) return;
+
+        // Cek tidak ada transaksi yang belum APPROVED
+        $adaBelumApproved = $this->transaksi()
+            ->where('status_approval', '!=', 'APPROVED')
+            ->exists();
+
+        if (! $adaBelumApproved) {
+            $this->update(['status' => self::STATUS_DITUTUP]);
+        }
     }
 }

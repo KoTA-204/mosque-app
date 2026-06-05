@@ -33,11 +33,9 @@ class TransaksiKegiatanService
             )
             ->orderByRaw("
                 CASE status
-                    WHEN 'BERJALAN' THEN 1
-                    WHEN 'DRAFT' THEN 2
-                    WHEN 'SELESAI' THEN 3
-                    WHEN 'DIBATALKAN' THEN 4
-                    ELSE 5
+                    WHEN 'AKTIF'   THEN 1
+                    WHEN 'DITUTUP' THEN 2
+                    ELSE 3
                 END
             ")
             ->orderBy('tanggal_mulai', 'desc')

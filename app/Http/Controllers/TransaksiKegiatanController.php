@@ -48,9 +48,9 @@ class TransaksiKegiatanController extends Controller
     public function createTransaksi(Kegiatan $kegiatan)
     {
         // Cek kegiatan masih berjalan
-        if ($kegiatan->status !== Kegiatan::STATUS_BERJALAN) {
+        if ($kegiatan->status !== Kegiatan::STATUS_AKTIF) {
             return redirect()->route('dashboard.kegiatan-panitia.show', $kegiatan)
-                ->with('error', 'Kegiatan tidak sedang berjalan');
+                ->with('error', 'Kegiatan tidak sedang aktif');
         }
 
         // Panitia hanya bisa input ke kegiatan miliknya
@@ -72,8 +72,8 @@ class TransaksiKegiatanController extends Controller
 
     public function storeTransaksi(StoreTransaksiRequest $request, Kegiatan $kegiatan)
     {
-        if ($kegiatan->status !== Kegiatan::STATUS_BERJALAN) {
-            return redirect()->back()->with('error', 'Kegiatan tidak sedang berjalan');
+        if ($kegiatan->status !== Kegiatan::STATUS_AKTIF) {
+            return redirect()->back()->with('error', 'Kegiatan tidak sedang aktif');
         }
 
         if (auth()->user()->hasRole('panitia-khusus') &&
