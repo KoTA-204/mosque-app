@@ -16,6 +16,7 @@ use App\Http\Controllers\ChartOfAccountController;
 use App\Http\Controllers\KenclengController;
 use App\Http\Controllers\KategoriTransaksiController;
 use App\Http\Controllers\AsetController;
+use App\Http\Controllers\JurnalUmumController;
 
 // ── Landing Page ───────────────────────────────────────────────────────────
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -184,6 +185,28 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
     
     Route::middleware('permission:DELETE_ASET')->group(function () {
         Route::delete('/aset/{aset}', [AsetController::class, 'destroy'])->name('aset.destroy');
+    });
+
+    // ── Akuntansi - Jurnal Umum ─────────────────────────────────
+    Route::middleware('permission:VIEW_JURNAL')->group(function () {
+        Route::get('/jurnal-umum', [JurnalUmumController::class, 'index'])->name('jurnal-umum.index');
+        Route::get('/jurnal-umum/{jurnalUmum}', [JurnalUmumController::class, 'show'])
+            ->whereNumber('jurnalUmum')
+            ->name('jurnal-umum.show');
+
+        Route::middleware('permission:CREATE_JURNAL')->group(function () {
+            Route::get('/jurnal-umum/create', [JurnalUmumController::class, 'create'])->name('jurnal-umum.create');
+            Route::post('/jurnal-umum', [JurnalUmumController::class, 'store'])->name('jurnal-umum.store');
+        });
+
+        Route::middleware('permission:EDIT_JURNAL')->group(function () {
+            Route::get('/jurnal-umum/{jurnalUmum}/edit', [JurnalUmumController::class, 'edit'])->name('jurnal-umum.edit');
+            Route::put('/jurnal-umum/{jurnalUmum}', [JurnalUmumController::class, 'update'])->name('jurnal-umum.update');
+        });
+
+        Route::middleware('permission:DELETE_JURNAL')->group(function () {
+            Route::delete('/jurnal-umum/{jurnalUmum}', [JurnalUmumController::class, 'destroy'])->name('jurnal-umum.destroy');
+        });
     });
 
     // ── Master Data - Chart of Accounts ────────────────────────────────────
