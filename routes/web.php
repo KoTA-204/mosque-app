@@ -19,11 +19,13 @@ use App\Http\Controllers\AsetController;
 use App\Http\Controllers\JurnalUmumController;
 use App\Http\Controllers\BukuBesarController;
 use App\Http\Controllers\NeracaSaldoController;
+use App\Http\Controllers\CalkController;
 
 // ── Landing Page ───────────────────────────────────────────────────────────
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::view('/organisasi', 'landing.organisasi')->name('organisasi');
 Route::view('/tentang-kami', 'landing.tentang-kami')->name('tentang-kami');
+Route::get('/calk', [CalkController::class, 'index'])->name('calk.index');
 
 // ── Authentication ─────────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
