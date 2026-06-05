@@ -10,15 +10,10 @@
             <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Kategori Transaksi</h1>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('dashboard.kategori-transaksi.create') }}"
-               class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
+            <button type="button" onclick="openModal('createKategoriModal')"
+                class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
                 Tambah Kategori
-            </a>
-            <!-- <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/>
-                </svg>
-            </button> -->
+            </button>
         </div>
     </div>
 
@@ -165,12 +160,14 @@
                             </form>
                             @endif
 
-                            <a href="{{ route('dashboard.kategori-transaksi.edit', $item) }}"
-                               class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                            <button type="button" onclick="openModal('editKategoriModal{{ $item->id }}')"
+                                class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                 </svg>
-                            </a>
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -226,4 +223,60 @@
 
     </div>
 </div>
+<<<<<<< HEAD
 @endsection
+=======
+
+@push('scripts')
+<script>
+    function openModal(id) {
+        const modal = document.getElementById(id);
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeModal(id) {
+        const modal = document.getElementById(id);
+
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }
+
+    setTimeout(() => {
+        const successAlert = document.getElementById('success-alert');
+
+        if (successAlert) {
+            successAlert.classList.add('opacity-0');
+
+            setTimeout(() => {
+                successAlert.remove();
+            }, 500);
+        }
+    }, 5000);
+
+    setTimeout(() => {
+        const errorAlert = document.getElementById('error-alert');
+
+        if (errorAlert) {
+            errorAlert.classList.add('opacity-0');
+
+            setTimeout(() => {
+                errorAlert.remove();
+            }, 500);
+        }
+    }, 5000);
+</script>
+@endpush
+
+@endsection
+
+<x-confirm-modal
+    id="deleteModal"
+    title="Hapus Kategori Transaksi"
+    message="Data kategori transaksi yang dihapus tidak dapat dikembalikan."
+/>
+
+@include('dashboard.kategori-transaksi.create')
+@include('dashboard.kategori-transaksi.edit')
+>>>>>>> feature/kategori-transaksi

@@ -319,3 +319,48 @@
     </div>
 </div>
 @endsection
+
+<x-confirm-modal
+    id="deleteKategoriModal"
+    title="Hapus Kategori"
+    message="Kategori yang dihapus tidak dapat dikembalikan."
+/>
+
+<x-confirm-modal
+    id="deleteSubKategoriModal"
+    title="Hapus Sub Kategori"
+    message="Sub kategori yang dihapus tidak dapat dikembalikan."
+/>
+
+<x-confirm-modal
+    id="deleteAkunModal"
+    title="Hapus Akun"
+    message="Akun yang dihapus tidak dapat dikembalikan."
+/>
+
+@push('scripts') 
+<script>
+    function openModal(id) {
+        const modal = document.getElementById(id);
+
+        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+        const modal = document.getElementById(id);
+
+        modal.style.display = 'none';
+        modal.classList.add('hidden');
+    }
+</script>
+@endpush
+
+@include('pages.coa.create-kategori')
+@include('pages.coa.edit-kategori')
+
+@include('pages.coa.create-subkategori')
+@include('pages.coa.edit-subkategori')
+
+@include('pages.coa.create-akun')
+@include('pages.coa.edit-akun')
