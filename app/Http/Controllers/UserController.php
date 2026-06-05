@@ -17,12 +17,28 @@ class UserController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                ->orWhere('email', 'like', "%{$search}%");
             });
+        }
+
+        if ($request->filled('role')) {
+            $query->whereHas('roles', fn($q) =>
+                $q->where('role_name', $request->role)
+            );
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
 
         $users = $query->paginate(10)->withQueryString();
         $roles = Role::where('is_active', true)->get();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('pages.users.table', compact('users', 'roles'))->render(),
+            ]);
+        }
 
         return view('pages.users.index', compact('users', 'roles'));
     }

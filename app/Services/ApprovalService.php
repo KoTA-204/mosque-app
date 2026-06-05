@@ -75,10 +75,17 @@ class ApprovalService
             return 'Transaksi tidak dalam status PENDING';
         }
 
-        $transaksi->update([
-            'status_approval' => 'APPROVED',
-            'catatan_revisi'  => null,
-        ]);
+        DB::transaction(function () use ($transaksi) {
+            $transaksi->update([
+                'status_approval' => 'APPROVED',
+                'catatan_revisi'  => null,
+            ]);
+
+            // Jika transaksi ini milik kegiatan, cek apakah kegiatan bisa ditutup
+            if ($transaksi->kegiatan_id) {
+                $transaksi->kegiatan->tutupJikaSelesai();
+            }
+        });
 
         return true;
     }
@@ -125,12 +132,35 @@ class ApprovalService
         $approved = 0;
         $skipped  = 0;
 
-        DB::transaction(function () use ($ids, &$approved, &$skipped) {
-            Transaksi::whereIn('id', $ids)->get()->each(function ($t) use (&$approved, &$skipped) {
-                if ($t->status_approval !== 'PENDING') { $skipped++; return; }
-                $t->update(['status_approval' => 'APPROVED', 'catatan_revisi' => null]);
+        // Kumpulkan kegiatan_id yang terlibat untuk di-cek setelah semua approve
+        $kegiatanIds = [];
+
+        DB::transaction(function () use ($ids, &$approved, &$skipped, &$kegiatanIds) {
+            $transaksiList = Transaksi::whereIn('id', $ids)->get();
+
+            foreach ($transaksiList as $transaksi) {
+                if ($transaksi->status_approval !== 'PENDING') {
+                    $skipped++;
+                    continue;
+                }
+
+                $transaksi->update([
+                    'status_approval' => 'APPROVED',
+                    'catatan_revisi'  => null,
+                ]);
+
+                if ($transaksi->kegiatan_id) {
+                    $kegiatanIds[] = $transaksi->kegiatan_id;
+                }
+
                 $approved++;
-            });
+            }
+
+            // Cek setiap kegiatan yang terlibat apakah bisa ditutup
+            foreach (array_unique($kegiatanIds) as $kegiatanId) {
+                $kegiatan = Kegiatan::find($kegiatanId);
+                $kegiatan?->tutupJikaSelesai();
+            }
         });
 
         return compact('approved', 'skipped');

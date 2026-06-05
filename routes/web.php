@@ -9,21 +9,16 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\KegiatanController;
 use App\Http\Controllers\TransaksiKegiatanController;
 use App\Http\Controllers\ApprovalController;
 
-// Landing Page
+// ── Landing Page ───────────────────────────────────────────────
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::view('/organisasi', 'landing.organisasi')->name('organisasi');
 Route::view('/tentang-kami', 'landing.tentang-kami')->name('tentang-kami');
 
-
-// dashboard pages
-Route::get('/dashboard', function () {
-    return view('pages.dashboard.ecommerce', ['title' => 'E-commerce Dashboard']);
-})->name('dashboard');
-
-// Authentication 
+// ── Authentication ─────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'index'])->name('auth.login');
     Route::post('/login', [LoginController::class, 'store'])->name('auth.login.post');
@@ -38,19 +33,22 @@ Route::middleware('guest')->group(function () {
             'token' => $token,
             'email' => request('email'),
         ]);
-    })->middleware('guest')->name('password.reset');
+    })->name('password.reset');
     Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'])->name('password.update');
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', function () {return view('pages.dashboard.ecommerce');})->name('dashboard');
+    Route::get('/dashboard', fn() => view('pages.dashboard.ecommerce'))->name('dashboard');
     Route::post('/logout', [LoginController::class, 'destroy'])->name('auth.logout');
-
 });
 
+// ── Dashboard ──────────────────────────────────────────────────
 Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(function () {
+
     Route::get('/', [DashboardController::class, 'index'])->name('index');
+
     Route::resource('users', UserController::class);
+
     Route::middleware('permission:VIEW_ROLES')->group(function () {
         Route::resource('roles', RoleController::class);
     });
@@ -63,18 +61,11 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         Route::resource('menus', MenuController::class);
     });
 
-    Route::middleware('permission:CREATE_KEGIATAN')->group(function () {
-        Route::get('/kegiatan-panitia/{kegiatan}/transaksi/create', [TransaksiKegiatanController::class, 'createTransaksi'])->name('kegiatan-panitia.transaksi.create');
-        Route::post('/kegiatan-panitia/{kegiatan}/transaksi', [TransaksiKegiatanController::class, 'storeTransaksi'])->name('kegiatan-panitia.transaksi.store');
-        Route::delete('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'destroyTransaksi'])->name('kegiatan-panitia.transaksi.destroy');
-        Route::get('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}/edit', [TransaksiKegiatanController::class, 'editTransaksi'])
-            ->name('kegiatan-panitia.transaksi.edit');
-        Route::put('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'updateTransaksi'])
-            ->name('kegiatan-panitia.transaksi.update');
-    });
-    
-    Route::middleware('permission:VIEW_KEGIATAN')->group(function () {
+    // ── Manajemen Kegiatan (Admin) ─────────────────────────────
+    Route::resource('kegiatan', KegiatanController::class);
 
+    // ── Transaksi Kegiatan (Panitia) ───────────────────────────
+    Route::middleware('permission:VIEW_KEGIATAN')->group(function () {
         Route::get('/kegiatan-panitia', [TransaksiKegiatanController::class, 'index'])
             ->name('kegiatan-panitia.index');
 
@@ -89,7 +80,6 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
     });
 
     Route::middleware('permission:CREATE_KEGIATAN')->group(function () {
-
         Route::get('/kegiatan-panitia/{kegiatan}/transaksi/create', [TransaksiKegiatanController::class, 'createTransaksi'])
             ->whereNumber('kegiatan')
             ->name('kegiatan-panitia.transaksi.create');
@@ -113,22 +103,28 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
             ->whereNumber('transaksi')
             ->name('kegiatan-panitia.transaksi.destroy');
     });
- 
+
+    // ── Approval (Bendahara) ───────────────────────────────────
     Route::middleware('permission:VIEW_APPROVAL')->group(function () {
         Route::get('/approval/transaksi', [ApprovalController::class, 'approvalIndex'])
             ->name('approval.index');
+
         Route::post('/approval/transaksi/bulk-approve', [ApprovalController::class, 'bulkApprove'])
             ->name('approval.bulk-approve');
+
         Route::post('/approval/transaksi/bulk-reject', [ApprovalController::class, 'bulkReject'])
             ->name('approval.bulk-reject');
+
         Route::get('/approval/transaksi/{transaksi}', [ApprovalController::class, 'approvalShow'])
             ->name('approval.show');
+
         Route::post('/approval/transaksi/{transaksi}/approve', [ApprovalController::class, 'approve'])
             ->name('approval.approve');
+
         Route::post('/approval/transaksi/{transaksi}/reject', [ApprovalController::class, 'reject'])
             ->name('approval.reject');
+
         Route::post('/approval/transaksi/{transaksi}/revision', [ApprovalController::class, 'revision'])
             ->name('approval.revision');
     });
 });
-

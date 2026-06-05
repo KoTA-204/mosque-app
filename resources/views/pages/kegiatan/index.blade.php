@@ -1,6 +1,11 @@
 @extends('layouts.app')
 
 @section('content')
+{{-- Flatpickr --}}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/id.js"></script>
+
 <div class="p-6 space-y-6">
 
     <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
@@ -49,10 +54,8 @@
                 <select id="filterStatus"
                     class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
                     <option value="">Semua Status</option>
-                    <option value="DRAFT">Draft</option>
-                    <option value="BERJALAN">Berjalan</option>
-                    <option value="SELESAI">Selesai</option>
-                    <option value="DIBATALKAN">Dibatalkan</option>
+                    <option value="AKTIF">Aktif</option>
+                    <option value="DITUTUP">Ditutup</option>
                 </select>
             </div>
         </div>
@@ -96,14 +99,10 @@
                     </td>
                     <td class="px-4 py-3.5 text-gray-500 dark:text-gray-400">{{ $item->panitia->name }}</td>
                     <td class="px-4 py-3.5 text-center">
-                        @if($item->status == 'DRAFT')
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">Draft</span>
-                        @elseif($item->status == 'BERJALAN')
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">Berjalan</span>
-                        @elseif($item->status == 'SELESAI')
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">Selesai</span>
+                        @if($item->status === 'AKTIF')
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">Aktif</span>
                         @else
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400">Dibatalkan</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">Ditutup</span>
                         @endif
                     </td>
                     <td class="px-5 py-3.5">
@@ -201,19 +200,15 @@ function openModal(modal) {
 }
 
 function statusBadge(status) {
-    const map = {
-        DRAFT:      'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
-        BERJALAN:   'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
-        SELESAI:    'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
-        DIBATALKAN: 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400',
-    };
-    const label = { DRAFT:'Draft', BERJALAN:'Berjalan', SELESAI:'Selesai', DIBATALKAN:'Dibatalkan' };
-    return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${map[status]||''}">${label[status]||status}</span>`;
+    if (status === 'AKTIF') {
+        return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">Aktif</span>`;
+    }
+    return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">Ditutup</span>`;
 }
 
 function fmtDate(str) {
     if (!str) return '-';
-    return new Date(str).toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' });
+    return new Date(str).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 }
 
 function fmtDateInput(str) {
@@ -235,20 +230,39 @@ function openShowModal(item) {
 }
 
 // EDIT
+let editDatePicker = null;
+
 function openEditModal(item, panitias) {
     const route = "{{ route('dashboard.kegiatan.update', ':id') }}".replace(':id', item.id);
-    document.getElementById('editForm').action            = route;
-    document.getElementById('edit_nama').value            = item.nama_kegiatan;
-    document.getElementById('edit_jenis').value           = item.jenis_kegiatan;
-    document.getElementById('edit_status').value          = item.status;
-    document.getElementById('edit_tgl_mulai').value       = fmtDateInput(item.tanggal_mulai);
-    document.getElementById('edit_tgl_selesai').value     = fmtDateInput(item.tanggal_selesai);
-    document.getElementById('edit_anggaran').value        = item.anggaran;
+    document.getElementById('editForm').action        = route;
+    document.getElementById('edit_nama').value        = item.nama_kegiatan;
+    document.getElementById('edit_jenis').value       = item.jenis_kegiatan;
+    document.getElementById('edit_anggaran').value    = item.anggaran;
 
     const sel = document.getElementById('edit_panitia');
     sel.innerHTML = panitias.map(p =>
         `<option value="${p.id}" ${p.id == item.panitia_id ? 'selected' : ''}>${p.name}</option>`
     ).join('');
+
+    // Set date range
+    const mulai   = fmtDateInput(item.tanggal_mulai);
+    const selesai = fmtDateInput(item.tanggal_selesai);
+
+    if (editDatePicker) editDatePicker.destroy();
+    editDatePicker = flatpickr('#edit_daterange', {
+        mode: 'range',
+        dateFormat: 'Y-m-d',
+        locale: 'id',
+        defaultDate: selesai ? [mulai, selesai] : [mulai],
+        onChange: function(selectedDates) {
+            document.getElementById('edit_tanggal_mulai').value   = selectedDates[0] ? flatpickr.formatDate(selectedDates[0], 'Y-m-d') : '';
+            document.getElementById('edit_tanggal_selesai').value = selectedDates[1] ? flatpickr.formatDate(selectedDates[1], 'Y-m-d') : '';
+        }
+    });
+
+    // Set hidden inputs
+    document.getElementById('edit_tanggal_mulai').value   = mulai;
+    document.getElementById('edit_tanggal_selesai').value = selesai;
 
     openModal(editModal);
 }
@@ -256,13 +270,25 @@ function openEditModal(item, panitias) {
 // DELETE
 function openDeleteModal(id, nama) {
     const route = "{{ route('dashboard.kegiatan.destroy', ':id') }}".replace(':id', id);
-    document.getElementById('deleteForm').action          = route;
-    document.getElementById('delete_nama').textContent    = nama;
+    document.getElementById('deleteForm').action       = route;
+    document.getElementById('delete_nama').textContent = nama;
     openModal(deleteModal);
 }
 
 // CREATE
+let createDatePicker = null;
+
 function openCreateModal() {
+    if (createDatePicker) createDatePicker.destroy();
+    createDatePicker = flatpickr('#create_daterange', {
+        mode: 'range',
+        dateFormat: 'Y-m-d',
+        locale: 'id',
+        onChange: function(selectedDates) {
+            document.getElementById('create_tanggal_mulai').value   = selectedDates[0] ? flatpickr.formatDate(selectedDates[0], 'Y-m-d') : '';
+            document.getElementById('create_tanggal_selesai').value = selectedDates[1] ? flatpickr.formatDate(selectedDates[1], 'Y-m-d') : '';
+        }
+    });
     openModal(createModal);
 }
 

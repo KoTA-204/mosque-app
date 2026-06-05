@@ -9,32 +9,41 @@
         @csrf
         <div class="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
 
+            {{-- Validation errors --}}
+            @if($errors->any())
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm text-red-600 dark:text-red-400 space-y-1">
+                @foreach($errors->all() as $error)
+                <div>• {{ $error }}</div>
+                @endforeach
+            </div>
+            @endif
+
             <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Nama Lengkap <span class="text-red-500">*</span></label>
-                <input type="text" name="name" placeholder="Masukkan nama lengkap"
-                    class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors placeholder-gray-400">
+                <input type="text" name="name" value="{{ old('name') }}" placeholder="Masukkan nama lengkap"
+                    class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors placeholder-gray-400 {{ $errors->has('name') ? 'border-red-400' : '' }}">
             </div>
 
             <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Email <span class="text-red-500">*</span></label>
-                <input type="email" name="email" placeholder="Masukkan email"
-                    class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors placeholder-gray-400">
+                <input type="email" name="email" value="{{ old('email') }}" placeholder="Masukkan email"
+                    class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors placeholder-gray-400 {{ $errors->has('email') ? 'border-red-400' : '' }}">
             </div>
 
             <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Password <span class="text-red-500">*</span></label>
                 <input type="password" name="password" placeholder="Masukkan password"
-                    class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors placeholder-gray-400">
+                    class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors placeholder-gray-400 {{ $errors->has('password') ? 'border-red-400' : '' }}">
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Role <span class="text-red-500">*</span></label>
                     <select name="role_id"
-                        class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors">
+                        class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors {{ $errors->has('role_id') ? 'border-red-400' : '' }}">
                         <option value="">Pilih Role</option>
                         @foreach($roles as $role)
-                        <option value="{{ $role->id }}">{{ $role->role_name }}</option>
+                        <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>{{ $role->role_name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -42,8 +51,8 @@
                     <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Status <span class="text-red-500">*</span></label>
                     <select name="status"
                         class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors">
-                        <option value="active">Aktif</option>
-                        <option value="inactive">Tidak Aktif</option>
+                        <option value="active" {{ old('status', 'active') == 'active' ? 'selected' : '' }}>Aktif</option>
+                        <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Tidak Aktif</option>
                     </select>
                 </div>
             </div>

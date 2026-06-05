@@ -13,40 +13,28 @@
                 <input type="text" name="nama_kegiatan" id="edit_nama"
                     class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors">
             </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Jenis Kegiatan <span class="text-red-500">*</span></label>
-                    <select name="jenis_kegiatan" id="edit_jenis"
-                        class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors">
-                        <option value="QURBAN">Qurban</option>
-                        <option value="ZAKAT">Zakat</option>
-                        <option value="KAJIAN">Kajian</option>
-                        <option value="SOSIAL">Sosial</option>
-                        <option value="LAINNYA">Lainnya</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Status <span class="text-red-500">*</span></label>
-                    <select name="status" id="edit_status"
-                        class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors">
-                        <option value="DRAFT">Draft</option>
-                        <option value="BERJALAN">Berjalan</option>
-                        <option value="SELESAI">Selesai</option>
-                        <option value="DIBATALKAN">Dibatalkan</option>
-                    </select>
-                </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Jenis Kegiatan <span class="text-red-500">*</span></label>
+                <select name="jenis_kegiatan" id="edit_jenis"
+                    class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors">
+                    <option value="QURBAN">Qurban</option>
+                    <option value="ZAKAT">Zakat</option>
+                    <option value="KAJIAN">Kajian</option>
+                    <option value="SOSIAL">Sosial</option>
+                    <option value="LAINNYA">Lainnya</option>
+                </select>
             </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Tanggal Mulai <span class="text-red-500">*</span></label>
-                    <input type="date" name="tanggal_mulai" id="edit_tgl_mulai"
-                        class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors">
+            <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Tanggal Kegiatan <span class="text-red-500">*</span></label>
+                <div class="relative">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <input type="text" id="edit_daterange" placeholder="Pilih rentang tanggal"
+                        class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pl-9 pr-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors placeholder-gray-400">
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Tanggal Selesai</label>
-                    <input type="date" name="tanggal_selesai" id="edit_tgl_selesai"
-                        class="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-green-400 transition-colors">
-                </div>
+                <input type="hidden" name="tanggal_mulai"   id="edit_tanggal_mulai">
+                <input type="hidden" name="tanggal_selesai" id="edit_tanggal_selesai">
             </div>
             <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Anggaran (Rp) <span class="text-red-500">*</span></label>
