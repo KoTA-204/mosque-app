@@ -13,7 +13,6 @@ class Role extends Model
     protected $fillable = [
         'role_name',
         'description',
-        'is_active',
     ];
 
     public function getSlugAttribute(): string
@@ -23,7 +22,7 @@ class Role extends Model
 
     public function users()
     {
-        return $this->belongsToMany(User::class);
+        return $this->hasMany(User::class);
     }
 
     public function permissions()

@@ -15,10 +15,6 @@ return new class extends Migration
             $table->id();
 
             $table->string('nama_kategori');
-            $table->enum('jenis_transaksi', [
-                'PEMASUKAN',
-                'PENGELUARAN',
-            ]);
             $table->string('deskripsi')->nullable();
             
             $table->timestamps();

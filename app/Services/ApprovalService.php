@@ -14,6 +14,7 @@ class ApprovalService
         string $sumber  = '',   // '' | 'kegiatan' | 'kencleng'
         string $dari    = '',
         string $sampai  = '',
+        string $urut    = 'asc', // 'asc' | 'desc'
         int    $perPage = 10
     ) {
         return Transaksi::with([
@@ -60,7 +61,9 @@ class ApprovalService
                           ->orWhere('deskripsi', 'ilike', "%{$search}%");
                 })
             )
-            ->orderBy('created_at', 'asc')
+
+            // Urutan berdasarkan tanggal transaksi
+            ->orderBy('tanggal_transaksi', in_array($urut, ['asc', 'desc']) ? $urut : 'asc')
             ->paginate($perPage);
     }
 
@@ -120,13 +123,6 @@ class ApprovalService
 
     // ── Bulk Approval ──────────────────────────────────────────
 
-    /**
-     * Approve banyak transaksi sekaligus.
-     * Hanya transaksi berstatus PENDING yang akan diproses.
-     *
-     * @param  array<int> $ids
-     * @return array{approved: int, skipped: int}
-     */
     public function bulkApprove(array $ids): array
     {
         $approved = 0;
@@ -166,13 +162,6 @@ class ApprovalService
         return compact('approved', 'skipped');
     }
 
-    /**
-     * Reject banyak transaksi sekaligus dengan catatan per transaksi.
-     * Hanya transaksi berstatus PENDING yang akan diproses.
-     *
-     * @param  array<int, string> $catatanMap  key = transaksi id, value = catatan
-     * @return array{rejected: int, skipped: int}
-     */
     public function bulkReject(array $catatanMap): array
     {
         $rejected = 0;

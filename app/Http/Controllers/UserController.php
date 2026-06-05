@@ -31,16 +31,16 @@ class UserController extends Controller
             $query->where('status', $request->status);
         }
 
-        $users = $query->paginate(10)->withQueryString();
-        $roles = Role::where('is_active', true)->get();
+        $users = $query->paginate(10);
+        $roles = Role::get();
 
-        if ($request->ajax()) {
-            return response()->json([
-                'html' => view('pages.users.table', compact('users', 'roles'))->render(),
-            ]);
-        }
+        return view('pages.users.index', compact('users', 'roles')); 
+    }
 
-        return view('pages.users.index', compact('users', 'roles'));
+    public function create()
+    {
+        $roles = Role::get();
+        return view('pages.users.create', compact('roles'));
     }
 
     public function store(Request $request)
@@ -57,13 +57,18 @@ class UserController extends Controller
             'name'     => $request->name,
             'email'    => $request->email,
             'password' => Hash::make($request->password),
-            'status'   => $request->status,
+            'role_id' => $request->role_id,
+            'status' => $request->status,
         ]);
 
-        $user->roles()->attach($request->role_id);
+        return redirect()->route('dashboard.users.index')->with('success', 'User berhasil ditambahkan');
+    }
 
-        return redirect()->route('dashboard.users.index')
-            ->with('success', 'User berhasil ditambahkan');
+    public function edit(User $user)
+    {
+        $user->load('roles');
+        $roles = Role::get();
+        return view('pages.users.edit', compact('user', 'roles')); 
     }
 
     public function update(Request $request, User $user)
@@ -76,15 +81,13 @@ class UserController extends Controller
         ]);
 
         $user->update([
-            'name'   => $request->name,
-            'email'  => $request->email,
-            'status' => $request->status,
+            'name' => $request->name,
+            'email' => $request->email,
+            'role_id' => $request->role_id,
+            'status' => $request->status
         ]);
 
-        $user->roles()->sync([$request->role_id]);
-
-        return redirect()->route('dashboard.users.index')
-            ->with('success', 'User berhasil diupdate');
+        return redirect()->route('dashboard.users.index')->with('success', 'User berhasil diupdate');
     }
 
     public function destroy(User $user)

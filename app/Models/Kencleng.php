@@ -13,8 +13,8 @@ class Kencleng extends Model
 
     protected $fillable = [
         'transaksi_id',
-        'nomor_berita_acara',
-        'file_berita_acara',
+        'nomor_kwitansi',
+        'berita_acara',
     ];
 
     public function transaksi()

@@ -14,6 +14,11 @@ class KategoriAkun extends Model
     protected $fillable = [
         'kode_kategori',
         'nama_kategori',
+        'status',
+    ];
+
+    protected $casts = [
+        'status' => 'boolean',
     ];
 
     public function akunKeuangan()

@@ -19,6 +19,10 @@ class Dompet extends Model
         'saldo_awal',
     ];
 
+    protected $casts = [
+        'saldo_awal' => 'decimal:2',
+    ];
+
     public function transaksi()
     {
         return $this->hasMany(Transaksi::class);

@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('roles', function (Blueprint $table) {
+        Schema::create('periode', function (Blueprint $table) {
             $table->id();
-            $table->string('role_name', 100)->unique();
-            $table->string('description', 255)->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->string('nama_periode');
+            $table->date('tanggal_awal');
+            $table->date('tanggal_akhir');
+            $table->enum('tipe', ['bulanan', 'tahunan']);
+            $table->boolean('status')->default(false);
             $table->timestamps();
         });
     }
@@ -25,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('roles');
+        Schema::dropIfExists('periode');
     }
 };

@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('transaksi', function (Blueprint $table) {
-            $table->text('catatan_revisi')->nullable()->after('status_approval');
+        Schema::create('roles', function (Blueprint $table) {
+            $table->id();
+            $table->string('role_name', 100)->unique();
+            $table->string('description', 255)->nullable();
+            $table->timestamps();
         });
     }
 
@@ -21,8 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('transaksi', function (Blueprint $table) {
-            $table->dropColumn('catatan_revisi');
-        });
+        Schema::dropIfExists('roles');
     }
 };

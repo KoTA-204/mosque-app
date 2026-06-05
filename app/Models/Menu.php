@@ -14,13 +14,14 @@ class Menu extends Model
         'route_name',
         'icon',
         'parent_id',
+        'permission_id',
         'sort_order',
         'is_active',
     ];
 
     public function permissions()
     {
-        return $this->belongsToMany(Permission::class);
+        return $this->belongsTo(Permission::class, 'permission_id');
     }
 
     public function parent()

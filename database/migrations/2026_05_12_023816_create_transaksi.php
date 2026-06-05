@@ -30,14 +30,22 @@ return new class extends Migration
                 ->restrictOnDelete();
             
             $table->foreignId('kategori_transaksi_id')
+                ->nullable()
                 ->constrained('kategori_transaksi')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
 
             $table->date('tanggal_transaksi');
+            $table->enum('jenis_transaksi', [
+                'PEMASUKAN',
+                'PENGELUARAN',
+            ]);
+
             $table->decimal('jumlah', 15, 2);
             $table->text('deskripsi')->nullable();
+            $table->text('catatan')->nullable();
             $table->enum('status_approval', [
+                'DRAFT',
                 'PENDING',
                 'APPROVED',
                 'REJECTED',
