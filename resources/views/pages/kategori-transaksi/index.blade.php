@@ -223,9 +223,6 @@
 
     </div>
 </div>
-<<<<<<< HEAD
-@endsection
-=======
 
 @push('scripts')
 <script>
@@ -279,4 +276,3 @@
 
 @include('dashboard.kategori-transaksi.create')
 @include('dashboard.kategori-transaksi.edit')
->>>>>>> feature/kategori-transaksi
