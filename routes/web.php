@@ -15,6 +15,7 @@ use App\Http\Controllers\KegiatanController;
 use App\Http\Controllers\ChartOfAccountController;
 use App\Http\Controllers\KenclengController;
 use App\Http\Controllers\KategoriTransaksiController;
+use App\Http\Controllers\AsetController;
 
 // ── Landing Page ───────────────────────────────────────────────────────────
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -157,6 +158,32 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         Route::post('/approval/transaksi/{transaksi}/approve', [ApprovalController::class, 'approve'])->name('approval.approve');
         Route::post('/approval/transaksi/{transaksi}/reject', [ApprovalController::class, 'reject'])->name('approval.reject');
         Route::post('/approval/transaksi/{transaksi}/revision', [ApprovalController::class, 'revision'])->name('approval.revision');
+    });
+
+    // ── Manajemen Aset ─────────────────────────────────────────────────────────
+    Route::middleware('permission:VIEW_ASET')->group(function () {
+        Route::get('/aset', [AsetController::class, 'index'])->name('aset.index');
+        Route::get('/aset/{aset}', [AsetController::class, 'show'])
+            ->name('aset.show')
+            ->whereNumber('aset');
+    });
+    
+    Route::middleware('permission:CREATE_ASET')->group(function () {
+        Route::get('/aset/create', [AsetController::class, 'create'])->name('aset.create');
+        Route::post('/aset', [AsetController::class, 'store'])->name('aset.store');
+    });
+    
+    Route::middleware('permission:EDIT_ASET')->group(function () {
+        Route::get('/aset/{aset}/edit', [AsetController::class, 'edit'])
+            ->name('aset.edit')
+            ->whereNumber('aset');
+        Route::put('/aset/{aset}', [AsetController::class, 'update'])->name('aset.update');
+        Route::patch('/aset/{aset}/toggle-status', [AsetController::class, 'toggleStatus'])
+            ->name('aset.toggle-status');
+    });
+    
+    Route::middleware('permission:DELETE_ASET')->group(function () {
+        Route::delete('/aset/{aset}', [AsetController::class, 'destroy'])->name('aset.destroy');
     });
 
     // ── Master Data - Chart of Accounts ────────────────────────────────────
