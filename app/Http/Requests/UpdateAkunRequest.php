@@ -27,7 +27,7 @@ class UpdateAkunRequest extends FormRequest
             'parent_id'    => 'required|exists:akun,id',
             'kode_akun'    => 'required|string|max:20|unique:akun,kode_akun,' . $akunId,
             'nama_akun'    => 'required|string|max:150',
-            'saldo_normal' => 'required|in:debit,kredit',
+            'saldo_normal' => 'required|in:DEBIT,KREDIT',
         ];
     }
  

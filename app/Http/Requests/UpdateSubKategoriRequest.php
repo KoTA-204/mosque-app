@@ -22,11 +22,12 @@ class UpdateSubKategoriRequest extends FormRequest
     public function rules(): array
     {
         $subKategoriId = $this->route('subKategori')->id;
- 
+
         return [
             'kategori_akun_id' => 'required|exists:kategori_akun,id',
             'kode_akun'        => 'required|string|max:20|unique:akun,kode_akun,' . $subKategoriId,
             'nama_akun'        => 'required|string|max:150',
+            'saldo_normal'     => 'required|in:DEBIT,KREDIT',
         ];
     }
  
@@ -37,6 +38,8 @@ class UpdateSubKategoriRequest extends FormRequest
             'kode_akun.required'        => 'Kode sub kategori wajib diisi.',
             'kode_akun.unique'          => 'Kode sudah digunakan.',
             'nama_akun.required'        => 'Nama sub kategori wajib diisi.',
+            'saldo_normal.required'     => 'Saldo normal wajib dipilih.',
+            'saldo_normal.in'           => 'Saldo normal tidak valid.',
         ];
     }
 }
