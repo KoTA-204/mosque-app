@@ -64,7 +64,8 @@ class Jurnal extends Model
 
     public function aset()
     {
-        return $this->belongsToMany(Aset::class);
+        return $this->belongsToMany(Aset::class, 'jurnal_aset', 'jurnal_id', 'aset_id')
+            ->withPivot('nominal');
     }
 
     /**
