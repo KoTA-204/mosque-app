@@ -17,6 +17,9 @@ use App\Http\Controllers\KenclengController;
 use App\Http\Controllers\KategoriTransaksiController;
 use App\Http\Controllers\AsetController;
 use App\Http\Controllers\JurnalUmumController;
+use App\Http\Controllers\JurnalPenyesuaianController;
+use App\Http\Controllers\JurnalKoreksiController;
+use App\Http\Controllers\JurnalPenutupController;
 use App\Http\Controllers\BukuBesarController;
 use App\Http\Controllers\NeracaSaldoController;
 
@@ -268,6 +271,90 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
 
         Route::middleware('permission:DELETE_KATEGORI')->group(function () {
             Route::delete('/kategori-transaksi/{kategoriTransaksi}', [KategoriTransaksiController::class, 'destroy'])->name('kategori-transaksi.destroy');
+        });
+    });
+
+    Route::middleware('permission:VIEW_JURNAL_PENYESUAIAN')->group(function () {
+        Route::get('/jurnal-penyesuaian', [JurnalPenyesuaianController::class, 'index'])
+            ->name('jurnal-penyesuaian.index');
+
+        Route::get('/jurnal-penyesuaian/{jurnal}', [JurnalPenyesuaianController::class, 'show'])
+            ->whereNumber('jurnal')
+            ->name('jurnal-penyesuaian.show');
+
+        Route::middleware('permission:CREATE_JURNAL_PENYESUAIAN')->group(function () {
+            Route::get('/jurnal-penyesuaian/create', [JurnalPenyesuaianController::class, 'create'])
+                ->name('jurnal-penyesuaian.create');
+
+            Route::get('/jurnal-penyesuaian/aset-detail', [JurnalPenyesuaianController::class, 'getAsetDetail'])
+                ->name('jurnal-penyesuaian.aset-detail');
+
+            Route::post('/jurnal-penyesuaian', [JurnalPenyesuaianController::class, 'store'])
+                ->name('jurnal-penyesuaian.store');
+
+            Route::post('/jurnal-penyesuaian/bulk-post', [JurnalPenyesuaianController::class, 'bulkPost'])
+                ->name('jurnal-penyesuaian.bulk-post');
+
+            Route::delete('/jurnal-penyesuaian/{jurnal}', [JurnalPenyesuaianController::class, 'destroy'])
+                ->whereNumber('jurnal')
+                ->name('jurnal-penyesuaian.destroy');
+        });
+    });
+
+    Route::middleware('permission:VIEW_JURNAL_KOREKSI')->group(function () {
+        Route::get('/jurnal-koreksi', [JurnalKoreksiController::class, 'index'])
+            ->name('jurnal-koreksi.index');
+
+        Route::get('/jurnal-koreksi/{jurnal}', [JurnalKoreksiController::class, 'show'])
+            ->whereNumber('jurnal')
+            ->name('jurnal-koreksi.show');
+
+        Route::middleware('permission:CREATE_JURNAL_KOREKSI')->group(function () {
+            Route::get('/jurnal-koreksi/create', [JurnalKoreksiController::class, 'create'])
+                ->name('jurnal-koreksi.create');
+
+            Route::get('/jurnal-koreksi/aset-detail', [JurnalKoreksiController::class, 'getAsetDetail'])
+                ->name('jurnal-koreksi.aset-detail');
+
+            Route::post('/jurnal-koreksi', [JurnalKoreksiController::class, 'store'])
+                ->name('jurnal-koreksi.store');
+
+            Route::post('/jurnal-koreksi/bulk-post', [JurnalKoreksiController::class, 'bulkPost'])
+                ->name('jurnal-koreksi.bulk-post');
+
+            Route::delete('/jurnal-koreksi/{jurnal}', [JurnalKoreksiController::class, 'destroy'])
+                ->whereNumber('jurnal')
+                ->name('jurnal-koreksi.destroy');
+        });
+    });
+
+    Route::middleware('permission:VIEW_JURNAL_PENUTUP')->group(function () {
+        Route::get('/jurnal-penutup', [JurnalPenutupController::class, 'index'])
+            ->name('jurnal-penutup.index');
+
+        Route::get('/jurnal-penutup/{jurnal}', [JurnalPenutupController::class, 'show'])
+            ->whereNumber('jurnal')
+            ->name('jurnal-penutup.show');
+
+        Route::middleware('permission:CREATE_JURNAL_PENUTUP')->group(function () {
+            Route::get('/jurnal-penutup/create', [JurnalPenutupController::class, 'create'])
+                ->name('jurnal-penutup.create');
+
+            Route::get('/jurnal-penutup/aset-detail', [JurnalPenutupController::class, 'getAsetDetail'])
+                ->name('jurnal-penutup.aset-detail');
+
+            Route::post('/jurnal-penutup', [JurnalPenutupController::class, 'store'])
+                ->name('jurnal-penutup.store');
+            
+            Route::post('/jurnal-penutup/konfirmasi-tahap', [JurnalPenutupController::class, 'konfirmasiTahap'])
+                ->name('jurnal-penutup.konfirmasi-tahap');
+
+            Route::post('/jurnal-penutup/bulk-post', [JurnalPenutupController::class, 'bulkPost'])
+                ->name('jurnal-penutup.bulk-post');
+
+            Route::delete('/jurnal-penutup/{jurnal}', [JurnalPenutupController::class, 'destroy'])
+                ->whereNumber('jurnal')
+                ->name('jurnal-penutup.destroy');
         });
     });
 });

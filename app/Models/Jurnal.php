@@ -33,30 +33,16 @@ class Jurnal extends Model
         return $this->belongsTo(Periode::class);
     }
 
-    /**
-     * Relasi ke transaksi operasional.
-     * Hanya ada nilainya jika jenis_jurnal = UMUM.
-     * One to one.
-     */
     public function transaksi()
     {
         return $this->belongsTo(Transaksi::class);
     }
 
-    /**
-     * Self referencing — jurnal yang dikoreksi oleh jurnal ini.
-     * Hanya ada nilainya jika jenis_jurnal = KOREKSI.
-     * Many to one (banyak koreksi bisa mengacu ke 1 jurnal).
-     */
     public function jurnalRef()
     {
         return $this->belongsTo(Jurnal::class, 'jurnal_ref_id');
     }
 
-    /**
-     * Self referencing — semua jurnal koreksi yang mengacu ke jurnal ini.
-     * One to many.
-     */
     public function jurnalKoreksi()
     {
         return $this->hasMany(Jurnal::class, 'jurnal_ref_id');
@@ -64,13 +50,10 @@ class Jurnal extends Model
 
     public function aset()
     {
-        return $this->belongsToMany(Aset::class);
+        return $this->belongsToMany(Aset::class, 'jurnal_aset', 'jurnal_id', 'aset_id')
+            ->withPivot('nominal');
     }
 
-    /**
-     * Baris debit/kredit jurnal ini.
-     * One to many.
-     */
     public function detailJurnal()
     {
         return $this->hasMany(DetailJurnal::class);

@@ -3,63 +3,50 @@
 namespace App\Http\Controllers;
 
 use App\Models\Jurnal;
-use App\Services\JurnalPenyesuaianService;
+use App\Services\JurnalKoreksiService;
 use Illuminate\Http\Request;
 
-class JurnalPenyesuaianController extends Controller
+class JurnalKoreksiController extends Controller
 {
     public function __construct(
-        protected JurnalPenyesuaianService $service
+        protected JurnalKoreksiService $service
     ) {}
 
     public function index(Request $request)
     {
         $search    = $request->get('search', '');
         $periodeId = $request->get('periode_id', '');
-        $tipe      = $request->get('tipe', '');
         $status    = $request->get('status', '');
         $perPage   = (int) $request->get('per_page', 10);
 
-        $jurnal       = $this->service->getList($search, $periodeId, $tipe, $status, $perPage);
+        $jurnal       = $this->service->getList($search, $periodeId, '', $status, $perPage);
         $periodeList  = $this->service->getPeriodeList();
         $periodeAktif = $this->service->getPeriodeAktif();
-        $tipeLabels   = JurnalPenyesuaianService::TIPE_LABELS;
 
-        return view('pages.jurnal-penyesuaian.index', compact(
+        return view('pages.jurnal-koreksi.index', compact(
             'jurnal', 'periodeList', 'periodeAktif',
-            'tipeLabels', 'search', 'periodeId', 'tipe', 'status', 'perPage'
+            'search', 'periodeId', 'status', 'perPage'
         ));
     }
 
     public function create()
     {
-        $periodeAktif = $this->service->getPeriodeAktif();
-        $periodeList  = $this->service->getPeriodeList();
-        $tipeLabels   = JurnalPenyesuaianService::TIPE_LABELS;
-        $tipeDescs    = JurnalPenyesuaianService::TIPE_DESCRIPTIONS;
+        $periodeAktif  = $this->service->getPeriodeAktif();
+        $periodeList   = $this->service->getPeriodeList();
+        $jurnalData    = $this->service->getJurnalData();
+        $akunList      = $this->service->getAkunList();
 
-        $akunList = $this->service->getAkunList('MANUAL');
-        $asetList = $this->service->getAsetAktif();
-
-        $akunPerTipe = [];
-        foreach (array_keys($tipeLabels) as $tipe) {
-            $akunPerTipe[$tipe] = $this->service->getAkunList($tipe);
-        }
-
-        return view('pages.jurnal-penyesuaian.create', compact(
-            'periodeAktif', 'periodeList', 'akunList', 'akunPerTipe',
-            'asetList', 'tipeLabels', 'tipeDescs'
+        return view('pages.jurnal-koreksi.create', compact(
+            'periodeAktif', 'periodeList', 'akunList', 'jurnalData'
         ));
     }
 
     public function store(Request $request)
     {
-        $tipeKeys = implode(',', array_keys(JurnalPenyesuaianService::TIPE_LABELS));
-
         $rules = [
             'periode_id'       => 'required|exists:periode,id',
             'tanggal'          => 'required|date',
-            'tipe_penyesuaian' => 'required|in:' . $tipeKeys,
+            'jurnal_ref_id'    => 'required|exists:jurnal,id',
             'keterangan'       => 'required|string|max:500',
             'detail'           => 'required|array|min:2',
             'detail.*.akun_id' => 'required|exists:akun,id',
@@ -67,12 +54,6 @@ class JurnalPenyesuaianController extends Controller
             'detail.*.nominal' => 'required|string',
             'submit_type'      => 'required|in:draft,posting',
         ];
-
-        if ($request->tipe_penyesuaian === 'PENYUSUTAN_ASET') {
-            $rules['detail.0.aset_rows']           = 'required|array|min:1';
-            $rules['detail.0.aset_rows.*.aset_id'] = 'required|exists:aset,id';
-            $rules['detail.0.aset_rows.*.nominal']  = 'required|string';
-        }
 
         $request->validate($rules);
 
@@ -97,25 +78,59 @@ class JurnalPenyesuaianController extends Controller
         $this->service->store($request->all(), $status);
 
         $msg = $status === 'POSTED'
-            ? 'Jurnal berhasil diposting ke buku besar.'
-            : 'Jurnal berhasil disimpan sebagai draft.';
+            ? 'Jurnal koreksi berhasil diposting ke buku besar.'
+            : 'Jurnal koreksi berhasil disimpan sebagai draft.';
 
-        return redirect()->route('dashboard.jurnal-penyesuaian.index')
+        return redirect()->route('dashboard.jurnal-koreksi.index')
             ->with('success', $msg);
     }
 
     public function show(Jurnal $jurnal)
     {
+        // Load semua relasi yang dibutuhkan drawer
         $jurnal = $this->service->getById($jurnal);
+
+        // FIX: generate nomor jurnal manual (tidak ada kolom nomor_jurnal di model)
+        $nomorJurnal = 'JK-'
+            . ($jurnal->periode->tanggal_awal->format('Y') ?? '0000') . '-'
+            . ($jurnal->periode->tanggal_awal->format('m') ?? '00') . '-'
+            . str_pad($jurnal->id, 4, '0', STR_PAD_LEFT);
+
+        // FIX: format data untuk JSON response agar drawer bisa render dengan benar
         return response()->json([
-            'jurnal' => $jurnal,
-            'labels' => JurnalPenyesuaianService::TIPE_LABELS,
+            'jurnal' => [
+                'id'             => $jurnal->id,
+                'nomor_jurnal'   => $nomorJurnal,
+                'tanggal'        => $jurnal->tanggal?->format('j M Y'),
+                'keterangan'     => $jurnal->keterangan,
+                'status'         => $jurnal->status,
+                'jenis_jurnal'   => $jurnal->jenis_jurnal,
+                'jurnal_ref_id'  => $jurnal->jurnal_ref_id,
+                'jurnal_ref'     => $jurnal->jurnalRef ? [
+                    'id'         => $jurnal->jurnalRef->id,
+                    'keterangan' => $jurnal->jurnalRef->keterangan,
+                    'tanggal'    => $jurnal->jurnalRef->tanggal?->format('j M Y'),
+                ] : null,
+                'periode'        => [
+                    'nama_periode' => $jurnal->periode->nama_periode ?? '—',
+                ],
+                // detail_jurnal dalam snake_case agar konsisten dengan JS (j.detail_jurnal)
+                'detail_jurnal'  => $jurnal->detailJurnal->map(fn($d) => [
+                    'tipe'    => $d->tipe,
+                    'nominal' => (float) $d->nominal,
+                    'akun'    => [
+                        'kode_akun' => $d->akun->kode_akun ?? '',
+                        'nama_akun' => $d->akun->nama_akun ?? '—',
+                    ],
+                ]),
+                'aset' => $jurnal->aset->map(fn($a) => [
+                    'nama_aset' => $a->nama_aset,
+                    'pivot'     => ['nominal' => (float) ($a->pivot->nominal ?? 0)],
+                ]),
+            ],
         ]);
     }
 
-    /**
-     * Bulk post — mengubah status beberapa jurnal DRAFT menjadi POSTED sekaligus.
-     */
     public function bulkPost(Request $request)
     {
         $request->validate([
@@ -123,8 +138,8 @@ class JurnalPenyesuaianController extends Controller
             'ids.*' => 'integer|exists:jurnal,id',
         ]);
 
-        $berhasil = 0;
-        $gagal    = 0;
+        $berhasil   = 0;
+        $gagal      = 0;
         $pesanGagal = [];
 
         foreach ($request->ids as $id) {
@@ -141,14 +156,13 @@ class JurnalPenyesuaianController extends Controller
                 $berhasil++;
             } else {
                 $gagal++;
-                $pesanGagal[] = $result; // pesan error dari service
+                $pesanGagal[] = $result;
             }
         }
 
         if ($berhasil === 0) {
-            // Semua gagal
             $detail = !empty($pesanGagal) ? ' (' . implode(', ', array_unique($pesanGagal)) . ')' : '';
-            return redirect()->route('dashboard.jurnal-penyesuaian.index')
+            return redirect()->route('dashboard.jurnal-koreksi.index')
                 ->with('error', "Tidak ada jurnal yang berhasil diposting.{$detail}");
         }
 
@@ -157,7 +171,7 @@ class JurnalPenyesuaianController extends Controller
             $msg .= " {$gagal} jurnal gagal (debit/kredit tidak balance atau sudah diposting).";
         }
 
-        return redirect()->route('dashboard.jurnal-penyesuaian.index')
+        return redirect()->route('dashboard.jurnal-koreksi.index')
             ->with($gagal > 0 ? 'error' : 'success', $msg);
     }
 
@@ -169,7 +183,7 @@ class JurnalPenyesuaianController extends Controller
             return redirect()->back()->with('error', $result);
         }
 
-        return redirect()->route('dashboard.jurnal-penyesuaian.index')
+        return redirect()->route('dashboard.jurnal-koreksi.index')
             ->with('success', 'Jurnal berhasil dihapus.');
     }
 }
