@@ -4,6 +4,7 @@
             <tr class="border-b border-gray-100 dark:border-gray-800">
                 <th class="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3 w-12">No</th>
                 <th class="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-4 py-3">Tanggal</th>
+                <th class="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-4 py-3">Akun</th>
                 <th class="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-4 py-3">Keterangan</th>
                 <th class="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-4 py-3">Ref.</th>
                 <th class="text-right text-xs font-medium text-gray-500 dark:text-gray-400 px-4 py-3">Debit</th>
@@ -17,27 +18,34 @@
             @forelse($details as $i => $detail)
             @php
                 $isDebit = $detail->tipe === 'DEBIT';
-                // Saldo bertambah sesuai saldo normal akun
                 if ($saldoNormal === 'DEBIT') {
                     $runningBalance = $isDebit
                         ? $runningBalance + $detail->nominal
                         : $runningBalance - $detail->nominal;
                 } else {
-                    // Saldo normal KREDIT: kredit menambah, debit mengurangi
                     $runningBalance = $isDebit
                         ? $runningBalance - $detail->nominal
                         : $runningBalance + $detail->nominal;
                 }
                 $saldoPositif = $runningBalance >= 0;
             @endphp
-
             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                 <td class="px-5 py-3.5 text-gray-500 dark:text-gray-400">{{ $details->firstItem() + $i }}</td>
                 <td class="px-4 py-3.5 text-gray-700 dark:text-gray-300 whitespace-nowrap">
                     {{ $detail->jurnal->tanggal->translatedFormat('d M Y') }}
                 </td>
+                <td class="px-4 py-3.5">
+                    <div class="flex flex-col">
+                        <span class="text-gray-900 dark:text-white font-medium text-xs">
+                            {{ $detail->akun->nama_akun ?? '-' }}
+                        </span>
+                        <span class="text-gray-400 dark:text-gray-500 font-mono text-xs">
+                            {{ $detail->akun->kode_akun ?? '' }}
+                        </span>
+                    </div>
+                </td>
                 <td class="px-4 py-3.5 text-gray-600 dark:text-gray-400 max-w-xs truncate">
-                    {{ $detail->jurnal->keterangan ?? 'Saldo Awal' }}
+                    {{ $detail->jurnal->keterangan ?? '-' }}
                 </td>
                 <td class="px-4 py-3.5 text-gray-600 dark:text-gray-400 font-mono text-xs">
                     J - {{ str_pad($detail->jurnal_id, 4, '0', STR_PAD_LEFT) }}
@@ -81,17 +89,18 @@
             </tr>
             @empty
             <tr>
-                <td colspan="8" class="px-5 py-12 text-center text-gray-400 dark:text-gray-500">
+                <td colspan="9" class="px-5 py-12 text-center text-gray-400 dark:text-gray-500">
                     Tidak ada data buku besar.
                 </td>
             </tr>
             @endforelse
         </tbody>
+
         {{-- Total Row --}}
         @if($details->count() > 0)
         <tfoot>
             <tr class="border-t-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                <td colspan="4" class="px-5 py-3 text-sm font-bold text-gray-900 dark:text-white">
+                <td colspan="5" class="px-5 py-3 text-sm font-bold text-gray-900 dark:text-white">
                     Total Keseluruhan
                 </td>
                 <td class="px-4 py-3 text-right font-bold text-blue-600 dark:text-blue-400">
