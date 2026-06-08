@@ -18,6 +18,7 @@ use App\Http\Controllers\KategoriTransaksiController;
 use App\Http\Controllers\AsetController;
 use App\Http\Controllers\JurnalUmumController;
 use App\Http\Controllers\JurnalPenyesuaianController;
+use App\Http\Controllers\JurnalKoreksiController;
 
 // ── Landing Page ───────────────────────────────────────────────────────────
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -282,6 +283,33 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
             Route::delete('/jurnal-penyesuaian/{jurnal}', [JurnalPenyesuaianController::class, 'destroy'])
                 ->whereNumber('jurnal')
                 ->name('jurnal-penyesuaian.destroy');
+        });
+    });
+
+    Route::middleware('permission:VIEW_JURNAL_KOREKSI')->group(function () {
+        Route::get('/jurnal-koreksi', [JurnalKoreksiController::class, 'index'])
+            ->name('jurnal-koreksi.index');
+
+        Route::get('/jurnal-koreksi/{jurnal}', [JurnalKoreksiController::class, 'show'])
+            ->whereNumber('jurnal')
+            ->name('jurnal-koreksi.show');
+
+        Route::middleware('permission:CREATE_JURNAL_KOREKSI')->group(function () {
+            Route::get('/jurnal-koreksi/create', [JurnalKoreksiController::class, 'create'])
+                ->name('jurnal-koreksi.create');
+
+            Route::get('/jurnal-koreksi/aset-detail', [JurnalKoreksiController::class, 'getAsetDetail'])
+                ->name('jurnal-koreksi.aset-detail');
+
+            Route::post('/jurnal-koreksi', [JurnalKoreksiController::class, 'store'])
+                ->name('jurnal-koreksi.store');
+
+            Route::post('/jurnal-koreksi/bulk-post', [JurnalKoreksiController::class, 'bulkPost'])
+                ->name('jurnal-koreksi.bulk-post');
+
+            Route::delete('/jurnal-koreksi/{jurnal}', [JurnalKoreksiController::class, 'destroy'])
+                ->whereNumber('jurnal')
+                ->name('jurnal-koreksi.destroy');
         });
     });
 });
