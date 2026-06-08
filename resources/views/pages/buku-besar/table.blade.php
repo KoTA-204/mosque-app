@@ -36,11 +36,11 @@
                 </td>
                 <td class="px-4 py-3.5">
                     <div class="flex flex-col">
-                        <span class="text-gray-900 dark:text-white font-medium text-xs">
-                            {{ $detail->akun->nama_akun ?? '-' }}
-                        </span>
                         <span class="text-gray-400 dark:text-gray-500 font-mono text-xs">
                             {{ $detail->akun->kode_akun ?? '' }}
+                        </span>
+                        <span class="text-gray-900 dark:text-white font-medium text-xs">
+                            {{ $detail->akun->nama_akun ?? '-' }}
                         </span>
                     </div>
                 </td>
