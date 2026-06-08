@@ -66,11 +66,12 @@ class BukuBesarController extends Controller
         $details  = $query->paginate($perPage)->withQueryString();
         $akuns    = Akun::with('kategoriAkun')->whereNotNull('parent_id')->orderBy('kode_akun')->get();
         $periodes = Periode::orderByDesc('tanggal_awal')->get();
+        $saldoNormal = $akunId ? optional(Akun::find($akunId))->saldo_normal : 'DEBIT';
 
         if ($request->ajax()) {
             return response()->json([
                 'html'        => view('pages.buku-besar.table', compact(
-                    'details', 'saldoAwal', 'totalDebit', 'totalKredit', 'saldoAkhir'
+                    'details', 'saldoAwal', 'totalDebit', 'totalKredit', 'saldoAkhir', 'saldoNormal'
                 ))->render(),
                 'totalDebit'  => $totalDebit,
                 'totalKredit' => $totalKredit,
@@ -84,7 +85,7 @@ class BukuBesarController extends Controller
         return view('pages.buku-besar.index', compact(
             'details', 'akuns', 'periodes',
             'saldoAwal', 'totalDebit', 'totalKredit', 'saldoAkhir',
-            'periodeId', 'akunId', 'badgeAkun', 'badgeWarna'
+            'periodeId', 'akunId', 'badgeAkun', 'badgeWarna', 'saldoNormal'
         ));
     }
 }
