@@ -16,58 +16,48 @@ class JurnalUmumController extends Controller
     {
         $search   = $request->input('search', '');
         $bulan    = $request->input('bulan', now()->format('Y-m'));
+        $status   = $request->input('status', '');
         $perPage  = $request->input('per_page', 10);
 
-        $query = DetailJurnal::with(['jurnal.periode', 'akun'])
-            ->whereHas('jurnal', function ($q) use ($bulan) {
-                $q->where('jenis_jurnal', 'UMUM');
-                if ($bulan) {
-                    $q->whereYear('tanggal', substr($bulan, 0, 4))
-                    ->whereMonth('tanggal', substr($bulan, 5, 2));
-                }
-            })
-            ->when($search, fn($q) =>
-                $q->whereHas('akun', fn($a) =>
-                    $a->where('nama_akun', 'like', "%{$search}%")
-                    ->orWhere('kode_akun', 'like', "%{$search}%")
-                )->orWhereHas('jurnal', fn($j) =>
-                    $j->where('keterangan', 'like', "%{$search}%")
-                )
-            )
-            ->orderByDesc(
-                Jurnal::select('tanggal')
-                    ->whereColumn('jurnal.id', 'detail_jurnal.jurnal_id')
-                    ->limit(1)
-            );
-
-        $details = $query->paginate($perPage)->withQueryString();
-
-        // Summary — query terpisah, bukan clone dari query yang sudah dipaginate
-        $summaryBase = DetailJurnal::whereHas('jurnal', function ($q) use ($bulan) {
-            $q->where('jenis_jurnal', 'UMUM')->where('status', 'POSTED');
-            if ($bulan) {
+        $query = Jurnal::with(['detailJurnal.akun', 'periode'])
+            ->where('jenis_jurnal', 'UMUM')
+            ->when($bulan, function ($q) use ($bulan) {
                 $q->whereYear('tanggal', substr($bulan, 0, 4))
                 ->whereMonth('tanggal', substr($bulan, 5, 2));
-            }
-        });
+            })
+            ->when($status, fn($q) => $q->where('status', strtoupper($status)))
+            ->when($search, fn($q) =>
+                $q->where('keterangan', 'like', "%{$search}%")
+            )
+            ->orderByDesc('tanggal')
+            ->orderByDesc('id');
 
-        $totalDebit  = (clone $summaryBase)->where('tipe', 'DEBIT')->sum('nominal');
-        $totalKredit = (clone $summaryBase)->where('tipe', 'KREDIT')->sum('nominal');
+        $jurnals = $query->paginate($perPage)->withQueryString();
 
-        $akuns    = Akun::whereNotNull('parent_id')->orderBy('kode_akun')->get();
+        $summaryBase = Jurnal::where('jenis_jurnal', 'UMUM')
+            ->where('status', 'POSTED')
+            ->when($bulan, function ($q) use ($bulan) {
+                $q->whereYear('tanggal', substr($bulan, 0, 4))
+                ->whereMonth('tanggal', substr($bulan, 5, 2));
+            });
+
+        $totalDebit  = DetailJurnal::whereIn('jurnal_id', (clone $summaryBase)->pluck('id'))
+            ->where('tipe', 'DEBIT')->sum('nominal');
+        $totalKredit = DetailJurnal::whereIn('jurnal_id', (clone $summaryBase)->pluck('id'))
+            ->where('tipe', 'KREDIT')->sum('nominal');
+
         $periodes = Periode::orderByDesc('tanggal_awal')->get();
 
         if ($request->ajax()) {
             return response()->json([
-                'html' => view('pages.jurnal-umum.table', compact('details'))->render(),
+                'html' => view('pages.jurnal-umum.table', compact('jurnals'))->render(),
             ]);
         }
 
         return view('pages.jurnal-umum.index', compact(
-            'details', 'totalDebit', 'totalKredit', 'akuns', 'periodes', 'bulan', 'search'
+            'jurnals', 'totalDebit', 'totalKredit', 'periodes', 'bulan', 'search', 'status'
         ));
     }
-
     public function create()
     {
         $akuns   = Akun::with('kategoriAkun')->whereNotNull('parent_id')->orderBy('kode_akun')->get();
@@ -179,6 +169,72 @@ class JurnalUmumController extends Controller
 
         return redirect()->route('dashboard.jurnal-umum.index')
             ->with('success', 'Jurnal umum berhasil diperbarui.');
+    }
+
+    public function post(Jurnal $jurnalUmum)
+    {
+        if ($jurnalUmum->status === 'POSTED') {
+            return back()->with('error', 'Jurnal sudah diposting.');
+        }
+
+        $jurnalUmum->load('detailJurnal');
+
+        if ($jurnalUmum->detailJurnal->isEmpty()) {
+            return back()->with('error', 'Jurnal tidak memiliki entri.');
+        }
+
+        $totalDebit  = $jurnalUmum->detailJurnal->where('tipe', 'DEBIT')->sum('nominal');
+        $totalKredit = $jurnalUmum->detailJurnal->where('tipe', 'KREDIT')->sum('nominal');
+
+        if (round($totalDebit, 2) !== round($totalKredit, 2)) {
+            return back()->with('error', 'Total debit dan kredit tidak seimbang.');
+        }
+
+        $jurnalUmum->update(['status' => 'POSTED']);
+
+        return back()->with('success', 'Jurnal berhasil diposting.');
+    }
+
+    public function bulkPost(Request $request)
+    {
+        $ids = $request->input('ids', []);
+
+        if (empty($ids)) {
+            return back()->with('error', 'Tidak ada jurnal yang dipilih.');
+        }
+
+        $jurnals = Jurnal::whereIn('id', $ids)
+            ->where('jenis_jurnal', 'UMUM')
+            ->where('status', 'DRAFT')
+            ->with('detailJurnal')
+            ->get();
+
+        $posted = 0;
+        $errors = [];
+
+        foreach ($jurnals as $jurnal) {
+            $totalDebit  = $jurnal->detailJurnal->where('tipe', 'DEBIT')->sum('nominal');
+            $totalKredit = $jurnal->detailJurnal->where('tipe', 'KREDIT')->sum('nominal');
+
+            if (round($totalDebit, 2) !== round($totalKredit, 2)) {
+                $errors[] = "Jurnal #{$jurnal->id} tidak seimbang, dilewati.";
+                continue;
+            }
+
+            $jurnal->update(['status' => 'POSTED']);
+            $posted++;
+        }
+
+        $message = "{$posted} jurnal berhasil diposting.";
+        if (!empty($errors)) {
+            $message .= ' ' . implode(' ', $errors);
+        }
+
+        if ($request->ajax()) {
+            return response()->json(['message' => $message, 'success' => $posted > 0]);
+        }
+
+        return back()->with('success', $message);
     }
 
     public function destroy(Jurnal $jurnalUmum)
