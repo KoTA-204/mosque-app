@@ -17,10 +17,20 @@
             @forelse($details as $i => $detail)
             @php
                 $isDebit = $detail->tipe === 'DEBIT';
-                $runningBalance = $isDebit
-                    ? $runningBalance + $detail->nominal
-                    : $runningBalance - $detail->nominal;
+                // Saldo bertambah sesuai saldo normal akun
+                if ($saldoNormal === 'DEBIT') {
+                    $runningBalance = $isDebit
+                        ? $runningBalance + $detail->nominal
+                        : $runningBalance - $detail->nominal;
+                } else {
+                    // Saldo normal KREDIT: kredit menambah, debit mengurangi
+                    $runningBalance = $isDebit
+                        ? $runningBalance - $detail->nominal
+                        : $runningBalance + $detail->nominal;
+                }
+                $saldoPositif = $runningBalance >= 0;
             @endphp
+
             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                 <td class="px-5 py-3.5 text-gray-500 dark:text-gray-400">{{ $details->firstItem() + $i }}</td>
                 <td class="px-4 py-3.5 text-gray-700 dark:text-gray-300 whitespace-nowrap">
@@ -46,10 +56,23 @@
                         <span class="text-gray-300 dark:text-gray-600">-</span>
                     @endif
                 </td>
-                <td class="px-4 py-3.5 text-right font-semibold {{ $runningBalance >= 0 ? 'text-gray-900 dark:text-white' : 'text-red-500' }}">
-                    Rp {{ number_format(abs($runningBalance), 0, ',', '.') }}
-                    @if($runningBalance < 0)
-                        <span class="text-xs font-normal text-red-400">(K)</span>
+                <td class="px-4 py-3.5 text-right font-semibold">
+                    @if($saldoPositif)
+                        <span class="text-gray-900 dark:text-white">
+                            Rp {{ number_format(abs($runningBalance), 0, ',', '.') }}
+                        </span>
+                        @if(!$loop->first)
+                        <span class="text-xs font-normal {{ $saldoNormal === 'DEBIT' ? 'text-blue-400' : 'text-green-500' }}">
+                            ({{ $saldoNormal === 'DEBIT' ? 'D' : 'K' }})
+                        </span>
+                        @endif
+                    @else
+                        <span class="text-red-500 dark:text-red-400">
+                            Rp {{ number_format(abs($runningBalance), 0, ',', '.') }}
+                        </span>
+                        <span class="text-xs font-normal text-red-400">
+                            ({{ $saldoNormal === 'DEBIT' ? 'K' : 'D' }})
+                        </span>
                     @endif
                 </td>
                 <td class="px-4 py-3.5 text-gray-600 dark:text-gray-400 text-xs">

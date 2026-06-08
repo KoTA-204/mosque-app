@@ -24,6 +24,7 @@
                 </p>
             </div>
         </div>
+
         {{-- Total Debit --}}
         <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-5 py-4 flex items-center gap-4">
             <div class="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
@@ -34,10 +35,11 @@
             <div>
                 <p class="text-xs text-gray-500 dark:text-gray-400">Total Debit</p>
                 <p id="badgeTotalDebit" class="text-sm font-bold text-gray-900 dark:text-white">
-                    {{ number_format($totalDebit, 0, ',', '.') }}
+                   Rp {{ number_format($totalDebit, 0, ',', '.') }}
                 </p>
             </div>
         </div>
+
         {{-- Total Kredit --}}
         <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-5 py-4 flex items-center gap-4">
             <div class="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
@@ -48,11 +50,12 @@
             <div>
                 <p class="text-xs text-gray-500 dark:text-gray-400">Total Kredit</p>
                 <p id="badgeTotalKredit" class="text-sm font-bold text-gray-900 dark:text-white">
-                    {{ number_format($totalKredit, 0, ',', '.') }}
+                    Rp {{ number_format($totalKredit, 0, ',', '.') }}
                 </p>
             </div>
         </div>
-        {{-- Saldo Akhir + Badge --}}
+
+        {{-- Saldo Akhir --}}
         <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-5 py-4 flex items-center gap-4">
             <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shrink-0">
                 <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,25 +63,9 @@
                 </svg>
             </div>
             <div>
-                <div class="flex items-center gap-2">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Saldo Akhir</p>
-                    @if($badgeAkun)
-                    <span id="badgeLabel" class="text-xs font-semibold px-1.5 py-0.5 rounded
-                        {{ $badgeWarna === 'blue' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : '' }}
-                        {{ $badgeWarna === 'green' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : '' }}
-                        {{ $badgeWarna === 'red' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : '' }}">
-                        {{ $badgeAkun }}
-                    </span>
-                    @else
-                    <span id="badgeLabel" class="hidden"></span>
-                    @endif
-                </div>
-                <p id="badgeSaldoAkhir" class="text-sm font-bold
-                    {{ $badgeWarna === 'blue' ? 'text-blue-600 dark:text-blue-400' : '' }}
-                    {{ $badgeWarna === 'green' ? 'text-green-600 dark:text-green-400' : '' }}
-                    {{ $badgeWarna === 'red' ? 'text-red-500 dark:text-red-400' : '' }}
-                    {{ !$badgeWarna ? 'text-gray-900 dark:text-white' : '' }}">
-                    Rp {{ number_format($saldoAkhir, 0, ',', '.') }}
+                <p class="text-xs text-gray-500 dark:text-gray-400">Saldo Akhir</p>
+                <p id="badgeSaldoAkhir" class="text-sm font-bold text-gray-900 dark:text-white">
+                    Rp {{ number_format(abs($saldoAkhir), 0, ',', '.') }}
                 </p>
             </div>
         </div>
@@ -86,6 +73,7 @@
 
     {{-- Tabel --}}
     <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+
         {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-wrap">
             <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
@@ -99,6 +87,7 @@
                 </select>
                 data
             </div>
+
             <div class="flex items-center gap-2 flex-wrap">
                 {{-- Filter Periode --}}
                 <select id="filterPeriode" onchange="applyFilters()"
@@ -122,25 +111,30 @@
                             onfocus="showAkunDropdown()"
                             oninput="filterAkunOptions()">
                         <input type="hidden" id="filterAkun" value="{{ $akunId }}">
-                        <button onclick="clearAkunFilter()" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <button type="button" onclick="toggleAkunDropdown()"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </button>
                     </div>
                     <div id="akunDropdown"
-                        class="hidden absolute z-20 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-56 overflow-y-auto">
+                        class="hidden absolute right-0 z-20 mt-1 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-60 overflow-y-auto">
                         <div class="p-1">
-                            <button onclick="selectAkun('', 'Semua Akun')"
-                                class="akun-option w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400">
+                            <button type="button" onclick="selectAkun('', 'Pilih Akun')"
+                                class="akun-option w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 italic">
                                 Semua Akun
                             </button>
                             @foreach($akuns->groupBy(fn($a) => $a->kategoriAkun->nama_kategori ?? 'Lainnya') as $kategori => $group)
-                            <div class="px-3 py-1 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mt-1">{{ $kategori }}</div>
+                            <div class="px-3 pt-2 pb-0.5 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                                {{ $kategori }}
+                            </div>
                             @foreach($group as $akun)
-                            <button onclick="selectAkun('{{ $akun->id }}', '{{ $akun->kode_akun }} — {{ addslashes($akun->nama_akun) }}')"
+                            <button type="button"
+                                onclick="selectAkun('{{ $akun->id }}', '{{ $akun->kode_akun }} — {{ addslashes($akun->nama_akun) }}')"
                                 data-label="{{ strtolower($akun->kode_akun . ' ' . $akun->nama_akun) }}"
-                                class="akun-option w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 {{ $akunId == $akun->id ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : '' }}">
+                                class="akun-option w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors
+                                    {{ $akunId == $akun->id ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 font-medium' : 'text-gray-700 dark:text-gray-300' }}">
                                 <span class="font-mono text-xs text-gray-400 dark:text-gray-500 mr-1">{{ $akun->kode_akun }}</span>
                                 {{ $akun->nama_akun }}
                             </button>
@@ -161,10 +155,6 @@
 <script>
 const filterUrl = "{{ route('dashboard.buku-besar.index') }}";
 
-function formatRp(val) {
-    return 'Rp ' + Math.abs(val).toLocaleString('id-ID');
-}
-
 function applyFilters() {
     const periode = document.getElementById('filterPeriode').value;
     const akun    = document.getElementById('filterAkun').value;
@@ -181,78 +171,47 @@ function applyFilters() {
     .then(data => {
         document.getElementById('tableWrapper').innerHTML = data.html;
 
-        // Update badges real-time
-        document.getElementById('badgeSaldoAwal').textContent  = formatRp(data.saldoAwal);
-        document.getElementById('badgeTotalDebit').textContent  = data.totalDebit.toLocaleString('id-ID');
-        document.getElementById('badgeTotalKredit').textContent = data.totalKredit.toLocaleString('id-ID');
-        document.getElementById('badgeSaldoAkhir').textContent  = formatRp(data.saldoAkhir);
-
-        // Update badge label warna
-        const badgeLabel = document.getElementById('badgeLabel');
-        const saldoEl    = document.getElementById('badgeSaldoAkhir');
-        const colorMap   = {
-            blue:  { badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',  saldo: 'text-blue-600 dark:text-blue-400' },
-            green: { badge: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', saldo: 'text-green-600 dark:text-green-400' },
-            red:   { badge: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',       saldo: 'text-red-500 dark:text-red-400' },
-        };
-
-        // Reset classes
-        ['bg-blue-100','text-blue-700','dark:bg-blue-900/30','dark:text-blue-400',
-         'bg-green-100','text-green-700','dark:bg-green-900/30','dark:text-green-400',
-         'bg-red-100','text-red-600','dark:bg-red-900/30','dark:text-red-400',
-         'text-blue-600','text-green-600','text-red-500','text-gray-900','dark:text-white',
-         'hidden'].forEach(c => {
-            badgeLabel.classList.remove(c);
-            saldoEl.classList.remove(c);
-        });
-
-        if (data.badgeAkun && data.badgeWarna && colorMap[data.badgeWarna]) {
-            badgeLabel.textContent = data.badgeAkun;
-            badgeLabel.classList.remove('hidden');
-            colorMap[data.badgeWarna].badge.split(' ').forEach(c => badgeLabel.classList.add(c));
-            colorMap[data.badgeWarna].saldo.split(' ').forEach(c => saldoEl.classList.add(c));
-        } else {
-            badgeLabel.classList.add('hidden');
-            saldoEl.classList.add('text-gray-900', 'dark:text-white');
-        }
+        // Update cards — nilai saja, tidak ada perubahan warna/badge
+        document.getElementById('badgeSaldoAwal').textContent  = 'Rp ' + Number(data.saldoAwal).toLocaleString('id-ID');
+        document.getElementById('badgeTotalDebit').textContent  = Number(data.totalDebit).toLocaleString('id-ID');
+        document.getElementById('badgeTotalKredit').textContent = Number(data.totalKredit).toLocaleString('id-ID');
+        document.getElementById('badgeSaldoAkhir').textContent  = 'Rp ' + Math.abs(Number(data.saldoAkhir)).toLocaleString('id-ID');
     });
 }
 
-// ── Searchable Akun Dropdown ──────────────────────────────
+// ── Searchable Akun Dropdown ──────────────────────────────────────────
 function showAkunDropdown() {
     document.getElementById('akunDropdown').classList.remove('hidden');
 }
 
 function hideAkunDropdown() {
-    setTimeout(() => document.getElementById('akunDropdown').classList.add('hidden'), 200);
+    document.getElementById('akunDropdown').classList.add('hidden');
+}
+
+function toggleAkunDropdown() {
+    document.getElementById('akunDropdown').classList.toggle('hidden');
 }
 
 function filterAkunOptions() {
     const q = document.getElementById('akunSearch').value.toLowerCase();
     document.querySelectorAll('.akun-option').forEach(btn => {
-        const label = btn.dataset.label ?? btn.textContent.toLowerCase();
+        const label = (btn.dataset.label ?? btn.textContent).toLowerCase();
         btn.style.display = label.includes(q) ? '' : 'none';
     });
     showAkunDropdown();
 }
 
 function selectAkun(id, label) {
-    document.getElementById('filterAkun').value  = id;
-    document.getElementById('akunSearch').value  = id ? label : '';
-    document.getElementById('akunDropdown').classList.add('hidden');
+    document.getElementById('filterAkun').value = id;
+    document.getElementById('akunSearch').value = id ? label : '';
+    hideAkunDropdown();
     applyFilters();
 }
 
-function clearAkunFilter() {
-    document.getElementById('filterAkun').value = '';
-    document.getElementById('akunSearch').value = '';
-    applyFilters();
-}
-
-document.getElementById('akunSearch').addEventListener('blur', hideAkunDropdown);
+// Tutup dropdown jika klik di luar
 document.addEventListener('click', function(e) {
     if (!document.getElementById('akunDropdownWrapper').contains(e.target)) {
-        document.getElementById('akunDropdown').classList.add('hidden');
+        hideAkunDropdown();
     }
 });
 </script>
