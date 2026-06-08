@@ -19,6 +19,7 @@ use App\Http\Controllers\AsetController;
 use App\Http\Controllers\JurnalUmumController;
 use App\Http\Controllers\JurnalPenyesuaianController;
 use App\Http\Controllers\JurnalKoreksiController;
+use App\Http\Controllers\JurnalPenutupController;
 
 // ── Landing Page ───────────────────────────────────────────────────────────
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -310,6 +311,36 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
             Route::delete('/jurnal-koreksi/{jurnal}', [JurnalKoreksiController::class, 'destroy'])
                 ->whereNumber('jurnal')
                 ->name('jurnal-koreksi.destroy');
+        });
+    });
+
+    Route::middleware('permission:VIEW_JURNAL_PENUTUP')->group(function () {
+        Route::get('/jurnal-penutup', [JurnalPenutupController::class, 'index'])
+            ->name('jurnal-penutup.index');
+
+        Route::get('/jurnal-penutup/{jurnal}', [JurnalPenutupController::class, 'show'])
+            ->whereNumber('jurnal')
+            ->name('jurnal-penutup.show');
+
+        Route::middleware('permission:CREATE_JURNAL_PENUTUP')->group(function () {
+            Route::get('/jurnal-penutup/create', [JurnalPenutupController::class, 'create'])
+                ->name('jurnal-penutup.create');
+
+            Route::get('/jurnal-penutup/aset-detail', [JurnalPenutupController::class, 'getAsetDetail'])
+                ->name('jurnal-penutup.aset-detail');
+
+            Route::post('/jurnal-penutup', [JurnalPenutupController::class, 'store'])
+                ->name('jurnal-penutup.store');
+            
+            Route::post('/jurnal-penutup/konfirmasi-tahap', [JurnalPenutupController::class, 'konfirmasiTahap'])
+                ->name('jurnal-penutup.konfirmasi-tahap');
+
+            Route::post('/jurnal-penutup/bulk-post', [JurnalPenutupController::class, 'bulkPost'])
+                ->name('jurnal-penutup.bulk-post');
+
+            Route::delete('/jurnal-penutup/{jurnal}', [JurnalPenutupController::class, 'destroy'])
+                ->whereNumber('jurnal')
+                ->name('jurnal-penutup.destroy');
         });
     });
 });
