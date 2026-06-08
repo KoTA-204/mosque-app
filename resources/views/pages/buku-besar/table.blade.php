@@ -32,25 +32,28 @@
                 <td class="px-4 py-3.5 text-gray-600 dark:text-gray-400 font-mono text-xs">
                     J - {{ str_pad($detail->jurnal_id, 4, '0', STR_PAD_LEFT) }}
                 </td>
-                <td class="px-4 py-3.5 text-right text-gray-900 dark:text-white">
+                <td class="px-4 py-3.5 text-right">
                     @if($isDebit)
-                        Rp {{ number_format($detail->nominal, 0, ',', '.') }}
+                        <span class="text-blue-600 dark:text-blue-400 font-medium">Rp {{ number_format($detail->nominal, 0, ',', '.') }}</span>
                     @else
                         <span class="text-gray-300 dark:text-gray-600">-</span>
                     @endif
                 </td>
-                <td class="px-4 py-3.5 text-right text-gray-900 dark:text-white">
+                <td class="px-4 py-3.5 text-right">
                     @if(!$isDebit)
-                        <span class="font-semibold">Rp{{ number_format($detail->nominal, 0, ',', '.') }}</span>
+                        <span class="text-red-500 dark:text-red-400 font-medium">Rp {{ number_format($detail->nominal, 0, ',', '.') }}</span>
                     @else
                         <span class="text-gray-300 dark:text-gray-600">-</span>
                     @endif
                 </td>
                 <td class="px-4 py-3.5 text-right font-semibold {{ $runningBalance >= 0 ? 'text-gray-900 dark:text-white' : 'text-red-500' }}">
-                    Rp.{{ number_format(abs($runningBalance), 0, ',', '.') }}
+                    Rp {{ number_format(abs($runningBalance), 0, ',', '.') }}
+                    @if($runningBalance < 0)
+                        <span class="text-xs font-normal text-red-400">(K)</span>
+                    @endif
                 </td>
                 <td class="px-4 py-3.5 text-gray-600 dark:text-gray-400 text-xs">
-                    {{ $detail->jurnal->transaksi->dompet->nama_dompet ?? 'Dana Operasional' }}
+                    {{ optional(optional($detail->jurnal->transaksi)->dompet)->nama_dompet ?? 'Dana Operasional' }}
                 </td>
             </tr>
             @empty
@@ -61,6 +64,29 @@
             </tr>
             @endforelse
         </tbody>
+        {{-- Total Row --}}
+        @if($details->count() > 0)
+        <tfoot>
+            <tr class="border-t-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                <td colspan="4" class="px-5 py-3 text-sm font-bold text-gray-900 dark:text-white">
+                    Total Keseluruhan
+                </td>
+                <td class="px-4 py-3 text-right font-bold text-blue-600 dark:text-blue-400">
+                    Rp {{ number_format($totalDebit, 0, ',', '.') }}
+                </td>
+                <td class="px-4 py-3 text-right font-bold text-red-500 dark:text-red-400">
+                    Rp {{ number_format($totalKredit, 0, ',', '.') }}
+                </td>
+                <td class="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">
+                    Rp {{ number_format(abs($saldoAkhir), 0, ',', '.') }}
+                    @if($saldoAkhir < 0)
+                        <span class="text-xs font-normal text-red-400">(K)</span>
+                    @endif
+                </td>
+                <td></td>
+            </tr>
+        </tfoot>
+        @endif
     </table>
 </div>
 
