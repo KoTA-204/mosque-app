@@ -1,6 +1,17 @@
 {{-- resources/views/pages/aset/edit.blade.php --}}
 <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden">
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+    <style>
+        .flatpickr-day.selected, .flatpickr-day.selected:hover { background: #16a34a; border-color: #16a34a; }
+        .flatpickr-day:hover { background: #f0fdf4; }
+        .dark .flatpickr-calendar { background: #1f2937; border-color: #374151; color: #f9fafb; }
+        .dark .flatpickr-day { color: #d1d5db; }
+        .dark .flatpickr-day:hover { background: #374151; }
+        .dark .flatpickr-months, .dark .flatpickr-weekdays { background: #111827; }
+        .dark .flatpickr-current-month, .dark .flatpickr-weekday { color: #f9fafb; }
+    </style>
+
     {{-- Header --}}
     <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
         <div>
@@ -27,17 +38,13 @@
                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">Identitas Aset</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                            Nama Aset <span class="text-red-500">*</span>
-                        </label>
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Nama Aset <span class="text-red-500">*</span></label>
                         <input type="text" name="nama_aset" value="{{ $aset->nama_aset }}"
                             class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
                         <p id="err-nama_aset" class="text-xs text-red-500 mt-1"></p>
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                            Lokasi <span class="text-red-500">*</span>
-                        </label>
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Lokasi <span class="text-red-500">*</span></label>
                         <div class="relative">
                             <select name="lokasi_aset"
                                 class="w-full appearance-none border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
@@ -49,9 +56,7 @@
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                            Kondisi Aset <span class="text-red-500">*</span>
-                        </label>
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Kondisi Aset <span class="text-red-500">*</span></label>
                         <div class="relative">
                             <select name="kondisi_aset"
                                 class="w-full appearance-none border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
@@ -81,11 +86,9 @@
                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">Perolehan Aset</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                            Sumber Perolehan <span class="text-red-500">*</span>
-                        </label>
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Sumber Perolehan <span class="text-red-500">*</span></label>
                         <div class="relative">
-                            <select name="sumber_perolehan" id="edit-sumberPerolehan" onchange="onEditSumberChange()"
+                            <select name="sumber_perolehan" id="edit-sumberPerolehan"
                                 class="w-full appearance-none border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
                                 @foreach(['Wakaf','Hibah/Donasi','Pembelian','Infak Jamaah','Lainnya'] as $src)
                                     <option value="{{ $src }}" {{ $aset->sumber_perolehan == $src ? 'selected' : '' }}>{{ $src }}</option>
@@ -95,22 +98,30 @@
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                            Tanggal Perolehan <span class="text-red-500">*</span>
-                        </label>
-                        <input type="date" name="tanggal_perolehan"
-                            value="{{ $aset->tanggal_perolehan?->format('Y-m-d') }}"
-                            class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Tanggal Perolehan <span class="text-red-500">*</span></label>
+                        <input type="hidden" name="tanggal_perolehan" id="edit-tanggal_perolehan"
+                            value="{{ $aset->tanggal_perolehan?->format('Y-m-d') }}">
+                        <input type="text" id="edit-fp-tanggal_perolehan" readonly
+                            value="{{ $aset->tanggal_perolehan?->translatedFormat('d F Y') }}"
+                            placeholder="Pilih tanggal"
+                            class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors cursor-pointer">
                     </div>
+
+                    {{-- Nilai --}}
                     <div>
                         <label id="edit-labelNilai" class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                            Nilai Perolehan (IDR) <span class="text-red-500">*</span>
+                            {{ $aset->label_nilai }} (IDR) <span class="text-red-500">*</span>
                         </label>
-                        <input type="number" name="nilai_tercatat" id="edit-nilaiTercatat"
-                            value="{{ $aset->nilai_tercatat }}" min="0"
+                        <input type="hidden" name="nilai_tercatat" id="edit-nilai_tercatat"
+                            value="{{ $aset->nilai_tercatat }}">
+                        <input type="text" id="edit-display-nilai"
+                            value="{{ number_format((float)$aset->nilai_tercatat, 0, ',', '.') }}"
+                            inputmode="numeric"
                             class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
                         <p id="err-nilai_tercatat" class="text-xs text-red-500 mt-1"></p>
                     </div>
+
+                    {{-- Nama Pemberi --}}
                     <div id="edit-fieldNamaPemberi" class="{{ in_array($aset->sumber_perolehan, ['Wakaf','Hibah/Donasi','Infak Jamaah']) ? '' : 'hidden' }}">
                         <label id="edit-labelNamaPemberi" class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
                             {{ $aset->label_pemberi }}
@@ -119,11 +130,13 @@
                             placeholder="Masukkan nama"
                             class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
                     </div>
+
                     <div>
                         <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Jumlah Unit</label>
                         <input type="number" name="jumlah_unit" value="{{ $aset->jumlah_unit ?? 1 }}" min="1"
                             class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
                     </div>
+
                     <div>
                         <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Dokumen Pendukung</label>
                         @if($aset->dokumen_pendukung)
@@ -134,22 +147,22 @@
                         <input type="file" name="dokumen_pendukung" accept=".png,.jpg,.jpeg,.pdf"
                             class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border file:border-green-600 file:text-green-700 file:bg-transparent file:text-sm file:font-medium hover:file:bg-green-50 cursor-pointer">
                     </div>
+
                     <div class="md:col-span-2">
                         <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Keterangan / Catatan</label>
-                        <textarea name="keterangan" rows="3" placeholder="Masukkan catatan tambahan..."
+                        <textarea name="keterangan" rows="3"
                             class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors resize-none">{{ $aset->keterangan }}</textarea>
                     </div>
                 </div>
             </div>
 
-            {{-- Checkbox: Aset Disusutkan --}}
+            {{-- Checkbox Penyusutan --}}
             <div class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                <input type="checkbox" id="edit-cbDisusutkan" name="disusutkan" value="1"
+                <input type="checkbox" id="edit-cbDisusutkan"
                     {{ $isDisusutkan ? 'checked' : '' }}
-                    onchange="toggleEditPenyusutan(this.checked)"
                     class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer">
                 <div>
-                    <label for="edit-cbDisusutkan" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                    <label for="edit-cbDisusutkan" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer select-none">
                         Aset ini disusutkan
                     </label>
                     <p class="text-xs text-gray-400 mt-0.5">Centang jika aset memiliki umur manfaat dan perlu dihitung penyusutannya</p>
@@ -157,51 +170,44 @@
             </div>
 
             {{-- Section Penyusutan --}}
-            <div id="edit-sectionPenyusutan" class="{{ $isDisusutkan ? '' : 'hidden' }}">
-                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">Penyusutan</p>
+            <div id="edit-sectionPenyusutan" class="{{ $isDisusutkan ? '' : 'hidden' }} space-y-4">
+                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Penyusutan</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                            Tanggal Mulai Penyusutan <span class="text-red-500">*</span>
-                        </label>
-                        <input type="date" name="tanggal_mulai_penyusutan" id="edit-tanggalMulai"
-                            value="{{ $aset->tanggal_mulai_penyusutan?->format('Y-m-d') }}"
-                            class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Tanggal Mulai Penyusutan <span class="text-red-500">*</span></label>
+                        <input type="hidden" name="tanggal_mulai_penyusutan" id="edit-tanggal_mulai_penyusutan"
+                            value="{{ $aset->tanggal_mulai_penyusutan?->format('Y-m-d') }}">
+                        <input type="text" id="edit-fp-tanggal_mulai" readonly
+                            value="{{ $aset->tanggal_mulai_penyusutan?->translatedFormat('d F Y') }}"
+                            placeholder="Pilih tanggal"
+                            class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors cursor-pointer">
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                            Umur Manfaat (Tahun) <span class="text-red-500">*</span>
-                        </label>
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Umur Manfaat (Tahun) <span class="text-red-500">*</span></label>
                         <input type="number" name="umur_manfaat" id="edit-umurManfaat"
                             value="{{ $aset->umur_manfaat }}" placeholder="Contoh: 20" min="1"
                             class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
                     </div>
                 </div>
 
-                {{-- Preview kalkulasi --}}
-                <div id="edit-previewPenyusutan" class="{{ $isDisusutkan && $aset->umur_manfaat ? '' : 'hidden' }} mt-4 grid grid-cols-3 gap-3">
-                    <div class="p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900">
+                {{-- Preview --}}
+                <div id="edit-previewPenyusutan" class="{{ $isDisusutkan && $aset->umur_manfaat ? '' : 'hidden' }} grid grid-cols-3 gap-3">
+                    <div class="p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900">
                         <p class="text-xs text-gray-400 mb-1">Penyusutan / Tahun</p>
                         <p id="edit-prev-tahunan" class="text-sm font-semibold text-gray-800 dark:text-white">
-                            @if($isDisusutkan && $aset->umur_manfaat)
-                                Rp {{ number_format($aset->penyusutan_per_tahun, 0, ',', '.') }}
-                            @else –
-                            @endif
+                            Rp {{ number_format($aset->penyusutan_per_tahun, 0, ',', '.') }}
                         </p>
                     </div>
-                    <div class="p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900">
+                    <div class="p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900">
                         <p class="text-xs text-gray-400 mb-1">Penyusutan / Bulan</p>
                         <p id="edit-prev-bulanan" class="text-sm font-semibold text-gray-800 dark:text-white">
-                            @if($isDisusutkan && $aset->umur_manfaat)
-                                Rp {{ number_format($aset->penyusutan_per_bulan, 0, ',', '.') }}
-                            @else –
-                            @endif
+                            Rp {{ number_format($aset->penyusutan_per_bulan, 0, ',', '.') }}
                         </p>
                     </div>
-                    <div class="p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900">
+                    <div class="p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900">
                         <p class="text-xs text-gray-400 mb-1">Selesai Tahun</p>
                         <p id="edit-prev-selesai" class="text-sm font-semibold text-gray-800 dark:text-white">
-                            @if($isDisusutkan && $aset->umur_manfaat && $aset->tanggal_mulai_penyusutan)
+                            @if($aset->tanggal_mulai_penyusutan && $aset->umur_manfaat)
                                 {{ $aset->tanggal_mulai_penyusutan->year + $aset->umur_manfaat - 1 }}
                             @else –
                             @endif
@@ -226,79 +232,3 @@
         </div>
     </form>
 </div>
-
-<script>
-const editLabelNilaiMap = {
-    'Wakaf':        'Nilai Wajar Aset (IDR)',
-    'Hibah/Donasi': 'Nilai Wajar Aset (IDR)',
-    'Infak Jamaah': 'Nilai Wajar Aset (IDR)',
-    'Pembelian':    'Nilai Perolehan / Harga Beli (IDR)',
-    'Lainnya':      'Nilai Perolehan (IDR)',
-};
-const editLabelPemberiMap = {
-    'Wakaf':        'Nama Wakif (Pemberi Wakaf)',
-    'Hibah/Donasi': 'Nama Donatur / Pemberi Hibah',
-    'Infak Jamaah': 'Nama Pemberi Infak',
-};
-const editShowPemberi = ['Wakaf','Hibah/Donasi','Infak Jamaah'];
-
-function onEditSumberChange() {
-    const val = document.getElementById('edit-sumberPerolehan').value;
-    document.getElementById('edit-labelNilai').innerHTML =
-        `${editLabelNilaiMap[val] ?? 'Nilai Perolehan (IDR)'} <span class="text-red-500">*</span>`;
-    const fp = document.getElementById('edit-fieldNamaPemberi');
-    if (editShowPemberi.includes(val)) {
-        fp.classList.remove('hidden');
-        document.getElementById('edit-labelNamaPemberi').textContent = editLabelPemberiMap[val] ?? 'Nama Pemberi';
-    } else {
-        fp.classList.add('hidden');
-    }
-    updateEditPreview();
-}
-
-function toggleEditPenyusutan(checked) {
-    const section = document.getElementById('edit-sectionPenyusutan');
-    const tanggal = document.getElementById('edit-tanggalMulai');
-    const umur    = document.getElementById('edit-umurManfaat');
-    if (checked) {
-        section.classList.remove('hidden');
-    } else {
-        section.classList.add('hidden');
-        tanggal.value = '';
-        umur.value    = '';
-        document.getElementById('edit-previewPenyusutan').classList.add('hidden');
-    }
-}
-
-function updateEditPreview() {
-    const nilai = parseFloat(document.getElementById('edit-nilaiTercatat')?.value) || 0;
-    const umur  = parseInt(document.getElementById('edit-umurManfaat')?.value) || 0;
-    const tgl   = document.getElementById('edit-tanggalMulai')?.value;
-
-    const preview = document.getElementById('edit-previewPenyusutan');
-    if (nilai > 0 && umur > 0) {
-        preview.classList.remove('hidden');
-        const tahunan = nilai / umur;
-        const bulanan = tahunan / 12;
-        document.getElementById('edit-prev-tahunan').textContent = 'Rp ' + tahunan.toLocaleString('id-ID', {maximumFractionDigits: 0});
-        document.getElementById('edit-prev-bulanan').textContent = 'Rp ' + bulanan.toLocaleString('id-ID', {maximumFractionDigits: 0});
-        if (tgl) {
-            const tahunMulai = new Date(tgl).getFullYear();
-            document.getElementById('edit-prev-selesai').textContent = tahunMulai + umur - 1;
-        } else {
-            document.getElementById('edit-prev-selesai').textContent = '–';
-        }
-    } else {
-        preview.classList.add('hidden');
-    }
-}
-
-document.addEventListener('input', function(e) {
-    if (['nilai_tercatat','umur_manfaat','tanggal_mulai_penyusutan'].includes(e.target.name)) {
-        updateEditPreview();
-    }
-});
-
-// Init saat partial dimuat
-onEditSumberChange();
-</script>
