@@ -199,6 +199,8 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         Route::middleware('permission:CREATE_JURNAL')->group(function () {
             Route::get('/jurnal-umum/create', [JurnalUmumController::class, 'create'])->name('jurnal-umum.create');
             Route::post('/jurnal-umum', [JurnalUmumController::class, 'store'])->name('jurnal-umum.store');
+            Route::post('/jurnal-umum/{jurnalUmum}/post', [JurnalUmumController::class, 'post'])->name('jurnal-umum.post');
+            Route::post('/jurnal-umum/bulk-post', [JurnalUmumController::class, 'bulkPost'])->name('jurnal-umum.bulk-post');
         });
 
         Route::middleware('permission:EDIT_JURNAL')->group(function () {
