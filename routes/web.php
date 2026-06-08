@@ -20,6 +20,8 @@ use App\Http\Controllers\JurnalUmumController;
 use App\Http\Controllers\JurnalPenyesuaianController;
 use App\Http\Controllers\JurnalKoreksiController;
 use App\Http\Controllers\JurnalPenutupController;
+use App\Http\Controllers\BukuBesarController;
+use App\Http\Controllers\NeracaSaldoController;
 
 // ── Landing Page ───────────────────────────────────────────────────────────
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -210,6 +212,16 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         Route::middleware('permission:DELETE_JURNAL')->group(function () {
             Route::delete('/jurnal-umum/{jurnalUmum}', [JurnalUmumController::class, 'destroy'])->name('jurnal-umum.destroy');
         });
+    });
+
+    // ── Akuntansi - Buku Besar ─────────────────────────────────
+    Route::middleware('permission:VIEW_BUKU_BESAR')->group(function () {
+        Route::get('/buku-besar', [BukuBesarController::class, 'index'])->name('buku-besar.index');
+    });
+
+    // ── Akuntansi - Neraca Saldo ─────────────────────────────────
+    Route::middleware('permission:VIEW_NERACA_SALDO')->group(function () {
+        Route::get('/neraca-saldo', [NeracaSaldoController::class, 'index'])->name('neraca-saldo.index');
     });
 
     // ── Master Data - Chart of Accounts ────────────────────────────────────
