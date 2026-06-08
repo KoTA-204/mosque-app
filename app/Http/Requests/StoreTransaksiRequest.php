@@ -80,4 +80,13 @@ class StoreTransaksiRequest extends FormRequest
             'dokumen_aset.max'               => 'Ukuran file dokumen aset maksimal 5MB',
         ];
     }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('is_aset')) {
+            $this->merge([
+                'is_aset' => filter_var($this->is_aset, FILTER_VALIDATE_BOOLEAN),
+            ]);
+        }
+    }
 }
