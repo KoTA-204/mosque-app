@@ -45,6 +45,11 @@ class Aset extends Model
         return $this->belongsTo(Transaksi::class);
     }
 
+    public function scopeAktif($query)
+    {
+        return $query->where('status_aset', 'AKTIF');
+    }
+
     public function getPenyusutanPerBulanAttribute(): float
     {
         if (!$this->umur_manfaat || $this->umur_manfaat <= 0) return 0;

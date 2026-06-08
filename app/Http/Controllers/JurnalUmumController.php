@@ -20,7 +20,6 @@ class JurnalUmumController extends Controller
 
         $query = DetailJurnal::with(['jurnal.periode', 'akun'])
             ->whereHas('jurnal', function ($q) use ($bulan) {
-                // FIX: panggil scope sebagai where clause biasa, bukan method
                 $q->where('jenis_jurnal', 'UMUM');
                 if ($bulan) {
                     $q->whereYear('tanggal', substr($bulan, 0, 4))
@@ -36,7 +35,7 @@ class JurnalUmumController extends Controller
                 )
             )
             ->orderByDesc(
-                \App\Models\Jurnal::select('tanggal')
+                Jurnal::select('tanggal')
                     ->whereColumn('jurnal.id', 'detail_jurnal.jurnal_id')
                     ->limit(1)
             );

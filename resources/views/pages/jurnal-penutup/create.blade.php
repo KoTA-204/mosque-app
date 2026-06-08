@@ -13,45 +13,16 @@
         @endif
     </div>
 
-    {{-- Error --}}
-    @if($errors->any())
-    <div class="flex items-start gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400">
-        <svg class="w-4 h-4 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-        </svg>
-        <ul class="list-disc list-inside space-y-0.5">
-            @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
-        </ul>
-    </div>
-    @endif
+    <x-jurnal.error-banner />
 
-    {{-- Stepper --}}
-    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
-        <div class="flex items-center">
-            @foreach([1 => 'Periode & Ringkasan', 2 => 'Proses Penutupan', 3 => 'Review & Posting'] as $n => $label)
-            <div class="flex items-center gap-2">
-                <div class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors
-                    {{ $n === 1 ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400' }}"
-                     id="step-circle-{{ $n }}">{{ $n }}</div>
-                <div>
-                    <p class="text-xs text-gray-400">Langkah {{ $n }}</p>
-                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $label }}</p>
-                </div>
-            </div>
-            @if($n < 3)
-            <div class="mx-4 flex-1 border-t-2 border-gray-100 dark:border-gray-800 transition-colors" id="step-line-{{ $n }}"></div>
-            @endif
-            @endforeach
-        </div>
-    </div>
+    <x-jurnal.stepper :steps="['Periode & Ringkasan', 'Proses Penutupan', 'Review & Posting']" />
 
     <form action="{{ route('dashboard.jurnal-penutup.store') }}" method="POST" id="penutupForm">
         @csrf
 
-        {{-- ═══ STEP 1: Periode & Ringkasan ═══ --}}
+        {{-- ═══ STEP 1 ═══ --}}
         <div id="step1" class="space-y-4">
 
-            {{-- Warning urutan --}}
             <div class="flex items-start gap-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl px-4 py-3 text-sm text-yellow-700 dark:text-yellow-400">
                 <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -112,7 +83,6 @@
                     <p class="text-xs text-gray-400">Data dari neraca saldo setelah penyesuaian</p>
                 </div>
 
-                {{-- Kartu ringkasan --}}
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
                     <div class="rounded-xl border border-gray-100 dark:border-gray-800 p-4">
                         <p class="text-xs text-gray-400 mb-1">Total Pendapatan</p>
@@ -129,13 +99,10 @@
                         <p class="text-xl font-bold {{ $ringkasan['surplus'] >= 0 ? 'text-green-600' : 'text-red-500' }}">
                             Rp {{ number_format(abs($ringkasan['surplus']), 0, ',', '.') }}
                         </p>
-                        <p class="text-xs text-gray-400 mt-1">
-                            {{ $ringkasan['surplus'] >= 0 ? 'Surplus — akan ditutup ke Saldo Dana' : 'Defisit' }}
-                        </p>
+                        <p class="text-xs text-gray-400 mt-1">{{ $ringkasan['surplus'] >= 0 ? 'Surplus — akan ditutup ke Saldo Dana' : 'Defisit' }}</p>
                     </div>
                 </div>
 
-                {{-- Status penyesuaian --}}
                 @if($ringkasan['ada_draft_penyesuaian'])
                 <div class="flex items-start gap-2 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400 mb-4">
                     <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,7 +119,6 @@
                 </div>
                 @endif
 
-                {{-- Rincian akun --}}
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Rincian Akun yang Akan Ditutup</p>
                 <table class="w-full text-sm">
                     <thead>
@@ -166,8 +132,7 @@
                         @foreach($ringkasan['pendapatan'] as $item)
                         <tr>
                             <td class="py-2 text-gray-700 dark:text-gray-300">
-                                <span class="text-xs text-gray-400 mr-1">{{ $item['akun']->kode_akun }}</span>
-                                {{ $item['akun']->nama_akun }}
+                                <span class="text-xs text-gray-400 mr-1">{{ $item['akun']->kode_akun }}</span>{{ $item['akun']->nama_akun }}
                             </td>
                             <td class="py-2 text-center">
                                 <span class="text-xs font-medium text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full">Pendapatan</span>
@@ -178,8 +143,7 @@
                         @foreach($ringkasan['beban'] as $item)
                         <tr>
                             <td class="py-2 text-gray-700 dark:text-gray-300">
-                                <span class="text-xs text-gray-400 mr-1">{{ $item['akun']->kode_akun }}</span>
-                                {{ $item['akun']->nama_akun }}
+                                <span class="text-xs text-gray-400 mr-1">{{ $item['akun']->kode_akun }}</span>{{ $item['akun']->nama_akun }}
                             </td>
                             <td class="py-2 text-center">
                                 <span class="text-xs font-medium text-red-600 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">Beban</span>
@@ -192,56 +156,30 @@
             </div>
             @endif
 
-            {{-- Footer step 1 --}}
-            <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
-                <span class="text-xs text-gray-400">Langkah 1 dari 3</span>
-                <div class="flex gap-3">
-                    <a href="{{ route('dashboard.jurnal-penutup.index') }}"
-                       class="inline-flex items-center gap-2 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                        Kembali
-                    </a>
-                    <button type="button" onclick="goToStep2()"
-                            {{ ($ringkasan && $ringkasan['ada_draft_penyesuaian']) ? 'disabled' : '' }}
-                            class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors">
-                        Lanjut ke Detail
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
+            <x-jurnal.form-footer
+                :step="1" :total="3"
+                :back-route="route('dashboard.jurnal-penutup.index')"
+                next-action="goToStep2()"
+                next-label="Lanjut ke Detail"
+                {{-- Disable tombol lanjut jika masih ada draft penyesuaian --}}
+            />
+            {{-- Catatan: jika perlu disable tombol lanjut secara kondisional, tambahkan atribut disabled di controller atau Alpine --}}
+
         </div>
 
-        {{-- ═══ STEP 2: Proses Penutupan (4 tahap) ═══ --}}
+        {{-- ═══ STEP 2: Proses Penutupan ═══ --}}
         <div id="step2" class="hidden space-y-4">
 
-            {{-- Stepper 4 tahap --}}
             @php
             $tahapDefs = [
-                'TUTUP_PENDAPATAN' => [
-                    'label'    => 'Tutup Pendapatan',
-                    'sub'      => 'Menutup semua akun pendapatan ke Ikhtisar Laba/Rugi',
-                    'entri'    => 'Debit semua akun Pendapatan → Kredit Ikhtisar L/R',
-                ],
-                'TUTUP_BEBAN' => [
-                    'label'    => 'Tutup Beban',
-                    'sub'      => 'Menutup semua akun beban ke Ikhtisar Laba/Rugi',
-                    'entri'    => 'Kredit semua akun Beban → Debit Ikhtisar L/R',
-                ],
-                'IKHTISAR_LR' => [
-                    'label'    => 'Ikhtisar Laba/Rugi',
-                    'sub'      => 'Menutup Ikhtisar L/R ke Saldo Dana Masjid',
-                    'entri'    => 'Debit Ikhtisar L/R → Kredit Saldo Dana Masjid',
-                ],
-                'TUTUP_SALDO_DANA' => [
-                    'label'    => 'Tutup ke Saldo Dana',
-                    'sub'      => 'Memindahkan surplus ke saldo dana masjid (opsional verifikasi)',
-                    'entri'    => 'Debit Saldo Dana Bulan Ini → Kredit Saldo Dana Kumulatif',
-                ],
+                'TUTUP_PENDAPATAN' => ['label' => 'Tutup Pendapatan',    'sub' => 'Menutup semua akun pendapatan ke Ikhtisar Laba/Rugi', 'entri' => 'Debit semua akun Pendapatan → Kredit Ikhtisar L/R'],
+                'TUTUP_BEBAN'      => ['label' => 'Tutup Beban',         'sub' => 'Menutup semua akun beban ke Ikhtisar Laba/Rugi',       'entri' => 'Kredit semua akun Beban → Debit Ikhtisar L/R'],
+                'IKHTISAR_LR'      => ['label' => 'Ikhtisar Laba/Rugi',  'sub' => 'Menutup Ikhtisar L/R ke Saldo Dana Masjid',            'entri' => 'Debit Ikhtisar L/R → Kredit Saldo Dana Masjid'],
+                'TUTUP_SALDO_DANA' => ['label' => 'Tutup ke Saldo Dana', 'sub' => 'Memindahkan surplus ke saldo dana masjid',             'entri' => 'Debit Saldo Dana Bulan Ini → Kredit Saldo Dana Kumulatif'],
             ];
             @endphp
 
-            {{-- Progress tahap --}}
+            {{-- Progress --}}
             <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5">
                 <div class="flex items-center justify-between mb-2">
                     <p class="text-xs text-gray-400" id="progressLabel">Tahap 1 dari 4</p>
@@ -267,9 +205,7 @@
                                     {{ $idxTahap + 1 }}
                                 @endif
                             </div>
-                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                {{ $stTahap['selesai'] ? 'Selesai' : 'Belum' }}
-                            </span>
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ $stTahap['selesai'] ? 'Selesai' : 'Belum' }}</span>
                         </div>
                         <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">{{ $tahap['label'] }}</p>
                         <p class="text-xs text-gray-400 mt-0.5">{{ $tahap['sub'] }}</p>
@@ -288,10 +224,8 @@
                     <h3 class="text-sm font-semibold text-gray-900 dark:text-white" id="tahapDetailTitle">Pilih tahap di atas</h3>
                 </div>
 
-                {{-- Info banner --}}
                 <div id="tahapInfoBanner" class="hidden rounded-xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800 px-4 py-3 text-sm text-green-700 dark:text-green-400 mb-4"></div>
 
-                {{-- Tabel entri --}}
                 <div id="tahapEntriContainer" class="hidden">
                     <div class="grid grid-cols-12 gap-3 mb-2 px-1 text-xs font-medium text-gray-400">
                         <div class="col-span-1">No</div>
@@ -302,28 +236,11 @@
                     </div>
                     <div id="tahapEntriRows" class="space-y-1 mb-4"></div>
 
-                    {{-- Total --}}
-                    <div class="rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 px-4 py-3 flex items-center justify-end gap-8">
-                        <div class="text-right">
-                            <p class="text-xs text-gray-400">Total Debit</p>
-                            <p id="tahapTotalDebit" class="text-sm font-bold text-red-500">Rp 0</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-xs text-gray-400">Total Kredit</p>
-                            <p id="tahapTotalKredit" class="text-sm font-bold text-green-600">Rp 0</p>
-                        </div>
-                        <div id="tahapBalanceStatus" class="flex items-center gap-1.5 text-xs font-medium text-green-600">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                            Seimbang
-                        </div>
-                    </div>
+                    {{-- Balance bar dengan prefix "tahap" agar id-nya tidak bentrok --}}
+                    <x-jurnal.balance-bar prefix="tahap" />
 
-                    {{-- Konfirmasi --}}
                     <div class="mt-4">
-                        <button type="button" id="btnKonfirmasi"
-                                onclick="konfirmasiTahap()"
+                        <button type="button" id="btnKonfirmasi" onclick="konfirmasiTahap()"
                                 class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -338,32 +255,17 @@
                 </div>
             </div>
 
-            {{-- Footer step 2 --}}
-            <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
-                <span class="text-xs text-gray-400">Langkah 2 dari 3</span>
-                <div class="flex gap-3">
-                    <button type="button" onclick="goToStep(1)"
-                            class="inline-flex items-center gap-2 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                        </svg>
-                        Kembali
-                    </button>
-                    <button type="button" onclick="goToStep3()" id="btnStep3"
-                            class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors">
-                        Lanjut ke Detail
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
+            <x-jurnal.form-footer
+                :step="2" :total="3"
+                back-action="goToStep(1)"
+                next-action="goToStep3()"
+                next-label="Lanjut ke Review"
+            />
         </div>
 
         {{-- ═══ STEP 3: Review & Posting ═══ --}}
         <div id="step3" class="hidden space-y-4">
 
-            {{-- Info --}}
             <div class="flex items-start gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3 text-sm text-blue-700 dark:text-blue-400">
                 <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -371,7 +273,6 @@
                 Semua 4 tahap jurnal penutup sudah digenerate. Klik "Posting Semua" untuk memposting seluruh jurnal penutup sekaligus ke buku besar.
             </div>
 
-            {{-- Review semua tahap --}}
             <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
                 <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
                     <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -382,30 +283,11 @@
                 <div id="reviewContent" class="space-y-6"></div>
             </div>
 
-            {{-- Footer step 3 --}}
-            <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
-                <span class="text-xs text-gray-400">Langkah 3 dari 3</span>
-                <div class="flex gap-3">
-                    <button type="button" onclick="goToStep(2)"
-                            class="inline-flex items-center gap-2 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                        </svg>
-                        Kembali
-                    </button>
-                    <button type="submit" name="submit_type" value="draft"
-                            class="border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-                        Simpan sebagai Draft
-                    </button>
-                    <button type="submit" name="submit_type" value="posting"
-                            class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                        </svg>
-                        Simpan & Posting
-                    </button>
-                </div>
-            </div>
+            <x-jurnal.form-footer
+                :step="3" :total="3"
+                back-action="goToStep(2)"
+                :show-submit="true"
+            />
         </div>
 
     </form>
@@ -413,16 +295,13 @@
 @endsection
 
 @push('scripts')
-<script>
+<script type="module">
+import { formatRp, makeStepperController } from '/js/jurnal-helpers.js';
+
 // ── Data dari server ───────────────────────────────────────────────────────
+const ringkasan          = @json($ringkasan ?? []);
+const statusTahapServer  = @json($statusTahap ?? []);
 
-const ringkasan = @json($ringkasan ?? []);
-const statusTahapServer = @json($statusTahap ?? []);
-
-// Entri yang sudah dikonfirmasi per tahap
-const entriPerTahap = {};
-
-// Tipe urutan
 const TIPE_URUT = ['TUTUP_PENDAPATAN', 'TUTUP_BEBAN', 'IKHTISAR_LR', 'TUTUP_SALDO_DANA'];
 const TIPE_LABELS = {
     TUTUP_PENDAPATAN: 'Tutup Pendapatan',
@@ -431,112 +310,62 @@ const TIPE_LABELS = {
     TUTUP_SALDO_DANA: 'Tutup ke Saldo Dana',
 };
 const TIPE_INFO = {
-    TUTUP_PENDAPATAN: 'Debit semua akun pendapatan → Kredit Ikhtisar Laba/Rugi. Entri di bawah sudah digenerate otomatis berdasarkan saldo neraca.',
-    TUTUP_BEBAN:      'Debit Ikhtisar Laba/Rugi → Kredit semua akun beban. Entri di bawah sudah digenerate otomatis berdasarkan saldo neraca.',
-    IKHTISAR_LR:      'Memindahkan saldo Ikhtisar L/R ke Saldo Dana Masjid. Entri di bawah sudah digenerate otomatis.',
-    TUTUP_SALDO_DANA: 'Memindahkan surplus ke saldo dana masjid (opsional verifikasi). Entri di bawah sudah digenerate otomatis berdasarkan saldo neraca.',
+    TUTUP_PENDAPATAN: 'Debit semua akun pendapatan → Kredit Ikhtisar Laba/Rugi. Entri digenerate otomatis berdasarkan saldo neraca.',
+    TUTUP_BEBAN:      'Debit Ikhtisar Laba/Rugi → Kredit semua akun beban. Entri digenerate otomatis berdasarkan saldo neraca.',
+    IKHTISAR_LR:      'Memindahkan saldo Ikhtisar L/R ke Saldo Dana Masjid. Entri digenerate otomatis.',
+    TUTUP_SALDO_DANA: 'Memindahkan surplus ke saldo dana masjid (opsional verifikasi). Entri digenerate otomatis.',
 };
 
-let currentStep    = 1;
-let currentTipe    = null;
-let tahapSelesai   = {};
+// ── State ──────────────────────────────────────────────────────────────────
+const entriPerTahap = {};
+let   currentTipe   = null;
+const tahapSelesai  = {};
+TIPE_URUT.forEach(t => { tahapSelesai[t] = statusTahapServer[t]?.selesai ?? false; });
 
-// Inisialisasi dari server
-TIPE_URUT.forEach(t => {
-    tahapSelesai[t] = statusTahapServer[t]?.selesai ?? false;
-});
+// ── Controllers ────────────────────────────────────────────────────────────
+const stepper = makeStepperController(3);
+window.goToStep = (n) => stepper.goToStep(n);
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-
-const formatRp = n => 'Rp ' + parseFloat(n || 0).toLocaleString('id-ID');
-
-// ── Stepper ────────────────────────────────────────────────────────────────
-
-function goToStep(n) {
-    document.getElementById('step' + currentStep).classList.add('hidden');
-    document.getElementById('step' + n).classList.remove('hidden');
-    currentStep = n;
-    updateStepperUI();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function updateStepperUI() {
-    for (let i = 1; i <= 3; i++) {
-        const circle = document.getElementById('step-circle-' + i);
-        if (i < currentStep) {
-            circle.className = 'flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold bg-green-600 text-white transition-colors';
-            circle.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>';
-        } else if (i === currentStep) {
-            circle.className = 'flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold bg-green-600 text-white transition-colors';
-            circle.textContent = i;
-        } else {
-            circle.className = 'flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors';
-            circle.textContent = i;
-        }
-        if (i < 3) {
-            const line = document.getElementById('step-line-' + i);
-            if (line) line.className = i < currentStep
-                ? 'mx-4 flex-1 border-t-2 border-green-500 transition-colors'
-                : 'mx-4 flex-1 border-t-2 border-gray-100 dark:border-gray-800 transition-colors';
-        }
-    }
-}
-
-// ── Step 1 → 2 ────────────────────────────────────────────────────────────
-
-function goToStep2() {
-    goToStep(2);
+// ── Step nav ────────────────────────────────────────────────────────────────
+window.goToStep2 = function() {
+    stepper.goToStep(2);
     updateProgressBar();
-    // Otomatis pilih tahap pertama yang belum selesai
     const pertama = TIPE_URUT.find(t => !tahapSelesai[t]) ?? TIPE_URUT[0];
     selectTahap(pertama);
-}
+};
 
-// ── Step 2 → 3 ────────────────────────────────────────────────────────────
-
-function goToStep3() {
+window.goToStep3 = function() {
     const belumSelesai = TIPE_URUT.filter(t => !tahapSelesai[t] && !entriPerTahap[t]);
-    if (belumSelesai.length > 0) {
-        alert('Konfirmasi semua ' + belumSelesai.length + ' tahap terlebih dahulu sebelum melanjutkan.');
-        return;
-    }
+    if (belumSelesai.length > 0) { alert('Konfirmasi semua ' + belumSelesai.length + ' tahap terlebih dahulu sebelum melanjutkan.'); return; }
     renderReview();
-    goToStep(3);
-}
+    stepper.goToStep(3);
+};
 
-// ── Select Tahap ───────────────────────────────────────────────────────────
-
-function selectTahap(tipe) {
+// ── Tahap ───────────────────────────────────────────────────────────────────
+window.selectTahap = function(tipe) {
     currentTipe = tipe;
-
-    // Generate entri dari ringkasan
     const detail = generateEntriTahap(tipe);
     entriPerTahap[tipe] = entriPerTahap[tipe] || detail;
 
-    // Update UI panel
     document.getElementById('tahapDetailTitle').textContent = 'Tahap ' + (TIPE_URUT.indexOf(tipe) + 1) + ': ' + TIPE_LABELS[tipe];
     document.getElementById('tahapInfoBanner').textContent  = TIPE_INFO[tipe];
     document.getElementById('tahapInfoBanner').classList.remove('hidden');
     document.getElementById('tahapEntriContainer').classList.remove('hidden');
     document.getElementById('tahapEmptyState').classList.add('hidden');
 
-    // Render rows
     renderEntriRows(entriPerTahap[tipe]);
 
-    // Update konfirmasi button
     const btnK = document.getElementById('btnKonfirmasi');
     if (tahapSelesai[tipe]) {
-        btnK.disabled = true;
+        btnK.disabled   = true;
         btnK.textContent = '✓ Tahap ini sudah selesai';
-        btnK.className = 'inline-flex items-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-500 text-sm font-medium px-5 py-2.5 rounded-xl cursor-not-allowed';
+        btnK.className  = 'inline-flex items-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-500 text-sm font-medium px-5 py-2.5 rounded-xl cursor-not-allowed';
     } else {
-        btnK.disabled = false;
-        btnK.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Konfirmasi & Lanjut ke Tahap Selesai`;
-        btnK.className = 'inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors';
+        btnK.disabled   = false;
+        btnK.innerHTML  = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Konfirmasi & Lanjut ke Tahap Selesai`;
+        btnK.className  = 'inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors';
     }
-}
-
-// ── Generate entri dari ringkasan JS ──────────────────────────────────────
+};
 
 function generateEntriTahap(tipe) {
     const pendapatan = ringkasan.pendapatan ?? [];
@@ -545,21 +374,15 @@ function generateEntriTahap(tipe) {
     const detail     = [];
 
     if (tipe === 'TUTUP_PENDAPATAN') {
-        pendapatan.forEach(item => {
-            if (item.saldo > 0) detail.push({ akun: item.akun.nama_akun, posisi: 'DEBIT',  nominal: item.saldo });
-        });
+        pendapatan.forEach(item => { if (item.saldo > 0) detail.push({ akun: item.akun.nama_akun, posisi: 'DEBIT',  nominal: item.saldo }); });
         const totalP = pendapatan.reduce((s, i) => s + i.saldo, 0);
         if (totalP > 0) detail.push({ akun: 'Ikhtisar Laba/Rugi', posisi: 'KREDIT', nominal: totalP });
     }
-
     if (tipe === 'TUTUP_BEBAN') {
         const totalB = beban.reduce((s, i) => s + i.saldo, 0);
         if (totalB > 0) detail.push({ akun: 'Ikhtisar Laba/Rugi', posisi: 'DEBIT', nominal: totalB });
-        beban.forEach(item => {
-            if (item.saldo > 0) detail.push({ akun: item.akun.nama_akun, posisi: 'KREDIT', nominal: item.saldo });
-        });
+        beban.forEach(item => { if (item.saldo > 0) detail.push({ akun: item.akun.nama_akun, posisi: 'KREDIT', nominal: item.saldo }); });
     }
-
     if (tipe === 'IKHTISAR_LR') {
         if (surplus > 0) {
             detail.push({ akun: 'Ikhtisar Laba/Rugi', posisi: 'DEBIT',  nominal: surplus });
@@ -569,21 +392,16 @@ function generateEntriTahap(tipe) {
             detail.push({ akun: 'Ikhtisar Laba/Rugi', posisi: 'KREDIT', nominal: Math.abs(surplus) });
         }
     }
-
-    if (tipe === 'TUTUP_SALDO_DANA') {
-        if (surplus !== 0) {
-            detail.push({ akun: 'Surplus Periode',       posisi: 'DEBIT',  nominal: Math.abs(surplus) });
-            detail.push({ akun: 'Saldo Dana Kumulatif',  posisi: 'KREDIT', nominal: Math.abs(surplus) });
-        }
+    if (tipe === 'TUTUP_SALDO_DANA' && surplus !== 0) {
+        detail.push({ akun: 'Surplus Periode',      posisi: 'DEBIT',  nominal: Math.abs(surplus) });
+        detail.push({ akun: 'Saldo Dana Kumulatif', posisi: 'KREDIT', nominal: Math.abs(surplus) });
     }
-
     return detail;
 }
 
 function renderEntriRows(detail) {
     const container = document.getElementById('tahapEntriRows');
     let totalD = 0, totalK = 0;
-
     container.innerHTML = detail.map((d, i) => {
         const isD = d.posisi === 'DEBIT';
         if (isD) totalD += d.nominal; else totalK += d.nominal;
@@ -591,46 +409,31 @@ function renderEntriRows(detail) {
         <div class="grid grid-cols-12 gap-3 items-center py-2 border-b border-gray-50 dark:border-gray-800">
             <div class="col-span-1 text-sm text-gray-400 text-center">${i + 1}</div>
             <div class="col-span-6 text-sm text-gray-700 dark:text-gray-300">${d.akun}</div>
-            <div class="col-span-2 text-center">
-                <span class="text-xs font-bold ${isD ? 'text-red-500' : 'text-green-600'}">${isD ? 'Debit' : 'Kredit'}</span>
-            </div>
-            <div class="col-span-2 text-right text-sm ${isD ? 'text-red-500 font-medium' : 'text-gray-300'}">
-                ${isD ? formatRp(d.nominal) : '—'}
-            </div>
-            <div class="col-span-1 text-right text-sm ${!isD ? 'text-green-600 font-medium' : 'text-gray-300'}">
-                ${!isD ? formatRp(d.nominal) : '—'}
-            </div>
+            <div class="col-span-2 text-center"><span class="text-xs font-bold ${isD ? 'text-red-500' : 'text-green-600'}">${isD ? 'Debit' : 'Kredit'}</span></div>
+            <div class="col-span-2 text-right text-sm ${isD  ? 'text-red-500 font-medium' : 'text-gray-300'}">${isD  ? formatRp(d.nominal) : '—'}</div>
+            <div class="col-span-1 text-right text-sm ${!isD ? 'text-green-600 font-medium' : 'text-gray-300'}">${!isD ? formatRp(d.nominal) : '—'}</div>
         </div>`;
     }).join('');
 
-    document.getElementById('tahapTotalDebit').textContent  = formatRp(totalD);
-    document.getElementById('tahapTotalKredit').textContent = formatRp(totalK);
+    // Update balance bar (prefix="tahap")
+    const elD = document.getElementById('tahapTotalDebit');
+    const elK = document.getElementById('tahapTotalKredit');
+    if (elD) elD.textContent = formatRp(totalD);
+    if (elK) elK.textContent = formatRp(totalK);
 }
 
-// ── Konfirmasi Tahap (AJAX) ────────────────────────────────────────────────
-
-function konfirmasiTahap() {
+window.konfirmasiTahap = function() {
     if (!currentTipe) return;
-
     const periodeId = document.getElementById('periodeSelect').value;
     const tanggal   = document.querySelector('input[name="tanggal"]').value;
     const btn       = document.getElementById('btnKonfirmasi');
-
     btn.disabled    = true;
     btn.textContent = 'Menyimpan...';
 
     fetch('{{ route("dashboard.jurnal-penutup.konfirmasi-tahap") }}', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-            periode_id:     periodeId,
-            tipe_penutupan: currentTipe,
-            tanggal:        tanggal,
-        }),
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
+        body: JSON.stringify({ periode_id: periodeId, tipe_penutupan: currentTipe, tanggal }),
     })
     .then(r => r.json())
     .then(data => {
@@ -638,67 +441,44 @@ function konfirmasiTahap() {
             tahapSelesai[currentTipe] = true;
             updateTahapCardUI(currentTipe);
             updateProgressBar();
-
-            // Pindah ke tahap berikutnya otomatis
             const idx = TIPE_URUT.indexOf(currentTipe);
-            if (idx < TIPE_URUT.length - 1) {
-                selectTahap(TIPE_URUT[idx + 1]);
-            } else {
-                // Semua selesai
-                btn.disabled  = true;
-                btn.textContent = '✓ Semua tahap selesai';
-            }
+            if (idx < TIPE_URUT.length - 1) { selectTahap(TIPE_URUT[idx + 1]); }
+            else { btn.disabled = true; btn.textContent = '✓ Semua tahap selesai'; }
         }
     })
-    .catch(() => {
-        btn.disabled    = false;
-        btn.textContent = 'Konfirmasi & Lanjut ke Tahap Selesai';
-        alert('Gagal menyimpan tahap. Coba lagi.');
-    });
-}
+    .catch(() => { btn.disabled = false; btn.innerHTML = `<svg class="w-4 h-4"...></svg> Konfirmasi & Lanjut`; alert('Gagal menyimpan tahap. Coba lagi.'); });
+};
 
 function updateTahapCardUI(tipe) {
     const card = document.getElementById('tahap-card-' + tipe);
     const icon = document.getElementById('tahap-icon-' + tipe);
-    if (card) {
-        card.className = card.className.replace('border-gray-100 dark:border-gray-800', '')
-            + ' border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10';
-    }
-    if (icon) {
-        icon.className = 'flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold bg-green-600 text-white';
-        icon.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>';
-    }
+    if (card) card.classList.add('border-green-200', 'dark:border-green-800', 'bg-green-50', 'dark:bg-green-900/10');
+    if (icon) { icon.className = 'flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold bg-green-600 text-white'; icon.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>'; }
 }
 
 function updateProgressBar() {
     const selesai = TIPE_URUT.filter(t => tahapSelesai[t]).length;
     const pct     = Math.round((selesai / 4) * 100);
-    document.getElementById('progressBar').style.width  = pct + '%';
-    document.getElementById('progressPct').textContent  = pct + '%';
+    document.getElementById('progressBar').style.width   = pct + '%';
+    document.getElementById('progressPct').textContent   = pct + '%';
     document.getElementById('progressLabel').textContent = 'Tahap ' + selesai + ' dari 4';
 }
 
-// ── Review Step 3 ─────────────────────────────────────────────────────────
-
 function renderReview() {
     const container = document.getElementById('reviewContent');
-
     container.innerHTML = TIPE_URUT.map(tipe => {
-        const detail   = entriPerTahap[tipe] ?? generateEntriTahap(tipe);
-        const totalD   = detail.filter(d => d.posisi === 'DEBIT').reduce((s, d) => s + d.nominal, 0);
-        const totalK   = detail.filter(d => d.posisi === 'KREDIT').reduce((s, d) => s + d.nominal, 0);
-        const isGenerated = tahapSelesai[tipe] || (detail.length > 0);
-
-        const rows = detail.map(d => {
+        const detail = entriPerTahap[tipe] ?? generateEntriTahap(tipe);
+        const totalD = detail.filter(d => d.posisi === 'DEBIT').reduce((s, d) => s + d.nominal, 0);
+        const totalK = detail.filter(d => d.posisi === 'KREDIT').reduce((s, d) => s + d.nominal, 0);
+        const rows   = detail.map(d => {
             const isD = d.posisi === 'DEBIT';
-            return `
-            <tr class="border-b border-gray-50 dark:border-gray-800">
+            return `<tr class="border-b border-gray-50 dark:border-gray-800">
                 <td class="py-1.5 text-sm text-gray-700 dark:text-gray-300">${d.akun}</td>
-                <td class="py-1.5 text-right text-sm ${isD ? 'text-red-500 font-medium' : 'text-gray-300'}">${isD ? formatRp(d.nominal) : '—'}</td>
+                <td class="py-1.5 text-right text-sm ${isD  ? 'text-red-500 font-medium' : 'text-gray-300'}">${isD  ? formatRp(d.nominal) : '—'}</td>
                 <td class="py-1.5 text-right text-sm ${!isD ? 'text-green-600 font-medium' : 'text-gray-300'}">${!isD ? formatRp(d.nominal) : '—'}</td>
             </tr>`;
         }).join('');
-
+        const isGenerated = tahapSelesai[tipe] || detail.length > 0;
         return `
         <div>
             <div class="flex items-center justify-between mb-3">
@@ -706,33 +486,25 @@ function renderReview() {
                 ${isGenerated ? '<span class="text-xs font-medium text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full">Generate ✓</span>' : ''}
             </div>
             <table class="w-full text-sm mb-3">
-                <thead>
-                    <tr class="border-b border-gray-100 dark:border-gray-800">
-                        <th class="pb-1.5 text-left text-xs font-medium text-gray-400">Akun</th>
-                        <th class="pb-1.5 text-right text-xs font-medium text-gray-400">Debit</th>
-                        <th class="pb-1.5 text-right text-xs font-medium text-gray-400">Kredit</th>
-                    </tr>
-                </thead>
+                <thead><tr class="border-b border-gray-100 dark:border-gray-800">
+                    <th class="pb-1.5 text-left text-xs font-medium text-gray-400">Akun</th>
+                    <th class="pb-1.5 text-right text-xs font-medium text-gray-400">Debit</th>
+                    <th class="pb-1.5 text-right text-xs font-medium text-gray-400">Kredit</th>
+                </tr></thead>
                 <tbody>${rows}</tbody>
             </table>
             <div class="grid grid-cols-2 gap-3">
                 <div class="rounded-xl border border-gray-100 dark:border-gray-800 p-3 text-center">
-                    <p class="text-xs text-gray-400">Total Debit</p>
-                    <p class="text-sm font-bold text-red-500">${formatRp(totalD)}</p>
+                    <p class="text-xs text-gray-400">Total Debit</p><p class="text-sm font-bold text-red-500">${formatRp(totalD)}</p>
                 </div>
                 <div class="rounded-xl border border-gray-100 dark:border-gray-800 p-3 text-center">
-                    <p class="text-xs text-gray-400">Total Kredit</p>
-                    <p class="text-sm font-bold text-green-600">${formatRp(totalK)}</p>
+                    <p class="text-xs text-gray-400">Total Kredit</p><p class="text-sm font-bold text-green-600">${formatRp(totalK)}</p>
                 </div>
             </div>
         </div>`;
     }).join('<hr class="border-gray-100 dark:border-gray-800">');
 }
 
-// ── Init ───────────────────────────────────────────────────────────────────
-
-document.addEventListener('DOMContentLoaded', () => {
-    updateProgressBar();
-});
+document.addEventListener('DOMContentLoaded', () => { updateProgressBar(); });
 </script>
 @endpush

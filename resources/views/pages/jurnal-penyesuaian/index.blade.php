@@ -26,74 +26,26 @@
 
     {{-- Alert --}}
     @if(session('success'))
-    <div class="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-sm text-green-700 dark:text-green-400">
-        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-        </svg>
-        {{ session('success') }}
-    </div>
+        <x-jurnal.alert type="success" :message="session('success')" />
     @endif
     @if(session('error'))
-    <div class="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400">
-        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-        </svg>
-        {{ session('error') }}
-    </div>
+        <x-jurnal.alert type="error" :message="session('error')" />
     @endif
 
     {{-- Table Container --}}
     <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
 
-        {{-- Bulk Action Bar (hidden by default) --}}
-        <div id="bulkActionBar"
-             class="hidden items-center justify-between gap-3 px-5 py-3 bg-green-50 dark:bg-green-900/20 border-b border-green-200 dark:border-green-800">
-            <div class="flex items-center gap-2">
-                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-600 text-white text-xs font-bold" id="bulkCountBadge">0</span>
-                <span id="bulkCountLabel" class="text-sm font-medium text-green-700 dark:text-green-400">jurnal dipilih</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <button type="button" onclick="clearSelection()"
-                        class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    Batal pilih
-                </button>
-                @if(auth()->user()->hasPermission('CREATE_JURNAL_PENYESUAIAN'))
-                <button type="button" onclick="submitBulkPost()"
-                        class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    Post Terpilih
-                </button>
-                @endif
-            </div>
-        </div>
+        {{-- Bulk Action Bar --}}
+        <x-jurnal.bulk-action-bar permission="CREATE_JURNAL_PENYESUAIAN" />
 
         {{-- Toolbar --}}
-        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-wrap">
+        <x-jurnal.table-toolbar
+            :route="route('dashboard.jurnal-penyesuaian.index')"
+            :per-page="$perPage"
+            :search="$search"
+            :hidden-params="['periode_id' => $periodeId, 'tipe' => $tipe, 'status' => $status]">
 
-            {{-- Kiri: Show entries --}}
-            <form method="GET" action="{{ route('dashboard.jurnal-penyesuaian.index') }}" id="perPageForm"
-                class="flex items-center gap-2">
-                <input type="hidden" name="search"     value="{{ $search }}">
-                <input type="hidden" name="periode_id" value="{{ $periodeId }}">
-                <input type="hidden" name="tipe"       value="{{ $tipe }}">
-                <input type="hidden" name="status"     value="{{ $status }}">
-                <span class="text-sm text-gray-500 dark:text-gray-400">Show</span>
-                <select name="per_page" onchange="document.getElementById('perPageForm').submit()"
-                        class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
-                    @foreach([10, 25, 50] as $val)
-                        <option value="{{ $val }}" {{ $perPage == $val ? 'selected' : '' }}>{{ $val }}</option>
-                    @endforeach
-                </select>
-                <span class="text-sm text-gray-500 dark:text-gray-400">entries</span>
-            </form>
-
-            {{-- Kanan: Filter + Search --}}
-            <form method="GET" action="{{ route('dashboard.jurnal-penyesuaian.index') }}"
-                class="flex items-center gap-2 flex-wrap" id="filterForm">
-                <input type="hidden" name="per_page" value="{{ $perPage }}">
-
+            <x-slot name="filters">
                 <select name="periode_id" onchange="document.getElementById('filterForm').submit()"
                         class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
                     <option value="">Semua Periode</option>
@@ -118,20 +70,10 @@
                     <option value="DRAFT"  {{ $status === 'DRAFT'  ? 'selected' : '' }}>Draft</option>
                     <option value="POSTED" {{ $status === 'POSTED' ? 'selected' : '' }}>Posted</option>
                 </select>
+            </x-slot>
+        </x-jurnal.table-toolbar>
 
-                <div class="relative">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    <input type="text" name="search" value="{{ $search }}"
-                        placeholder="Search..."
-                        class="pl-9 pr-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 w-48 placeholder-gray-400">
-                </div>
-            </form>
-
-        </div>
-
-        {{-- Bulk Post Form (hidden, submitted by JS) --}}
+        {{-- Bulk Post Form --}}
         <form method="POST" action="{{ route('dashboard.jurnal-penyesuaian.bulk-post') }}" id="bulkForm">
             @csrf
             <div id="bulkInputsContainer"></div>
@@ -142,7 +84,6 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-gray-100 dark:border-gray-800">
-                        {{-- Kolom checkbox --}}
                         <th class="px-5 py-3 w-10">
                             <input type="checkbox" id="checkAll"
                                    class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 cursor-pointer"
@@ -159,17 +100,18 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
-                    @forelse($jurnal as $index => $item)
+                    @forelse($jurnal as $item)
                     @php
                         $totalDebit  = $item->detailJurnal->where('tipe', 'DEBIT')->sum('nominal');
                         $totalKredit = $item->detailJurnal->where('tipe', 'KREDIT')->sum('nominal');
                         $isPosted    = $item->status === 'POSTED';
-                        $nomorJurnal = 'JP-' . $item->periode->tanggal_awal->format('Y') . '-' . $item->periode->tanggal_awal->format('m') . '-' . str_pad($jurnal->firstItem() + $loop->index, 4, '0', STR_PAD_LEFT);
+                        $nomorJurnal = 'JP-'
+                            . $item->periode->tanggal_awal->format('Y') . '-'
+                            . $item->periode->tanggal_awal->format('m') . '-'
+                            . str_pad($jurnal->firstItem() + $loop->index, 4, '0', STR_PAD_LEFT);
                     @endphp
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors group"
-                        id="row-{{ $item->id }}">
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors" id="row-{{ $item->id }}">
 
-                        {{-- Checkbox cell --}}
                         <td class="px-5 py-3.5" onclick="event.stopPropagation()">
                             @if(!$isPosted)
                             <input type="checkbox"
@@ -178,41 +120,36 @@
                                    onchange="updateBulkBar()">
                             @endif
                         </td>
-
                         <td class="px-5 py-3.5 font-mono text-sm font-medium text-green-600 dark:text-green-400 cursor-pointer"
-                            onclick="showDrawer({{ $item->id }})">
+                            onclick="showDrawer('/dashboard/jurnal-penyesuaian/{{ $item->id }}')">
                             {{ $nomorJurnal }}
                         </td>
                         <td class="px-4 py-3.5 text-gray-500 dark:text-gray-400 cursor-pointer"
-                            onclick="showDrawer({{ $item->id }})">
+                            onclick="showDrawer('/dashboard/jurnal-penyesuaian/{{ $item->id }}')">
                             {{ $item->tanggal->format('j M Y') }}
                         </td>
                         <td class="px-4 py-3.5 font-medium text-gray-800 dark:text-gray-200 cursor-pointer"
-                            onclick="showDrawer({{ $item->id }})">
+                            onclick="showDrawer('/dashboard/jurnal-penyesuaian/{{ $item->id }}')">
                             {{ $tipeLabels[$item->tipe_penyesuaian] ?? $item->tipe_penyesuaian }}
                         </td>
                         <td class="px-4 py-3.5 text-gray-500 dark:text-gray-400 max-w-xs cursor-pointer"
-                            onclick="showDrawer({{ $item->id }})">
+                            onclick="showDrawer('/dashboard/jurnal-penyesuaian/{{ $item->id }}')">
                             <span class="line-clamp-1">{{ $item->keterangan ?? '—' }}</span>
                         </td>
                         <td class="px-4 py-3.5 text-right font-medium text-gray-800 dark:text-gray-200 cursor-pointer"
-                            onclick="showDrawer({{ $item->id }})">
+                            onclick="showDrawer('/dashboard/jurnal-penyesuaian/{{ $item->id }}')">
                             Rp {{ number_format($totalDebit, 0, ',', '.') }}
                         </td>
                         <td class="px-4 py-3.5 text-right font-medium text-gray-800 dark:text-gray-200 cursor-pointer"
-                            onclick="showDrawer({{ $item->id }})">
+                            onclick="showDrawer('/dashboard/jurnal-penyesuaian/{{ $item->id }}')">
                             Rp {{ number_format($totalKredit, 0, ',', '.') }}
                         </td>
                         <td class="px-4 py-3.5 text-center cursor-pointer"
-                            onclick="showDrawer({{ $item->id }})">
+                            onclick="showDrawer('/dashboard/jurnal-penyesuaian/{{ $item->id }}')">
                             @if($isPosted)
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">
-                                    Posted
-                                </span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">Posted</span>
                             @else
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400">
-                                    Draft
-                                </span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400">Draft</span>
                             @endif
                         </td>
                         <td class="px-5 py-3.5" onclick="event.stopPropagation()">
@@ -220,8 +157,7 @@
                                 @if(!$isPosted)
                                 <form action="{{ route('dashboard.jurnal-penyesuaian.destroy', $item) }}" method="POST"
                                       onsubmit="return confirm('Yakin hapus jurnal ini?')">
-                                    @csrf
-                                    @method('DELETE')
+                                    @csrf @method('DELETE')
                                     <button type="submit"
                                             class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                             title="Hapus">
@@ -231,7 +167,8 @@
                                     </button>
                                 </form>
                                 @endif
-                                <button type="button" onclick="showDrawer({{ $item->id }})"
+                                <button type="button"
+                                        onclick="showDrawer('/dashboard/jurnal-penyesuaian/{{ $item->id }}')"
                                         class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                         title="Detail">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -246,7 +183,7 @@
                         <td colspan="9" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-600">
                             Belum ada jurnal penyesuaian.
                             @if(auth()->user()->hasPermission('CREATE_JURNAL_PENYESUAIAN'))
-                            <a href="{{ route('dashboard.jurnal-penyesuaian.create') }}" class="text-green-600 hover:underline ml-1">Catat sekarang</a>
+                                <a href="{{ route('dashboard.jurnal-penyesuaian.create') }}" class="text-green-600 hover:underline ml-1">Catat sekarang</a>
                             @endif
                         </td>
                     </tr>
@@ -256,285 +193,68 @@
         </div>
 
         {{-- Pagination --}}
-        @if($jurnal->hasPages())
-        <div class="flex items-center justify-between px-5 py-4 border-t border-gray-100 dark:border-gray-800 flex-wrap gap-3">
-            <div class="flex items-center gap-1">
-                {{-- Previous --}}
-                @if($jurnal->onFirstPage())
-                    <span class="px-3 py-1.5 text-sm text-gray-300 dark:text-gray-600 border border-gray-200 dark:border-gray-700 rounded-lg">Previous</span>
-                @else
-                    <a href="{{ $jurnal->previousPageUrl() }}&search={{ $search }}&periode_id={{ $periodeId }}&tipe={{ $tipe }}&status={{ $status }}&per_page={{ $perPage }}"
-                       class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Previous</a>
-                @endif
-
-                {{-- Page Numbers --}}
-                @foreach($jurnal->getUrlRange(1, $jurnal->lastPage()) as $page => $url)
-                    <a href="{{ $url }}&search={{ $search }}&periode_id={{ $periodeId }}&tipe={{ $tipe }}&status={{ $status }}&per_page={{ $perPage }}"
-                       class="w-8 h-8 flex items-center justify-center text-sm rounded-lg transition-colors
-                           {{ $page === $jurnal->currentPage()
-                               ? 'bg-green-600 text-white font-medium'
-                               : 'text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
-                        {{ $page }}
-                    </a>
-                @endforeach
-
-                {{-- Next --}}
-                @if($jurnal->hasMorePages())
-                    <a href="{{ $jurnal->nextPageUrl() }}&search={{ $search }}&periode_id={{ $periodeId }}&tipe={{ $tipe }}&status={{ $status }}&per_page={{ $perPage }}"
-                       class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Next</a>
-                @else
-                    <span class="px-3 py-1.5 text-sm text-gray-300 dark:text-gray-600 border border-gray-200 dark:border-gray-700 rounded-lg">Next</span>
-                @endif
-            </div>
-
-            <span class="text-xs text-gray-400 dark:text-gray-600">
-                @if($jurnal->total() > 0)
-                    Showing {{ $jurnal->firstItem() }} to {{ $jurnal->lastItem() }} of {{ $jurnal->total() }} entries
-                @else
-                    No entries
-                @endif
-            </span>
-        </div>
-        @endif
+        <x-jurnal.table-pagination
+            :paginator="$jurnal"
+            :query-params="['search' => $search, 'periode_id' => $periodeId, 'tipe' => $tipe, 'status' => $status, 'per_page' => $perPage]" />
 
     </div>
 </div>
-
-{{-- Drawer Overlay --}}
-<div id="drawerOverlay"
-     class="fixed inset-0 z-40 hidden bg-black/30"
-     onclick="closeDrawer()"></div>
 
 {{-- Drawer --}}
-<div id="drawer"
-     class="fixed right-0 top-0 z-50 h-full w-full max-w-md translate-x-full transform overflow-y-auto bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-xl transition-transform duration-300">
-
-    <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-5 py-4">
-        <h3 class="text-base font-semibold text-gray-900 dark:text-white">Detail Jurnal Penyesuaian</h3>
-        <button onclick="closeDrawer()"
-                class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </button>
-    </div>
-
-    <div id="drawerContent" class="p-5">
-        <div class="flex items-center justify-center py-10 text-gray-400 dark:text-gray-600 gap-2">
-            <svg class="animate-spin w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 1 1-6.219-8.56"/>
-            </svg>
-            <span class="text-sm">Memuat...</span>
-        </div>
-    </div>
-</div>
-
+<x-jurnal.drawer title="Detail Jurnal Penyesuaian" />
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/jurnal-shared.js') }}"></script>
+
 <script>
-// ─── Drawer ───────────────────────────────────────────────────────────────────
-
-function showDrawer(id) {
-    document.getElementById('drawerOverlay').classList.remove('hidden');
-    document.getElementById('drawer').classList.remove('translate-x-full');
-    document.getElementById('drawer').classList.add('translate-x-0');
-    document.getElementById('drawerContent').innerHTML = `
-        <div class="flex items-center justify-center py-10 text-gray-400 dark:text-gray-600 gap-2">
-            <svg class="animate-spin w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 1 1-6.219-8.56"/>
-            </svg>
-            <span class="text-sm">Memuat...</span>
-        </div>`;
-
-    fetch(`/dashboard/jurnal-penyesuaian/${id}`, {
-        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-    })
-    .then(r => r.json())
-    .then(data => renderDrawer(data))
-    .catch(() => {
-        document.getElementById('drawerContent').innerHTML =
-            '<p class="text-center text-sm text-red-500 py-10">Gagal memuat data</p>';
-    });
-}
-
-function closeDrawer() {
-    document.getElementById('drawerOverlay').classList.add('hidden');
-    document.getElementById('drawer').classList.remove('translate-x-0');
-    document.getElementById('drawer').classList.add('translate-x-full');
-}
-
-function renderDrawer(data) {
-    const j       = data.jurnal;
-    const labels  = data.labels;
-    const details = j.detail_jurnal ?? j.detailJurnal ?? [];
-    const asets   = j.aset ?? [];
+/**
+ * renderDrawerContent — spesifik untuk Jurnal Penyesuaian
+ */
+window.renderDrawerContent = function(data) {
+    const j        = data.jurnal;
+    const labels   = data.labels ?? {};
+    const details  = j.detail_jurnal ?? [];
+    const asets    = j.aset ?? [];
     const isPosted = j.status === 'POSTED';
 
-    const totalDebit  = details.filter(d => d.tipe === 'DEBIT').reduce((s, d) => s + parseFloat(d.nominal), 0);
-    const totalKredit = details.filter(d => d.tipe === 'KREDIT').reduce((s, d) => s + parseFloat(d.nominal), 0);
+    // Section aset (hanya untuk PENYUSUTAN_ASET)
+    let asetSection = '';
+    if (j.tipe_penyesuaian === 'PENYUSUTAN_ASET' && asets.length > 0) {
+        const totalAset = asets.reduce((s, a) => s + parseFloat(a.pivot?.nominal ?? 0), 0);
+        const asetRows  = asets.map(a => `
+            <div class="flex justify-between items-center px-3 py-2.5 bg-green-50 border border-green-100 rounded-xl">
+                <div>
+                    <p class="text-sm font-medium text-gray-800">${a.nama_aset}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">Penyusutan periode ini</p>
+                </div>
+                <span class="text-sm font-semibold text-green-600">${formatRp(a.pivot?.nominal ?? 0)}</span>
+            </div>`).join('');
 
-    const formatRp = n => 'Rp ' + parseFloat(n).toLocaleString('id-ID');
-
-    const statusBadge = isPosted
-        ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-600">Posted</span>`
-        : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-50 text-yellow-600">Draft</span>`;
-
-    const detailRows = details.map(d => `
-        <tr class="border-b border-gray-50">
-            <td class="py-2.5 text-sm text-gray-800">${d.akun?.nama_akun ?? '—'}</td>
-            <td class="py-2.5 text-center">
-                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold
-                    ${d.tipe === 'DEBIT' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}">
-                    ${d.tipe === 'DEBIT' ? 'D' : 'K'}
-                </span>
-            </td>
-            <td class="py-2.5 text-right text-sm ${d.tipe === 'DEBIT' ? 'text-red-600 font-medium' : 'text-gray-300'}">
-                ${d.tipe === 'DEBIT' ? formatRp(d.nominal) : '—'}
-            </td>
-            <td class="py-2.5 text-right text-sm ${d.tipe === 'KREDIT' ? 'text-green-600 font-medium' : 'text-gray-300'}">
-                ${d.tipe === 'KREDIT' ? formatRp(d.nominal) : '—'}
-            </td>
-        </tr>
-    `).join('');
-
-    const asetSection = (j.tipe_penyesuaian === 'PENYUSUTAN_ASET' && asets.length > 0) ? `
-        <div class="mt-6">
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Rincian Aset yang Disusutkan</p>
-            <div class="space-y-2">
-                ${asets.map(a => `
-                    <div class="flex justify-between items-center px-3 py-2.5 bg-green-50 border border-green-100 rounded-xl">
-                        <div>
-                            <p class="text-sm font-medium text-gray-800">${a.nama_aset}</p>
-                            <p class="text-xs text-gray-400 mt-0.5">Penyusutan periode ini</p>
-                        </div>
-                        <span class="text-sm font-semibold text-green-600">${formatRp(a.pivot?.nominal ?? 0)}</span>
+        asetSection = `
+            <div class="mt-6">
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
+                    Rincian Aset yang Disusutkan
+                </p>
+                <div class="space-y-2">
+                    ${asetRows}
+                    <div class="flex justify-between items-center px-3 py-2 bg-green-100 rounded-xl mt-1">
+                        <span class="text-xs font-semibold text-green-700">Total Penyusutan</span>
+                        <span class="text-sm font-bold text-green-700">${formatRp(totalAset)}</span>
                     </div>
-                `).join('')}
-                <div class="flex justify-between items-center px-3 py-2 bg-green-100 rounded-xl mt-1">
-                    <span class="text-xs font-semibold text-green-700">Total Penyusutan</span>
-                    <span class="text-sm font-bold text-green-700">${formatRp(asets.reduce((s, a) => s + parseFloat(a.pivot?.nominal ?? 0), 0))}</span>
                 </div>
-            </div>
-        </div>` : '';
-
-    document.getElementById('drawerContent').innerHTML = `
-        <div class="mb-5">
-            <p class="font-mono text-xl font-bold text-green-600 dark:text-green-400 mb-1">${j.nomor_jurnal ?? '—'}</p>
-            <div class="flex items-center gap-2">
-                <span class="text-sm text-gray-400">${j.tanggal}</span>
-                ${statusBadge}
-            </div>
-        </div>
-
-        <div class="mb-5">
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Informasi Jurnal</p>
-            <div class="bg-gray-50 rounded-xl px-4 py-3 space-y-2.5">
-                <div class="flex justify-between items-start">
-                    <span class="text-sm text-gray-400">Jenis Penyesuaian</span>
-                    <span class="text-sm font-medium text-gray-800 text-right max-w-[180px]">${labels[j.tipe_penyesuaian] ?? j.tipe_penyesuaian}</span>
-                </div>
-                <div class="flex justify-between items-start">
-                    <span class="text-sm text-gray-400">Keterangan</span>
-                    <span class="text-sm font-medium text-gray-800 text-right max-w-[180px]">${j.keterangan ?? '—'}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-400">Tanggal</span>
-                    <span class="text-sm font-medium text-gray-800">${j.tanggal}</span>
-                </div>
-            </div>
-        </div>
-
-        <div>
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Detail Debit & Kredit</p>
-            <table class="w-full border-collapse">
-                <thead>
-                    <tr class="border-b border-gray-100">
-                        <th class="pb-2 text-left text-xs font-semibold text-gray-400">Akun</th>
-                        <th class="pb-2 text-center text-xs font-semibold text-gray-400">Pos.</th>
-                        <th class="pb-2 text-right text-xs font-semibold text-gray-400">Debit</th>
-                        <th class="pb-2 text-right text-xs font-semibold text-gray-400">Kredit</th>
-                    </tr>
-                </thead>
-                <tbody>${detailRows}</tbody>
-                <tfoot>
-                    <tr class="border-t-2 border-gray-100">
-                        <td colspan="2" class="pt-3 text-sm font-semibold text-gray-800">Total</td>
-                        <td class="pt-3 text-right text-sm font-bold text-red-600">${formatRp(totalDebit)}</td>
-                        <td class="pt-3 text-right text-sm font-bold text-green-600">${formatRp(totalKredit)}</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-
-        ${asetSection}
-    `;
-}
-
-// ─── Bulk Selection ───────────────────────────────────────────────────────────
-
-function toggleAll(source) {
-    document.querySelectorAll('.row-check').forEach(cb => {
-        cb.checked = source.checked;
-    });
-    updateBulkBar();
-}
-
-function updateBulkBar() {
-    const checked  = document.querySelectorAll('.row-check:checked');
-    const allBoxes = document.querySelectorAll('.row-check');
-    const bar      = document.getElementById('bulkActionBar');
-    const badge    = document.getElementById('bulkCountBadge');
-    const checkAll = document.getElementById('checkAll');
-
-    // Tampilkan / sembunyikan bulk action bar
-    if (checked.length > 0) {
-        bar.classList.remove('hidden');
-        bar.classList.add('flex');
-    } else {
-        bar.classList.add('hidden');
-        bar.classList.remove('flex');
+            </div>`;
     }
 
-    badge.textContent = checked.length;
-
-    // Sinkron state checkAll: full / indeterminate / empty
-    if (allBoxes.length > 0 && checked.length === allBoxes.length) {
-        checkAll.checked       = true;
-        checkAll.indeterminate = false;
-    } else if (checked.length > 0) {
-        checkAll.checked       = false;
-        checkAll.indeterminate = true;
-    } else {
-        checkAll.checked       = false;
-        checkAll.indeterminate = false;
-    }
-}
-
-function clearSelection() {
-    document.querySelectorAll('.row-check').forEach(cb => cb.checked = false);
-    updateBulkBar();
-}
-
-function submitBulkPost() {
-    const checked = document.querySelectorAll('.row-check:checked');
-
-    if (checked.length === 0) return;
-
-    if (!confirm(`Posting ${checked.length} jurnal yang dipilih? Aksi ini tidak dapat dibatalkan.`)) return;
-
-    // Inject hidden inputs ke dalam form bulk
-    const container = document.getElementById('bulkInputsContainer');
-    container.innerHTML = '';
-    checked.forEach(cb => {
-        const input = document.createElement('input');
-        input.type  = 'hidden';
-        input.name  = 'ids[]';
-        input.value = cb.value;
-        container.appendChild(input);
-    });
-
-    document.getElementById('bulkForm').submit();
-}
+    document.getElementById('drawerContent').innerHTML =
+        buildDrawerHeader(j.nomor_jurnal, j.tanggal, isPosted) +
+        buildInfoBox('Informasi Jurnal', [
+            { label: 'Jenis Penyesuaian', value: labels[j.tipe_penyesuaian] ?? j.tipe_penyesuaian },
+            { label: 'Keterangan',        value: j.keterangan },
+            { label: 'Tanggal',           value: j.tanggal },
+        ]) +
+        buildDetailTable(details, 'Detail Debit & Kredit') +
+        asetSection;
+};
 </script>
 @endpush

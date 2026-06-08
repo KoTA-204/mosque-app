@@ -13,8 +13,6 @@ class JurnalPenutupController extends Controller
         protected JurnalPenutupService $service
     ) {}
 
-    // ── Index ──────────────────────────────────────────────────────────────
-
     public function index(Request $request)
     {
         $search    = $request->get('search', '');

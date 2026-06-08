@@ -9,7 +9,7 @@ use App\Models\Jurnal;
 use App\Models\Periode;
 use Illuminate\Support\Facades\DB;
 
-class JurnalPenyesuaianService
+class JurnalPenyesuaianService extends JurnalService
 {
     const TIPE_LABELS = [
         'PENYUSUTAN_ASET'          => 'Penyusutan Aset',
@@ -28,7 +28,7 @@ class JurnalPenyesuaianService
     ];
 
     /**
-     * Akun yang dikecualikan dari semua tipe penyesuaian (kecuali MANUAL).
+     * Akun yang dikecualikan dari semua tipe penyesuaian.
      * Kas & Bank tidak pernah disesuaikan lewat jurnal penyesuaian.
      */
     const EXCLUDED_AKUN_KODE = ['1-1100', '1-1200', '1-1300', '1-1400'];
@@ -40,7 +40,7 @@ class JurnalPenyesuaianService
         ?string $periodeId = '',
         ?string $tipe      = '',
         ?string $status    = '',
-        int    $perPage   = 10
+        int     $perPage   = 10
     ) {
         return Jurnal::with(['periode', 'detailJurnal.akun', 'aset'])
             ->penyesuaian()
@@ -60,32 +60,13 @@ class JurnalPenyesuaianService
         return $jurnal->load('periode', 'detailJurnal.akun', 'aset');
     }
 
-    public function getPeriodeAktif(): ?Periode
-    {
-        return Periode::aktif()->where('tipe', 'bulanan')->latest('tanggal_awal')->first();
-    }
-
-    public function getPeriodeList()
-    {
-        return Periode::orderBy('tanggal_awal', 'desc')->get();
-    }
-
-    /**
-     * Akun child yang relevan untuk penyesuaian.
-     *
-     * Untuk tipe MANUAL    → semua akun child (parent_id != null).
-     * Untuk tipe lainnya   → akun child KECUALI Kas & Bank.
-     * Dikelompokkan per kategori untuk UX dropdown yang lebih baik.
-     */
     public function getAkunList(string $tipe = ''): array
     {
-        $query = Akun::with('kategoriAkun')
+        return Akun::with('kategoriAkun')
             ->whereNotNull('parent_id')
-            ->orderBy('kode_akun');
-
-        $query->whereNotIn('kode_akun', self::EXCLUDED_AKUN_KODE);
-
-        return $query->get()
+            ->whereNotIn('kode_akun', self::EXCLUDED_AKUN_KODE)
+            ->orderBy('kode_akun')
+            ->get()
             ->groupBy(fn($akun) => $akun->kategoriAkun->nama_kategori ?? 'Lainnya')
             ->map(fn($group, $kategori) => [
                 'kategori' => $kategori,
@@ -150,24 +131,9 @@ class JurnalPenyesuaianService
                 'status'           => $status,
             ]);
 
-            // Simpan detail jurnal (baris debit/kredit)
-            foreach ($data['detail'] as $detail) {
-                $nominalRaw = $detail['nominal'] ?? 0;
-                $nominal    = is_string($nominalRaw)
-                    ? (float) str_replace(['.', ','], ['', '.'], $nominalRaw)
-                    : (float) $nominalRaw;
+            // Gunakan helper dari base class
+            $this->storeDetail($jurnal, $data['detail']);
 
-                if (empty($detail['akun_id']) || $nominal <= 0) continue;
-
-                DetailJurnal::create([
-                    'jurnal_id' => $jurnal->id,
-                    'akun_id'   => $detail['akun_id'],
-                    'tipe'      => $detail['tipe'],
-                    'nominal'   => $nominal,
-                ]);
-            }
-
-            // Attach ke jurnal_aset kalau tipe penyusutan
             if ($data['tipe_penyesuaian'] === 'PENYUSUTAN_ASET') {
                 $this->attachAset($jurnal, $data, $status);
             }
@@ -179,94 +145,65 @@ class JurnalPenyesuaianService
     /**
      * Attach aset ke jurnal dan update akumulasi jika POSTED.
      *
-     * FIX: aset_rows sekarang nested di dalam detail[0] (baris DEBIT),
-     * bukan lagi di top-level $data['aset_rows'].
-     *
-     * Format baru dari form:
+     * Format dari form:
      *   detail[0][aset_rows][0][aset_id] = 1
      *   detail[0][aset_rows][0][nominal] = "46.875"
      */
     private function attachAset(Jurnal $jurnal, array $data, string $status): void
     {
-        // FIX: ambil aset_rows dari baris DEBIT di dalam detail, bukan top-level
-        $debitRow = collect($data['detail'] ?? [])
-            ->firstWhere('tipe', 'DEBIT');
-
+        $debitRow = collect($data['detail'] ?? [])->firstWhere('tipe', 'DEBIT');
         $asetRows = $debitRow['aset_rows'] ?? [];
 
         foreach ($asetRows as $row) {
             $asetId  = $row['aset_id'] ?? null;
-            $nominal = is_string($row['nominal'] ?? '')
-                ? (float) str_replace(['.', ','], ['', '.'], $row['nominal'] ?? 0)
-                : (float) ($row['nominal'] ?? 0);
+            $nominal = $this->parseNominal($row['nominal'] ?? 0); // gunakan helper base
 
             if (!$asetId || $nominal <= 0) continue;
 
             $jurnal->aset()->attach($asetId, ['nominal' => $nominal]);
 
-            // Update akumulasi & nilai buku hanya jika POSTED
             if ($status === 'POSTED') {
-                $aset = Aset::find($asetId);
-                if ($aset) {
-                    $aset->akumulasi_penyusutan = ($aset->akumulasi_penyusutan ?? 0) + $nominal;
-                    $aset->nilai_buku           = $aset->nilai_tercatat - $aset->akumulasi_penyusutan;
-                    $aset->save();
-                }
+                $this->updateAkumulasiAset($asetId, $nominal);
             }
         }
     }
 
-    // ── Post ───────────────────────────────────────────────────────────────
-
-    public function post(Jurnal $jurnal): bool|string
+    /**
+     * Update akumulasi penyusutan dan nilai buku aset.
+     */
+    private function updateAkumulasiAset(int $asetId, float $nominal): void
     {
-        if ($jurnal->status === 'POSTED') {
-            return 'Jurnal sudah diposting';
-        }
+        $aset = Aset::find($asetId);
+        if (!$aset) return;
 
-        $jurnal->load('detailJurnal', 'aset');
-
-        if ($jurnal->detailJurnal->isEmpty()) {
-            return 'Jurnal harus memiliki minimal satu entri';
-        }
-
-        $totalDebit  = $jurnal->detailJurnal->where('tipe', 'DEBIT')->sum('nominal');
-        $totalKredit = $jurnal->detailJurnal->where('tipe', 'KREDIT')->sum('nominal');
-
-        if (round($totalDebit, 2) !== round($totalKredit, 2)) {
-            return 'Total debit dan kredit harus sama sebelum diposting';
-        }
-
-        DB::transaction(function () use ($jurnal) {
-            $jurnal->update(['status' => 'POSTED']);
-
-            if ($jurnal->tipe_penyesuaian === 'PENYUSUTAN_ASET') {
-                foreach ($jurnal->aset as $aset) {
-                    $nominal = (float) $aset->pivot->nominal;
-                    $aset->akumulasi_penyusutan = ($aset->akumulasi_penyusutan ?? 0) + $nominal;
-                    $aset->nilai_buku           = $aset->nilai_tercatat - $aset->akumulasi_penyusutan;
-                    $aset->save();
-                }
-            }
-        });
-
-        return true;
+        $aset->akumulasi_penyusutan = ($aset->akumulasi_penyusutan ?? 0) + $nominal;
+        $aset->nilai_buku           = $aset->nilai_tercatat - $aset->akumulasi_penyusutan;
+        $aset->save();
     }
 
-    // ── Delete ─────────────────────────────────────────────────────────────
+    // ── Hook: post ─────────────────────────────────────────────────────────
 
-    public function delete(Jurnal $jurnal): bool|string
+    /**
+     * Saat diposting, update akumulasi penyusutan untuk tiap aset terlampir.
+     */
+    protected function onPosted(Jurnal $jurnal): void
     {
-        if ($jurnal->status === 'POSTED') {
-            return 'Jurnal yang sudah diposting tidak bisa dihapus';
+        if ($jurnal->tipe_penyesuaian !== 'PENYUSUTAN_ASET') return;
+
+        $jurnal->loadMissing('aset');
+
+        foreach ($jurnal->aset as $aset) {
+            $this->updateAkumulasiAset($aset->id, (float) $aset->pivot->nominal);
         }
+    }
 
-        DB::transaction(function () use ($jurnal) {
-            $jurnal->aset()->detach();
-            $jurnal->detailJurnal()->delete();
-            $jurnal->delete();
-        });
+    // ── Hook: delete ───────────────────────────────────────────────────────
 
-        return true;
+    /**
+     * Detach relasi aset sebelum jurnal dihapus.
+     */
+    protected function beforeDelete(Jurnal $jurnal): void
+    {
+        $jurnal->aset()->detach();
     }
 }
