@@ -17,6 +17,7 @@ use App\Http\Controllers\KenclengController;
 use App\Http\Controllers\KategoriTransaksiController;
 use App\Http\Controllers\AsetController;
 use App\Http\Controllers\JurnalUmumController;
+use App\Http\Controllers\JurnalPenyesuaianController;
 
 // ── Landing Page ───────────────────────────────────────────────────────────
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -254,6 +255,33 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
 
         Route::middleware('permission:DELETE_KATEGORI')->group(function () {
             Route::delete('/kategori-transaksi/{kategoriTransaksi}', [KategoriTransaksiController::class, 'destroy'])->name('kategori-transaksi.destroy');
+        });
+    });
+
+    Route::middleware('permission:VIEW_JURNAL_PENYESUAIAN')->group(function () {
+        Route::get('/jurnal-penyesuaian', [JurnalPenyesuaianController::class, 'index'])
+            ->name('jurnal-penyesuaian.index');
+
+        Route::get('/jurnal-penyesuaian/{jurnal}', [JurnalPenyesuaianController::class, 'show'])
+            ->whereNumber('jurnal')
+            ->name('jurnal-penyesuaian.show');
+
+        Route::middleware('permission:CREATE_JURNAL_PENYESUAIAN')->group(function () {
+            Route::get('/jurnal-penyesuaian/create', [JurnalPenyesuaianController::class, 'create'])
+                ->name('jurnal-penyesuaian.create');
+
+            Route::get('/jurnal-penyesuaian/aset-detail', [JurnalPenyesuaianController::class, 'getAsetDetail'])
+                ->name('jurnal-penyesuaian.aset-detail');
+
+            Route::post('/jurnal-penyesuaian', [JurnalPenyesuaianController::class, 'store'])
+                ->name('jurnal-penyesuaian.store');
+
+            Route::post('/jurnal-penyesuaian/bulk-post', [JurnalPenyesuaianController::class, 'bulkPost'])
+                ->name('jurnal-penyesuaian.bulk-post');
+
+            Route::delete('/jurnal-penyesuaian/{jurnal}', [JurnalPenyesuaianController::class, 'destroy'])
+                ->whereNumber('jurnal')
+                ->name('jurnal-penyesuaian.destroy');
         });
     });
 });

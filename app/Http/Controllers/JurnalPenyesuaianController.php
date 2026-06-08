@@ -2,408 +2,174 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreJurnalPenyesuaianRequest;
-use App\Models\Akun;
-use App\Models\Aset;
-use App\Models\DetailJurnal;
 use App\Models\Jurnal;
-use App\Models\JurnalPenyesuaian;
-use App\Models\Periode;
+use App\Services\JurnalPenyesuaianService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class JurnalPenyesuaianController extends Controller
 {
-    // ────────────────────────────────────────────────────────────────────────
-    // INDEX
-    // ────────────────────────────────────────────────────────────────────────
+    public function __construct(
+        protected JurnalPenyesuaianService $service
+    ) {}
 
     public function index(Request $request)
     {
-        $query = Jurnal::with([
-            'periode',
-            'user',
-            'jurnalPenyesuaian',
-            'detailJurnal.akun',
-        ])
-            ->penyesuaian()
-            ->orderByDesc('created_at');
+        $search    = $request->get('search', '');
+        $periodeId = $request->get('periode_id', '');
+        $tipe      = $request->get('tipe', '');
+        $status    = $request->get('status', '');
+        $perPage   = (int) $request->get('per_page', 10);
 
-        if ($request->filled('periode')) {
-            $query->where('periode_id', $request->periode);
-        }
-
-        if ($request->filled('tipe')) {
-            $query->whereHas('jurnalPenyesuaian', function ($q) use ($request) {
-                $q->where('tipe_penyesuaian', $request->tipe);
-            });
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $perPage     = $request->input('per_page', 10);
-        $jurnal      = $query->paginate($perPage)->withQueryString();
-        $periodeList = Periode::orderByDesc('tanggal_awal')->get();
+        $jurnal       = $this->service->getList($search, $periodeId, $tipe, $status, $perPage);
+        $periodeList  = $this->service->getPeriodeList();
+        $periodeAktif = $this->service->getPeriodeAktif();
+        $tipeLabels   = JurnalPenyesuaianService::TIPE_LABELS;
 
         return view('pages.jurnal-penyesuaian.index', compact(
-            'jurnal',
-            'periodeList',
-            'perPage',
+            'jurnal', 'periodeList', 'periodeAktif',
+            'tipeLabels', 'search', 'periodeId', 'tipe', 'status', 'perPage'
         ));
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // CREATE
-    // ────────────────────────────────────────────────────────────────────────
-
-    public function create(Request $request)
+    public function create()
     {
-        $periodeList = Periode::orderByDesc('tanggal_awal')->get();
+        $periodeAktif = $this->service->getPeriodeAktif();
+        $periodeList  = $this->service->getPeriodeList();
+        $tipeLabels   = JurnalPenyesuaianService::TIPE_LABELS;
+        $tipeDescs    = JurnalPenyesuaianService::TIPE_DESCRIPTIONS;
 
-        // Hanya akun level terbawah (yang punya parent) yang bisa dipilih
-        $akunList = Akun::whereNotNull('parent_id')
-            ->with('parent')
-            ->orderBy('kode_akun')
-            ->get();
+        $akunList = $this->service->getAkunList('MANUAL');
+        $asetList = $this->service->getAsetAktif();
 
-        $asetList = Aset::aktif()->get();
-
-        $tipe = $request->input('tipe', 'PENYUSUTAN_ASET');
+        $akunPerTipe = [];
+        foreach (array_keys($tipeLabels) as $tipe) {
+            $akunPerTipe[$tipe] = $this->service->getAkunList($tipe);
+        }
 
         return view('pages.jurnal-penyesuaian.create', compact(
-            'periodeList',
-            'akunList',
-            'asetList',
-            'tipe',
+            'periodeAktif', 'periodeList', 'akunList', 'akunPerTipe',
+            'asetList', 'tipeLabels', 'tipeDescs'
         ));
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // STORE
-    // ────────────────────────────────────────────────────────────────────────
-
-    public function store(StoreJurnalPenyesuaianRequest $request)
+    public function store(Request $request)
     {
-        DB::beginTransaction();
+        $tipeKeys = implode(',', array_keys(JurnalPenyesuaianService::TIPE_LABELS));
 
-        try {
-            // Buat header jurnal (supertype)
-            $jurnal = Jurnal::create([
-                'periode_id'   => $request->periode_id,
-                'user_id'      => auth()->id(),
-                'nomor_jurnal' => Jurnal::generateNomor('PENYESUAIAN'),
-                'jenis_jurnal' => 'PENYESUAIAN',
-                'keterangan'   => $request->keterangan,
-                'status'       => 'DRAFT',
-            ]);
+        $rules = [
+            'periode_id'       => 'required|exists:periode,id',
+            'tanggal'          => 'required|date',
+            'tipe_penyesuaian' => 'required|in:' . $tipeKeys,
+            'keterangan'       => 'required|string|max:500',
+            'detail'           => 'required|array|min:2',
+            'detail.*.akun_id' => 'required|exists:akun,id',
+            'detail.*.tipe'    => 'required|in:DEBIT,KREDIT',
+            'detail.*.nominal' => 'required|string',
+            'submit_type'      => 'required|in:draft,posting',
+        ];
 
-            // Buat subtype is-a
-            JurnalPenyesuaian::create([
-                'jurnal_id'        => $jurnal->id,
-                'tipe_penyesuaian' => $request->tipe_penyesuaian,
-                'aset_id'          => $request->tipe_penyesuaian === 'PENYUSUTAN_ASET'
-                    ? $request->aset_id
-                    : null,
-            ]);
-
-            // Buat baris detail jurnal sesuai tipe
-            $this->storeDetail($jurnal, $request);
-
-            DB::commit();
-
-            return redirect()
-                ->route('dashboard.jurnal-penyesuaian.show', $jurnal)
-                ->with('success', 'Jurnal ' . $jurnal->nomor_jurnal . ' berhasil disimpan sebagai draft.');
-
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            return back()
-                ->withInput()
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        if ($request->tipe_penyesuaian === 'PENYUSUTAN_ASET') {
+            $rules['detail.0.aset_rows']           = 'required|array|min:1';
+            $rules['detail.0.aset_rows.*.aset_id'] = 'required|exists:aset,id';
+            $rules['detail.0.aset_rows.*.nominal']  = 'required|string';
         }
+
+        $request->validate($rules);
+
+        $status = $request->submit_type === 'posting' ? 'POSTED' : 'DRAFT';
+
+        // Validasi balance sebelum posting
+        if ($status === 'POSTED') {
+            $totalDebit  = 0;
+            $totalKredit = 0;
+            foreach ($request->detail as $d) {
+                $nominal = (float) str_replace(['.', ','], ['', '.'], $d['nominal'] ?? 0);
+                if ($d['tipe'] === 'DEBIT')  $totalDebit  += $nominal;
+                if ($d['tipe'] === 'KREDIT') $totalKredit += $nominal;
+            }
+            if (round($totalDebit, 2) !== round($totalKredit, 2)) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['balance' => 'Total debit dan kredit harus sama sebelum diposting.']);
+            }
+        }
+
+        $this->service->store($request->all(), $status);
+
+        $msg = $status === 'POSTED'
+            ? 'Jurnal berhasil diposting ke buku besar.'
+            : 'Jurnal berhasil disimpan sebagai draft.';
+
+        return redirect()->route('dashboard.jurnal-penyesuaian.index')
+            ->with('success', $msg);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // SHOW
-    // ────────────────────────────────────────────────────────────────────────
-
-    public function show(Jurnal $jurnalPenyesuaian)
+    public function show(Jurnal $jurnal)
     {
-        abort_if($jurnalPenyesuaian->jenis_jurnal !== 'PENYESUAIAN', 404);
-
-        $jurnalPenyesuaian->load([
-            'periode',
-            'user',
-            'jurnalPenyesuaian.aset',
-            'detailJurnal.akun',
-        ]);
-
-        return view('pages.jurnal-penyesuaian.show', compact('jurnalPenyesuaian'));
-    }
-
-    // ────────────────────────────────────────────────────────────────────────
-    // POSTING — DRAFT → POSTED
-    // ────────────────────────────────────────────────────────────────────────
-
-    public function posting(Jurnal $jurnalPenyesuaian)
-    {
-        abort_if($jurnalPenyesuaian->jenis_jurnal !== 'PENYESUAIAN', 404);
-
-        if ($jurnalPenyesuaian->status === 'POSTED') {
-            return back()->with('error', 'Jurnal ini sudah diposting sebelumnya.');
-        }
-
-        // Wajib balance sebelum posting
-        if (!$jurnalPenyesuaian->is_balance) {
-            return back()->with('error', 'Jurnal tidak dapat diposting karena total debit dan kredit tidak seimbang.');
-        }
-
-        DB::beginTransaction();
-
-        try {
-            $jurnalPenyesuaian->update(['status' => 'POSTED']);
-
-            // Side effect: update akumulasi aset jika tipe penyusutan
-            $this->updateAkumulasiAset($jurnalPenyesuaian);
-
-            DB::commit();
-
-            return back()->with('success', 'Jurnal ' . $jurnalPenyesuaian->nomor_jurnal . ' berhasil diposting ke buku besar.');
-
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            return back()->with('error', 'Gagal memposting jurnal: ' . $e->getMessage());
-        }
-    }
-
-    // ────────────────────────────────────────────────────────────────────────
-    // DESTROY — hanya DRAFT yang boleh dihapus
-    // ────────────────────────────────────────────────────────────────────────
-
-    public function destroy(Jurnal $jurnalPenyesuaian)
-    {
-        abort_if($jurnalPenyesuaian->jenis_jurnal !== 'PENYESUAIAN', 404);
-
-        if ($jurnalPenyesuaian->status === 'POSTED') {
-            return back()->with('error', 'Jurnal yang sudah diposting tidak dapat dihapus.');
-        }
-
-        // detail_jurnal dan jurnal_penyesuaian terhapus otomatis
-        // via cascadeOnDelete di migration
-        $jurnalPenyesuaian->delete();
-
-        return redirect()
-            ->route('dashboard.jurnal-penyesuaian.index')
-            ->with('success', 'Draft jurnal berhasil dihapus.');
-    }
-
-    // ────────────────────────────────────────────────────────────────────────
-    // API — data aset untuk preview JS di halaman create
-    // ────────────────────────────────────────────────────────────────────────
-
-    public function getAset(Aset $aset)
-    {
+        $jurnal = $this->service->getById($jurnal);
         return response()->json([
-            'id'                       => $aset->id,
-            'nama_aset'                => $aset->nama_aset,
-            'nilai_perolehan'          => $aset->nilai_perolehan,
-            'akumulasi_penyusutan'     => $aset->akumulasi_penyusutan,
-            'nilai_buku'               => $aset->nilai_buku,
-            'penyusutan_per_bulan'     => $aset->penyusutan_per_bulan,
-            'akun_beban_penyusutan_id' => $aset->akun_beban_penyusutan_id,
-            'akun_akumulasi_id'        => $aset->akun_akumulasi_id,
-        ]);
-    }
-
-    // ────────────────────────────────────────────────────────────────────────
-    // PRIVATE — store detail per tipe penyesuaian
-    // ────────────────────────────────────────────────────────────────────────
-
-    private function storeDetail(Jurnal $jurnal, $request): void
-    {
-        match ($request->tipe_penyesuaian) {
-            'PENYUSUTAN_ASET'          => $this->storeDetailPenyusutan($jurnal, $request),
-            'BEBAN_BELUM_DIBAYAR'      => $this->storeDetailBebanBelumDibayar($jurnal, $request),
-            'PENDAPATAN_BELUM_DICATAT' => $this->storeDetailPendapatanBelumDicatat($jurnal, $request),
-            'BEBAN_DIBAYAR_DIMUKA'     => $this->storeDetailBebanDibayarDimuka($jurnal, $request),
-            'ZAKAT_INFAQ'              => $this->storeDetailZakatInfaq($jurnal, $request),
-            'MANUAL'                   => $this->storeDetailManual($jurnal, $request),
-        };
-    }
-
-    /**
-     * Penyusutan Aset
-     * Debit  : Beban Penyusutan  (dari data aset)
-     * Kredit : Akumulasi Penyusutan (dari data aset)
-     * Nominal otomatis dari penyusutan_per_bulan aset
-     */
-    private function storeDetailPenyusutan(Jurnal $jurnal, $request): void
-    {
-        $aset = Aset::findOrFail($request->aset_id);
-
-        DetailJurnal::create([
-            'jurnal_id'  => $jurnal->id,
-            'akun_id'    => $aset->akun_beban_penyusutan_id,
-            'tipe'       => 'DEBIT',
-            'nominal'    => $aset->penyusutan_per_bulan,
-            'keterangan' => $request->keterangan,
-        ]);
-
-        DetailJurnal::create([
-            'jurnal_id'  => $jurnal->id,
-            'akun_id'    => $aset->akun_akumulasi_id,
-            'tipe'       => 'KREDIT',
-            'nominal'    => $aset->penyusutan_per_bulan,
-            'keterangan' => $request->keterangan,
+            'jurnal' => $jurnal,
+            'labels' => JurnalPenyesuaianService::TIPE_LABELS,
         ]);
     }
 
     /**
-     * Beban Masih Harus Dibayar
-     * Debit  : Beban terkait
-     * Kredit : Utang Beban
+     * Bulk post — mengubah status beberapa jurnal DRAFT menjadi POSTED sekaligus.
      */
-    private function storeDetailBebanBelumDibayar(Jurnal $jurnal, $request): void
+    public function bulkPost(Request $request)
     {
-        DetailJurnal::create([
-            'jurnal_id'  => $jurnal->id,
-            'akun_id'    => $request->akun_beban_id,
-            'tipe'       => 'DEBIT',
-            'nominal'    => $request->nominal,
-            'keterangan' => $request->keterangan,
+        $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'integer|exists:jurnal,id',
         ]);
 
-        DetailJurnal::create([
-            'jurnal_id'  => $jurnal->id,
-            'akun_id'    => $request->akun_utang_id,
-            'tipe'       => 'KREDIT',
-            'nominal'    => $request->nominal,
-            'keterangan' => $request->keterangan,
-        ]);
-    }
+        $berhasil = 0;
+        $gagal    = 0;
+        $pesanGagal = [];
 
-    /**
-     * Pendapatan Belum Dicatat
-     * Debit  : Piutang Pendapatan
-     * Kredit : Pendapatan
-     */
-    private function storeDetailPendapatanBelumDicatat(Jurnal $jurnal, $request): void
-    {
-        DetailJurnal::create([
-            'jurnal_id'  => $jurnal->id,
-            'akun_id'    => $request->akun_piutang_id,
-            'tipe'       => 'DEBIT',
-            'nominal'    => $request->nominal,
-            'keterangan' => $request->keterangan,
-        ]);
+        foreach ($request->ids as $id) {
+            $jurnal = Jurnal::find($id);
 
-        DetailJurnal::create([
-            'jurnal_id'  => $jurnal->id,
-            'akun_id'    => $request->akun_pendapatan_id,
-            'tipe'       => 'KREDIT',
-            'nominal'    => $request->nominal,
-            'keterangan' => $request->keterangan,
-        ]);
-    }
+            if (!$jurnal) {
+                $gagal++;
+                continue;
+            }
 
-    /**
-     * Beban Dibayar Dimuka
-     * Debit  : Beban periode ini
-     * Kredit : Biaya Dibayar Dimuka
-     */
-    private function storeDetailBebanDibayarDimuka(Jurnal $jurnal, $request): void
-    {
-        DetailJurnal::create([
-            'jurnal_id'  => $jurnal->id,
-            'akun_id'    => $request->akun_beban_id,
-            'tipe'       => 'DEBIT',
-            'nominal'    => $request->nominal,
-            'keterangan' => $request->keterangan,
-        ]);
+            $result = $this->service->post($jurnal);
 
-        DetailJurnal::create([
-            'jurnal_id'  => $jurnal->id,
-            'akun_id'    => $request->akun_dibayar_dimuka_id,
-            'tipe'       => 'KREDIT',
-            'nominal'    => $request->nominal,
-            'keterangan' => $request->keterangan,
-        ]);
-    }
-
-    /**
-     * Penyesuaian Zakat / Infaq
-     * Debit  : Pendapatan Zakat/Infaq (sisa belum disalurkan)
-     * Kredit : Kewajiban Dana Belum Disalurkan
-     * Nominal = total_diterima - total_disalurkan
-     */
-    private function storeDetailZakatInfaq(Jurnal $jurnal, $request): void
-    {
-        $sisa = $request->total_diterima - $request->total_disalurkan;
-
-        if ($sisa <= 0) {
-            throw new \Exception('Tidak ada sisa dana yang perlu dicatat sebagai kewajiban.');
+            if ($result === true) {
+                $berhasil++;
+            } else {
+                $gagal++;
+                $pesanGagal[] = $result; // pesan error dari service
+            }
         }
 
-        DetailJurnal::create([
-            'jurnal_id'  => $jurnal->id,
-            'akun_id'    => $request->akun_pendapatan_id,
-            'tipe'       => 'DEBIT',
-            'nominal'    => $sisa,
-            'keterangan' => $request->keterangan,
-        ]);
+        if ($berhasil === 0) {
+            // Semua gagal
+            $detail = !empty($pesanGagal) ? ' (' . implode(', ', array_unique($pesanGagal)) . ')' : '';
+            return redirect()->route('dashboard.jurnal-penyesuaian.index')
+                ->with('error', "Tidak ada jurnal yang berhasil diposting.{$detail}");
+        }
 
-        DetailJurnal::create([
-            'jurnal_id'  => $jurnal->id,
-            'akun_id'    => $request->akun_kewajiban_id,
-            'tipe'       => 'KREDIT',
-            'nominal'    => $sisa,
-            'keterangan' => $request->keterangan,
-        ]);
+        $msg = "Berhasil memposting {$berhasil} jurnal.";
+        if ($gagal > 0) {
+            $msg .= " {$gagal} jurnal gagal (debit/kredit tidak balance atau sudah diposting).";
+        }
+
+        return redirect()->route('dashboard.jurnal-penyesuaian.index')
+            ->with($gagal > 0 ? 'error' : 'success', $msg);
     }
 
-    /**
-     * Manual Entry
-     * Bendahara input debit/kredit bebas.
-     * Validasi balance sudah dilakukan di StoreJurnalPenyesuaianRequest.
-     */
-    private function storeDetailManual(Jurnal $jurnal, $request): void
+    public function destroy(Jurnal $jurnal)
     {
-        foreach ($request->detail as $row) {
-            DetailJurnal::create([
-                'jurnal_id'  => $jurnal->id,
-                'akun_id'    => $row['akun_id'],
-                'tipe'       => $row['tipe'],
-                'nominal'    => $row['nominal'],
-                'keterangan' => $row['keterangan'] ?? null,
-            ]);
-        }
-    }
+        $result = $this->service->delete($jurnal);
 
-    /**
-     * Update akumulasi penyusutan di tabel aset setelah posting.
-     * Hanya berjalan jika tipe_penyesuaian = PENYUSUTAN_ASET.
-     */
-    private function updateAkumulasiAset(Jurnal $jurnal): void
-    {
-        $sub = $jurnal->jurnalPenyesuaian;
-
-        if (!$sub || $sub->tipe_penyesuaian !== 'PENYUSUTAN_ASET' || !$sub->aset_id) {
-            return;
+        if ($result !== true) {
+            return redirect()->back()->with('error', $result);
         }
 
-        $aset = $sub->aset;
-
-        if (!$aset) return;
-
-        $nominal = $jurnal->detailJurnal->where('tipe', 'DEBIT')->sum('nominal');
-
-        $aset->increment('akumulasi_penyusutan', $nominal);
-
-        if ($aset->fresh()->akumulasi_penyusutan >= $aset->nilai_perolehan) {
-            $aset->update(['status_aset' => 'HABIS']);
-        }
+        return redirect()->route('dashboard.jurnal-penyesuaian.index')
+            ->with('success', 'Jurnal berhasil dihapus.');
     }
 }
