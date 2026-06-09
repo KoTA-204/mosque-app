@@ -18,22 +18,23 @@
         <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Laporan Catatan Atas Laporan Keuangan (CALK)</h1>
         <div class="flex items-center gap-2">
             <a href="{{ route('dashboard.laporan.penghasilan-komprehensif') }}"
-               class="text-sm text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            class="text-sm text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 Penghasilan Komprehensif
             </a>
             <a href="{{ route('dashboard.laporan.posisi-keuangan') }}"
-               class="text-sm text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            class="text-sm text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 Posisi Keuangan
             </a>
             <a href="{{ route('dashboard.laporan.perubahan-aset-neto') }}"
-               class="text-sm text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            class="text-sm text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 Perubahan Aset Neto
             </a>
-            <button onclick="window.print()"
-                class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors no-print">
+            {{-- Ganti button cetak --}}
+            <button onclick="cetakLaporan()"
+                class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                 </svg>
                 Cetak
             </button>
@@ -59,7 +60,7 @@
         </div>
 
         {{-- ══ DOKUMEN CALK ══ --}}
-        <div class="p-6">
+        <div class="p-6" id="calkDokumen">
 
             {{-- KOP --}}
             <div class="text-center mb-8">
@@ -461,72 +462,235 @@
     </div>
 </div>
 
-@push('styles')
-<style>
-@media print {
-    /* Sembunyikan semua UI chrome */
-    nav,
-    aside,
-    header,
-    .no-print,
-    [class*="sidebar"],
-    [class*="navbar"] {
-        display: none !important;
-    }
+@push('scripts')
+<script>
+function cetakLaporan() {
+    @if(!$periode)
+        alert('Pilih periode terlebih dahulu.');
+        return;
+    @endif
 
-    /* Reset body & halaman */
-    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    html, body { margin: 0 !important; padding: 0 !important; background: white !important; }
+    const periodeLabel = @json($periode?->nama_periode ?? '');
+    const tanggalAkhir = @json($periode?->tanggal_akhir?->translatedFormat('d F Y') ?? '');
 
-    /* Container utama full width */
-    main,
-    [class*="content"],
-    .p-6,
-    .space-y-6 {
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-    }
+    const konten = document.getElementById('calkDokumen').innerHTML;
 
-    /* Card wrapper: hilangkan rounded & shadow */
-    .bg-white,
-    .rounded-2xl,
-    .border {
-        border: none !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-    }
+    // Inject garis hijau pemisah setelah blok KOP, sebelum Catatan 1
+    const kontenFinal = konten.replace(
+        /(<\/span>\s*<\/div>)\s*(<div class="catatan-section)/,
+        '$1<hr class="kop-divider">$2'
+    );
 
-    /* Dokumen CALK */
-    #calkContent {
-        max-width: 100% !important;
-        padding: 1cm 1.5cm !important;
-        margin: 0 auto !important;
-    }
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
 
-    /* Tabel */
-    table {
-        width: 100% !important;
-        font-size: 10pt !important;
-        border-collapse: collapse !important;
-    }
-    th, td {
-        padding: 4pt 6pt !important;
-        border: 0.5pt solid #d1d5db !important;
-    }
-    thead { background-color: #f9fafb !important; }
-    tfoot { background-color: #f3f4f6 !important; font-weight: bold; }
+    printWindow.document.write(`<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>CALK - Masjid Luqmanul Hakim - ${periodeLabel}</title>
+    <style>
+        /* ── Reset & Base ── */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: white;
+            font-family: 'Segoe UI', Arial, sans-serif;   /* ← sans-serif, bukan Times */
+            font-size: 10pt;
+            color: #111;
+            line-height: 1.6;
+        }
 
-    /* Page break */
-    .catatan-section { page-break-inside: avoid; margin-bottom: 18pt; }
+        /* ── Layout wrapper ── */
+        .print-wrapper {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
 
-    /* Ukuran halaman */
-    @page {
-        size: A4 portrait;
-        margin: 1.5cm 1.8cm;
-    }
+        /* ── KOP ── */
+        .text-center { text-align: center; }
+        .mb-8 { margin-bottom: 22pt; }
+        .mb-3 { margin-bottom: 8pt; }
+        .mb-4 { margin-bottom: 10pt; }
+        .mt-1 { margin-top: 3pt; }
+        .mt-2 { margin-top: 6pt; }
+
+        /* Nama masjid — kecil hijau uppercase seperti preview */
+        .kop-nama,
+        p.text-sm.font-bold.text-green-700 {
+            font-size: 9pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #15803d !important;
+            margin-bottom: 2pt;
+        }
+
+        /* Judul CALK — besar bold uppercase */
+        h2.text-xl,
+        h2.font-bold {
+            font-size: 15pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #111 !important;
+            margin: 4pt 0;
+        }
+
+        /* Sub judul periode */
+        p.text-sm.text-gray-500 {
+            font-size: 10pt;
+            color: #6b7280 !important;
+            margin: 3pt 0;
+        }
+
+        /* Badge ISAK 35 — pill hijau seperti preview */
+        span.inline-block.text-xs {
+            display: inline-block;
+            margin-top: 6pt;
+            font-size: 8pt;
+            color: #15803d !important;
+            background-color: #dcfce7 !important;
+            padding: 2pt 12pt;
+            border-radius: 20pt;
+        }
+
+        /* Garis pemisah setelah KOP */
+        .kop-divider {
+            border: none;
+            border-top: 1.5pt solid #16a34a;
+            margin: 12pt 0 18pt 0;
+        }
+
+        /* ── Catatan Section ── */
+        .catatan-section {
+            margin-bottom: 18pt;
+            page-break-inside: avoid;
+        }
+        .catatan-section h3 {
+            font-size: 11pt;
+            font-weight: bold;
+            color: #15803d;
+            margin: 0 0 6pt 0;
+            padding-bottom: 2pt;
+            border-bottom: 0.5pt solid #d1fae5;
+        }
+        .catatan-section p {
+            font-size: 10pt;
+            color: #333;
+            margin: 0 0 6pt 0;
+            line-height: 1.6;
+        }
+
+        /* ── Tabel Info Umum (Catatan 1) ── */
+        table.info-table {
+            border: none;
+            font-size: 10pt;
+            width: auto;
+            max-width: 60%;
+        }
+        table.info-table td {
+            border: none !important;
+            padding: 2pt 8pt 2pt 0 !important;
+            color: #333;
+            vertical-align: top;
+        }
+        table.info-table td:first-child { color: #555; width: 100pt; }
+        table.info-table td:nth-child(2) { width: 12pt; color: #555; }
+
+        /* ── Tabel Keuangan ── */
+        table.fin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10pt;
+            margin-top: 4pt;
+        }
+        table.fin-table thead tr th {
+            background-color: #f3f4f6 !important;
+            font-size: 8.5pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 5pt 8pt;
+            border: 0.5pt solid #9ca3af;
+            color: #374151;
+        }
+        table.fin-table thead tr th.text-right,
+        table.fin-table td.text-right { text-align: right; }
+        table.fin-table thead tr th.text-left,
+        table.fin-table td.text-left { text-align: left; }
+
+        table.fin-table tbody tr td {
+            padding: 4pt 8pt;
+            border: 0.5pt solid #d1d5db;
+            color: #111;
+            background: white;
+            font-size: 10pt;
+            vertical-align: middle;
+        }
+        table.fin-table tbody tr.row-akumulasi td {
+            font-style: italic;
+            font-size: 9.5pt;
+            color: #6b7280;
+            padding-left: 20pt;
+        }
+        table.fin-table tbody tr td.td-indent { padding-left: 20pt; }
+        table.fin-table tbody tr td.color-red { color: #dc2626; }
+        table.fin-table tbody tr td.color-green { color: #15803d; }
+
+        table.fin-table tfoot tr td {
+            padding: 5pt 8pt;
+            border: 0.5pt solid #9ca3af;
+            border-top: 1.5pt solid #6b7280 !important;
+            background-color: #f3f4f6 !important;
+            font-weight: bold;
+            font-size: 10pt;
+            color: #111;
+        }
+        table.fin-table tfoot tr td.color-red { color: #dc2626; }
+
+        /* ── Catatan kaki tabel ── */
+        .tabel-note {
+            font-size: 8.5pt;
+            color: #6b7280;
+            font-style: italic;
+            margin-top: 4pt;
+        }
+
+        /* ── Ukuran halaman & margin ── */
+        @page {
+            size: A4 portrait;
+            margin: 1.8cm 2cm 2cm 2cm;
+        }
+
+        /* ── Nama file saat simpan PDF ── */
+        /* (diatur via title tag di atas) */
+    </style>
+</head>
+<body>
+<div class="print-wrapper">
+    ${konten}
+</div>
+<script>
+    // Auto print setelah render
+    window.onload = function() {
+        // Beri jeda agar font/style render sempurna
+        setTimeout(function() {
+            window.print();
+        }, 400);
+    };
+<\/script>
+</body>
+</html>`);
+
+    printWindow.document.close();
 }
-</style>
+</script>
 @endpush
 @endsection
