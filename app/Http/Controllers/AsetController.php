@@ -10,14 +10,32 @@ class AsetController extends Controller
 {
     public function index(Request $request)
     {
+        if ($request->get('stats_only')) {
+            return response()->json([
+                'stats' => [
+                    'total'       => Aset::count(),
+                    'aktif'       => Aset::where('status_aset', 'AKTIF')->count(),
+                    'tidak_aktif' => Aset::where('status_aset', 'TIDAK AKTIF')->count(),
+                ]
+            ]);
+        }
+
         $query = Aset::query();
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('nama_aset',    'like', "%{$search}%")
-                  ->orWhere('kode_aset',  'like', "%{$search}%")
-                  ->orWhere('lokasi_aset','like', "%{$search}%");
+                ->orWhere('kode_aset',  'like', "%{$search}%")
+                ->orWhere('lokasi_aset','like', "%{$search}%");
             });
+        }
+
+        if ($tahun = $request->get('tahun')) {
+            $query->where('kode_aset', 'like', "ASET-{$tahun}-%");
+        }
+
+        if ($lokasi = $request->get('lokasi')) {
+            $query->where('lokasi_aset', $lokasi);
         }
 
         if ($sumber = $request->get('sumber')) {
@@ -26,6 +44,10 @@ class AsetController extends Controller
 
         if ($status = $request->get('status')) {
             $query->where('status_aset', strtoupper($status));
+        }
+
+        if ($kondisi = $request->get('kondisi')) {
+            $query->where('kondisi_aset', $kondisi);
         }
 
         $perPage = (int) $request->get('per_page', 10);

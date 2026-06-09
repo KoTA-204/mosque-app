@@ -1,31 +1,4 @@
-{{-- resources/views/pages/aset/create.blade.php --}}
-<div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden">
-
-    {{-- Flatpickr CSS --}}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
-    <style>
-        .flatpickr-calendar { font-size: 13px; }
-        .flatpickr-day.selected, .flatpickr-day.selected:hover { background: #16a34a; border-color: #16a34a; }
-        .flatpickr-day:hover { background: #f0fdf4; }
-        .dark .flatpickr-calendar { background: #1f2937; border-color: #374151; color: #f9fafb; }
-        .dark .flatpickr-day { color: #d1d5db; }
-        .dark .flatpickr-day:hover { background: #374151; }
-        .dark .flatpickr-months, .dark .flatpickr-weekdays { background: #111827; }
-        .dark .flatpickr-current-month, .dark .flatpickr-weekday { color: #f9fafb; }
-    </style>
-
-    {{-- Header --}}
-    <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
-        <div>
-            <h2 class="text-base font-semibold text-gray-900 dark:text-white">Tambah Aset</h2>
-            <p class="text-xs text-gray-400 mt-0.5">Isi informasi aset yang akan dicatat</p>
-        </div>
-        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </button>
-    </div>
+<x-modal id="createAsetModal" title="Tambah Aset">
 
     <form id="createAsetForm" enctype="multipart/form-data">
         @csrf
@@ -95,29 +68,23 @@
                     </div>
                     <div>
                         <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Tanggal Perolehan <span class="text-red-500">*</span></label>
-                        {{-- hidden input untuk value aktual (Y-m-d) --}}
                         <input type="hidden" name="tanggal_perolehan" id="create-tanggal_perolehan">
-                        {{-- input display untuk flatpickr --}}
                         <input type="text" id="create-fp-tanggal_perolehan" placeholder="Pilih tanggal" readonly
                             class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors cursor-pointer">
                         <p id="err-tanggal_perolehan" class="text-xs text-red-500 mt-1"></p>
                     </div>
 
-                    {{-- Nilai --}}
                     <div>
                         <label id="create-labelNilai" class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
                             Nilai Perolehan (IDR) <span class="text-red-500">*</span>
                         </label>
-                        {{-- hidden input untuk value aktual (angka) --}}
                         <input type="hidden" name="nilai_tercatat" id="create-nilai_tercatat">
-                        {{-- input display dengan format ribuan --}}
                         <input type="text" id="create-display-nilai" placeholder="0"
                             inputmode="numeric"
                             class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
                         <p id="err-nilai_tercatat" class="text-xs text-red-500 mt-1"></p>
                     </div>
 
-                    {{-- Nama Pemberi --}}
                     <div id="create-fieldNamaPemberi" class="hidden">
                         <label id="create-labelNamaPemberi" class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Nama Pemberi</label>
                         <input type="text" name="nama_pemberi" placeholder="Masukkan nama"
@@ -181,7 +148,6 @@
                     </div>
                 </div>
 
-                {{-- Preview --}}
                 <div id="create-previewPenyusutan" class="hidden grid grid-cols-3 gap-3">
                     <div class="p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900">
                         <p class="text-xs text-gray-400 mb-1">Penyusutan / Tahun</p>
@@ -202,7 +168,7 @@
 
         {{-- Footer --}}
         <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-            <button type="button" onclick="closeModal()"
+            <button type="button" onclick="closeModal('createAsetModal')"
                 class="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 Batal
             </button>
@@ -213,4 +179,5 @@
             </button>
         </div>
     </form>
-</div>
+
+</x-modal>

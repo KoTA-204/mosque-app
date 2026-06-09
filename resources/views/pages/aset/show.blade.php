@@ -1,20 +1,6 @@
-{{-- resources/views/pages/aset/show.blade.php --}}
-<div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden">
+<x-modal id="showAsetModal" title="Detail Aset">
 
-    {{-- Header --}}
-    <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
-        <div>
-            <h2 class="text-base font-semibold text-gray-900 dark:text-white">Detail Aset</h2>
-            <p class="text-xs text-gray-400 mt-0.5">{{ $aset->kode_aset }} · {{ $aset->nama_aset }}</p>
-        </div>
-        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </button>
-    </div>
-
-    <div class="px-6 py-5 max-h-[72vh] overflow-y-auto space-y-7">
+    <div class="px-6 py-5 overflow-y-auto space-y-7" style="max-height: 65vh;">
 
         {{-- Identitas Aset --}}
         <div>
@@ -134,7 +120,7 @@
             </div>
         </div>
 
-        {{-- Penyusutan — hanya tampil jika disusutkan --}}
+        {{-- Penyusutan --}}
         @if($aset->umur_manfaat && $aset->tanggal_mulai_penyusutan)
         <div>
             <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Informasi Penyusutan</p>
@@ -164,7 +150,7 @@
                 </div>
             </div>
 
-            {{-- Jadwal penyusutan (inline, bukan tab) --}}
+            {{-- Jadwal penyusutan --}}
             <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800">
                 <table class="w-full text-sm">
                     <thead>
@@ -230,7 +216,7 @@
     </div>
 
     {{-- Footer --}}
-    <div class="flex justify-between items-center px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+    <div class="flex justify-between items-center px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 rounded-b-2xl">
         <button onclick="openEditModal({{ $aset->id }})"
             class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-yellow-700 border border-yellow-300 dark:border-yellow-700 dark:text-yellow-400 rounded-lg hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -238,9 +224,10 @@
             </svg>
             Edit Aset
         </button>
-        <button onclick="closeModal()"
+        <button onclick="closeModal('showAsetModal')"
             class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
             Tutup
         </button>
     </div>
-</div>
+
+</x-modal>
