@@ -29,43 +29,22 @@
 
     {{-- Stats --}}
     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center gap-4">
-            <div class="shrink-0 w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                </svg>
-            </div>
-            <div>
-                <p id="stat-total" class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['total'] }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total Aset</p>
-            </div>
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Aset</p>
+            <p id="stat-total" class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['total'] }}</p>
         </div>
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center gap-4">
-            <div class="shrink-0 w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-            </div>
-            <div>
-                <p id="stat-aktif" class="text-2xl font-bold text-green-600">{{ $stats['aktif'] }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Aset Aktif</p>
-            </div>
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Aset Aktif</p>
+            <p id="stat-aktif" class="text-2xl font-bold text-green-600">{{ $stats['aktif'] }}</p>
         </div>
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center gap-4">
-            <div class="shrink-0 w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                <svg class="w-6 h-6 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                </svg>
-            </div>
-            <div>
-                <p id="stat-tidak-aktif" class="text-2xl font-bold text-red-500">{{ $stats['tidak_aktif'] }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Aset Non-Aktif</p>
-            </div>
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Aset Non-Aktif</p>
+            <p id="stat-tidak-aktif" class="text-2xl font-bold text-red-500">{{ $stats['tidak_aktif'] }}</p>
         </div>
     </div>
 
     {{-- Table Card --}}
-    <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+    <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl">
         <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-wrap">
 
             {{-- Kiri: Show entries --}}
@@ -93,9 +72,9 @@
                         class="pl-9 pr-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 w-48 placeholder-gray-400">
                 </div>
 
-                {{-- Filter button + panel --}}
-                <div class="relative" id="filterWrapper">
-                    <button onclick="toggleFilterPanel()"
+                {{-- Filter button --}}
+                <div id="filterWrapper">
+                    <button id="filterBtn" onclick="toggleFilterPanel()"
                         class="flex items-center gap-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-green-400 transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/>
@@ -105,87 +84,93 @@
                             class="hidden items-center justify-center w-4 h-4 text-xs font-bold text-white bg-green-600 rounded-full">
                         </span>
                     </button>
-
-                    {{-- Panel --}}
-                    <div id="filterPanel"
-                        class="hidden absolute right-0 top-10 z-30 w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-4 space-y-4">
-
-                        <div class="flex items-center justify-between">
-                            <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Filter</p>
-                            <button onclick="resetFilters()" class="text-xs text-green-600 hover:underline">Reset</button>
-                        </div>
-
-                        {{-- Tahun --}}
-                        <div>
-                            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Tahun Perolehan</label>
-                            <select id="filterTahun" onchange="applyFilters()"
-                                class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
-                                <option value="">Semua Tahun</option>
-                                @foreach(range(date('Y'), 2000, -1) as $tahun)
-                                    <option value="{{ $tahun }}">{{ $tahun }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        {{-- Lokasi --}}
-                        <div>
-                            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Lokasi</label>
-                            <select id="filterLokasi" onchange="applyFilters()"
-                                class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
-                                <option value="">Semua Lokasi</option>
-                                @foreach(['Ruang Utama Masjid','Ruang Wanita Masjid','Menara Masjid','Ruang Utilitas','Garasi Masjid','Gudang','Lainnya'] as $lok)
-                                    <option value="{{ $lok }}">{{ $lok }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        {{-- Sumber --}}
-                        <div>
-                            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Sumber Perolehan</label>
-                            <select id="filterSumber" onchange="applyFilters()"
-                                class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
-                                <option value="">Semua Sumber</option>
-                                <option value="Wakaf">Wakaf</option>
-                                <option value="Hibah/Donasi">Hibah/Donasi</option>
-                                <option value="Pembelian">Pembelian</option>
-                                <option value="Infak Jamaah">Infak Jamaah</option>
-                                <option value="Lainnya">Lainnya</option>
-                            </select>
-                        </div>
-
-                        {{-- Status --}}
-                        <div>
-                            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Status</label>
-                            <select id="filterStatus" onchange="applyFilters()"
-                                class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
-                                <option value="">Semua Status</option>
-                                <option value="aktif">Aktif</option>
-                                <option value="tidak aktif">Tidak Aktif</option>
-                            </select>
-                        </div>
-
-                        {{-- Kondisi --}}
-                        <div>
-                            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Kondisi</label>
-                            <select id="filterKondisi" onchange="applyFilters()"
-                                class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
-                                <option value="">Semua Kondisi</option>
-                                <option value="BAIK">Baik</option>
-                                <option value="RUSAK RINGAN">Rusak Ringan</option>
-                                <option value="RUSAK BERAT">Rusak Berat</option>
-                            </select>
-                        </div>
-
-                    </div>
                 </div>
 
             </div>
         </div>
-        <div id="tableWrapper">
+
+        <div id="tableWrapper" class="overflow-x-auto">
             @include('pages.aset.table')
         </div>
     </div>
 
+</div>
+
+{{-- Filter Panel — fixed, di luar semua container --}}
+<div id="filterPanel"
+    class="hidden z-[9998] w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl">
+    
+    {{-- Header tetap di atas --}}
+    <div class="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+        <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Filter</p>
+        <button onclick="resetFilters()" class="text-xs text-green-600 hover:underline">Reset</button>
+    </div>
+
+    {{-- Konten scrollable --}}
+    <div id="filterPanelBody" class="p-4 space-y-4 overflow-y-auto">
+
+        {{-- Tahun --}}
+        <div>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Tahun Perolehan</label>
+            <select id="filterTahun" onchange="applyFilters()"
+                class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                <option value="">Semua Tahun</option>
+                @foreach(range(date('Y'), 2000, -1) as $tahun)
+                    <option value="{{ $tahun }}">{{ $tahun }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        {{-- Lokasi --}}
+        <div>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Lokasi</label>
+            <select id="filterLokasi" onchange="applyFilters()"
+                class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                <option value="">Semua Lokasi</option>
+                @foreach(['Ruang Utama Masjid','Ruang Wanita Masjid','Menara Masjid','Ruang Utilitas','Garasi Masjid','Gudang','Lainnya'] as $lok)
+                    <option value="{{ $lok }}">{{ $lok }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        {{-- Sumber --}}
+        <div>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Sumber Perolehan</label>
+            <select id="filterSumber" onchange="applyFilters()"
+                class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                <option value="">Semua Sumber</option>
+                <option value="Wakaf">Wakaf</option>
+                <option value="Hibah/Donasi">Hibah/Donasi</option>
+                <option value="Pembelian">Pembelian</option>
+                <option value="Infak Jamaah">Infak Jamaah</option>
+                <option value="Lainnya">Lainnya</option>
+            </select>
+        </div>
+
+        {{-- Status --}}
+        <div>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Status</label>
+            <select id="filterStatus" onchange="applyFilters()"
+                class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                <option value="">Semua Status</option>
+                <option value="aktif">Aktif</option>
+                <option value="tidak aktif">Tidak Aktif</option>
+            </select>
+        </div>
+
+        {{-- Kondisi --}}
+        <div>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Kondisi</label>
+            <select id="filterKondisi" onchange="applyFilters()"
+                class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                <option value="">Semua Kondisi</option>
+                <option value="BAIK">Baik</option>
+                <option value="RUSAK RINGAN">Rusak Ringan</option>
+                <option value="RUSAK BERAT">Rusak Berat</option>
+            </select>
+        </div>
+
+    </div>
 </div>
 
 {{-- Modal Container --}}
@@ -201,6 +186,8 @@
 const modalContainer = document.getElementById('modalContainer');
 const csrfToken      = document.querySelector('meta[name="csrf-token"]').content;
 const baseUrl        = "{{ url('dashboard/aset') }}";
+const filterUrl      = "{{ route('dashboard.aset.index') }}";
+let filterDebounce;
 
 // ── Stats realtime ────────────────────────────────────────────
 function updateStats(delta) {
@@ -224,15 +211,35 @@ function fetchStats() {
     });
 }
 
-// ── Filter panel ──────────────────────────────────────────────
+// ── Filter panel (fixed positioning) ─────────────────────────
 function toggleFilterPanel() {
-    document.getElementById('filterPanel').classList.toggle('hidden');
+    const panel = document.getElementById('filterPanel');
+    const body  = document.getElementById('filterPanelBody');
+    const btn   = document.getElementById('filterBtn');
+    const rect  = btn.getBoundingClientRect();
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+
+    if (panel.classList.contains('hidden')) {
+        const top  = rect.bottom + scrollY + 8;
+        const left = Math.max(8, rect.right - 288);
+
+        panel.style.position   = 'absolute';
+        panel.style.top        = top + 'px';
+        panel.style.left       = left + 'px';
+        body.style.maxHeight   = Math.min(400, window.innerHeight - rect.bottom - 24) + 'px';
+        panel.classList.remove('hidden');
+    } else {
+        panel.classList.add('hidden');
+    }
 }
 
 document.addEventListener('click', function(e) {
+    const panel   = document.getElementById('filterPanel');
     const wrapper = document.getElementById('filterWrapper');
-    if (wrapper && !wrapper.contains(e.target)) {
-        document.getElementById('filterPanel').classList.add('hidden');
+    if (!panel.classList.contains('hidden') &&
+        !panel.contains(e.target) &&
+        !wrapper.contains(e.target)) {
+        panel.classList.add('hidden');
     }
 });
 
@@ -242,6 +249,7 @@ function resetFilters() {
         if (el) el.value = '';
     });
     document.getElementById('filterSearch').value = '';
+    countActiveFilters();
     applyFilters();
 }
 
@@ -286,6 +294,9 @@ function closeModal(id) {
 
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
+        // Tutup filter panel jika terbuka
+        document.getElementById('filterPanel').classList.add('hidden');
+        // Tutup modal jika terbuka
         modalContainer.querySelectorAll('[id$="Modal"]').forEach(el => {
             if (el.style.display === 'flex') closeModal(el.id);
         });
@@ -356,7 +367,7 @@ function initModalFeatures() {
             maxDate:    'today',
             onChange: function(selectedDates) {
                 if (selectedDates[0]) {
-                    const d = selectedDates[0];
+                    const d   = selectedDates[0];
                     const ymd = d.getFullYear() + '-' +
                         String(d.getMonth()+1).padStart(2,'0') + '-' +
                         String(d.getDate()).padStart(2,'0');
@@ -489,9 +500,6 @@ function showToast(msg, type = 'success') {
 }
 
 // ── AJAX Filter ───────────────────────────────────────────────
-const filterUrl = "{{ route('dashboard.aset.index') }}";
-let filterDebounce;
-
 function applyFilters() {
     const search  = document.getElementById('filterSearch').value;
     const tahun   = document.getElementById('filterTahun').value;
