@@ -23,13 +23,10 @@ class UpdateTransaksiRequest extends FormRequest
     {
         return [
             'dompet_id'             => 'required|exists:dompet,id',
-            'kategori_transaksi_id' => 'required|exists:kategori_transaksi,id',
-            'kegiatan_id'           => 'nullable|exists:kegiatan,id',
             'tanggal_transaksi'     => 'required|date',
             'akun_debit_id'         => 'required|exists:akun,id',
             'akun_kredit_id'        => 'required|exists:akun,id',
             'deskripsi'             => 'nullable|string|max:500',
-            'catatan'               => 'nullable|string|max:500',
             'bukti_transaksi'       => 'nullable|array|max:5',
             'bukti_transaksi.*'     => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
         ];
@@ -39,7 +36,6 @@ class UpdateTransaksiRequest extends FormRequest
     {
         return [
             'dompet_id.required'             => 'Dompet wajib dipilih.',
-            'kategori_transaksi_id.required' => 'Kategori transaksi wajib dipilih.',
             'tanggal_transaksi.required'     => 'Tanggal transaksi wajib diisi.',
             'akun_debit_id.required'         => 'Akun debit wajib dipilih.',
             'akun_kredit_id.required'        => 'Akun kredit wajib dipilih.',

@@ -119,15 +119,19 @@ class TransaksiController extends Controller
             'aset',
         ]);
 
-        $debit  = $transaksi->jurnal->flatMap->detailJurnal->firstWhere('posisi', 'DEBIT');
-        $kredit = $transaksi->jurnal->flatMap->detailJurnal->firstWhere('posisi', 'KREDIT');
+        $detailJurnals = $transaksi->jurnal
+            ->firstWhere('jenis_jurnal', 'UMUM')
+            ?->detailJurnal;
+
+        $debit  = $detailJurnals?->firstWhere('tipe', 'DEBIT');   // ← fix: tipe bukan posisi
+        $kredit = $detailJurnals?->firstWhere('tipe', 'KREDIT');  // ← fix: tipe bukan posisi
 
         return response()->json([
             'success' => true,
             'data'    => array_merge($transaksi->toArray(), [
-                'akun_debit_id'  => $debit?->akun_id,
-                'akun_kredit_id' => $kredit?->akun_id,
-                'akun_debit_nama' => $debit?->akun?->nama_akun,
+                'akun_debit_id'    => $debit?->akun_id,
+                'akun_kredit_id'   => $kredit?->akun_id,
+                'akun_debit_nama'  => $debit?->akun?->nama_akun,
                 'akun_kredit_nama' => $kredit?->akun?->nama_akun,
             ]),
         ]);
@@ -135,17 +139,19 @@ class TransaksiController extends Controller
 
     public function update(UpdateTransaksiRequest $request, Transaksi $transaksi)
     {
-        // Hanya DRAFT / PENDING / REVISION yang bisa diedit
-        if (!in_array($transaksi->status_approval, ['DRAFT', 'PENDING', 'REVISION'])) {
+        $jurnal = $transaksi->jurnal()->where('jenis_jurnal', 'UMUM')->first();
+        $isUnmapped = $transaksi->status_approval === 'APPROVED' 
+                && $transaksi->status_jurnal === 'UNMAPPED';
+
+        if (!$isUnmapped && $jurnal?->status !== 'DRAFT') {
             return response()->json([
                 'success' => false,
-                'message' => 'Transaksi dengan status ' . $transaksi->status_approval . ' tidak dapat diubah.',
+                'message' => 'Transaksi ini tidak dapat diubah karena jurnal sudah diposting.',
             ], 403);
         }
 
         try {
             $transaksi = $this->transaksiService->update($request, $transaksi);
-
             return response()->json([
                 'success' => true,
                 'message' => 'Transaksi berhasil diperbarui.',
@@ -161,16 +167,19 @@ class TransaksiController extends Controller
 
     public function destroy(Transaksi $transaksi)
     {
-        if (!in_array($transaksi->status_approval, ['DRAFT', 'PENDING'])) {
+        $jurnal = $transaksi->jurnal()->where('jenis_jurnal', 'UMUM')->first();
+        $isUnmapped = $transaksi->status_approval === 'APPROVED'
+                && $transaksi->status_jurnal === 'UNMAPPED';
+
+        if (!$isUnmapped && $jurnal?->status !== 'DRAFT') {
             return response()->json([
                 'success' => false,
-                'message' => 'Transaksi ini tidak dapat dihapus.',
+                'message' => 'Transaksi ini tidak dapat dihapus karena jurnal sudah diposting.',
             ], 403);
         }
 
         try {
             $this->transaksiService->destroy($transaksi);
-
             return response()->json([
                 'success' => true,
                 'message' => 'Transaksi berhasil dihapus.',

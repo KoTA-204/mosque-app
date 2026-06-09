@@ -52,29 +52,16 @@
         </div>
     </div>
 
-    <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">
-            Jenis Transaksi <span class="text-red-500">*</span>
-        </label>
-        <select name="jenis_transaksi" required
-            class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
-            <option value="">Pilih jenis transaksi</option>
-            <option value="PEMASUKAN">Pemasukan</option>
-            <option value="PENGELUARAN">Pengeluaran</option>
-        </select>
-    </div>
-
     <div class="grid grid-cols-2 gap-4 mb-4">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
-                Kategori <span class="text-red-500">*</span>
+                Jenis Transaksi <span class="text-red-500">*</span>
             </label>
-            <select name="kategori_transaksi_id" required
+            <select name="jenis_transaksi" required
                 class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
-                <option value="">Pilih kategori</option>
-                @foreach ($kategoris as $k)
-                    <option value="{{ $k->id }}">{{ $k->nama_kategori }}</option>
-                @endforeach
+                <option value="">Pilih jenis transaksi</option>
+                <option value="PEMASUKAN">Pemasukan</option>
+                <option value="PENGELUARAN">Pengeluaran</option>
             </select>
         </div>
         <div>
@@ -89,17 +76,6 @@
                 @endforeach
             </select>
         </div>
-    </div>
-
-    <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Kegiatan</label>
-        <select name="kegiatan_id"
-            class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
-            <option value="">Pilih kegiatan (opsional)</option>
-            @foreach ($kegiatans as $k)
-                <option value="{{ $k->id }}">{{ $k->nama_kegiatan }}</option>
-            @endforeach
-        </select>
     </div>
 
     <div class="mb-4">
@@ -313,7 +289,7 @@
             class="h-9 px-4 text-sm border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors">
             Batal
         </button>
-        <button type="submit" id="btnTambahSubmit"
+        <button type="button" id="btnTambahSubmit" onclick="submitTambah()"
             class="h-9 px-5 text-sm bg-green-700 text-white rounded-xl font-medium hover:bg-green-800 transition-colors flex items-center gap-2">
             <svg id="iconSpinnerTambah" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -391,22 +367,21 @@ function previewDokumen(input) {
     lbl.classList.toggle('text-gray-700', !!input.files[0]);
 }
 
-document.getElementById('formTambah').addEventListener('submit', async function (e) {
-    e.preventDefault();
-
+async function submitTambah() {
+    const form    = document.getElementById('formTambah');
     const btn     = document.getElementById('btnTambahSubmit');
     const spinner = document.getElementById('iconSpinnerTambah');
     const errBox  = document.getElementById('tambahErrors');
     const errList = document.getElementById('tambahErrorList');
 
-    btn.disabled    = true;
+    btn.disabled = true;
     spinner.classList.remove('hidden');
     errBox.classList.add('hidden');
     errList.innerHTML = '';
 
     try {
-        const fd  = new FormData(this);
-        const res = await fetch(this.action, {
+        const fd  = new FormData(form);
+        const res = await fetch(form.action, {
             method: 'POST',
             body: fd,
             headers: {
@@ -415,18 +390,24 @@ document.getElementById('formTambah').addEventListener('submit', async function 
             },
         });
         const data = await res.json();
-
         if (data.success) {
             closeModal('modalTambah');
+            sessionStorage.setItem('alert', JSON.stringify({
+                type: 'success',
+                message: 'Transaksi berhasil disimpan.'
+            }));
             window.location.reload();
         } else if (res.status === 422 && data.errors) {
-            // Validasi Laravel
             Object.values(data.errors).flat().forEach(msg => {
                 errList.insertAdjacentHTML('beforeend', `<li>${msg}</li>`);
             });
             errBox.classList.remove('hidden');
         } else {
-            alert(data.message ?? 'Terjadi kesalahan.');
+            sessionStorage.setItem('alert', JSON.stringify({
+                type: 'error',
+                message: data.message ?? 'Terjadi kesalahan.'
+            }));
+            window.location.reload();
         }
     } catch {
         alert('Gagal menghubungi server.');
@@ -434,5 +415,5 @@ document.getElementById('formTambah').addEventListener('submit', async function 
         btn.disabled = false;
         spinner.classList.add('hidden');
     }
-});
+}
 </script>

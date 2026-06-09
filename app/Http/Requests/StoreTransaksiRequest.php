@@ -21,13 +21,11 @@ class StoreTransaksiRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'jenis_transaksi'       => 'required|in:PEMASUKAN,PENGELUARAN',
             'tanggal_transaksi'     => 'required|date',
             'jumlah'                => 'required|numeric|min:1',
             'dompet_id'             => 'required|exists:dompet,id',
-            'kategori_transaksi_id' => 'required|exists:kategori_transaksi,id',
-            'kegiatan_id'           => 'nullable|exists:kegiatan,id',
             'akun_debit_id'         => 'required|exists:akun,id',
             'akun_kredit_id'        => 'required|exists:akun,id',
             'deskripsi'             => 'nullable|string|max:500',
@@ -39,22 +37,21 @@ class StoreTransaksiRequest extends FormRequest
 
         if ($this->boolean('is_aset')) {
             $rules = array_merge($rules, [
-                'nama_aset'               => 'required|string|max:200',
-                'tanggal_perolehan'       => 'required|date',
-                'kondisi_aset'            => 'required|in:BARU,BAIK,RUSAK_RINGAN,RUSAK_BERAT',
-                'sumber_perolehan'        => 'required|in:PEMBELIAN,DONASI,WAKAF,HIBAH',
-                'lokasi_aset'             => 'required|string|max:200',
-                'jumlah_unit'             => 'required|integer|min:1',
-                'dokumen_aset'            => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-                'tanggal_mulai_penyusutan'=> 'required|date',
-                'umur_manfaat'            => 'required|integer|min:1',
-                'keterangan_penyusutan'   => 'nullable|string|max:500',
+                'nama_aset'                => 'required|string|max:200',
+                'tanggal_perolehan'        => 'required|date',
+                'kondisi_aset'             => 'required|in:BARU,BAIK,RUSAK_RINGAN,RUSAK_BERAT',
+                'sumber_perolehan'         => 'required|in:PEMBELIAN,DONASI,WAKAF,HIBAH',
+                'lokasi_aset'              => 'required|string|max:200',
+                'jumlah_unit'              => 'required|integer|min:1',
+                'dokumen_aset'             => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+                'tanggal_mulai_penyusutan' => 'required|date',
+                'umur_manfaat'             => 'required|integer|min:1',
+                'keterangan_penyusutan'    => 'nullable|string|max:500',
             ]);
         }
 
         return $rules;
     }
-
     public function messages(): array
     {
         return [
@@ -65,7 +62,6 @@ class StoreTransaksiRequest extends FormRequest
             'akun_debit_id.required'         => 'Akun debit wajib dipilih.',
             'akun_kredit_id.required'        => 'Akun kredit wajib dipilih.',
             'dompet_id.required'             => 'Dompet wajib dipilih',
-            'kategori_transaksi_id.required' => 'Kategori wajib dipilih',
             'bukti_transaksi.*.mimes'        => 'File harus berformat JPG, PNG, atau PDF',
             'bukti_transaksi.*.max'          => 'Ukuran file maksimal 5MB',
             'catatan.max'                    => 'Catatan tidak boleh lebih dari 500 karakter',

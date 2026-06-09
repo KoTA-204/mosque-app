@@ -1,8 +1,8 @@
 @extends('layouts.app')
 @section('title', 'Transaksi')
 @section('content')
-<div class="space-y-4 p-6">
 
+<div class="space-y-4 p-6">
     <div class="bg-white rounded-2xl border border-gray-200 px-6 py-4 flex items-center justify-between">
         <div>
             <h1 class="text-xl font-semibold text-gray-900">Transaksi</h1>
@@ -20,6 +20,23 @@
                 Tambah Transaksi
             </button>
         </div>
+    </div>
+
+    {{-- Alert --}}
+    <div id="success-alert"
+        class="hidden items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
+        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span id="success-alert-msg"></span>
+    </div>
+
+    <div id="error-alert"
+        class="hidden items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <span id="error-alert-msg"></span>
     </div>
 
     <div class="grid grid-cols-3 gap-4">
@@ -152,23 +169,6 @@
                     </div>
                 </div>
 
-                {{-- Kategori --}}
-                <div class="bg-white border border-gray-200 rounded-xl px-3 py-1.5 flex items-center gap-2 hover:border-gray-300 transition-colors">
-                    <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                    </svg>
-                    <select id="filterKategori" onchange="applyFilter()"
-                        class="text-sm text-gray-600 border-0 outline-none bg-transparent">
-                        <option value="">Semua Kategori</option>
-                        @foreach ($kategoris as $k)
-                            <option value="{{ $k->id }}" {{ request('kategori_id') == $k->id ? 'selected' : '' }}>
-                                {{ $k->nama_kategori }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
                 {{-- Akun --}}
                 <div class="bg-white border border-gray-200 rounded-xl px-3 py-1.5 flex items-center gap-2 hover:border-gray-300 transition-colors">
                     <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -222,12 +222,12 @@
                         <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Keterangan</th>
                         <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-32">Kategori</th>
                         <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-28">Jenis</th>
+                        <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-24">Status</th>
+                        <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-24">Jurnal</th>
                         <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-36">Akun</th>
                         <th class="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-28">Debit</th>
                         <th class="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-28">Kredit</th>
                         <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-16">Bukti</th>
-                        <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-24">Status</th>
-                        <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-24">Jurnal</th>
                         <th class="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-20">Aksi</th>
                     </tr>
                 </thead>
@@ -235,8 +235,8 @@
                 @forelse ($transaksis as $i => $t)
                     @php
                         $jurnal      = $t->jurnal->firstWhere('jenis_jurnal', 'UMUM');
-                        $debitEntri  = $jurnal?->detailJurnal->firstWhere('posisi', 'DEBIT');
-                        $kreditEntri = $jurnal?->detailJurnal->firstWhere('posisi', 'KREDIT');
+                        $debitEntri  = $jurnal?->detailJurnal->firstWhere('tipe', 'DEBIT');
+                        $kreditEntri = $jurnal?->detailJurnal->firstWhere('tipe', 'KREDIT');
 
                         $dariBendahara = is_null($t->status_approval);
                         $dariApproval  = $t->status_approval === 'APPROVED';
@@ -245,10 +245,7 @@
 
                         $isUnmapped = $dariApproval && $t->status_jurnal === 'UNMAPPED';
 
-                        // Bisa edit+hapus jika:
-                        // 1. Transaksi bendahara langsung dan jurnal DRAFT
-                        // 2. Transaksi approval (mapped) dan jurnal DRAFT
-                        // 3. Transaksi approval yang UNMAPPED (belum ada jurnal, tapi perlu bisa dihapus)
+                        // Edit/hapus boleh jika: belum mapping ATAU jurnal masih DRAFT
                         $bisaEditHapus = $isUnmapped || $jurnal?->status === 'DRAFT';
                     @endphp
                     <tr class="hover:bg-gray-50 transition-colors">
@@ -396,7 +393,6 @@
         </div>
         @endif
     </div>
-
 </div>
 
 <x-modal id="modalTambah" title="Tambah Transaksi">
@@ -446,23 +442,6 @@ function openDeleteModal(actionUrl) {
     openModal('deleteModal');
 }
 
-function applyFilter() {
-    const p = new URLSearchParams();
-    const perPage  = document.getElementById('filterPerPage').value;
-    const tanggal  = document.getElementById('filterTanggal').value;
-    const kategori = document.getElementById('filterKategori').value;
-    const akun     = document.getElementById('filterAkun').value;
-    const search   = document.getElementById('filterSearch').value;
-
-    if (perPage && perPage !== '10') p.set('per_page', perPage);
-    if (tanggal)  p.set('tanggal', tanggal);
-    if (kategori) p.set('kategori_id', kategori);
-    if (akun)     p.set('akun_id', akun);
-    if (search)   p.set('search', search);
-
-    window.location.search = p.toString();
-}
-
 function konfirmasiHapus(id) {
     const form = document.getElementById('modalHapusForm');
     form.action = `/dashboard/transaksi/${id}`;
@@ -470,26 +449,50 @@ function konfirmasiHapus(id) {
 }
 
 function editTransaksi(id) {
-    fetch(`/dashboard/transaksi/${id}`, { headers: { 'Accept': 'application/json' } })
-        .then(r => r.json())
-        .then(({ data }) => {
-            const f = document.getElementById('formEdit');
-            f.action = `/dashboard/transaksi/${id}`;
+    const btn = document.querySelector(`button[onclick="editTransaksi(${id})"]`);
+    if (btn) btn.classList.add('opacity-50', 'pointer-events-none');
 
-            // Isi field
-            f.querySelector('[name=tanggal_transaksi]').value      = data.tanggal_transaksi?.substring(0, 10) ?? '';
-            f.querySelector('[name=dompet_id]').value              = data.dompet_id ?? '';
-            f.querySelector('[name=kategori_transaksi_id]').value  = data.kategori_transaksi_id ?? '';
-            f.querySelector('[name=jumlah]').value                 = data.jumlah ?? '';
-            f.querySelector('[name=jenis_transaksi]').value        = data.jenis_transaksi ?? '';
-            f.querySelector('[name=kegiatan_id]').value            = data.kegiatan_id ?? '';
-            f.querySelector('[name=akun_debit_id]').value          = data.akun_debit_id ?? '';
-            f.querySelector('[name=akun_kredit_id]').value         = data.akun_kredit_id ?? '';
-            f.querySelector('[name=deskripsi]').value              = data.deskripsi ?? '';
-            f.querySelector('[name=catatan]').value                = data.catatan ?? '';
+    fetch(`/dashboard/transaksi/${id}`, {
+        headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+        }
+    })
+    .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+    })
+    .then(({ data }) => {
+        if (!data) throw new Error('Data tidak ditemukan');
 
-            openModal('modalEdit');
-        });
+        const f = document.getElementById('formEdit');
+        f.action = `/dashboard/transaksi/${id}`;
+
+        // Helper aman — skip jika field tidak ada di form
+        const setVal = (name, val) => {
+            const el = f.querySelector(`[name=${name}]`);
+            if (el) el.value = val ?? '';
+        };
+
+        setVal('tanggal_transaksi',     data.tanggal_transaksi?.substring(0, 10));
+        setVal('dompet_id',             data.dompet_id);
+        setVal('kategori_transaksi_id', data.kategori_transaksi_id);
+        setVal('jumlah',                parseFloat(data.jumlah) || '');
+        setVal('jenis_transaksi',       data.jenis_transaksi);
+        setVal('kegiatan_id',           data.kegiatan_id);
+        setVal('akun_debit_id',         data.akun_debit_id);
+        setVal('akun_kredit_id',        data.akun_kredit_id);
+        setVal('deskripsi',             data.deskripsi);
+
+        openModal('modalEdit');
+    })
+    .catch(err => {
+        console.error('editTransaksi error:', err);
+        alert('Gagal memuat data transaksi: ' + err.message);
+    })
+    .finally(() => {
+        if (btn) btn.classList.remove('opacity-50', 'pointer-events-none');
+    });
 }
 
 function lihatBukti(id) {
@@ -502,12 +505,73 @@ function lihatBukti(id) {
         });
 }
 
+function showAlert(type, message) {
+    const el  = document.getElementById(type + '-alert');
+    const msg = document.getElementById(type + '-alert-msg');
+    msg.textContent = message;
+    el.classList.remove('hidden');
+    el.classList.add('flex');
+    // Auto hide setelah 5 detik
+    setTimeout(() => {
+        el.classList.add('hidden');
+        el.classList.remove('flex');
+    }, 5000);
+}
+
 // ── Flatpickr ─────────────────────────────────────────────
 let fp;
 let selectedDari   = '{{ request('dari') }}';
 let selectedSampai = '{{ request('sampai') }}';
 
 document.addEventListener('DOMContentLoaded', function () {
+    const alertData = sessionStorage.getItem('alert');
+    if (alertData) {
+        const { type, message } = JSON.parse(alertData);
+        sessionStorage.removeItem('alert');
+        showAlert(type, message);
+    }
+
+    const formHapus = document.getElementById('modalHapusForm');
+    if (formHapus) {
+        formHapus.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const btn = document.getElementById('modalHapus').querySelector('button[type="submit"]');
+            if (btn) btn.disabled = true;
+
+            try {
+                const fd  = new FormData(this);
+                const res = await fetch(this.action, {
+                    method: 'POST',
+                    body: fd,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                        'Accept': 'application/json',
+                    },
+                });
+                const data = await res.json();
+
+                closeModal('modalHapus');
+
+                sessionStorage.setItem('alert', JSON.stringify({
+                    type: data.success ? 'success' : 'error',
+                    message: data.message ?? (data.success ? 'Transaksi berhasil dihapus.' : 'Transaksi gagal dihapus.')
+                }));
+                window.location.reload();
+
+            } catch {
+                closeModal('modalHapus');
+                sessionStorage.setItem('alert', JSON.stringify({
+                    type: 'error',
+                    message: 'Gagal menghubungi server.'
+                }));
+                window.location.reload();
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        });
+    }
+
     fp = flatpickr('#flatpickrInput', {
         mode: 'range',
         dateFormat: 'Y-m-d',

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Transaksi;
 use App\Models\BuktiTransaksi;
 use App\Models\Jurnal;
+use App\Models\DetailJurnal;
 use App\Http\Requests\StoreTransaksiRequest;
 use App\Http\Requests\UpdateTransaksiRequest;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +21,7 @@ class TransaksiService
             // 1. Simpan transaksi
             $transaksi = Transaksi::create([
                 'dompet_id'             => $request->dompet_id,
-                'kegiatan_id'           => $request->kegiatan_id,
+                'kegiatan_id'           => null,
                 'user_id'               => Auth::id(),
                 'kategori_transaksi_id' => $request->kategori_transaksi_id,
                 'tanggal_transaksi'     => $request->tanggal_transaksi,
@@ -28,12 +29,18 @@ class TransaksiService
                 'jumlah'                => $request->jumlah,
                 'deskripsi'             => $request->deskripsi,
                 'catatan'               => $request->catatan,
-                'status_approval'       => 'PENDING',
+                'status_approval'       => null, 
                 'status_jurnal'         => 'MAPPED',
             ]);
 
             // 2. Jurnal entri debit & kredit
-            $this->upsertJurnalEntri($transaksi, $request->akun_debit_id, $request->akun_kredit_id, $request->jumlah);
+            $this->buatJurnalUmum(
+                $transaksi,
+                $request->akun_debit_id,
+                $request->akun_kredit_id,
+                $request->jumlah,
+                $request->deskripsi,
+            );
 
             // 3. Upload bukti (bisa multi-file)
             $this->uploadBukti($transaksi, $request->file('bukti_transaksi') ?? []);
@@ -43,7 +50,7 @@ class TransaksiService
                 $this->simpanAset($transaksi, $request->all());
             }
 
-            return $transaksi->load('buktiTransaksi', 'jurnalEntri.akun', 'aset');
+            return $transaksi->load('buktiTransaksi', 'jurnal.detailJurnal.akun', 'aset');
         });
     }
 
@@ -51,28 +58,34 @@ class TransaksiService
     {
         return DB::transaction(function () use ($request, $transaksi) {
 
-            // Field yang boleh diedit (jumlah & jenis TIDAK boleh diubah setelah tersimpan)
             $transaksi->update([
                 'dompet_id'             => $request->dompet_id,
-                'kegiatan_id'           => $request->kegiatan_id,
-                'kategori_transaksi_id' => $request->kategori_transaksi_id,
                 'tanggal_transaksi'     => $request->tanggal_transaksi,
+                'jenis_transaksi'       => $request->jenis_transaksi,
+                'jumlah'                => $request->jumlah,
                 'deskripsi'             => $request->deskripsi,
                 'catatan'               => $request->catatan,
             ]);
 
             // Update akun jurnal entri
-            $this->upsertJurnalEntri(
+            $jurnalLama = $transaksi->jurnal()->where('jenis_jurnal', 'UMUM')->first();
+            if ($jurnalLama) {
+                $jurnalLama->detailJurnal()->delete();
+                $jurnalLama->delete();
+            }
+
+            $this->buatJurnalUmum(
                 $transaksi,
                 $request->akun_debit_id,
                 $request->akun_kredit_id,
-                $transaksi->jumlah, // jumlah tidak berubah
+                $request->jumlah,
+                $request->deskripsi,
             );
 
             // Upload bukti baru (jika ada)
             $this->uploadBukti($transaksi, $request->file('bukti_transaksi') ?? []);
 
-            return $transaksi->fresh(['buktiTransaksi', 'jurnalEntri.akun']);
+            return $transaksi->fresh(['buktiTransaksi', 'jurnal.detailJurnal.akun']);
         });
     }
 
@@ -83,6 +96,12 @@ class TransaksiService
             foreach ($transaksi->buktiTransaksi as $bukti) {
                 Storage::disk('public')->delete($bukti->path_file);
             }
+
+            foreach ($transaksi->jurnal as $jurnal) {
+                $jurnal->detailJurnal()->delete();
+                $jurnal->delete();
+            }
+
             $transaksi->delete();
         });
     }
@@ -118,7 +137,7 @@ class TransaksiService
                 // Simpan transaksi
                 $tanggal   = substr($row['waktu_transaksi'] ?? $row['tanggal'], 0, 10);
                 $transaksi = Transaksi::create([
-                    'dompet_id'             => null, // Disesuaikan dengan konteks aplikasi
+                    'dompet_id'             => null, 
                     'user_id'               => Auth::id(),
                     'kategori_transaksi_id' => null,
                     'tanggal_transaksi'     => $tanggal,
@@ -126,16 +145,17 @@ class TransaksiService
                     'jumlah'                => $row['jumlah'],
                     'deskripsi'             => $row['deskripsi'],
                     'catatan'               => $row['no_referensi'],
-                    'status_approval'       => 'PENDING',
+                    'status_approval'       => null,
                     'status_jurnal'         => 'MAPPED',
                 ]);
 
-                // Simpan jurnal entri
-                $this->upsertJurnalEntri(
+                // Simpan jurnal umum
+                $this->upsertJurnalUmum(
                     $transaksi,
                     $klas['akun_debit_id'],
                     $klas['akun_kredit_id'],
                     $row['jumlah'],
+                    $row['deskripsi'],
                 );
 
                 $tersimpan++;
@@ -150,28 +170,53 @@ class TransaksiService
         ];
     }
 
-    private function upsertJurnalEntri(
+    private function buatJurnalUmum(
         Transaksi $transaksi,
         int $akunDebitId,
         int $akunKreditId,
         float $jumlah,
-    ): void {
-        $transaksi->jurnalEntri()->delete();
+        ?string $deskripsi = null
+    ): Jurnal {
+        $periode = \App\Models\Periode::aktif()
+            ->where('tanggal_awal', '<=', $transaksi->tanggal_transaksi)
+            ->where('tanggal_akhir', '>=', $transaksi->tanggal_transaksi)
+            ->first();
 
-        $transaksi->jurnalEntri()->createMany([
+        if (!$periode) {
+            throw new \RuntimeException(
+                'Tidak ada periode aktif untuk tanggal ' . $transaksi->tanggal_transaksi
+            );
+        }
+
+        $jurnal = Jurnal::create([
+            'periode_id'   => $periode->id,
+            'transaksi_id' => $transaksi->id,
+            'jenis_jurnal' => 'UMUM',
+            'tanggal'      => $transaksi->tanggal_transaksi,
+            'deskripsi'    => $deskripsi ?? "Jurnal untuk transaksi #{$transaksi->id}",
+            'status'       => 'DRAFT',
+        ]);
+
+        DetailJurnal::insert([
             [
-                'akun_id' => $akunDebitId,
-                'posisi'  => 'DEBIT',
-                'jumlah'  => $jumlah,
-                'user_id' => Auth::id(),
+                'jurnal_id' => $jurnal->id,
+                'akun_id'   => $akunDebitId,
+                'tipe'    => 'DEBIT',
+                'nominal'   => $jumlah,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
-                'akun_id' => $akunKreditId,
-                'posisi'  => 'KREDIT',
-                'jumlah'  => $jumlah,
-                'user_id' => Auth::id(),
+                'jurnal_id' => $jurnal->id,
+                'akun_id'   => $akunKreditId,
+                'tipe'    => 'KREDIT',
+                'nominal'    => $jumlah,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
         ]);
+
+        return $jurnal;
     }
 
     private function uploadBukti(Transaksi $transaksi, array $files): void
