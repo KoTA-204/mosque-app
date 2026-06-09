@@ -144,7 +144,7 @@ class MenuSeeder extends Seeder
 
         Menu::create([
             'menu_name'     => 'Jurnal Umum',
-            'route_name'    => 'dashboard.jurnal.index',
+            'route_name'    => 'dashboard.jurnal-umum.index',
             'icon'          => 'book-open',
             'parent_id'     => $akuntansi->id,
             'sort_order'    => 46,

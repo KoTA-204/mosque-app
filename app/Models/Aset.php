@@ -3,16 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes; // ← tambah
 
 class Aset extends Model
 {
-    use HasFactory;
+    use SoftDeletes; 
 
     protected $table = 'aset';
 
     protected $fillable = [
         'transaksi_id',
+        'kode_aset',
         'nama_aset',
         'sumber_perolehan',
         'tanggal_perolehan',
@@ -21,53 +23,97 @@ class Aset extends Model
         'kondisi_aset',
         'lokasi_aset',
         'nama_pemberi',
+        'jumlah_unit',
+        'dokumen_pendukung',
+        'tanggal_mulai_penyusutan',
+        'keterangan',
         'status_aset',
         'nilai_buku',
         'akumulasi_penyusutan',
     ];
 
     protected $casts = [
-        'tanggal_perolehan' => 'date',
-        'nilai_tercatat' => 'decimal:2',
-        'nilai_buku' => 'decimal:2',
-        'akumulasi_penyusutan' => 'decimal:2',
-        'umur_manfaat' => 'integer',
+        'tanggal_perolehan'        => 'date',
+        'tanggal_mulai_penyusutan' => 'date',
+        'nilai_tercatat'           => 'decimal:2',
+        'nilai_buku'               => 'decimal:2',
+        'akumulasi_penyusutan'     => 'decimal:2',
     ];
 
-    /**
-     * Relasi ke transaksi.
-     */
-    public function transaksi()
+    public function transaksi(): BelongsTo
     {
         return $this->belongsTo(Transaksi::class);
     }
 
-    public function jurnal()
-    {
-        return $this->belongsToMany(Jurnal::class);
-    }
-
-    /**
-     * Scope aset aktif.
-     */
     public function scopeAktif($query)
     {
         return $query->where('status_aset', 'AKTIF');
     }
 
-    /**
-     * Scope aset draft.
-     */
-    public function scopeDraft($query)
+    public function getPenyusutanPerBulanAttribute(): float
     {
-        return $query->where('status_aset', 'DRAFT');
+        if (!$this->umur_manfaat || $this->umur_manfaat <= 0) return 0;
+        return (float) $this->nilai_tercatat / ($this->umur_manfaat * 12);
     }
 
-    /**
-     * Scope aset tidak aktif.
-     */
-    public function scopeTidakAktif($query)
+    public function getAkumulasiRealTimeAttribute(): float
     {
-        return $query->where('status_aset', 'TIDAK AKTIF');
+        if (!$this->tanggal_mulai_penyusutan || !$this->umur_manfaat) return 0;
+        $bulan = (int) $this->tanggal_mulai_penyusutan->diffInMonths(now());
+        return min($this->penyusutan_per_bulan * $bulan, (float) $this->nilai_tercatat);
+    }
+
+    public function getNilaiBukuRealTimeAttribute(): float
+    {
+        return max((float) $this->nilai_tercatat - $this->akumulasi_real_time, 0);
+    }
+
+    public function getProgressPenyusutanAttribute(): float
+    {
+        if (!(float) $this->nilai_tercatat) return 0;
+        return min(($this->akumulasi_real_time / (float) $this->nilai_tercatat) * 100, 100);
+    }
+
+    public function getPenyusutanPerTahunAttribute(): float
+    {
+        if (!$this->umur_manfaat || $this->umur_manfaat <= 0) return 0;
+        return (float) $this->nilai_tercatat / $this->umur_manfaat;
+    }
+
+    public static function generateKode(): string
+    {
+        $tahun  = now()->year;
+        $prefix = "ACC-ASS-{$tahun}-";
+        $last   = self::where('kode_aset', 'like', "{$prefix}%")
+                      ->orderByDesc('kode_aset')
+                      ->value('kode_aset');
+        $no = $last ? ((int) substr($last, -5)) + 1 : 1;
+        return $prefix . str_pad($no, 5, '0', STR_PAD_LEFT);
+    }
+
+    public function getLabelPemberiAttribute(): string
+    {
+        return match($this->sumber_perolehan) {
+            'Wakaf'        => 'Nama Wakif',
+            'Hibah/Donasi' => 'Nama Donatur / Pemberi Hibah',
+            'Infak Jamaah' => 'Nama Pemberi Infak',
+            default        => 'Nama Pemberi',
+        };
+    }
+
+    public function getLabelNilaiAttribute(): string
+    {
+        return match($this->sumber_perolehan) {
+            'Pembelian'    => 'Nilai Perolehan',
+            'Wakaf'        => 'Nilai Wajar Aset',
+            'Hibah/Donasi' => 'Nilai Wajar Aset',
+            'Infak Jamaah' => 'Nilai Perolehan',
+            default        => 'Nilai Perolehan',
+        };
+    }
+
+    public function getPemilikAsetAttribute(): string
+    {
+        return 'Masjid Lukmanul Hakim';
     }
 }
