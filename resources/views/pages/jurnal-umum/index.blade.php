@@ -4,12 +4,8 @@
 <div class="p-6 space-y-6">
 
     {{-- Header --}}
-    <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
         <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Jurnal Umum</h1>
-        <a href="{{ route('dashboard.jurnal-umum.create') }}"
-            class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-            + Tambah Jurnal
-        </a>
     </div>
 
     @if(session('success'))
