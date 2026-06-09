@@ -11,6 +11,17 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
+        // Stats selalu dihitung dari semua data (tidak terpengaruh filter)
+        $stats = [
+            'total'       => User::count(),
+            'aktif'       => User::where('status', 'active')->count(),
+            'tidak_aktif' => User::where('status', 'inactive')->count(),
+        ];
+
+        if ($request->get('stats_only')) {
+            return response()->json(['stats' => $stats]);
+        }
+
         $query = User::with('roles');
 
         if ($request->filled('search')) {
@@ -31,20 +42,10 @@ class UserController extends Controller
         $users   = $query->paginate($perPage)->withQueryString();
         $roles   = Role::all();
 
-        $stats = [
-            'total'       => User::count(),
-            'aktif'       => User::where('status', 'active')->count(),
-            'tidak_aktif' => User::where('status', 'inactive')->count(),
-        ];
-
         if ($request->ajax()) {
-            // stats_only untuk refresh card tanpa filter
-            if ($request->stats_only) {
-                return response()->json(['stats' => $stats]);
-            }
             return response()->json([
                 'html'  => view('pages.users.table', compact('users', 'roles'))->render(),
-                'stats' => $stats,
+                'stats' => $stats, // ← ini yang hilang sebelumnya
             ]);
         }
 

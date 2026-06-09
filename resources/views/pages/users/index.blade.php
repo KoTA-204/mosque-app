@@ -14,24 +14,43 @@
 
     {{-- Stats --}}
     <div class="grid grid-cols-3 gap-4">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4">
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total User</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['total'] }}</p>
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center gap-4">
+            <div class="shrink-0 w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+            </div>
+            <div>
+                <p id="stat-total" class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['total'] }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total User</p>
+            </div>
         </div>
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4">
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">User Aktif</p>
-            <p class="text-2xl font-bold text-green-600">{{ $stats['aktif'] }}</p>
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center gap-4">
+            <div class="shrink-0 w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div>
+                <p id="stat-aktif" class="text-2xl font-bold text-green-600">{{ $stats['aktif'] }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">User Aktif</p>
+            </div>
         </div>
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4">
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">User Tidak Aktif</p>
-            <p class="text-2xl font-bold text-red-500">{{ $stats['tidak_aktif'] }}</p>
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center gap-4">
+            <div class="shrink-0 w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <svg class="w-6 h-6 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                </svg>
+            </div>
+            <div>
+                <p id="stat-tidak-aktif" class="text-2xl font-bold text-red-500">{{ $stats['tidak_aktif'] }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">User Tidak Aktif</p>
+            </div>
         </div>
     </div>
 
     {{-- Table Card --}}
     <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
-
-        {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-wrap">
             <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 Show
@@ -67,7 +86,6 @@
                 </div>
             </div>
         </div>
-
         <div id="tableWrapper">
             @include('pages.users.table')
         </div>
@@ -159,6 +177,13 @@ function showToast(msg, type = 'success') {
     setTimeout(() => toast.classList.add('hidden'), 3500);
 }
 
+function updateStats(stats) {
+    if (!stats) return;
+    document.getElementById('stat-total').textContent       = stats.total;
+    document.getElementById('stat-aktif').textContent       = stats.aktif;
+    document.getElementById('stat-tidak-aktif').textContent = stats.tidak_aktif;
+}
+
 function submitUserForm(formId, method, url) {
     const form = document.getElementById(formId);
     form.querySelectorAll('[id^="err-"]').forEach(el => el.textContent = '');
@@ -179,7 +204,6 @@ function submitUserForm(formId, method, url) {
             if (active) closeModal(active.id);
             showToast(res.message, 'success');
             applyFilters();
-            fetchStats();
         } else if (res.errors) {
             Object.entries(res.errors).forEach(([field, messages]) => {
                 const el    = form.querySelector(`[name="${field}"]`);
@@ -192,7 +216,7 @@ function submitUserForm(formId, method, url) {
     .catch(() => showToast('Terjadi kesalahan.', 'error'));
 }
 
-function submitDeleteUser(formId, url) {
+function submitDeleteUser(url) {
     fetch(url, {
         method: 'POST',
         headers: {
@@ -209,7 +233,6 @@ function submitDeleteUser(formId, url) {
             if (active) closeModal(active.id);
             showToast(res.message, 'success');
             applyFilters();
-            fetchStats();
         } else {
             showToast(res.message ?? 'Gagal menghapus.', 'error');
         }
@@ -217,31 +240,16 @@ function submitDeleteUser(formId, url) {
     .catch(() => showToast('Terjadi kesalahan.', 'error'));
 }
 
-// ── Refresh stats cards setelah operasi ──────────────────────
-function fetchStats() {
-    fetch(`${filterUrl}?stats_only=1`, {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.stats) {
-            document.querySelector('.stat-total').textContent      = data.stats.total;
-            document.querySelector('.stat-aktif').textContent      = data.stats.aktif;
-            document.querySelector('.stat-tidak-aktif').textContent = data.stats.tidak_aktif;
-        }
-    });
-}
-
 function applyFilters() {
-    const params = new URLSearchParams();
+    const params  = new URLSearchParams();
     const search  = document.getElementById('filterSearch').value;
     const role    = document.getElementById('filterRole').value;
     const status  = document.getElementById('filterStatus').value;
     const perPage = document.getElementById('perPage').value;
 
-    if (search)  params.set('search',   search);
-    if (role)    params.set('role',     role);
-    if (status)  params.set('status',   status);
+    if (search)  params.set('search',  search);
+    if (role)    params.set('role',    role);
+    if (status)  params.set('status',  status);
     params.set('per_page', perPage);
 
     fetch(`${filterUrl}?${params.toString()}`, {
@@ -250,11 +258,7 @@ function applyFilters() {
     .then(r => r.json())
     .then(data => {
         document.getElementById('tableWrapper').innerHTML = data.html;
-        if (data.stats) {
-            document.querySelector('.stat-total').textContent       = data.stats.total;
-            document.querySelector('.stat-aktif').textContent       = data.stats.aktif;
-            document.querySelector('.stat-tidak-aktif').textContent = data.stats.tidak_aktif;
-        }
+        updateStats(data.stats);
     });
 }
 
