@@ -14,17 +14,38 @@
 
     {{-- Stats --}}
     <div class="grid grid-cols-3 gap-4">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4">
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Kegiatan</p>
-            <p class="stat-total text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['total'] }}</p>
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center gap-4">
+            <div class="shrink-0 w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <div>
+                <p id="stat-total" class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['total'] }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total Kegiatan</p>
+            </div>
         </div>
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4">
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Kegiatan Aktif</p>
-            <p class="stat-aktif text-2xl font-bold text-green-600">{{ $stats['aktif'] }}</p>
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center gap-4">
+            <div class="shrink-0 w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div>
+                <p id="stat-aktif" class="text-2xl font-bold text-green-600">{{ $stats['aktif'] }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kegiatan Aktif</p>
+            </div>
         </div>
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4">
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Kegiatan Ditutup</p>
-            <p class="stat-ditutup text-2xl font-bold text-red-500">{{ $stats['ditutup'] }}</p>
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center gap-4">
+            <div class="shrink-0 w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <svg class="w-6 h-6 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                </svg>
+            </div>
+            <div>
+                <p id="stat-ditutup" class="text-2xl font-bold text-red-500">{{ $stats['ditutup'] }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kegiatan Ditutup</p>
+            </div>
         </div>
     </div>
 
@@ -66,7 +87,6 @@
                 </div>
             </div>
         </div>
-
         <div id="tableWrapper">
             @include('pages.kegiatan.table')
         </div>
@@ -162,11 +182,11 @@ function showToast(msg, type = 'success') {
     setTimeout(() => toast.classList.add('hidden'), 3500);
 }
 
-function updateStatsEl(stats) {
+function updateStats(stats) {
     if (!stats) return;
-    document.querySelector('.stat-total').textContent   = stats.total;
-    document.querySelector('.stat-aktif').textContent   = stats.aktif;
-    document.querySelector('.stat-ditutup').textContent = stats.ditutup;
+    document.getElementById('stat-total').textContent   = stats.total;
+    document.getElementById('stat-aktif').textContent   = stats.aktif;
+    document.getElementById('stat-ditutup').textContent = stats.ditutup;
 }
 
 function submitKegiatanForm(formId, method, url) {
@@ -214,14 +234,9 @@ function submitDeleteKegiatan(url) {
     .then(r => r.json())
     .then(res => {
         const active = modalContainer.querySelector('[id$="Modal"]');
-        if (res.success) {
-            if (active) closeModal(active.id);
-            showToast(res.message, 'success');
-            applyFilters();
-        } else {
-            if (active) closeModal(active.id);
-            showToast(res.message, 'error');
-        }
+        if (active) closeModal(active.id);
+        showToast(res.message, res.success ? 'success' : 'error');
+        if (res.success) applyFilters();
     })
     .catch(() => showToast('Terjadi kesalahan.', 'error'));
 }
@@ -238,7 +253,8 @@ function tutupKegiatan(id) {
     })
     .then(r => r.json())
     .then(res => {
-        closeModal(modalContainer.querySelector('[id$="Modal"]')?.id);
+        const active = modalContainer.querySelector('[id$="Modal"]');
+        if (active) closeModal(active.id);
         showToast(res.message, res.success ? 'success' : 'error');
         if (res.success) applyFilters();
     })
@@ -252,9 +268,9 @@ function applyFilters() {
     const status  = document.getElementById('filterStatus').value;
     const perPage = document.getElementById('perPage').value;
 
-    if (search)  params.set('search',   search);
-    if (jenis)   params.set('jenis',    jenis);
-    if (status)  params.set('status',   status);
+    if (search)  params.set('search',  search);
+    if (jenis)   params.set('jenis',   jenis);
+    if (status)  params.set('status',  status);
     params.set('per_page', perPage);
 
     fetch(`${filterUrl}?${params.toString()}`, {
@@ -263,7 +279,7 @@ function applyFilters() {
     .then(r => r.json())
     .then(data => {
         document.getElementById('tableWrapper').innerHTML = data.html;
-        updateStatsEl(data.stats);
+        updateStats(data.stats);
     });
 }
 
@@ -276,9 +292,9 @@ function loadPage(e, url) {
     const status  = document.getElementById('filterStatus').value;
     const perPage = document.getElementById('perPage').value;
 
-    if (search)  params.set('search',   search);
-    if (jenis)   params.set('jenis',    jenis);
-    if (status)  params.set('status',   status);
+    if (search)  params.set('search',  search);
+    if (jenis)   params.set('jenis',   jenis);
+    if (status)  params.set('status',  status);
     params.set('per_page', perPage);
     params.set('page', current.get('page') || 1);
 
@@ -288,7 +304,7 @@ function loadPage(e, url) {
     .then(r => r.json())
     .then(data => {
         document.getElementById('tableWrapper').innerHTML = data.html;
-        updateStatsEl(data.stats);
+        updateStats(data.stats);
     });
 }
 

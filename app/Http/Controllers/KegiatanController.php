@@ -17,6 +17,16 @@ class KegiatanController extends Controller
 
     public function index(Request $request)
     {
+        $stats = [
+            'total'   => Kegiatan::count(),
+            'aktif'   => Kegiatan::where('status', 'AKTIF')->count(),
+            'ditutup' => Kegiatan::where('status', 'DITUTUP')->count(),
+        ];
+
+        if ($request->get('stats_only')) {
+            return response()->json(['stats' => $stats]);
+        }
+
         $query = Kegiatan::with('panitia');
 
         if ($request->filled('search')) {
@@ -33,16 +43,10 @@ class KegiatanController extends Controller
         $kegiatan = $query->latest()->paginate($perPage)->withQueryString();
         $panitias = $this->getPanitias();
 
-        $stats = [
-            'total'   => Kegiatan::count(),
-            'aktif'   => Kegiatan::where('status', 'AKTIF')->count(),
-            'ditutup' => Kegiatan::where('status', 'DITUTUP')->count(),
-        ];
-
         if ($request->ajax()) {
             return response()->json([
                 'html'  => view('pages.kegiatan.table', compact('kegiatan', 'panitias'))->render(),
-                'stats' => $stats,
+                'stats' => $stats, // ← ini yang hilang sebelumnya
             ]);
         }
 
