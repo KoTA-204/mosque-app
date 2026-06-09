@@ -58,18 +58,24 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
     Route::get('/', [DashboardController::class, 'index'])->name('index');
 
     // ── Manajemen User ─────────────────────────────────────────────────────
-    Route::middleware('permission:VIEW_USERS')->group(function () {
-        Route::resource('users', UserController::class);
-    });
+        Route::middleware('permission:VIEW_USERS')->group(function () {
+            Route::get('/users',                        [UserController::class, 'index'])->name('users.index');
+            Route::get('/users/create',                 [UserController::class, 'create'])->name('users.create');
+            Route::post('/users',                       [UserController::class, 'store'])->name('users.store');
+            Route::get('/users/{user}/edit',            [UserController::class, 'edit'])->name('users.edit');
+            Route::put('/users/{user}',                 [UserController::class, 'update'])->name('users.update');
+            Route::get('/users/{user}/delete',          [UserController::class, 'confirmDelete'])->name('users.confirmDelete');
+            Route::delete('/users/{user}',              [UserController::class, 'destroy'])->name('users.destroy');
+        });
 
-    Route::middleware('permission:VIEW_ROLES')->group(function () {
-        Route::resource('roles', RoleController::class);
-    });
+        Route::middleware('permission:VIEW_ROLES')->group(function () {
+            Route::resource('roles', RoleController::class);
+        });
 
-    Route::middleware('permission:VIEW_PERMISSIONS')->group(function () {
-        Route::resource('permissions', PermissionController::class);
-        Route::resource('menus', MenuController::class);
-    });
+        Route::middleware('permission:VIEW_PERMISSIONS')->group(function () {
+            Route::resource('permissions', PermissionController::class);
+            Route::resource('menus', MenuController::class);
+        });
 
     // ── Pencatatan - Kencleng ──────────────────────────────────────────────
 
