@@ -22,6 +22,7 @@ use App\Http\Controllers\JurnalKoreksiController;
 use App\Http\Controllers\JurnalPenutupController;
 use App\Http\Controllers\BukuBesarController;
 use App\Http\Controllers\NeracaSaldoController;
+use App\Http\Controllers\LaporanKeuanganController;
 
 // ── Landing Page ───────────────────────────────────────────────────────────
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -356,5 +357,16 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
                 ->whereNumber('jurnal')
                 ->name('jurnal-penutup.destroy');
         });
+    });
+
+    Route::prefix('laporan')->name('laporan.')->group(function () {
+        Route::get('/penghasilan-komprehensif', [LaporanKeuanganController::class, 'penghasilanKomprehensif'])
+            ->name('penghasilan-komprehensif');
+    
+        Route::get('/posisi-keuangan', [LaporanKeuanganController::class, 'posisiKeuangan'])
+            ->name('posisi-keuangan');
+    
+        Route::get('/perubahan-aset-neto', [LaporanKeuanganController::class, 'perubahanAsetNeto'])
+            ->name('perubahan-aset-neto');
     });
 });

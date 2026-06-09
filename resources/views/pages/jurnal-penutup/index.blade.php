@@ -32,18 +32,16 @@
     {{-- Status Penutupan Periode Aktif --}}
     @if($periodeAktif)
     @php
-        $tipes = ['TUTUP_PENDAPATAN', 'TUTUP_BEBAN', 'IKHTISAR_LR', 'TUTUP_SALDO_DANA'];
+        $tipes = ['TUTUP_PENDAPATAN', 'TUTUP_BEBAN'];
         $labelsTahap = [
             'TUTUP_PENDAPATAN' => 'Tutup Pendapatan',
             'TUTUP_BEBAN'      => 'Tutup Beban',
-            'IKHTISAR_LR'      => 'Ikhtisar Laba/Rugi',
-            'TUTUP_SALDO_DANA' => 'Tutup ke Saldo Dana',
         ];
-        $sisaTahap   = 4 - $tahapSelesai;
-        $pct         = ($tahapSelesai / 4) * 100;
-        $statusLabel = $tahapSelesai === 4
+        $sisaTahap   = 2 - $tahapSelesai;
+        $pct         = ($tahapSelesai / 2) * 100;
+        $statusLabel = $tahapSelesai === 2
             ? 'Selesai — semua tahap telah diposting'
-            : 'Belum selesai — ' . $tahapSelesai . ' dari 4 tahap selesai';
+            : 'Belum selesai — ' . $tahapSelesai . ' dari 2 tahap selesai';
     @endphp
     <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-5">
         <div class="flex items-start justify-between mb-4">
@@ -71,7 +69,7 @@
             <div class="bg-green-600 h-2 rounded-full transition-all duration-500" style="width: {{ $pct }}%"></div>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="grid grid-cols-2 gap-3">
             @foreach($tipes as $i => $tipe)
             @php $st = $statusTahap[$tipe] ?? ['selesai' => false]; @endphp
             <div class="rounded-xl border px-3 py-2.5 {{ $st['selesai'] ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10' : 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30' }}">
@@ -99,7 +97,6 @@
     {{-- Table --}}
     <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
 
-        {{-- ✅ Toolbar --}}
         <x-jurnal.table-toolbar
             :route="route('dashboard.jurnal-penutup.index')"
             :per-page="$perPage"
@@ -126,7 +123,6 @@
             </x-slot>
         </x-jurnal.table-toolbar>
 
-        {{-- Table --}}
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
@@ -151,11 +147,9 @@
                             . $item->periode->tanggal_awal->format('Y') . '-'
                             . $item->periode->tanggal_awal->format('m') . '-'
                             . str_pad($jurnal->firstItem() + $loop->index, 3, '0', STR_PAD_LEFT);
-                        $tipeLabels  = [
+                        $tipeLabels = [
                             'TUTUP_PENDAPATAN' => 'Tutup Pendapatan',
                             'TUTUP_BEBAN'      => 'Tutup Beban',
-                            'IKHTISAR_LR'      => 'Ikhtisar Laba/Rugi',
-                            'TUTUP_SALDO_DANA' => 'Tutup ke Saldo Dana',
                         ];
                     @endphp
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors" id="row-{{ $item->id }}">
@@ -174,7 +168,7 @@
                         <td class="px-4 py-3.5 cursor-pointer"
                             onclick="showDrawer('/dashboard/jurnal-penutup/{{ $item->id }}')">
                             <span class="text-sm font-medium text-gray-800 dark:text-gray-200">
-                                {{ $tipeLabels[$item->tipe_penyesuaian] ?? $item->tipe_penyesuaian ?? '—' }}
+                                {{ $tipeLabels[$item->tipe_penutupan] ?? $item->tipe_penutupan ?? '—' }}
                             </span>
                         </td>
                         <td class="px-4 py-3.5 text-right font-medium text-gray-800 dark:text-gray-200 cursor-pointer"
@@ -232,7 +226,6 @@
             </table>
         </div>
 
-        {{-- Pagination --}}
         <x-jurnal.table-pagination
             :paginator="$jurnal"
             :query-params="['search' => $search, 'periode_id' => $periodeId, 'status' => $status, 'per_page' => $perPage]" />
@@ -248,9 +241,6 @@
 <script src="{{ asset('js/jurnal-shared.js') }}"></script>
 
 <script>
-/**
- * renderDrawerContent — spesifik untuk Jurnal Penutup
- */
 window.renderDrawerContent = function(data) {
     const j        = data.jurnal;
     const details  = j.detail_jurnal ?? [];
@@ -259,9 +249,9 @@ window.renderDrawerContent = function(data) {
     document.getElementById('drawerContent').innerHTML =
         buildDrawerHeader(j.nomor_jurnal, j.tanggal, isPosted) +
         buildInfoBox('Informasi Jurnal', [
-            { label: 'Periode',          value: j.periode?.nama_periode },
-            { label: 'Tipe Penutupan',   value: j.label_penutupan },
-            { label: 'Tanggal',          value: j.tanggal },
+            { label: 'Periode',        value: j.periode?.nama_periode },
+            { label: 'Tipe Penutupan', value: j.label_penutupan },
+            { label: 'Tanggal',        value: j.tanggal },
         ]) +
         buildDetailTable(details, 'Entri Jurnal');
 };

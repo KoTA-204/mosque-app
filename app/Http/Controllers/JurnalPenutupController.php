@@ -24,9 +24,8 @@ class JurnalPenutupController extends Controller
         $periodeList  = $this->service->getPeriodeList();
         $periodeAktif = $this->service->getPeriodeAktif();
 
-        // Status penutupan periode aktif
-        $statusTahap    = $periodeAktif ? $this->service->getStatusTahap($periodeAktif) : [];
-        $tahapSelesai   = $periodeAktif ? $this->service->getTahapSelesai($periodeAktif) : 0;
+        $statusTahap  = $periodeAktif ? $this->service->getStatusTahap($periodeAktif) : [];
+        $tahapSelesai = $periodeAktif ? $this->service->getTahapSelesai($periodeAktif) : 0;
 
         return view('pages.jurnal-penutup.index', compact(
             'jurnal', 'periodeList', 'periodeAktif',
@@ -34,8 +33,6 @@ class JurnalPenutupController extends Controller
             'statusTahap', 'tahapSelesai'
         ));
     }
-
-    // ── Create (Step 1: Periode & Ringkasan) ──────────────────────────────
 
     public function create()
     {
@@ -55,14 +52,13 @@ class JurnalPenutupController extends Controller
         ));
     }
 
-    // ── Store: proses tiap tahap dari step 2 ──────────────────────────────
-
     public function store(Request $request)
     {
+        dd($request->all());
         $request->validate([
-            'periode_id'   => 'required|exists:periode,id',
-            'tanggal'      => 'required|date',
-            'submit_type'  => 'required|in:draft,posting',
+            'periode_id'  => 'required|exists:periode,id',
+            'tanggal'     => 'required|date',
+            'submit_type' => 'required|in:draft,posting',
         ]);
 
         $periode = Periode::findOrFail($request->periode_id);
@@ -70,15 +66,12 @@ class JurnalPenutupController extends Controller
 
         $ringkasan = $this->service->getRingkasanPeriode($periode);
 
-        // Generate semua detail per tahap
         $semua = [
             'TUTUP_PENDAPATAN' => $this->service->generateTutupPendapatan($ringkasan),
             'TUTUP_BEBAN'      => $this->service->generateTutupBeban($ringkasan),
-            'IKHTISAR_LR'      => $this->service->generateIkhtisarLR($ringkasan),
-            'TUTUP_SALDO_DANA' => $this->service->generateTutupSaldoDana($periode, $ringkasan),
         ];
 
-        $this->service->storeAllTahap($periode, $semua, $request->tanggal, $status);
+        $this->service->storeAllTahapIfNotExists($periode, $semua, $request->tanggal, $status);
 
         $msg = $status === 'POSTED'
             ? 'Semua jurnal penutup berhasil diposting ke buku besar.'
@@ -88,14 +81,12 @@ class JurnalPenutupController extends Controller
             ->with('success', $msg);
     }
 
-    // ── Konfirmasi satu tahap (AJAX dari step 2) ──────────────────────────
-
     public function konfirmasiTahap(Request $request)
     {
         $request->validate([
-            'periode_id'      => 'required|exists:periode,id',
-            'tipe_penutupan'  => 'required|in:TUTUP_PENDAPATAN,TUTUP_BEBAN,IKHTISAR_LR,TUTUP_SALDO_DANA',
-            'tanggal'         => 'required|date',
+            'periode_id'     => 'required|exists:periode,id',
+            'tipe_penutupan' => 'required|in:TUTUP_PENDAPATAN,TUTUP_BEBAN',
+            'tanggal'        => 'required|date',
         ]);
 
         $periode   = Periode::findOrFail($request->periode_id);
@@ -105,11 +96,8 @@ class JurnalPenutupController extends Controller
         $detail = match ($tipe) {
             'TUTUP_PENDAPATAN' => $this->service->generateTutupPendapatan($ringkasan),
             'TUTUP_BEBAN'      => $this->service->generateTutupBeban($ringkasan),
-            'IKHTISAR_LR'      => $this->service->generateIkhtisarLR($ringkasan),
-            'TUTUP_SALDO_DANA' => $this->service->generateTutupSaldoDana($periode, $ringkasan),
         };
 
-        // Simpan sebagai DRAFT dulu, nanti di-post saat step 3
         $jurnal = $this->service->storeTahap($periode, $tipe, $detail, $request->tanggal, 'DRAFT');
 
         return response()->json([
@@ -121,8 +109,6 @@ class JurnalPenutupController extends Controller
             ],
         ]);
     }
-
-    // ── Show (drawer detail) ───────────────────────────────────────────────
 
     public function show(Jurnal $jurnal)
     {
@@ -140,8 +126,8 @@ class JurnalPenutupController extends Controller
                 'tanggal'         => $jurnal->tanggal?->format('j M Y'),
                 'keterangan'      => $jurnal->keterangan,
                 'status'          => $jurnal->status,
-                'tipe_penutupan'  => $jurnal->tipe_penyesuaian,
-                'label_penutupan' => JurnalPenutupService::TIPE_LABELS[$jurnal->tipe_penyesuaian] ?? $jurnal->tipe_penyesuaian,
+                'tipe_penutupan'  => $jurnal->tipe_penutupan,
+                'label_penutupan' => JurnalPenutupService::TIPE_LABELS[$jurnal->tipe_penutupan] ?? $jurnal->tipe_penutupan,
                 'periode'         => [
                     'nama_periode' => $jurnal->periode->nama_periode ?? '—',
                 ],
@@ -157,8 +143,6 @@ class JurnalPenutupController extends Controller
         ]);
     }
 
-    // ── Post semua draft sekaligus ─────────────────────────────────────────
-
     public function postSemua(Request $request)
     {
         $request->validate(['periode_id' => 'required|exists:periode,id']);
@@ -172,8 +156,6 @@ class JurnalPenutupController extends Controller
         return redirect()->route('dashboard.jurnal-penutup.index')
             ->with('success', 'Semua jurnal penutup berhasil diposting.');
     }
-
-    // ── Delete ─────────────────────────────────────────────────────────────
 
     public function destroy(Jurnal $jurnal)
     {

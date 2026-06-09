@@ -29,7 +29,7 @@
                 </svg>
                 <span>
                     <strong>Jurnal penutup harus dibuat secara berurutan</strong>:
-                    (1) Tutup Pendapatan → (2) Tutup Beban → (3) Ikhtisar Laba/Rugi → (4) Tutup ke Saldo Dana.
+                    (1) Tutup Pendapatan → (2) Tutup Beban.
                     Pastikan semua jurnal penyesuaian sudah diposting sebelum memulai.
                 </span>
             </div>
@@ -99,11 +99,11 @@
                         <p class="text-xl font-bold {{ $ringkasan['surplus'] >= 0 ? 'text-green-600' : 'text-red-500' }}">
                             Rp {{ number_format(abs($ringkasan['surplus']), 0, ',', '.') }}
                         </p>
-                        <p class="text-xs text-gray-400 mt-1">{{ $ringkasan['surplus'] >= 0 ? 'Surplus — akan ditutup ke Saldo Dana' : 'Defisit' }}</p>
+                        <p class="text-xs text-gray-400 mt-1">{{ $ringkasan['surplus'] >= 0 ? 'Surplus — akan ditutup ke Aset Neto' : 'Defisit' }}</p>
                     </div>
                 </div>
 
-                @if($ringkasan['ada_draft_penyesuaian'])
+                @if($ringkasan['ada_draft_belum_posting'])
                 <div class="flex items-start gap-2 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400 mb-4">
                     <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -161,9 +161,7 @@
                 :back-route="route('dashboard.jurnal-penutup.index')"
                 next-action="goToStep2()"
                 next-label="Lanjut ke Detail"
-                {{-- Disable tombol lanjut jika masih ada draft penyesuaian --}}
             />
-            {{-- Catatan: jika perlu disable tombol lanjut secara kondisional, tambahkan atribut disabled di controller atau Alpine --}}
 
         </div>
 
@@ -172,23 +170,29 @@
 
             @php
             $tahapDefs = [
-                'TUTUP_PENDAPATAN' => ['label' => 'Tutup Pendapatan',    'sub' => 'Menutup semua akun pendapatan ke Ikhtisar Laba/Rugi', 'entri' => 'Debit semua akun Pendapatan → Kredit Ikhtisar L/R'],
-                'TUTUP_BEBAN'      => ['label' => 'Tutup Beban',         'sub' => 'Menutup semua akun beban ke Ikhtisar Laba/Rugi',       'entri' => 'Kredit semua akun Beban → Debit Ikhtisar L/R'],
-                'IKHTISAR_LR'      => ['label' => 'Ikhtisar Laba/Rugi',  'sub' => 'Menutup Ikhtisar L/R ke Saldo Dana Masjid',            'entri' => 'Debit Ikhtisar L/R → Kredit Saldo Dana Masjid'],
-                'TUTUP_SALDO_DANA' => ['label' => 'Tutup ke Saldo Dana', 'sub' => 'Memindahkan surplus ke saldo dana masjid',             'entri' => 'Debit Saldo Dana Bulan Ini → Kredit Saldo Dana Kumulatif'],
+                'TUTUP_PENDAPATAN' => [
+                    'label' => 'Tutup Pendapatan',
+                    'sub'   => 'Menutup semua akun pendapatan ke Aset Neto',
+                    'entri' => 'Debit semua akun Pendapatan → Kredit Aset Neto (3-1xxx / 3-2xxx)',
+                ],
+                'TUTUP_BEBAN' => [
+                    'label' => 'Tutup Beban',
+                    'sub'   => 'Menutup semua akun beban dari Aset Neto Tanpa Pembatasan',
+                    'entri' => 'Debit Aset Neto Tanpa Pembatasan (3-1xxx) → Kredit semua akun Beban',
+                ],
             ];
             @endphp
 
             {{-- Progress --}}
             <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5">
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-xs text-gray-400" id="progressLabel">Tahap 1 dari 4</p>
+                    <p class="text-xs text-gray-400" id="progressLabel">Tahap 1 dari 2</p>
                     <p class="text-xs font-medium text-green-600" id="progressPct">0%</p>
                 </div>
                 <div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 mb-4">
                     <div id="progressBar" class="bg-green-600 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
                 </div>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="grid grid-cols-2 gap-3">
                     @foreach($tahapDefs as $tipeKey => $tahap)
                     @php $stTahap = $statusTahap[$tipeKey] ?? ['selesai' => false]; $idxTahap = array_search($tipeKey, array_keys($tahapDefs)); @endphp
                     <div class="rounded-xl border p-3 cursor-pointer transition-colors
@@ -236,7 +240,6 @@
                     </div>
                     <div id="tahapEntriRows" class="space-y-1 mb-4"></div>
 
-                    {{-- Balance bar dengan prefix "tahap" agar id-nya tidak bentrok --}}
                     <x-jurnal.balance-bar prefix="tahap" />
 
                     <div class="mt-4">
@@ -245,7 +248,7 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
-                            Konfirmasi & Lanjut ke Tahap Selesai
+                            Konfirmasi & Lanjut ke Tahap Berikutnya
                         </button>
                     </div>
                 </div>
@@ -270,7 +273,7 @@
                 <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                Semua 4 tahap jurnal penutup sudah digenerate. Klik "Posting Semua" untuk memposting seluruh jurnal penutup sekaligus ke buku besar.
+                Semua 2 tahap jurnal penutup sudah digenerate. Klik "Posting Semua" untuk memposting seluruh jurnal penutup sekaligus ke buku besar.
             </div>
 
             <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
@@ -298,37 +301,64 @@
 <script type="module">
 import { formatRp, makeStepperController } from '/js/jurnal-helpers.js';
 
-// ── Data dari server ───────────────────────────────────────────────────────
-const ringkasan          = @json($ringkasan ?? []);
-const statusTahapServer  = @json($statusTahap ?? []);
+const ringkasan         = @json($ringkasan ?? []);
+const statusTahapServer = @json($statusTahap ?? []);
 
-const TIPE_URUT = ['TUTUP_PENDAPATAN', 'TUTUP_BEBAN', 'IKHTISAR_LR', 'TUTUP_SALDO_DANA'];
+const TIPE_URUT = ['TUTUP_PENDAPATAN', 'TUTUP_BEBAN'];
 const TIPE_LABELS = {
     TUTUP_PENDAPATAN: 'Tutup Pendapatan',
     TUTUP_BEBAN:      'Tutup Beban',
-    IKHTISAR_LR:      'Ikhtisar Laba/Rugi',
-    TUTUP_SALDO_DANA: 'Tutup ke Saldo Dana',
 };
 const TIPE_INFO = {
-    TUTUP_PENDAPATAN: 'Debit semua akun pendapatan → Kredit Ikhtisar Laba/Rugi. Entri digenerate otomatis berdasarkan saldo neraca.',
-    TUTUP_BEBAN:      'Debit Ikhtisar Laba/Rugi → Kredit semua akun beban. Entri digenerate otomatis berdasarkan saldo neraca.',
-    IKHTISAR_LR:      'Memindahkan saldo Ikhtisar L/R ke Saldo Dana Masjid. Entri digenerate otomatis.',
-    TUTUP_SALDO_DANA: 'Memindahkan surplus ke saldo dana masjid (opsional verifikasi). Entri digenerate otomatis.',
+    TUTUP_PENDAPATAN: 'Debit semua akun pendapatan → Kredit Aset Neto sesuai klasifikasi dana (3-1xxx untuk tidak terikat, 3-2xxx untuk terikat). Sesuai ISAK 35.',
+    TUTUP_BEBAN:      'Debit Aset Neto Tanpa Pembatasan (3-1xxx) → Kredit semua akun beban. Dana terikat tidak digunakan untuk menutup beban operasional.',
 };
 
-// ── State ──────────────────────────────────────────────────────────────────
-const entriPerTahap = {};
+// ── Session state ──────────────────────────────────────────────────────────
+const periodeId  = document.getElementById('periodeSelect')?.value ?? '';
+const SESSION_KEY = 'penutup_' + periodeId;
+
+function saveState(step) {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+        step,
+        tahapSelesai,
+        entriPerTahap,
+    }));
+}
+
+function loadState() {
+    try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); }
+    catch { return null; }
+}
+
+function clearState() {
+    sessionStorage.removeItem(SESSION_KEY);
+}
+
+// ── Init state ─────────────────────────────────────────────────────────────
+const savedState = loadState();
+
+const entriPerTahap = savedState?.entriPerTahap ?? {};
 let   currentTipe   = null;
-const tahapSelesai  = {};
-TIPE_URUT.forEach(t => { tahapSelesai[t] = statusTahapServer[t]?.selesai ?? false; });
+const tahapSelesai  = savedState?.tahapSelesai ?? {};
 
-// ── Controllers ────────────────────────────────────────────────────────────
+// Fallback ke server jika tidak ada state tersimpan
+TIPE_URUT.forEach(t => {
+    if (tahapSelesai[t] === undefined) {
+        tahapSelesai[t] = statusTahapServer[t]?.selesai ?? false;
+    }
+});
+
+// ── Stepper ────────────────────────────────────────────────────────────────
 const stepper = makeStepperController(3);
-window.goToStep = (n) => stepper.goToStep(n);
+window.goToStep = (n) => {
+    stepper.goToStep(n);
+    saveState(n);
+};
 
-// ── Step nav ────────────────────────────────────────────────────────────────
 window.goToStep2 = function() {
     stepper.goToStep(2);
+    saveState(2);
     updateProgressBar();
     const pertama = TIPE_URUT.find(t => !tahapSelesai[t]) ?? TIPE_URUT[0];
     selectTahap(pertama);
@@ -336,12 +366,15 @@ window.goToStep2 = function() {
 
 window.goToStep3 = function() {
     const belumSelesai = TIPE_URUT.filter(t => !tahapSelesai[t] && !entriPerTahap[t]);
-    if (belumSelesai.length > 0) { alert('Konfirmasi semua ' + belumSelesai.length + ' tahap terlebih dahulu sebelum melanjutkan.'); return; }
+    if (belumSelesai.length > 0) {
+        alert('Konfirmasi semua ' + belumSelesai.length + ' tahap terlebih dahulu sebelum melanjutkan.');
+        return;
+    }
     renderReview();
     stepper.goToStep(3);
+    saveState(3);
 };
 
-// ── Tahap ───────────────────────────────────────────────────────────────────
 window.selectTahap = function(tipe) {
     currentTipe = tipe;
     const detail = generateEntriTahap(tipe);
@@ -357,45 +390,40 @@ window.selectTahap = function(tipe) {
 
     const btnK = document.getElementById('btnKonfirmasi');
     if (tahapSelesai[tipe]) {
-        btnK.disabled   = true;
+        btnK.disabled    = true;
         btnK.textContent = '✓ Tahap ini sudah selesai';
-        btnK.className  = 'inline-flex items-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-500 text-sm font-medium px-5 py-2.5 rounded-xl cursor-not-allowed';
+        btnK.className   = 'inline-flex items-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-500 text-sm font-medium px-5 py-2.5 rounded-xl cursor-not-allowed';
     } else {
-        btnK.disabled   = false;
-        btnK.innerHTML  = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Konfirmasi & Lanjut ke Tahap Selesai`;
-        btnK.className  = 'inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors';
+        btnK.disabled  = false;
+        btnK.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Konfirmasi & Lanjut ke Tahap Berikutnya`;
+        btnK.className = 'inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors';
     }
 };
 
 function generateEntriTahap(tipe) {
     const pendapatan = ringkasan.pendapatan ?? [];
     const beban      = ringkasan.beban ?? [];
-    const surplus    = ringkasan.surplus ?? 0;
     const detail     = [];
 
     if (tipe === 'TUTUP_PENDAPATAN') {
-        pendapatan.forEach(item => { if (item.saldo > 0) detail.push({ akun: item.akun.nama_akun, posisi: 'DEBIT',  nominal: item.saldo }); });
-        const totalP = pendapatan.reduce((s, i) => s + i.saldo, 0);
-        if (totalP > 0) detail.push({ akun: 'Ikhtisar Laba/Rugi', posisi: 'KREDIT', nominal: totalP });
+        const tanpa  = pendapatan.filter(i => !i.akun.kode_akun.startsWith('4-2'));
+        const dengan = pendapatan.filter(i =>  i.akun.kode_akun.startsWith('4-2'));
+
+        tanpa.forEach(i => { if (i.saldo > 0) detail.push({ akun: i.akun.nama_akun, posisi: 'DEBIT', nominal: i.saldo }); });
+        const totalTanpa = tanpa.reduce((s, i) => s + i.saldo, 0);
+        if (totalTanpa > 0) detail.push({ akun: 'Aset Neto Tanpa Pembatasan (3-1000)', posisi: 'KREDIT', nominal: totalTanpa });
+
+        dengan.forEach(i => { if (i.saldo > 0) detail.push({ akun: i.akun.nama_akun, posisi: 'DEBIT', nominal: i.saldo }); });
+        const totalDengan = dengan.reduce((s, i) => s + i.saldo, 0);
+        if (totalDengan > 0) detail.push({ akun: 'Aset Neto Dengan Pembatasan (3-2000)', posisi: 'KREDIT', nominal: totalDengan });
     }
+
     if (tipe === 'TUTUP_BEBAN') {
         const totalB = beban.reduce((s, i) => s + i.saldo, 0);
-        if (totalB > 0) detail.push({ akun: 'Ikhtisar Laba/Rugi', posisi: 'DEBIT', nominal: totalB });
-        beban.forEach(item => { if (item.saldo > 0) detail.push({ akun: item.akun.nama_akun, posisi: 'KREDIT', nominal: item.saldo }); });
+        if (totalB > 0) detail.push({ akun: 'Aset Neto Tanpa Pembatasan (3-1000)', posisi: 'DEBIT', nominal: totalB });
+        beban.forEach(i => { if (i.saldo > 0) detail.push({ akun: i.akun.nama_akun, posisi: 'KREDIT', nominal: i.saldo }); });
     }
-    if (tipe === 'IKHTISAR_LR') {
-        if (surplus > 0) {
-            detail.push({ akun: 'Ikhtisar Laba/Rugi', posisi: 'DEBIT',  nominal: surplus });
-            detail.push({ akun: 'Saldo Dana Masjid',  posisi: 'KREDIT', nominal: surplus });
-        } else if (surplus < 0) {
-            detail.push({ akun: 'Saldo Dana Masjid',  posisi: 'DEBIT',  nominal: Math.abs(surplus) });
-            detail.push({ akun: 'Ikhtisar Laba/Rugi', posisi: 'KREDIT', nominal: Math.abs(surplus) });
-        }
-    }
-    if (tipe === 'TUTUP_SALDO_DANA' && surplus !== 0) {
-        detail.push({ akun: 'Surplus Periode',      posisi: 'DEBIT',  nominal: Math.abs(surplus) });
-        detail.push({ akun: 'Saldo Dana Kumulatif', posisi: 'KREDIT', nominal: Math.abs(surplus) });
-    }
+
     return detail;
 }
 
@@ -415,53 +443,55 @@ function renderEntriRows(detail) {
         </div>`;
     }).join('');
 
-    // Update balance bar (prefix="tahap")
     const elD = document.getElementById('tahapTotalDebit');
     const elK = document.getElementById('tahapTotalKredit');
     if (elD) elD.textContent = formatRp(totalD);
     if (elK) elK.textContent = formatRp(totalK);
+
+    const elStatus = document.getElementById('tahapBalanceStatus');
+    if (elStatus) {
+        const balanced = totalD === totalK && totalD > 0;
+        elStatus.className = `flex items-center gap-1.5 text-xs font-medium ${balanced ? 'text-green-600' : 'text-yellow-600'}`;
+        elStatus.innerHTML = balanced
+            ? `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Seimbang`
+            : `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg> Belum seimbang`;
+    }
 }
 
+// ── Konfirmasi tahap — hanya update state FE, tidak hit DB ────────────────
 window.konfirmasiTahap = function() {
     if (!currentTipe) return;
-    const periodeId = document.getElementById('periodeSelect').value;
-    const tanggal   = document.querySelector('input[name="tanggal"]').value;
-    const btn       = document.getElementById('btnKonfirmasi');
-    btn.disabled    = true;
-    btn.textContent = 'Menyimpan...';
 
-    fetch('{{ route("dashboard.jurnal-penutup.konfirmasi-tahap") }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
-        body: JSON.stringify({ periode_id: periodeId, tipe_penutupan: currentTipe, tanggal }),
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            tahapSelesai[currentTipe] = true;
-            updateTahapCardUI(currentTipe);
-            updateProgressBar();
-            const idx = TIPE_URUT.indexOf(currentTipe);
-            if (idx < TIPE_URUT.length - 1) { selectTahap(TIPE_URUT[idx + 1]); }
-            else { btn.disabled = true; btn.textContent = '✓ Semua tahap selesai'; }
-        }
-    })
-    .catch(() => { btn.disabled = false; btn.innerHTML = `<svg class="w-4 h-4"...></svg> Konfirmasi & Lanjut`; alert('Gagal menyimpan tahap. Coba lagi.'); });
+    tahapSelesai[currentTipe] = true;
+    updateTahapCardUI(currentTipe);
+    updateProgressBar();
+    saveState(stepper.currentStep);
+
+    const idx = TIPE_URUT.indexOf(currentTipe);
+    if (idx < TIPE_URUT.length - 1) {
+        selectTahap(TIPE_URUT[idx + 1]);
+    } else {
+        const btn = document.getElementById('btnKonfirmasi');
+        btn.disabled    = true;
+    }
 };
 
 function updateTahapCardUI(tipe) {
     const card = document.getElementById('tahap-card-' + tipe);
     const icon = document.getElementById('tahap-icon-' + tipe);
     if (card) card.classList.add('border-green-200', 'dark:border-green-800', 'bg-green-50', 'dark:bg-green-900/10');
-    if (icon) { icon.className = 'flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold bg-green-600 text-white'; icon.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>'; }
+    if (icon) {
+        icon.className = 'flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold bg-green-600 text-white';
+        icon.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>';
+    }
 }
 
 function updateProgressBar() {
     const selesai = TIPE_URUT.filter(t => tahapSelesai[t]).length;
-    const pct     = Math.round((selesai / 4) * 100);
+    const pct     = Math.round((selesai / 2) * 100);
     document.getElementById('progressBar').style.width   = pct + '%';
     document.getElementById('progressPct').textContent   = pct + '%';
-    document.getElementById('progressLabel').textContent = 'Tahap ' + selesai + ' dari 4';
+    document.getElementById('progressLabel').textContent = 'Tahap ' + selesai + ' dari 2';
 }
 
 function renderReview() {
@@ -478,12 +508,11 @@ function renderReview() {
                 <td class="py-1.5 text-right text-sm ${!isD ? 'text-green-600 font-medium' : 'text-gray-300'}">${!isD ? formatRp(d.nominal) : '—'}</td>
             </tr>`;
         }).join('');
-        const isGenerated = tahapSelesai[tipe] || detail.length > 0;
         return `
         <div>
             <div class="flex items-center justify-between mb-3">
                 <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">Tahap ${TIPE_URUT.indexOf(tipe) + 1}: ${TIPE_LABELS[tipe]}</p>
-                ${isGenerated ? '<span class="text-xs font-medium text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full">Generate ✓</span>' : ''}
+                <span class="text-xs font-medium text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full">Generate ✓</span>
             </div>
             <table class="w-full text-sm mb-3">
                 <thead><tr class="border-b border-gray-100 dark:border-gray-800">
@@ -495,16 +524,42 @@ function renderReview() {
             </table>
             <div class="grid grid-cols-2 gap-3">
                 <div class="rounded-xl border border-gray-100 dark:border-gray-800 p-3 text-center">
-                    <p class="text-xs text-gray-400">Total Debit</p><p class="text-sm font-bold text-red-500">${formatRp(totalD)}</p>
+                    <p class="text-xs text-gray-400">Total Debit</p>
+                    <p class="text-sm font-bold text-red-500">${formatRp(totalD)}</p>
                 </div>
                 <div class="rounded-xl border border-gray-100 dark:border-gray-800 p-3 text-center">
-                    <p class="text-xs text-gray-400">Total Kredit</p><p class="text-sm font-bold text-green-600">${formatRp(totalK)}</p>
+                    <p class="text-xs text-gray-400">Total Kredit</p>
+                    <p class="text-sm font-bold text-green-600">${formatRp(totalK)}</p>
                 </div>
             </div>
         </div>`;
     }).join('<hr class="border-gray-100 dark:border-gray-800">');
 }
 
-document.addEventListener('DOMContentLoaded', () => { updateProgressBar(); });
+// ── Restore state saat load ────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    updateProgressBar();
+
+    if (savedState?.step && savedState.step > 1) {
+        if (savedState.step === 2) {
+            stepper.goToStep(2);
+            updateProgressBar();
+            // restore tahap card UI
+            TIPE_URUT.forEach(t => {
+                if (tahapSelesai[t]) updateTahapCardUI(t);
+            });
+            const pertama = TIPE_URUT.find(t => !tahapSelesai[t]) ?? TIPE_URUT[0];
+            selectTahap(pertama);
+        } else if (savedState.step === 3) {
+            stepper.goToStep(3);
+            renderReview();
+        }
+    }
+
+    // Clear state setelah form submit
+    document.getElementById('penutupForm').addEventListener('submit', () => {
+        clearState();
+    });
+});
 </script>
 @endpush
