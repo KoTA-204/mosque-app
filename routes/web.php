@@ -105,24 +105,24 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
 
     // ── Kegiatan Khusus - Data Kegiatan ────────────────────────────────────
     Route::middleware('permission:VIEW_KEGIATAN')->group(function () {
-        Route::get('/kegiatan', [KegiatanController::class, 'index'])->name('kegiatan.index');
-        Route::get('/kegiatan/{kegiatan}', [KegiatanController::class, 'show'])
-            ->name('kegiatan.show')
-            ->whereNumber('kegiatan');
+        Route::get('/kegiatan',              [KegiatanController::class, 'index'])->name('kegiatan.index');
+        Route::get('/kegiatan/{kegiatan}',   [KegiatanController::class, 'show'])->name('kegiatan.show')->whereNumber('kegiatan');
     });
 
     Route::middleware('permission:CREATE_KEGIATAN')->group(function () {
-        Route::get('/kegiatan/create', [KegiatanController::class, 'create'])->name('kegiatan.create');
-        Route::post('/kegiatan', [KegiatanController::class, 'store'])->name('kegiatan.store');
+        Route::get('/kegiatan/create',       [KegiatanController::class, 'create'])->name('kegiatan.create');
+        Route::post('/kegiatan',             [KegiatanController::class, 'store'])->name('kegiatan.store');
     });
 
     Route::middleware('permission:EDIT_KEGIATAN')->group(function () {
-        Route::get('/kegiatan/{kegiatan}/edit', [KegiatanController::class, 'edit'])->name('kegiatan.edit');
-        Route::put('/kegiatan/{kegiatan}', [KegiatanController::class, 'update'])->name('kegiatan.update');
+        Route::get('/kegiatan/{kegiatan}/edit',   [KegiatanController::class, 'edit'])->name('kegiatan.edit');
+        Route::put('/kegiatan/{kegiatan}',        [KegiatanController::class, 'update'])->name('kegiatan.update');
+        Route::patch('/kegiatan/{kegiatan}/tutup',[KegiatanController::class, 'tutup'])->name('kegiatan.tutup');
     });
 
     Route::middleware('permission:DELETE_KEGIATAN')->group(function () {
-        Route::delete('/kegiatan/{kegiatan}', [KegiatanController::class, 'destroy'])->name('kegiatan.destroy');
+        Route::get('/kegiatan/{kegiatan}/delete', [KegiatanController::class, 'confirmDelete'])->name('kegiatan.confirmDelete')->whereNumber('kegiatan');
+        Route::delete('/kegiatan/{kegiatan}',     [KegiatanController::class, 'destroy'])->name('kegiatan.destroy');
     });
 
     // ── Kegiatan Khusus - Transaksi Kegiatan ───────────────────────────────

@@ -8,6 +8,13 @@ use Illuminate\Http\Request;
 
 class KegiatanController extends Controller
 {
+    private function getPanitias()
+    {
+        return User::whereHas('roles', fn($q) =>
+            $q->where('role_name', 'Panitia Khusus')
+        )->get();
+    }
+
     public function index(Request $request)
     {
         $query = Kegiatan::with('panitia');
@@ -24,17 +31,35 @@ class KegiatanController extends Controller
 
         $perPage  = in_array($request->per_page, [10, 25, 50]) ? $request->per_page : 10;
         $kegiatan = $query->latest()->paginate($perPage)->withQueryString();
-        $panitias = User::whereHas('roles', fn($q) =>
-            $q->where('role_name', 'Panitia Khusus')
-        )->get();
+        $panitias = $this->getPanitias();
+
+        $stats = [
+            'total'   => Kegiatan::count(),
+            'aktif'   => Kegiatan::where('status', 'AKTIF')->count(),
+            'ditutup' => Kegiatan::where('status', 'DITUTUP')->count(),
+        ];
 
         if ($request->ajax()) {
             return response()->json([
-                'html' => view('pages.kegiatan.table', compact('kegiatan', 'panitias'))->render(),
+                'html'  => view('pages.kegiatan.table', compact('kegiatan', 'panitias'))->render(),
+                'stats' => $stats,
             ]);
         }
 
-        return view('pages.kegiatan.index', compact('kegiatan', 'panitias'));
+        return view('pages.kegiatan.index', compact('kegiatan', 'panitias', 'stats'));
+    }
+
+    public function create(Request $request)
+    {
+        $panitias = $this->getPanitias();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('pages.kegiatan.create', compact('panitias'))->render(),
+            ]);
+        }
+
+        return view('pages.kegiatan.create', compact('panitias'));
     }
 
     public function store(Request $request)
@@ -49,11 +74,44 @@ class KegiatanController extends Controller
         ]);
 
         $validated['status'] = Kegiatan::STATUS_AKTIF;
-
         Kegiatan::create($validated);
 
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Kegiatan berhasil ditambahkan.',
+            ]);
+        }
+
         return redirect()->route('dashboard.kegiatan.index')
-            ->with('success', 'Kegiatan berhasil ditambahkan');
+            ->with('success', 'Kegiatan berhasil ditambahkan.');
+    }
+
+    public function show(Request $request, Kegiatan $kegiatan)
+    {
+        $kegiatan->load('panitia');
+        $kegiatan->transaksi_count = $kegiatan->transaksi()->count();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('pages.kegiatan.show', compact('kegiatan'))->render(),
+            ]);
+        }
+
+        return view('pages.kegiatan.show', compact('kegiatan'));
+    }
+
+    public function edit(Request $request, Kegiatan $kegiatan)
+    {
+        $panitias = $this->getPanitias();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('pages.kegiatan.edit', compact('kegiatan', 'panitias'))->render(),
+            ]);
+        }
+
+        return view('pages.kegiatan.edit', compact('kegiatan', 'panitias'));
     }
 
     public function update(Request $request, Kegiatan $kegiatan)
@@ -65,40 +123,79 @@ class KegiatanController extends Controller
             'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
             'anggaran'        => 'required|numeric|min:0',
             'panitia_id'      => 'required|exists:users,id',
+            'status'          => 'required|in:AKTIF,DITUTUP',
         ]);
 
         $kegiatan->update($validated);
 
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Kegiatan berhasil diupdate.',
+            ]);
+        }
+
         return redirect()->route('dashboard.kegiatan.index')
-            ->with('success', 'Kegiatan berhasil diupdate');
+            ->with('success', 'Kegiatan berhasil diupdate.');
     }
 
-    public function destroy(Kegiatan $kegiatan)
+    public function confirmDelete(Request $request, Kegiatan $kegiatan)
     {
+        $transaksiCount = $kegiatan->transaksi()->count();
+        $hasTransaksi   = $transaksiCount > 0;
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('pages.kegiatan.delete', compact(
+                    'kegiatan', 'hasTransaksi', 'transaksiCount'
+                ))->render(),
+            ]);
+        }
+
+        return redirect()->route('dashboard.kegiatan.index');
+    }
+
+    public function destroy(Request $request, Kegiatan $kegiatan)
+    {
+        // Guard — double check di server side
+        if ($kegiatan->transaksi()->count() > 0) {
+            $msg = 'Kegiatan tidak dapat dihapus karena memiliki transaksi.';
+
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+
+            return redirect()->route('dashboard.kegiatan.index')->with('error', $msg);
+        }
+
         $kegiatan->delete();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Kegiatan berhasil dihapus.',
+            ]);
+        }
+
         return redirect()->route('dashboard.kegiatan.index')
-            ->with('success', 'Kegiatan berhasil dihapus');
+            ->with('success', 'Kegiatan berhasil dihapus.');
     }
 
-    public function create()
+    /**
+     * Tutup kegiatan (sebagai alternatif hapus jika ada transaksi).
+     */
+    public function tutup(Request $request, Kegiatan $kegiatan)
     {
-        $panitias = User::whereHas('roles', fn($q) =>
-            $q->where('role_name', 'Panitia Khusus')
-        )->get();
-        return view('pages.kegiatan.create', compact('panitias'));
-    }
+        $kegiatan->update(['status' => 'DITUTUP']);
 
-    public function edit(Kegiatan $kegiatan)
-    {
-        $panitias = User::whereHas('roles', fn($q) =>
-            $q->where('role_name', 'Panitia Khusus')
-        )->get();
-        return view('pages.kegiatan.edit', compact('kegiatan', 'panitias'));
-    }
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Status kegiatan berhasil diubah menjadi Ditutup.',
+            ]);
+        }
 
-    public function show(Kegiatan $kegiatan)
-    {
-        $kegiatan->load('panitia');
-        return view('pages.kegiatan.show', compact('kegiatan'));
+        return redirect()->route('dashboard.kegiatan.index')
+            ->with('success', 'Status kegiatan berhasil diubah menjadi Ditutup.');
     }
 }

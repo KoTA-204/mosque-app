@@ -1,39 +1,36 @@
 @extends('layouts.app')
 
 @section('content')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/id.js"></script>
-
 <div class="p-6 space-y-6">
 
+    {{-- Header --}}
     <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
         <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Manajemen Kegiatan Khusus</h1>
         <button onclick="openCreateModal()"
             class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-            Tambah Kegiatan
+            + Tambah Kegiatan
         </button>
     </div>
 
-    @if(session('success'))
-    <div class="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-sm text-green-700 dark:text-green-400">
-        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-        {{ session('success') }}
+    {{-- Stats --}}
+    <div class="grid grid-cols-3 gap-4">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Kegiatan</p>
+            <p class="stat-total text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['total'] }}</p>
+        </div>
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Kegiatan Aktif</p>
+            <p class="stat-aktif text-2xl font-bold text-green-600">{{ $stats['aktif'] }}</p>
+        </div>
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Kegiatan Ditutup</p>
+            <p class="stat-ditutup text-2xl font-bold text-red-500">{{ $stats['ditutup'] }}</p>
+        </div>
     </div>
-    @endif
-    @if(session('error'))
-    <div class="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400">
-        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-        {{ session('error') }}
-    </div>
-    @endif
 
+    {{-- Table Card --}}
     <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
-
-        {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-wrap">
-
-            {{-- Kiri: Show entries --}}
             <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 Show
                 <select id="perPage" onchange="applyFilters()"
@@ -44,8 +41,6 @@
                 </select>
                 entries
             </div>
-
-            {{-- Kanan: Filter --}}
             <div class="flex items-center gap-2 flex-wrap">
                 <select id="filterJenis" onchange="applyFilters()"
                     class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
@@ -75,171 +70,191 @@
         <div id="tableWrapper">
             @include('pages.kegiatan.table')
         </div>
-
     </div>
 </div>
 
-{{-- Modal Backdrop --}}
-<div id="modalBackdrop" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 flex items-center justify-center p-4"
-     onclick="closeAllModals(event)">
-    @include('pages.kegiatan.show')
-    @include('pages.kegiatan.edit')
-    @include('pages.kegiatan.create')
-    @include('pages.kegiatan.delete')
-</div>
+{{-- Modal Container --}}
+<div id="modalContainer"></div>
+
+{{-- Toast --}}
+<div id="toast" class="hidden fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium"></div>
 
 <script>
-const backdrop    = document.getElementById('modalBackdrop');
-const showModal   = document.getElementById('showModal');
-const editModal   = document.getElementById('editModal');
-const deleteModal = document.getElementById('deleteModal');
-const createModal = document.getElementById('createModal');
+const modalContainer = document.getElementById('modalContainer');
+const csrfToken      = document.querySelector('meta[name="csrf-token"]').content;
+const baseUrl        = "{{ url('dashboard/kegiatan') }}";
+const filterUrl      = "{{ route('dashboard.kegiatan.index') }}";
+let filterDebounce;
 
-function showBackdrop() { backdrop.classList.remove('hidden'); }
-function hideBackdrop() { backdrop.classList.add('hidden'); }
-
-function closeAllModals(e) {
-    if (e && e.target !== backdrop) return;
-    [showModal, editModal, deleteModal, createModal].forEach(m => m.classList.add('hidden'));
-    hideBackdrop();
+function openModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'flex';
 }
 
-function openModal(modal) {
-    [showModal, editModal, deleteModal, createModal].forEach(m => m.classList.add('hidden'));
-    modal.classList.remove('hidden');
-    showBackdrop();
-}
-
-// ── Flatpickr — inisialisasi sekali saat DOM ready ────────────
-let createPicker, editPicker;
-
-document.addEventListener('DOMContentLoaded', () => {
-
-    // Create picker
-    createPicker = flatpickr('#create_daterange', {
-        mode: 'range',
-        dateFormat: 'Y-m-d',
-        locale: 'id',
-        onChange(dates) {
-            document.getElementById('create_tanggal_mulai').value   = dates[0] ? flatpickr.formatDate(dates[0], 'Y-m-d') : '';
-            document.getElementById('create_tanggal_selesai').value = dates[1] ? flatpickr.formatDate(dates[1], 'Y-m-d') : '';
+function closeModal(id) {
+    if (id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.display = 'none';
+            if (modalContainer.contains(el)) modalContainer.innerHTML = '';
         }
-    });
-
-    // Kalau ada old value (setelah validation fail), set kembali
-    const oldMulai   = document.getElementById('create_tanggal_mulai').value;
-    const oldSelesai = document.getElementById('create_tanggal_selesai').value;
-    if (oldMulai) {
-        createPicker.setDate(oldSelesai ? [oldMulai, oldSelesai] : [oldMulai]);
+    } else {
+        modalContainer.querySelectorAll('[id$="Modal"]').forEach(el => el.style.display = 'none');
+        modalContainer.innerHTML = '';
     }
-
-    // Edit picker
-    editPicker = flatpickr('#edit_daterange', {
-        mode: 'range',
-        dateFormat: 'Y-m-d',
-        locale: 'id',
-        onChange(dates) {
-            document.getElementById('edit_tanggal_mulai').value   = dates[0] ? flatpickr.formatDate(dates[0], 'Y-m-d') : '';
-            document.getElementById('edit_tanggal_selesai').value = dates[1] ? flatpickr.formatDate(dates[1], 'Y-m-d') : '';
-        }
-    });
-
-    // Buka modal create otomatis kalau ada validation error
-    @if($errors->any())
-    openCreateModal();
-    @endif
-});
-
-// ── Modal functions ───────────────────────────────────────────
-function statusBadge(status) {
-    if (status === 'AKTIF') {
-        return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">Aktif</span>`;
-    }
-    return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">Ditutup</span>`;
-}
-
-function fmtDate(str) {
-    if (!str) return '-';
-    return new Date(str).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-}
-
-function fmtDateInput(str) {
-    if (!str) return '';
-    return str.substring(0, 10);
-}
-
-function openShowModal(item) {
-    document.getElementById('show_nama').textContent          = item.nama_kegiatan;
-    document.getElementById('show_jenis').textContent         = item.jenis_kegiatan;
-    document.getElementById('show_status_badge').innerHTML    = statusBadge(item.status);
-    document.getElementById('show_tgl_mulai').textContent     = fmtDate(item.tanggal_mulai);
-    document.getElementById('show_tgl_selesai').textContent   = fmtDate(item.tanggal_selesai);
-    document.getElementById('show_anggaran').textContent      = 'Rp ' + Number(item.anggaran).toLocaleString('id-ID');
-    document.getElementById('show_panitia_nama').textContent  = item.panitia?.name  ?? '-';
-    document.getElementById('show_panitia_email').textContent = item.panitia?.email ?? '';
-    openModal(showModal);
-}
-
-function openEditModal(item, panitias) {
-    const route = "{{ route('dashboard.kegiatan.update', ':id') }}".replace(':id', item.id);
-    document.getElementById('editForm').action         = route;
-    document.getElementById('edit_nama').value         = item.nama_kegiatan;
-    document.getElementById('edit_jenis').value        = item.jenis_kegiatan;
-    document.getElementById('edit_anggaran').value     = item.anggaran;
-
-    const sel = document.getElementById('edit_panitia');
-    sel.innerHTML = panitias.map(p =>
-        `<option value="${p.id}" ${p.id == item.panitia_id ? 'selected' : ''}>${p.name}</option>`
-    ).join('');
-
-    const mulai   = fmtDateInput(item.tanggal_mulai);
-    const selesai = fmtDateInput(item.tanggal_selesai);
-
-    document.getElementById('edit_tanggal_mulai').value   = mulai;
-    document.getElementById('edit_tanggal_selesai').value = selesai;
-
-    editPicker.setDate(selesai ? [mulai, selesai] : [mulai]);
-
-    openModal(editModal);
-}
-
-function openDeleteModal(id, nama) {
-    const route = "{{ route('dashboard.kegiatan.destroy', ':id') }}".replace(':id', id);
-    document.getElementById('deleteForm').action       = route;
-    document.getElementById('delete_nama').textContent = nama;
-    openModal(deleteModal);
-}
-
-function openCreateModal() {
-    // Reset form & picker
-    createModal.querySelector('form').reset();
-    createPicker.clear();
-    document.getElementById('create_tanggal_mulai').value   = '';
-    document.getElementById('create_tanggal_selesai').value = '';
-    openModal(createModal);
 }
 
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-        [showModal, editModal, deleteModal, createModal].forEach(m => m.classList.add('hidden'));
-        hideBackdrop();
+        modalContainer.querySelectorAll('[id$="Modal"]').forEach(el => {
+            if (el.style.display === 'flex') closeModal(el.id);
+        });
     }
 });
 
-// ── AJAX Filter ───────────────────────────────────────────────
-const filterUrl = "{{ route('dashboard.kegiatan.index') }}";
-let filterDebounce;
+function loadModal(url) {
+    modalContainer.innerHTML = '';
+    const loader = document.createElement('div');
+    loader.style.cssText = 'display:flex;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
+    loader.innerHTML = `
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-10 flex items-center justify-center">
+            <svg class="animate-spin w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+        </div>`;
+    document.body.appendChild(loader);
+
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.json())
+        .then(data => {
+            loader.remove();
+            modalContainer.innerHTML = data.html;
+            modalContainer.querySelectorAll('script').forEach(old => {
+                const s = document.createElement('script');
+                old.src ? (s.src = old.src) : (s.textContent = old.textContent);
+                document.head.appendChild(s);
+                old.remove();
+            });
+            const modal = modalContainer.querySelector('[id$="Modal"]');
+            if (modal) modal.style.display = 'flex';
+        })
+        .catch(() => {
+            loader.remove();
+            showToast('Gagal memuat data.', 'error');
+        });
+}
+
+function openCreateModal() { loadModal(`${baseUrl}/create`); }
+function openShowModal(id)  { loadModal(`${baseUrl}/${id}`); }
+function openEditModal(id)  { loadModal(`${baseUrl}/${id}/edit`); }
+function openDeleteModal(id){ loadModal(`${baseUrl}/${id}/delete`); }
+
+function showToast(msg, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.className = `fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium ${
+        type === 'success'
+            ? 'bg-green-50 border border-green-200 text-green-700 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400'
+            : 'bg-red-50 border border-red-200 text-red-700 dark:bg-red-900/30 dark:border-red-800 dark:text-red-400'
+    }`;
+    toast.innerHTML = msg;
+    toast.classList.remove('hidden');
+    setTimeout(() => toast.classList.add('hidden'), 3500);
+}
+
+function updateStatsEl(stats) {
+    if (!stats) return;
+    document.querySelector('.stat-total').textContent   = stats.total;
+    document.querySelector('.stat-aktif').textContent   = stats.aktif;
+    document.querySelector('.stat-ditutup').textContent = stats.ditutup;
+}
+
+function submitKegiatanForm(formId, method, url) {
+    const form = document.getElementById(formId);
+    form.querySelectorAll('[id^="err-"]').forEach(el => el.textContent = '');
+    form.querySelectorAll('input,select,textarea').forEach(el => el.classList.remove('border-red-400'));
+
+    const data = new FormData(form);
+    if (method === 'PUT') data.append('_method', 'PUT');
+
+    fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
+        body: data,
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            const active = modalContainer.querySelector('[id$="Modal"]');
+            if (active) closeModal(active.id);
+            showToast(res.message, 'success');
+            applyFilters();
+        } else if (res.errors) {
+            Object.entries(res.errors).forEach(([field, messages]) => {
+                const el    = form.querySelector(`[name="${field}"]`);
+                const errEl = document.getElementById(`err-${field}`);
+                if (el)    el.classList.add('border-red-400');
+                if (errEl) errEl.textContent = messages[0];
+            });
+        }
+    })
+    .catch(() => showToast('Terjadi kesalahan.', 'error'));
+}
+
+function submitDeleteKegiatan(url) {
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN':     csrfToken,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type':     'application/x-www-form-urlencoded',
+        },
+        body: '_method=DELETE',
+    })
+    .then(r => r.json())
+    .then(res => {
+        const active = modalContainer.querySelector('[id$="Modal"]');
+        if (res.success) {
+            if (active) closeModal(active.id);
+            showToast(res.message, 'success');
+            applyFilters();
+        } else {
+            if (active) closeModal(active.id);
+            showToast(res.message, 'error');
+        }
+    })
+    .catch(() => showToast('Terjadi kesalahan.', 'error'));
+}
+
+function tutupKegiatan(id) {
+    fetch(`${baseUrl}/${id}/tutup`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN':     csrfToken,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type':     'application/x-www-form-urlencoded',
+        },
+        body: '_method=PATCH',
+    })
+    .then(r => r.json())
+    .then(res => {
+        closeModal(modalContainer.querySelector('[id$="Modal"]')?.id);
+        showToast(res.message, res.success ? 'success' : 'error');
+        if (res.success) applyFilters();
+    })
+    .catch(() => showToast('Terjadi kesalahan.', 'error'));
+}
 
 function applyFilters() {
+    const params  = new URLSearchParams();
     const search  = document.getElementById('filterSearch').value;
     const jenis   = document.getElementById('filterJenis').value;
     const status  = document.getElementById('filterStatus').value;
     const perPage = document.getElementById('perPage').value;
 
-    const params = new URLSearchParams();
-    if (search)  params.set('search', search);
-    if (jenis)   params.set('jenis', jenis);
-    if (status)  params.set('status', status);
+    if (search)  params.set('search',   search);
+    if (jenis)   params.set('jenis',    jenis);
+    if (status)  params.set('status',   status);
     params.set('per_page', perPage);
 
     fetch(`${filterUrl}?${params.toString()}`, {
@@ -248,6 +263,7 @@ function applyFilters() {
     .then(r => r.json())
     .then(data => {
         document.getElementById('tableWrapper').innerHTML = data.html;
+        updateStatsEl(data.stats);
     });
 }
 
@@ -255,16 +271,14 @@ function loadPage(e, url) {
     e.preventDefault();
     const current = new URLSearchParams(url.split('?')[1] || '');
     const params  = new URLSearchParams();
-
-    // Pertahankan filter aktif
     const search  = document.getElementById('filterSearch').value;
     const jenis   = document.getElementById('filterJenis').value;
     const status  = document.getElementById('filterStatus').value;
     const perPage = document.getElementById('perPage').value;
 
-    if (search)  params.set('search', search);
-    if (jenis)   params.set('jenis', jenis);
-    if (status)  params.set('status', status);
+    if (search)  params.set('search',   search);
+    if (jenis)   params.set('jenis',    jenis);
+    if (status)  params.set('status',   status);
     params.set('per_page', perPage);
     params.set('page', current.get('page') || 1);
 
@@ -274,6 +288,7 @@ function loadPage(e, url) {
     .then(r => r.json())
     .then(data => {
         document.getElementById('tableWrapper').innerHTML = data.html;
+        updateStatsEl(data.stats);
     });
 }
 
