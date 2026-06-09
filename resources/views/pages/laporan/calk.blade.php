@@ -41,7 +41,7 @@
     </div>
 
     {{-- ══ CARD WRAPPER ══ --}}
-    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden p-6">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
         {{-- ══ FILTER BAR ══ --}}
         <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-gray-100 dark:border-gray-800 no-print">
             <form method="GET" class="flex items-center gap-3">
@@ -66,7 +66,7 @@
         </div>
 
         {{-- ══ DOKUMEN CALK ══ --}}
-        <div class="p-8 max-w-4xl mx-auto" id="calkContent">
+        <div class="p-6">
 
             {{-- KOP --}}
             <div class="text-center mb-8">
