@@ -17,34 +17,38 @@ class UserController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('email', 'ilike', "%{$search}%");
+                ->orWhere('email', 'ilike', "%{$search}%");
             });
         }
-
         if ($request->filled('role')) {
-            $query->whereHas('roles', fn($q) =>
-                $q->where('role_name', $request->role)
-            );
+            $query->whereHas('roles', fn($q) => $q->where('role_name', $request->role));
         }
-
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        $perPage = in_array($request->per_page, [10, 25, 50, 100])
-            ? $request->per_page
-            : 10;
+        $perPage = in_array($request->per_page, [10, 25, 50, 100]) ? $request->per_page : 10;
+        $users   = $query->paginate($perPage)->withQueryString();
+        $roles   = Role::all();
 
-        $users = $query->paginate($perPage)->withQueryString();
-        $roles = Role::all();
+        $stats = [
+            'total'       => User::count(),
+            'aktif'       => User::where('status', 'active')->count(),
+            'tidak_aktif' => User::where('status', 'inactive')->count(),
+        ];
 
         if ($request->ajax()) {
+            // stats_only untuk refresh card tanpa filter
+            if ($request->stats_only) {
+                return response()->json(['stats' => $stats]);
+            }
             return response()->json([
-                'html' => view('pages.users.table', compact('users', 'roles'))->render(),
+                'html'  => view('pages.users.table', compact('users', 'roles'))->render(),
+                'stats' => $stats,
             ]);
         }
 
-        return view('pages.users.index', compact('users', 'roles'));
+        return view('pages.users.index', compact('users', 'roles', 'stats'));
     }
 
     public function create(Request $request)
