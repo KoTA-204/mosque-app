@@ -56,13 +56,6 @@
                     @endforeach
                 </select>
             </form>
-            <div class="relative">
-                <input type="text" id="calkSearch" placeholder="Cari catatan..."
-                    class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 pl-8 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 w-52">
-                <svg class="absolute left-2.5 top-2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
-                </svg>
-            </div>
         </div>
 
         {{-- ══ DOKUMEN CALK ══ --}}
@@ -467,17 +460,6 @@
         </div>{{-- end #calkContent --}}
     </div>
 </div>
-
-@push('scripts')
-<script>
-    document.getElementById('calkSearch')?.addEventListener('input', function () {
-        const q = this.value.toLowerCase().trim();
-        document.querySelectorAll('.catatan-section').forEach(function (section) {
-            section.style.display = (!q || section.textContent.toLowerCase().includes(q)) ? '' : 'none';
-        });
-    });
-</script>
-@endpush
 
 @push('styles')
 <style>
