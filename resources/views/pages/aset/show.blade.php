@@ -143,11 +143,20 @@
             <div class="mb-5">
                 <div class="flex justify-between text-xs text-gray-400 mb-1.5">
                     <span>Progress Penyusutan</span>
-                    <span>{{ number_format($aset->progress_penyusutan, 1) }}%</span>
+                    <div class="flex items-center gap-2">
+                        @if($aset->status_aset === 'TIDAK AKTIF')
+                            <span class="text-xs text-red-400 font-medium">Dihentikan</span>
+                        @endif
+                        <span>{{ number_format($aset->progress_penyusutan, 1) }}%</span>
+                    </div>
                 </div>
                 <div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
-                    <div class="bg-green-500 h-2 rounded-full" style="width: {{ min($aset->progress_penyusutan, 100) }}%"></div>
+                    <div class="h-2 rounded-full {{ $aset->status_aset === 'TIDAK AKTIF' ? 'bg-gray-400' : 'bg-green-500' }}"
+                        style="width: {{ min($aset->progress_penyusutan, 100) }}%"></div>
                 </div>
+                @if($aset->status_aset === 'TIDAK AKTIF')
+                    <p class="text-xs text-red-400 mt-1">* Penyusutan dihentikan saat aset dinonaktifkan.</p>
+                @endif
             </div>
 
             {{-- Jadwal penyusutan --}}
@@ -164,29 +173,44 @@
                     </thead>
                     <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
                         @php
-                            $nilaiAwal   = (float) $aset->nilai_tercatat;
-                            $penyTahunan = $aset->umur_manfaat > 0 ? $nilaiAwal / $aset->umur_manfaat : 0;
-                            $akumulasi   = 0;
-                            $tahunMulai  = $aset->tanggal_mulai_penyusutan->year;
+                            $nilaiAwal        = (float) $aset->nilai_tercatat;
+                            $penyTahunan      = $aset->umur_manfaat > 0 ? $nilaiAwal / $aset->umur_manfaat : 0;
+                            $akumulasi        = 0;
+                            $tahunMulai       = $aset->tanggal_mulai_penyusutan->year;
+                            $snapshotAkumulasi = (float) $aset->akumulasi_penyusutan;
+                            $isNonaktif       = $aset->status_aset === 'TIDAK AKTIF';
+                            $sudahDihentikan  = false;
                         @endphp
                         @for($i = 1; $i <= $aset->umur_manfaat; $i++)
                         @php
-                            $nilaiBukuAwal = $nilaiAwal - $akumulasi;
-                            $akumulasi    += $penyTahunan;
-                            $nilaiBuku     = max($nilaiAwal - $akumulasi, 0);
-                            $tahun         = $tahunMulai + $i - 1;
-                            $isCurrent     = $tahun == now()->year;
-                            $isPast        = $tahun < now()->year;
+                            $nilaiBukuAwal  = $nilaiAwal - $akumulasi;
+                            $akumulasi     += $penyTahunan;
+                            $nilaiBuku      = max($nilaiAwal - $akumulasi, 0);
+                            $tahun          = $tahunMulai + $i - 1;
+                            $isCurrent      = $tahun == now()->year;
+                            $isPast         = $tahun < now()->year;
+
+                            // Tandai baris dihentikan: saat nonaktif dan akumulasi baris ini melebihi snapshot
+                            if ($isNonaktif && !$sudahDihentikan && $akumulasi > $snapshotAkumulasi + 1) {
+                                $sudahDihentikan = true;
+                            }
                         @endphp
-                        <tr class="{{ $isCurrent ? 'bg-green-50 dark:bg-green-900/10' : '' }} {{ $isPast ? 'opacity-50' : '' }} hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                            <td class="px-4 py-2.5 text-xs {{ $isCurrent ? 'font-semibold text-green-700 dark:text-green-400' : 'text-gray-700 dark:text-gray-300' }}">
+                        <tr class="
+                            {{ $sudahDihentikan ? 'opacity-30 bg-gray-50 dark:bg-gray-800/30' : '' }}
+                            {{ !$sudahDihentikan && $isCurrent ? 'bg-green-50 dark:bg-green-900/10' : '' }}
+                            {{ !$sudahDihentikan && $isPast ? 'opacity-50' : '' }}
+                            hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                            <td class="px-4 py-2.5 text-xs {{ !$sudahDihentikan && $isCurrent ? 'font-semibold text-green-700 dark:text-green-400' : 'text-gray-700 dark:text-gray-300' }}">
                                 {{ $tahun }}
-                                @if($isCurrent)
+                                @if(!$sudahDihentikan && $isCurrent)
                                     <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Tahun Ini</span>
+                                @endif
+                                @if($sudahDihentikan && $akumulasi - $penyTahunan <= $snapshotAkumulasi + 1)
+                                    <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-red-100 text-red-600">Dihentikan</span>
                                 @endif
                             </td>
                             <td class="px-4 py-2.5 text-right text-xs text-gray-600 dark:text-gray-400">Rp {{ number_format($nilaiBukuAwal, 0, ',', '.') }}</td>
-                            <td class="px-4 py-2.5 text-right text-xs text-red-500">Rp {{ number_format($penyTahunan, 0, ',', '.') }}</td>
+                            <td class="px-4 py-2.5 text-right text-xs {{ $sudahDihentikan ? 'text-gray-300' : 'text-red-500' }}">Rp {{ number_format($penyTahunan, 0, ',', '.') }}</td>
                             <td class="px-4 py-2.5 text-right text-xs text-gray-600 dark:text-gray-400">Rp {{ number_format($akumulasi, 0, ',', '.') }}</td>
                             <td class="px-4 py-2.5 text-right text-xs font-semibold text-gray-900 dark:text-white">Rp {{ number_format($nilaiBuku, 0, ',', '.') }}</td>
                         </tr>

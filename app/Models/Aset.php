@@ -58,6 +58,11 @@ class Aset extends Model
 
     public function getAkumulasiRealTimeAttribute(): float
     {
+        // Jika tidak aktif, pakai snapshot dari DB
+        if ($this->status_aset === 'TIDAK AKTIF') {
+            return (float) $this->akumulasi_penyusutan;
+        }
+
         if (!$this->tanggal_mulai_penyusutan || !$this->umur_manfaat) return 0;
         $bulan = (int) $this->tanggal_mulai_penyusutan->diffInMonths(now());
         return min($this->penyusutan_per_bulan * $bulan, (float) $this->nilai_tercatat);
@@ -65,6 +70,11 @@ class Aset extends Model
 
     public function getNilaiBukuRealTimeAttribute(): float
     {
+        // Jika tidak aktif, pakai snapshot dari DB
+        if ($this->status_aset === 'TIDAK AKTIF') {
+            return (float) $this->nilai_buku;
+        }
+
         return max((float) $this->nilai_tercatat - $this->akumulasi_real_time, 0);
     }
 

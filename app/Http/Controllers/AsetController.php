@@ -205,7 +205,23 @@ class AsetController extends Controller
     public function toggleStatus(Aset $aset)
     {
         $newStatus = $aset->status_aset === 'AKTIF' ? 'TIDAK AKTIF' : 'AKTIF';
-        $aset->update(['status_aset' => $newStatus]);
+
+        $updateData = ['status_aset' => $newStatus];
+
+        // Saat dinonaktifkan, snapshot nilai penyusutan saat ini
+        if ($newStatus === 'TIDAK AKTIF' && $aset->umur_manfaat) {
+            $updateData['akumulasi_penyusutan'] = $aset->akumulasi_real_time;
+            $updateData['nilai_buku']           = $aset->nilai_buku_real_time;
+        }
+
+        // Saat diaktifkan kembali, reset ke hitungan real-time
+        // (biarkan accessor yang hitung ulang, kosongkan snapshot)
+        if ($newStatus === 'AKTIF' && $aset->umur_manfaat) {
+            $updateData['akumulasi_penyusutan'] = 0;
+            $updateData['nilai_buku']           = $aset->nilai_buku_real_time;
+        }
+
+        $aset->update($updateData);
 
         if (request()->ajax()) {
             return response()->json([
