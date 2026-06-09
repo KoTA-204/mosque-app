@@ -127,7 +127,6 @@ class KegiatanController extends Controller
             'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
             'anggaran'        => 'required|numeric|min:0',
             'panitia_id'      => 'required|exists:users,id',
-            'status'          => 'required|in:AKTIF,DITUTUP',
         ]);
 
         $kegiatan->update($validated);
@@ -183,23 +182,5 @@ class KegiatanController extends Controller
 
         return redirect()->route('dashboard.kegiatan.index')
             ->with('success', 'Kegiatan berhasil dihapus.');
-    }
-
-    /**
-     * Tutup kegiatan (sebagai alternatif hapus jika ada transaksi).
-     */
-    public function tutup(Request $request, Kegiatan $kegiatan)
-    {
-        $kegiatan->update(['status' => 'DITUTUP']);
-
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Status kegiatan berhasil diubah menjadi Ditutup.',
-            ]);
-        }
-
-        return redirect()->route('dashboard.kegiatan.index')
-            ->with('success', 'Status kegiatan berhasil diubah menjadi Ditutup.');
     }
 }

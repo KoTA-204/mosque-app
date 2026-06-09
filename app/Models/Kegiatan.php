@@ -18,7 +18,7 @@ class Kegiatan extends Model
         'tanggal_selesai',
         'anggaran',
         'status',
-        'panitia_id'
+        'panitia_id',
     ];
 
     protected $casts = [
@@ -50,7 +50,6 @@ class Kegiatan extends Model
     }
 
     // ── Scopes ─────────────────────────────────────────────────
-
     public function scopeAktif($query)
     {
         return $query->where('status', self::STATUS_AKTIF);
@@ -62,7 +61,6 @@ class Kegiatan extends Model
     }
 
     // ── Helpers ────────────────────────────────────────────────
-
     public function hasTransaksi(): bool
     {
         return $this->transaksi()->exists();
@@ -90,6 +88,8 @@ class Kegiatan extends Model
             ->sum('jumlah');
     }
 
+    // ── Status otomatis ────────────────────────────────────────
+
     /**
      * Tutup kegiatan otomatis jika semua transaksi sudah APPROVED.
      * Dipanggil setiap kali bendahara approve sebuah transaksi.
@@ -103,11 +103,22 @@ class Kegiatan extends Model
 
         // Cek tidak ada transaksi yang belum APPROVED
         $adaBelumApproved = $this->transaksi()
-            ->where('status_approval', '!=', 'APPROVED')
+            ->whereNotIn('status_approval', ['APPROVED'])
             ->exists();
 
         if (! $adaBelumApproved) {
             $this->update(['status' => self::STATUS_DITUTUP]);
         }
+    }
+
+    /**
+     * Buka kembali kegiatan jika ada transaksi yang di-reject atau revision.
+     * Dipanggil setiap kali bendahara reject/revision sebuah transaksi.
+     */
+    public function bukaKembali(): void
+    {
+        if ($this->status === self::STATUS_AKTIF) return;
+
+        $this->update(['status' => self::STATUS_AKTIF]);
     }
 }

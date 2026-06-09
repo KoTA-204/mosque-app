@@ -117,7 +117,6 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
     Route::middleware('permission:EDIT_KEGIATAN')->group(function () {
         Route::get('/kegiatan/{kegiatan}/edit',   [KegiatanController::class, 'edit'])->name('kegiatan.edit');
         Route::put('/kegiatan/{kegiatan}',        [KegiatanController::class, 'update'])->name('kegiatan.update');
-        Route::patch('/kegiatan/{kegiatan}/tutup',[KegiatanController::class, 'tutup'])->name('kegiatan.tutup');
     });
 
     Route::middleware('permission:DELETE_KEGIATAN')->group(function () {

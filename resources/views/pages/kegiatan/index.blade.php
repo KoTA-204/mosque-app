@@ -241,26 +241,6 @@ function submitDeleteKegiatan(url) {
     .catch(() => showToast('Terjadi kesalahan.', 'error'));
 }
 
-function tutupKegiatan(id) {
-    fetch(`${baseUrl}/${id}/tutup`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN':     csrfToken,
-            'X-Requested-With': 'XMLHttpRequest',
-            'Content-Type':     'application/x-www-form-urlencoded',
-        },
-        body: '_method=PATCH',
-    })
-    .then(r => r.json())
-    .then(res => {
-        const active = modalContainer.querySelector('[id$="Modal"]');
-        if (active) closeModal(active.id);
-        showToast(res.message, res.success ? 'success' : 'error');
-        if (res.success) applyFilters();
-    })
-    .catch(() => showToast('Terjadi kesalahan.', 'error'));
-}
-
 function applyFilters() {
     const params  = new URLSearchParams();
     const search  = document.getElementById('filterSearch').value;

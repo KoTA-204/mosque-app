@@ -56,18 +56,6 @@
             </div>
 
             <div>
-                <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Status <span class="text-red-500">*</span></label>
-                <div class="relative">
-                    <select name="status"
-                        class="w-full appearance-none border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
-                        <option value="AKTIF"   {{ $kegiatan->status === 'AKTIF'   ? 'selected' : '' }}>Aktif</option>
-                        <option value="DITUTUP" {{ $kegiatan->status === 'DITUTUP' ? 'selected' : '' }}>Ditutup</option>
-                    </select>
-                    <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                </div>
-            </div>
-
-            <div>
                 <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Panitia <span class="text-red-500">*</span></label>
                 <div class="relative">
                     <select name="panitia_id"
@@ -81,6 +69,22 @@
                     <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </div>
                 <p id="err-panitia_id" class="text-xs text-red-500 mt-1"></p>
+            </div>
+
+            {{-- Status info — readonly, tidak bisa diedit --}}
+            <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center gap-3">
+                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Status kegiatan dikelola otomatis berdasarkan approval transaksi.
+                    Saat ini:
+                    @if($kegiatan->status === 'AKTIF')
+                        <span class="font-medium text-green-600">Aktif</span>
+                    @else
+                        <span class="font-medium text-gray-500">Ditutup</span>
+                    @endif
+                </p>
             </div>
 
         </div>
@@ -109,24 +113,23 @@
     const selesai = document.getElementById('edit-tanggal_selesai').value;
 
     flatpickr('#edit-fp-daterange', {
-        mode:         'range',
-        dateFormat:   'Y-m-d',
-        locale:       'id',
-        defaultDate:  selesai ? [mulai, selesai] : (mulai ? [mulai] : []),
+        mode:        'range',
+        dateFormat:  'Y-m-d',
+        locale:      'id',
+        defaultDate: selesai ? [mulai, selesai] : (mulai ? [mulai] : []),
         onChange(dates) {
             document.getElementById('edit-tanggal_mulai').value   = dates[0] ? flatpickr.formatDate(dates[0], 'Y-m-d') : '';
             document.getElementById('edit-tanggal_selesai').value = dates[1] ? flatpickr.formatDate(dates[1], 'Y-m-d') : '';
         }
     });
-    // Format ribuan anggaran
+
     const displayEl = document.getElementById('edit-anggaran-display');
     const hiddenEl  = document.getElementById('edit-anggaran-hidden');
-
     displayEl.addEventListener('input', function () {
         const raw = this.value.replace(/\./g, '').replace(/[^0-9]/g, '');
         const num = parseInt(raw, 10) || 0;
-        const pos = this.selectionStart;
         const prevLen = this.value.length;
+        const pos     = this.selectionStart;
         this.value    = num > 0 ? num.toLocaleString('id-ID') : '';
         hiddenEl.value = num > 0 ? num : '';
         const diff = this.value.length - prevLen;
