@@ -9,6 +9,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\TransaksiKegiatanController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\KegiatanController;
@@ -76,6 +77,47 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
             Route::resource('permissions', PermissionController::class);
             Route::resource('menus', MenuController::class);
         });
+
+    // ── Pencatatan - Transaksi ─────────────────────────────────────────────
+ 
+    Route::middleware('permission:VIEW_TRANSAKSI')->group(function () {
+        Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');
+ 
+        Route::get('/transaksi/{transaksi}', [TransaksiController::class, 'show'])
+            ->name('transaksi.show')
+            ->whereNumber('transaksi');
+ 
+        Route::get('/transaksi/import/review', [TransaksiController::class, 'importReview'])
+            ->name('transaksi.import.review');
+    });
+ 
+    Route::middleware('permission:CREATE_TRANSAKSI')->group(function () {
+        Route::post('/transaksi', [TransaksiController::class, 'store'])->name('transaksi.store');
+ 
+        // Import — upload file 
+        Route::post('/transaksi/import', [TransaksiController::class, 'import'])
+            ->name('transaksi.import');
+ 
+        // Import — simpan hasil klasifikasi 
+        Route::post('/transaksi/import/simpan', [TransaksiController::class, 'importSimpan'])
+            ->name('transaksi.import.simpan');
+    });
+ 
+    Route::middleware('permission:EDIT_TRANSAKSI')->group(function () {
+        Route::put('/transaksi/{transaksi}', [TransaksiController::class, 'update'])
+            ->name('transaksi.update')
+            ->whereNumber('transaksi');
+    });
+ 
+    Route::middleware('permission:DELETE_TRANSAKSI')->group(function () {
+        Route::delete('/transaksi/{transaksi}', [TransaksiController::class, 'destroy'])
+            ->name('transaksi.destroy')
+            ->whereNumber('transaksi');
+ 
+        Route::delete('/transaksi/bukti/{bukti}', [TransaksiController::class, 'destroyBukti'])
+            ->name('transaksi.bukti.destroy')
+            ->whereNumber('bukti');
+    });
 
     // ── Pencatatan - Kencleng ──────────────────────────────────────────────
 

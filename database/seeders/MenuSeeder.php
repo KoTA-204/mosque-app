@@ -74,6 +74,15 @@ class MenuSeeder extends Seeder
         ]);
 
         Menu::create([
+            'menu_name'     => 'Pencatatan Transaksi',   
+            'route_name'    => 'dashboard.transaksi.index',
+            'icon'          => 'arrows-exchange',
+            'parent_id'     => $pencatatan->id,
+            'sort_order'    => 20,
+            'permission_id' => $perm('VIEW_TRANSAKSI'),
+        ]);
+
+        Menu::create([
             'menu_name'     => 'Kencleng',
             'route_name'    => 'dashboard.kencleng.index',
             'icon'          => 'pig-money',

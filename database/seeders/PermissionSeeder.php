@@ -27,6 +27,11 @@ class PermissionSeeder extends Seeder
             ['permission_code' => 'DELETE_PERMISSIONS',         'permission_name' => 'Delete Permissions',        'module' => 'permissions',        'action' => 'delete'],
 
             // ── Transaksi ──────────────────────────────────────────
+            ['permission_code' => 'VIEW_TRANSAKSI',             'permission_name' => 'Lihat Transaksi',           'module' => 'transaksi',          'action' => 'view'],
+            ['permission_code' => 'CREATE_TRANSAKSI',           'permission_name' => 'Tambah Transaksi',          'module' => 'transaksi',          'action' => 'create'],
+            ['permission_code' => 'EDIT_TRANSAKSI',             'permission_name' => 'Edit Transaksi',            'module' => 'transaksi',          'action' => 'update'],
+            ['permission_code' => 'DELETE_TRANSAKSI',           'permission_name' => 'Hapus Transaksi',           'module' => 'transaksi',          'action' => 'delete'],
+
             ['permission_code' => 'VIEW_KENCLENG',              'permission_name' => 'View Kencleng',             'module' => 'kencleng',           'action' => 'view'],
             ['permission_code' => 'CREATE_KENCLENG',            'permission_name' => 'Create Kencleng',           'module' => 'kencleng',           'action' => 'create'],
             ['permission_code' => 'EDIT_KENCLENG',              'permission_name' => 'Edit Kencleng',             'module' => 'kencleng',           'action' => 'update'],

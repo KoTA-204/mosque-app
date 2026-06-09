@@ -50,7 +50,7 @@ return new class extends Migration
                 'APPROVED',
                 'REJECTED',
                 'REVISION'
-            ])->default('PENDING');
+            ])->default('PENDING')->nullable();
 
             $table->enum('status_jurnal', [
                 'UNMAPPED',
