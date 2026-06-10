@@ -41,17 +41,6 @@
                             <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Status Aset</label>
-                        <div class="relative">
-                            <select name="status_aset"
-                                class="w-full appearance-none border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
-                                <option value="AKTIF"       {{ $aset->status_aset == 'AKTIF'       ? 'selected' : '' }}>Aktif</option>
-                                <option value="TIDAK AKTIF" {{ $aset->status_aset == 'TIDAK AKTIF' ? 'selected' : '' }}>Tidak Aktif</option>
-                            </select>
-                            <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                        </div>
-                    </div>
                 </div>
             </div>
 

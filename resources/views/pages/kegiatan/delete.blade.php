@@ -12,7 +12,7 @@
         </button>
         @if(!$hasTransaksi)
         <button type="button"
-            onclick="submitDeleteKegiatan('/dashboard/kegiatan/{{ $kegiatan->id }}')"
+            onclick="submitDeleteKegiatan('{{ route('dashboard.kegiatan.destroy', $kegiatan->id) }}')"
             class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
             Hapus
         </button>

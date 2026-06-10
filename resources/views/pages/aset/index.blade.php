@@ -64,6 +64,9 @@
         </div>
     </div>
 
+    {{-- Alert area --}}
+    <div id="alertArea"></div>
+
     {{-- Table Card --}}
     <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl">
         <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-wrap">
@@ -197,8 +200,6 @@
 {{-- Modal Container --}}
 <div id="modalContainer"></div>
 
-{{-- Toast --}}
-<div id="toast" class="hidden fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium"></div>
 
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
@@ -361,7 +362,7 @@ function loadModal(url) {
         })
         .catch(() => {
             loader.remove();
-            showToast('Gagal memuat data.', 'error');
+            showAlert('Gagal memuat data.', 'error');
         });
 }
 
@@ -507,17 +508,24 @@ function initModalFeatures() {
     if (isEdit) updatePreview();
 }
 
-// ── Toast ─────────────────────────────────────────────────────
-function showToast(msg, type = 'success') {
-    const toast = document.getElementById('toast');
-    toast.className = `fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium ${
-        type === 'success'
-            ? 'bg-green-50 border border-green-200 text-green-700 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400'
-            : 'bg-red-50 border border-red-200 text-red-700 dark:bg-red-900/30 dark:border-red-800 dark:text-red-400'
-    }`;
-    toast.innerHTML = msg;
-    toast.classList.remove('hidden');
-    setTimeout(() => toast.classList.add('hidden'), 3500);
+function showAlert(msg, type = 'success') {
+    const area   = document.getElementById('alertArea');
+    const colors = {
+        success: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400',
+        error:   'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400',
+    };
+    const icons = {
+        success: '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>',
+        error:   '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>',
+    };
+    area.innerHTML = `
+        <div class="flex items-center gap-3 ${colors[type] ?? colors.success} border rounded-xl px-4 py-3 text-sm">
+            <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                ${icons[type] ?? icons.success}
+            </svg>
+            ${msg}
+        </div>`;
+    setTimeout(() => { area.innerHTML = ''; }, 4000);
 }
 
 // ── AJAX Filter ───────────────────────────────────────────────
@@ -575,7 +583,7 @@ function submitAsetForm(formId, method, url) {
         if (res.success) {
             const activeModal = modalContainer.querySelector('[id$="Modal"]');
             if (activeModal) closeModal(activeModal.id);
-            showToast(res.message, 'success');
+            showAlert(res.message, 'success');
             applyFilters();
             fetchStats();
         } else if (res.errors) {
@@ -587,7 +595,7 @@ function submitAsetForm(formId, method, url) {
             });
         }
     })
-    .catch(() => showToast('Terjadi kesalahan.', 'error'));
+    .catch(() => showAlert('Terjadi kesalahan.', 'error'));
 }
 </script>
 @endpush

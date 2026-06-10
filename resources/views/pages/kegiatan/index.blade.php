@@ -22,7 +22,7 @@
             </div>
             <div>
                 <p id="stat-total" class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['total'] }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total Kegiatan</p>
+                <p class="text-xs text-gray-500 dark:text-gray.400 mt-0.5">Total Kegiatan</p>
             </div>
         </div>
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center gap-4">
@@ -48,6 +48,9 @@
             </div>
         </div>
     </div>
+
+    {{-- Alert area --}}
+    <div id="alertArea"></div>
 
     {{-- Table Card --}}
     <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
@@ -93,11 +96,15 @@
     </div>
 </div>
 
-{{-- Modal Container --}}
+{{-- Modal Container (create, edit, show) --}}
 <div id="modalContainer"></div>
 
-{{-- Toast --}}
-<div id="toast" class="hidden fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium"></div>
+{{-- Delete Modal --}}
+<x-confirm-modal
+    id="deleteKegiatanModal"
+    title="Hapus Kegiatan"
+    message="Yakin ingin menghapus kegiatan ini? Tindakan ini tidak dapat dibatalkan."
+/>
 
 <script>
 const modalContainer = document.getElementById('modalContainer');
@@ -126,7 +133,7 @@ function closeModal(id) {
 
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-        modalContainer.querySelectorAll('[id$="Modal"]').forEach(el => {
+        document.querySelectorAll('[id$="Modal"]').forEach(el => {
             if (el.style.display === 'flex') closeModal(el.id);
         });
     }
@@ -161,25 +168,39 @@ function loadModal(url) {
         })
         .catch(() => {
             loader.remove();
-            showToast('Gagal memuat data.', 'error');
+            showAlert('Gagal memuat data.', 'error');
         });
 }
 
 function openCreateModal() { loadModal(`${baseUrl}/create`); }
 function openShowModal(id)  { loadModal(`${baseUrl}/${id}`); }
 function openEditModal(id)  { loadModal(`${baseUrl}/${id}/edit`); }
-function openDeleteModal(id){ loadModal(`${baseUrl}/${id}/delete`); }
 
-function showToast(msg, type = 'success') {
-    const toast = document.getElementById('toast');
-    toast.className = `fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium ${
-        type === 'success'
-            ? 'bg-green-50 border border-green-200 text-green-700 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400'
-            : 'bg-red-50 border border-red-200 text-red-700 dark:bg-red-900/30 dark:border-red-800 dark:text-red-400'
-    }`;
-    toast.innerHTML = msg;
-    toast.classList.remove('hidden');
-    setTimeout(() => toast.classList.add('hidden'), 3500);
+function openDeleteModal(id) {
+    const modal = document.getElementById('deleteKegiatanModal');
+    const form  = document.getElementById('deleteKegiatanModalForm');
+    form.action = `${baseUrl}/${id}`;
+    modal.style.display = 'flex';
+}
+
+function showAlert(msg, type = 'success') {
+    const area   = document.getElementById('alertArea');
+    const colors = {
+        success: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400',
+        error:   'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400',
+    };
+    const icons = {
+        success: '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>',
+        error:   '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>',
+    };
+    area.innerHTML = `
+        <div class="flex items-center gap-3 ${colors[type] ?? colors.success} border rounded-xl px-4 py-3 text-sm">
+            <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                ${icons[type] ?? icons.success}
+            </svg>
+            ${msg}
+        </div>`;
+    setTimeout(() => { area.innerHTML = ''; }, 4000);
 }
 
 function updateStats(stats) {
@@ -207,7 +228,7 @@ function submitKegiatanForm(formId, method, url) {
         if (res.success) {
             const active = modalContainer.querySelector('[id$="Modal"]');
             if (active) closeModal(active.id);
-            showToast(res.message, 'success');
+            showAlert(res.message, 'success');
             applyFilters();
         } else if (res.errors) {
             Object.entries(res.errors).forEach(([field, messages]) => {
@@ -218,27 +239,7 @@ function submitKegiatanForm(formId, method, url) {
             });
         }
     })
-    .catch(() => showToast('Terjadi kesalahan.', 'error'));
-}
-
-function submitDeleteKegiatan(url) {
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN':     csrfToken,
-            'X-Requested-With': 'XMLHttpRequest',
-            'Content-Type':     'application/x-www-form-urlencoded',
-        },
-        body: '_method=DELETE',
-    })
-    .then(r => r.json())
-    .then(res => {
-        const active = modalContainer.querySelector('[id$="Modal"]');
-        if (active) closeModal(active.id);
-        showToast(res.message, res.success ? 'success' : 'error');
-        if (res.success) applyFilters();
-    })
-    .catch(() => showToast('Terjadi kesalahan.', 'error'));
+    .catch(() => showAlert('Terjadi kesalahan.', 'error'));
 }
 
 function applyFilters() {
@@ -291,6 +292,13 @@ function loadPage(e, url) {
 document.getElementById('filterSearch').addEventListener('input', () => {
     clearTimeout(filterDebounce);
     filterDebounce = setTimeout(applyFilters, 400);
+});
+
+// Setelah delete berhasil, reload tabel
+document.getElementById('deleteKegiatanModalForm').addEventListener('submit', function() {
+    const modal = document.getElementById('deleteKegiatanModal');
+    modal.style.display = 'none';
+    setTimeout(() => applyFilters(), 300);
 });
 </script>
 @endsection
