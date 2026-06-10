@@ -66,7 +66,7 @@
         @if($showSubmit)
         @if($showDraft)
         <button type="submit" name="submit_type" value="draft"
-                class="border border-green-600 text-green-700 ...">
+                class="border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
             Simpan sebagai Draft
         </button>
         @endif
