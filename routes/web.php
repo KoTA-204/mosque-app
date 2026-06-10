@@ -23,6 +23,7 @@ use App\Http\Controllers\JurnalKoreksiController;
 use App\Http\Controllers\JurnalPenutupController;
 use App\Http\Controllers\BukuBesarController;
 use App\Http\Controllers\NeracaSaldoController;
+use App\Http\Controllers\LaporanKeuanganController;
 
 // ── Landing Page ───────────────────────────────────────────────────────────
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -167,40 +168,39 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
     });
 
     // ── Kegiatan Khusus - Transaksi Kegiatan ───────────────────────────────
-    Route::middleware('permission:VIEW_TRANSAKSI_KEGIATAN')->group(function () {
-        Route::get('/kegiatan-panitia', [TransaksiKegiatanController::class, 'index'])->name('kegiatan-panitia.index');
-        Route::get('/kegiatan-panitia/{kegiatan}', [TransaksiKegiatanController::class, 'show'])
-            ->name('kegiatan-panitia.show')
+    
+        Route::get('/transaksi-kegiatan', [TransaksiKegiatanController::class, 'index'])->name('transaksi-kegiatan.index');
+        Route::get('/transaksi-kegiatan/{kegiatan}', [TransaksiKegiatanController::class, 'show'])
+            ->name('transaksi-kegiatan.show')
             ->whereNumber('kegiatan');
-        Route::get('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'showTransaksi'])
+        Route::get('/transaksi-kegiatan/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'showTransaksi'])
             ->whereNumber('kegiatan')
             ->whereNumber('transaksi')
-            ->name('kegiatan-panitia.transaksi.show');
-    });
+            ->name('transaksi-kegiatan.transaksi.show');
+    
 
-    Route::middleware('permission:CREATE_TRANSAKSI_KEGIATAN')->group(function () {
-        Route::get('/kegiatan-panitia/{kegiatan}/transaksi/create', [TransaksiKegiatanController::class, 'createTransaksi'])
-            ->name('kegiatan-panitia.transaksi.create');
-        Route::post('/kegiatan-panitia/{kegiatan}/transaksi', [TransaksiKegiatanController::class, 'storeTransaksi'])
-            ->name('kegiatan-panitia.transaksi.store');
-    });
+  
+        Route::get('/transaksi-kegiatan/{kegiatan}/transaksi/create', [TransaksiKegiatanController::class, 'createTransaksi'])
+            ->name('transaksi-kegiatan.transaksi.create');
+        Route::post('/transaksi-kegiatan/{kegiatan}/transaksi', [TransaksiKegiatanController::class, 'storeTransaksi'])
+            ->name('transaksi-kegiatan.transaksi.store');
+   
 
-    Route::middleware('permission:EDIT_TRANSAKSI_KEGIATAN')->group(function () {
-        Route::get('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}/edit', [TransaksiKegiatanController::class, 'editTransaksi'])
+   
+        Route::get('/transaksi-kegiatan/{kegiatan}/transaksi/{transaksi}/edit', [TransaksiKegiatanController::class, 'editTransaksi'])
             ->whereNumber('kegiatan')
             ->whereNumber('transaksi')
-            ->name('kegiatan-panitia.transaksi.edit');
+            ->name('transaksi-kegiatan.transaksi.edit');
 
-        Route::put('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'updateTransaksi'])
+        Route::put('/transaksi-kegiatan/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'updateTransaksi'])
             ->whereNumber('kegiatan')
             ->whereNumber('transaksi')
-            ->name('kegiatan-panitia.transaksi.update');
-    });
-
-    Route::middleware('permission:DELETE_TRANSAKSI_KEGIATAN')->group(function () {
-        Route::delete('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'destroyTransaksi'])
-            ->name('kegiatan-panitia.transaksi.destroy');
-    });
+            ->name('transaksi-kegiatan.transaksi.update');
+   
+ 
+        Route::delete('/transaksi-kegiatan/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'destroyTransaksi'])
+            ->name('transaksi-kegiatan.transaksi.destroy');
+ 
 
     // ── Approval ───────────────────────────────────────────────────────────
     Route::middleware('permission:VIEW_APPROVAL')->group(function () {
@@ -387,6 +387,9 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
             Route::get('/jurnal-penutup/create', [JurnalPenutupController::class, 'create'])
                 ->name('jurnal-penutup.create');
 
+            Route::post('/jurnal-penutup/post-draft', [JurnalPenutupController::class, 'postDraft'])
+                ->name('jurnal-penutup.post-draft');
+
             Route::get('/jurnal-penutup/aset-detail', [JurnalPenutupController::class, 'getAsetDetail'])
                 ->name('jurnal-penutup.aset-detail');
 
@@ -403,5 +406,19 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
                 ->whereNumber('jurnal')
                 ->name('jurnal-penutup.destroy');
         });
+    });
+
+    Route::prefix('laporan')->name('laporan.')->group(function () {
+        Route::get('/penghasilan-komprehensif', [LaporanKeuanganController::class, 'penghasilanKomprehensif'])
+            ->name('penghasilan-komprehensif');
+    
+        Route::get('/posisi-keuangan', [LaporanKeuanganController::class, 'posisiKeuangan'])
+            ->name('posisi-keuangan');
+    
+        Route::get('/perubahan-aset-neto', [LaporanKeuanganController::class, 'perubahanAsetNeto'])
+            ->name('perubahan-aset-neto');
+
+        Route::get('/calk', [LaporanKeuanganController::class, 'calk'])
+            ->name('calk');
     });
 });

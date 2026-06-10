@@ -17,6 +17,7 @@ class Jurnal extends Model
         'jurnal_ref_id',
         'jenis_jurnal',
         'tipe_penyesuaian',
+        'tipe_penutupan',
         'tanggal',
         'keterangan',
         'status',

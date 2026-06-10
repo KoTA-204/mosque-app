@@ -26,7 +26,6 @@ class StoreSubKategoriRequest extends FormRequest
             'kode_akun'        => 'required|string|max:20|unique:akun,kode_akun',
             'nama_akun'        => 'required|string|max:150',
             'saldo_normal'     => 'required|in:DEBIT,KREDIT',
-            'deskripsi'        => 'nullable|string',
         ];
     }
  

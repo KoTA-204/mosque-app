@@ -6,6 +6,7 @@
     'nextAction'  => null,
     'nextLabel'   => 'Lanjut ke Detail',
     'showSubmit'  => false,
+    'showDraft'   => true,
     'postingId'   => 'btnPosting',
 ])
 
@@ -63,10 +64,12 @@
 
         {{-- Tombol Submit (step terakhir) --}}
         @if($showSubmit)
+        @if($showDraft)
         <button type="submit" name="submit_type" value="draft"
                 class="border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
             Simpan sebagai Draft
         </button>
+        @endif
         <button type="submit" name="submit_type" value="posting"
                 id="{{ $postingId }}"
                 class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors">

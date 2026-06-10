@@ -124,6 +124,25 @@
             bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400">{{ old('deskripsi') }}</textarea>
     </div>
 
+    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
+        <div>
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Status Akun</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Akun aktif dapat digunakan dalam transaksi</p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+            <input type="hidden" name="status" value="tidak_aktif">
+            <input type="checkbox" name="status" value="aktif"
+                {{ old('status', 'aktif') === 'aktif' ? 'checked' : '' }}
+                class="sr-only peer">
+            <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer
+                peer-checked:bg-green-500
+                after:content-[''] after:absolute after:top-0.5 after:left-0.5
+                after:bg-white after:rounded-full after:h-5 after:w-5
+                after:transition-all peer-checked:after:translate-x-5">
+            </div>
+        </label>
+    </div>
+
     <div class="flex items-center gap-3 pt-2">
         <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors">
             Simpan

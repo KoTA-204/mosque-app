@@ -39,8 +39,11 @@ class TransaksiKegiatanController extends Controller
         $search    = $request->get('search', '');
         $transaksi = $this->transaksiKegiatanService->getTransaksiByKegiatan($kegiatan, $search);
         $porsi     = $this->transaksiKegiatanService->getPorsiAnggaran($kegiatan);
+        $dompetList    = $this->transaksiKegiatanService->getDompetList();
+        $kategoriList  = $this->transaksiKegiatanService->getKategoriList();
+        $kodeTransaksi = $this->transaksiKegiatanService->generateKodeTransaksi();
 
-        return view('pages.transaksi-kegiatan.show', compact('kegiatan', 'transaksi', 'porsi', 'search'));
+        return view('pages.transaksi-kegiatan.show', compact('kegiatan', 'transaksi', 'porsi', 'search', 'dompetList', 'kategoriList', 'kodeTransaksi'));
     }
 
     // ── Form Catat Transaksi ───────────────────────────────────
@@ -49,19 +52,14 @@ class TransaksiKegiatanController extends Controller
     {
         // Cek kegiatan masih berjalan
         if ($kegiatan->status !== Kegiatan::STATUS_AKTIF) {
-            return redirect()->route('dashboard.kegiatan-panitia.show', $kegiatan)
+            return redirect()->route('dashboard.transaksi-kegiatan.show', $kegiatan)
                 ->with('error', 'Kegiatan tidak sedang aktif');
         }
 
-        // Panitia hanya bisa input ke kegiatan miliknya
         if (auth()->user()->hasRole('panitia-khusus') &&
             $kegiatan->panitia_id !== auth()->id()) {
             abort(403);
         }
-
-        $dompetList    = $this->transaksiKegiatanService->getDompetList();
-        $kategoriList  = $this->transaksiKegiatanService->getKategoriList();
-        $kodeTransaksi = $this->transaksiKegiatanService->generateKodeTransaksi();
 
         return view('pages.transaksi-kegiatan.create-transaksi', compact(
             'kegiatan', 'dompetList', 'kategoriList', 'kodeTransaksi'
@@ -83,7 +81,7 @@ class TransaksiKegiatanController extends Controller
 
         $this->transaksiKegiatanService->storeTransaksi($kegiatan, $request->validated());
 
-        return redirect()->route('dashboard.kegiatan-panitia.show', $kegiatan)
+        return redirect()->route('dashboard.transaksi-kegiatan.show', $kegiatan)
             ->with('success', 'Transaksi berhasil dicatat');
     }
 
@@ -114,7 +112,7 @@ class TransaksiKegiatanController extends Controller
             return redirect()->back()->with('error', $result);
         }
 
-        return redirect()->route('dashboard.kegiatan-panitia.show', $kegiatan)
+        return redirect()->route('dashboard.transaksi-kegiatan.show', $kegiatan)
             ->with('success', 'Transaksi berhasil dihapus');
     }
 
@@ -182,7 +180,7 @@ class TransaksiKegiatanController extends Controller
         );
 
         return redirect()
-            ->route('dashboard.kegiatan-panitia.show', $kegiatan)
+            ->route('dashboard.transaksi-kegiatan.show', $kegiatan)
             ->with(
                 'success',
                 'Transaksi berhasil diperbarui'

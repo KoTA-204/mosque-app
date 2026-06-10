@@ -6,7 +6,7 @@
     {{-- Header --}}
     <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
         <div class="flex items-center gap-3">
-            <a href="{{ route('dashboard.kegiatan-panitia.show', $kegiatan) }}"
+            <a href="{{ route('dashboard.transaksi-kegiatan.show', $kegiatan) }}"
                class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -50,7 +50,7 @@
             </div>
             <div>
                 <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">Jenis</p>
-                @php $jenis = $transaksi->kategoriTransaksi->jenis_transaksi; @endphp
+                @php $jenis = $transaksi->jenis_transaksi; @endphp
                 <span class="rounded-full px-2.5 py-1 text-xs font-medium
                     {{ $jenis === 'PEMASUKAN' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                     {{ ucfirst(strtolower($jenis)) }}

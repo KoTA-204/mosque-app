@@ -8,7 +8,7 @@
     {{-- Header --}}
     <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
         <div class="flex items-center gap-3">
-            <a href="{{ route('dashboard.kegiatan-panitia.index') }}"
+            <a href="{{ route('dashboard.transaksi-kegiatan.index') }}"
                class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -178,9 +178,9 @@
                     </div>
                 </form>
 
-                @if($kegiatan->status === 'BERJALAN')
+                @if($kegiatan->status === 'AKTIF')
                     @if(auth()->user()->hasPermission('CREATE_TRANSAKSI_KEGIATAN'))
-                        <a href="{{ route('dashboard.kegiatan-panitia.transaksi.create', $kegiatan) }}"
+                        <a href= "#" onclick="openModal('modal-catat-transaksi')"
                            class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
                             Catat Transaksi
                         </a>
@@ -234,7 +234,7 @@
                     @forelse($transaksi as $index => $item)
 
                     @php
-                        $jenis = $item->kategoriTransaksi->jenis_transaksi;
+                        $jenis = $item->jenis_transaksi;
 
                         $statusBadge = match($item->status_approval) {
                             'PENDING'  => 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400',
@@ -290,7 +290,7 @@
                             <div class="flex items-center justify-center gap-1">
 
                                 {{-- Detail --}}
-                                <a href="{{ route('dashboard.kegiatan-panitia.transaksi.show', [$kegiatan, $item]) }}"
+                                <a href="{{ route('dashboard.transaksi-kegiatan.transaksi.show', [$kegiatan, $item]) }}"
                                    class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -301,7 +301,23 @@
 
                                 {{-- Edit --}}
                                 @if(in_array($item->status_approval, ['PENDING', 'REVISION']))
-                                <a href="{{ route('dashboard.kegiatan-panitia.transaksi.edit', [$kegiatan, $item]) }}"
+                                <a data-transaksi="{{ json_encode([
+                                        'kode_transaksi'        => $kodeTransaksi,
+                                        'jenis_transaksi'       => $item->jenis_transaksi,
+                                        'tanggal_transaksi'     => $item->tanggal_transaksi?->format('Y-m-d'),
+                                        'jumlah'                => $item->jumlah,
+                                        'dompet_id'             => $item->dompet_id,
+                                        'kategori_transaksi_id' => $item->kategori_transaksi_id,
+                                        'deskripsi'             => $item->deskripsi,
+                                        'pencatat'              => auth()->user()->name,
+                                        'bukti'                 => $item->buktiTransaksi->map(fn($b) => [
+                                            'id'        => $b->id,
+                                            'nama_file' => $b->nama_file ?? basename($b->path),
+                                            'url'       => Storage::url($b->path),
+                                        ])->values(),
+                                        'update_url' => route('dashboard.transaksi-kegiatan.transaksi.update', [$kegiatan, $item]),
+                                    ]) }}"
+                                    onclick="openEditModal(this)"
                                    class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -312,7 +328,7 @@
 
                                 {{-- Delete --}}
                                 @if($item->status_approval === 'PENDING')
-                                <form action="{{ route('dashboard.kegiatan-panitia.transaksi.destroy', [$kegiatan, $item]) }}"
+                                <form action="{{ route('dashboard.transaksi-kegiatan.transaksi.destroy', [$kegiatan, $item]) }}"
                                       method="POST"
                                       onsubmit="return confirm('Yakin hapus transaksi ini?')">
                                     @csrf
@@ -397,6 +413,144 @@
         @endif
 
     </div>
-
 </div>
+@include('pages.transaksi-kegiatan.create-transaksi')
+@include('pages.transaksi-kegiatan.edit-transaksi')
+<script>
+    function openModal(id) {
+        const modal = document.getElementById(id);
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+
+    function closeModal(id) {
+        const modal = document.getElementById(id);
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+
+    function openDeleteModal(actionUrl) {
+        const form = document.getElementById('deleteModalForm');
+        form.action = actionUrl;
+        openModal('deleteModal');
+    }
+
+    function openEditModal(el) {
+        const data = JSON.parse(el.dataset.transaksi);
+
+        // Set form action
+        document.getElementById('form-edit-transaksi').action = data.update_url;
+
+        // Info bar
+        document.getElementById('edit-kode').textContent     = data.kode_transaksi;
+        document.getElementById('edit-pencatat').textContent = data.pencatat;
+
+        // Fields
+        document.getElementById('edit-tanggal').value   = data.tanggal_transaksi;
+        document.getElementById('edit-jumlah').value    = data.jumlah;
+        document.getElementById('edit-deskripsi').value = data.deskripsi ?? '';
+        document.getElementById('edit-dompet').value    = data.dompet_id;
+        document.getElementById('edit-kategori').value  = data.kategori_transaksi_id;
+
+        // Toggle jenis
+        const radio = document.querySelector(`input[name="jenis_transaksi"][value="${data.jenis_transaksi}"]`);
+        if (radio) radio.checked = true;
+        updateEditToggleStyle(data.jenis_transaksi);
+
+        // Bukti lama
+        const buktiList = document.getElementById('edit-bukti-list');
+        const buktiHint = document.getElementById('edit-bukti-hint');
+        buktiList.innerHTML = '';
+
+        if (data.bukti && data.bukti.length > 0) {
+            buktiHint.classList.remove('hidden');
+            data.bukti.forEach(b => {
+                buktiList.insertAdjacentHTML('beforeend', `
+                    <div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
+                        <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                        </svg>
+                        <a href="${b.url}" target="_blank"
+                        class="text-xs text-gray-600 dark:text-gray-300 hover:text-green-600 truncate max-w-[140px]">
+                            ${b.nama_file}
+                        </a>
+                        <label class="cursor-pointer ml-1" title="Hapus file ini">
+                            <input type="checkbox" name="hapus_bukti[]" value="${b.id}" class="sr-only peer">
+                            <span class="text-gray-300 peer-checked:text-red-500 hover:text-red-400 transition-colors text-xs select-none">✕</span>
+                        </label>
+                    </div>
+                `);
+            });
+        } else {
+            buktiHint.classList.add('hidden');
+        }
+
+        // Reset file input
+        document.getElementById('editBuktiInput').value = '';
+        document.getElementById('editFileLabel').innerHTML = `
+            <svg class="mx-auto mb-2 w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+            </svg>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Klik untuk upload foto atau PDF baru</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Maks. 5MB · JPG, PNG, PDF</p>
+        `;
+
+        openModal('modal-edit-transaksi');
+    }
+
+    function updateEditToggleStyle(jenis) {
+        const btnPemasukan   = document.getElementById('edit-btn-pemasukan');
+        const btnPengeluaran = document.getElementById('edit-btn-pengeluaran');
+        if (!btnPemasukan || !btnPengeluaran) return;
+        if (jenis === 'PEMASUKAN') {
+            btnPemasukan.classList.add('bg-green-600', 'text-white');
+            btnPemasukan.classList.remove('text-gray-500');
+            btnPengeluaran.classList.remove('bg-green-600', 'text-white');
+            btnPengeluaran.classList.add('text-gray-500');
+        } else {
+            btnPengeluaran.classList.add('bg-green-600', 'text-white');
+            btnPengeluaran.classList.remove('text-gray-500');
+            btnPemasukan.classList.remove('bg-green-600', 'text-white');
+            btnPemasukan.classList.add('text-gray-500');
+        }
+    }
+
+    function showEditFileNames(input) {
+        const label = document.getElementById('editFileLabel');
+        if (input.files.length > 0 && label) {
+            const names = Array.from(input.files).map(f => f.name).join(', ');
+            label.innerHTML = `<p class="text-sm font-medium text-gray-900 dark:text-white">${names}</p>`;
+        }
+    }
+
+    document.getElementById('search-input').addEventListener('input', function () {
+        const btn = document.getElementById('clear-search');
+        btn.classList.toggle('hidden', this.value === '');
+    });
+
+    function clearSearch() {
+        const input = document.getElementById('search-input');
+        input.value = '';
+        document.getElementById('clear-search').classList.add('hidden');
+        document.getElementById('search-form').submit();
+    }
+
+    setTimeout(() => {
+        const successAlert = document.getElementById('success-alert');
+        if (successAlert) {
+            successAlert.classList.add('opacity-0');
+            setTimeout(() => successAlert.remove(), 500);
+        }
+    }, 5000);
+
+    setTimeout(() => {
+        const errorAlert = document.getElementById('error-alert');
+        if (errorAlert) {
+            errorAlert.classList.add('opacity-0');
+            setTimeout(() => errorAlert.remove(), 500);
+        }
+    }, 5000);
+</script>
 @endsection

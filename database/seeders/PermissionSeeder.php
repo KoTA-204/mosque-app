@@ -37,10 +37,10 @@ class PermissionSeeder extends Seeder
             ['permission_code' => 'EDIT_KENCLENG',              'permission_name' => 'Edit Kencleng',             'module' => 'kencleng',           'action' => 'update'],
             ['permission_code' => 'DELETE_KENCLENG',            'permission_name' => 'Delete Kencleng',           'module' => 'kencleng',           'action' => 'delete'],
 
-            ['permission_code' => 'VIEW_TRANSAKSI_KEGIATAN',   'permission_name' => 'View Transaksi Kegiatan',   'module' => 'kegiatan-panitia',   'action' => 'view'],
-            ['permission_code' => 'CREATE_TRANSAKSI_KEGIATAN', 'permission_name' => 'Create Transaksi Kegiatan', 'module' => 'kegiatan-panitia',   'action' => 'create'],
-            ['permission_code' => 'EDIT_TRANSAKSI_KEGIATAN',   'permission_name' => 'Edit Transaksi Kegiatan',   'module' => 'kegiatan-panitia',   'action' => 'update'],
-            ['permission_code' => 'DELETE_TRANSAKSI_KEGIATAN', 'permission_name' => 'Delete Transaksi Kegiatan', 'module' => 'kegiatan-panitia',   'action' => 'delete'],
+            ['permission_code' => 'VIEW_TRANSAKSI_KEGIATAN',   'permission_name' => 'View Transaksi Kegiatan',   'module' => 'transaksi-kegiatan',   'action' => 'view'],
+            ['permission_code' => 'CREATE_TRANSAKSI_KEGIATAN', 'permission_name' => 'Create Transaksi Kegiatan', 'module' => 'transaksi-kegiatan',   'action' => 'create'],
+            ['permission_code' => 'EDIT_TRANSAKSI_KEGIATAN',   'permission_name' => 'Edit Transaksi Kegiatan',   'module' => 'transaksi-kegiatan',   'action' => 'update'],
+            ['permission_code' => 'DELETE_TRANSAKSI_KEGIATAN', 'permission_name' => 'Delete Transaksi Kegiatan', 'module' => 'transaksi-kegiatan',   'action' => 'delete'],
 
             // ── Kegiatan Khusus ────────────────────────────────────
             ['permission_code' => 'VIEW_KEGIATAN',              'permission_name' => 'View Kegiatan',             'module' => 'kegiatan',           'action' => 'view'],
