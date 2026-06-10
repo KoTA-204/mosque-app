@@ -107,15 +107,6 @@
         @enderror
     </div>
 
-    <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-            Deskripsi
-        </label>
-
-        <textarea name="deskripsi" rows="4" placeholder="Masukan deskripsi sub kategori" class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 focus:border-green-400 rounded-xl outline-none resize-none transition-colors
-            bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400">{{ old('deskripsi') }}</textarea>
-    </div>
-
     {{-- Actions --}}
     <button
         type="submit"

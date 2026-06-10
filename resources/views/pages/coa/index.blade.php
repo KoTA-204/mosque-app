@@ -202,6 +202,7 @@
                         <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-5 py-3 w-1/2">Nama Akun</th>
                         <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3">Kode</th>
                         <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3">Saldo Normal</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3">Status</th>
                         <th class="text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-5 py-3">Aksi</th>
                     </tr>
                 </thead>
@@ -211,20 +212,12 @@
 
                     {{-- ── LEVEL 1: KATEGORI ── --}}
                     <tr class="bg-green-700 dark:bg-green-800">
-                        <td colspan="4" class="px-5 py-3">
+                        <td colspan="5" class="px-5 py-3">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
                                     <span class="text-sm font-semibold text-white">
                                         ({{ $kat->kode_kategori }}) {{ $kat->nama_kategori }}
                                     </span>
-
-                                    @if($kat->deskripsi)
-                                    <button type="button" onclick="openModal('detailKategoriModal{{ $kat->id }}')" class="text-green-200 hover:text-white">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                    </button>
-                                    @endif
                                 </div>
                                 <div class="flex items-center gap-1">
                                 <button
@@ -264,14 +257,6 @@
                                         <span class="font-medium text-gray-700 dark:text-gray-300">
                                             {{ $subKat->nama_akun }}
                                         </span>
-
-                                        @if($subKat->deskripsi)
-                                        <button type="button" onclick="openModal('detailSubKategoriModal{{ $subKat->id }}')" class="text-gray-400 hover:text-blue-600">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            </svg>
-                                        </button>
-                                        @endif
                                     </div>
                                 </div>
                             </td>
@@ -281,6 +266,7 @@
                                     —
                                 </span>
                             </td>
+                            <td class="px-4 py-3"></td>
                             <td class="px-5 py-3">
                                 <div class="flex items-center justify-end gap-1">
                                     <button onclick="openModal('editSubKategoriModal{{ $subKat->id }}')"
@@ -338,6 +324,14 @@
                                     {{ ucfirst($akun->saldo_normal) }}
                                 </span>
                             </td>
+                            <td class="px-4 py-3 text-center">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                                    {{ $akun->status === 'aktif'
+                                        ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+                                        : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' }}">
+                                    {{ $akun->status === 'aktif' ? 'Aktif' : 'Tidak Aktif' }}
+                                </span>
+                            </td>
                             <td class="px-5 py-3">
                                 <div class="flex items-center justify-end gap-1">
                                     <button onclick="openModal('editAkunModal{{ $akun->id }}')"
@@ -365,7 +359,7 @@
                         </tr>
                         @empty
                         <tr class="bg-white dark:bg-gray-900">
-                            <td colspan="4" class="pl-14 py-2.5 text-xs text-gray-400 dark:text-gray-600 italic">
+                            <td colspan="5" class="pl-14 py-2.5 text-xs text-gray-400 dark:text-gray-600 italic">
                                 Belum ada akun dalam sub kategori ini.
                             </td>
                         </tr>
@@ -373,7 +367,7 @@
 
                     @empty
                     <tr class="bg-white dark:bg-gray-900">
-                        <td colspan="4" class="px-5 py-4 text-sm text-gray-400 dark:text-gray-600 text-center italic">
+                        <td colspan="5" class="px-5 py-4 text-sm text-gray-400 dark:text-gray-600 text-center italic">
                             Belum ada sub kategori dalam kategori ini.
                         </td>
                     </tr>
@@ -381,7 +375,7 @@
 
                 @empty
                 <tr>
-                    <td colspan="4" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-600">
+                    <td colspan="5" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-600">
                         Belum ada data Chart of Account.
                         <a href="{{ route('dashboard.coa.kategori.create') }}" class="text-green-600 hover:underline ml-1">Tambah kategori pertama</a>
                     </td>
@@ -463,6 +457,13 @@
         form.action = actionUrl;
 
         modal.style.display = 'flex';
+    }
+
+    function clearSearch() {
+        const input = document.getElementById('search-input');
+        input.value = '';
+        document.getElementById('clear-search').classList.add('hidden');
+        document.getElementById('search-form').submit();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
