@@ -234,7 +234,7 @@
                     @forelse($transaksi as $index => $item)
 
                     @php
-                        $jenis = $item->kategoriTransaksi->jenis_transaksi;
+                        $jenis = $item->jenis_transaksi;
 
                         $statusBadge = match($item->status_approval) {
                             'PENDING'  => 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400',

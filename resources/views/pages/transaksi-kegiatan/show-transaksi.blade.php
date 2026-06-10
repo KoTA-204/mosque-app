@@ -50,7 +50,7 @@
             </div>
             <div>
                 <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">Jenis</p>
-                @php $jenis = $transaksi->kategoriTransaksi->jenis_transaksi; @endphp
+                @php $jenis = $transaksi->jenis_transaksi; @endphp
                 <span class="rounded-full px-2.5 py-1 text-xs font-medium
                     {{ $jenis === 'PEMASUKAN' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                     {{ ucfirst(strtolower($jenis)) }}

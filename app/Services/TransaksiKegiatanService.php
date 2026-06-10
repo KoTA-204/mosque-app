@@ -154,6 +154,7 @@ class TransaksiKegiatanService
                 'user_id'               => auth()->id(),
                 'kategori_transaksi_id' => $data['kategori_transaksi_id'],
                 'tanggal_transaksi'     => $data['tanggal_transaksi'],
+                'jenis_transaksi'       => $data['jenis_transaksi'],
                 'jumlah'                => $data['jumlah'],
                 'deskripsi'             => $data['deskripsi'] ?? null,
                 'status_approval'       => 'PENDING',
