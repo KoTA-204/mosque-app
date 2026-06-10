@@ -178,7 +178,7 @@
                     </div>
                 </form>
 
-                @if($kegiatan->status === 'BERJALAN')
+                @if($kegiatan->status === 'AKTIF')
                     @if(auth()->user()->hasPermission('CREATE_TRANSAKSI_KEGIATAN'))
                         <a href="{{ route('dashboard.kegiatan-panitia.transaksi.create', $kegiatan) }}"
                            class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">

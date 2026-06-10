@@ -15,10 +15,12 @@
             </p>
             @endif
         </div>
-        <a href="{{ route('dashboard.jurnal-penutup.create') }}"
-           class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-            Mulai Penutupan
-        </a>
+        @if(!$periodeAktif || $tahapSelesai < 2)
+            <a href="{{ route('dashboard.jurnal-penutup.create') }}"
+            class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
+                Mulai Penutupan
+            </a>
+        @endif
     </div>
 
     {{-- Alert --}}
@@ -37,11 +39,18 @@
             'TUTUP_PENDAPATAN' => 'Tutup Pendapatan',
             'TUTUP_BEBAN'      => 'Tutup Beban',
         ];
-        $sisaTahap   = 2 - $tahapSelesai;
-        $pct         = ($tahapSelesai / 2) * 100;
+
+        $sisaTahap = 2 - $tahapSelesai;
+        $pct       = ($tahapSelesai / 2) * 100;
+
         $statusLabel = $tahapSelesai === 2
             ? 'Selesai — semua tahap telah diposting'
             : 'Belum selesai — ' . $tahapSelesai . ' dari 2 tahap selesai';
+
+        // Cek apakah ada DRAFT yang siap diposting (semua tahap ada sebagai DRAFT)
+        $adaDraftSiapPosting = collect($tipes)->every(
+            fn($t) => isset($statusTahap[$t]) && $statusTahap[$t]['ada'] && !$statusTahap[$t]['selesai']
+        );
     @endphp
     <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-5">
         <div class="flex items-start justify-between mb-4">
@@ -54,12 +63,12 @@
             <div class="flex items-center gap-2">
                 <div class="text-center px-3 py-1.5 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800">
                     <p class="text-lg font-bold text-green-600">{{ $tahapSelesai }}</p>
-                    <p class="text-xs text-gray-400">Selesai</p>
+                    <p class="text-xs text-gray-400">Posted</p>
                 </div>
                 @if($sisaTahap > 0)
                 <div class="text-center px-3 py-1.5 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800">
                     <p class="text-lg font-bold text-yellow-600">{{ $sisaTahap }}</p>
-                    <p class="text-xs text-gray-400">Tersisa</p>
+                    <p class="text-xs text-gray-400">Belum Posted</p>
                 </div>
                 @endif
             </div>
@@ -69,28 +78,57 @@
             <div class="bg-green-600 h-2 rounded-full transition-all duration-500" style="width: {{ $pct }}%"></div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-3 mb-4">
             @foreach($tipes as $i => $tipe)
-            @php $st = $statusTahap[$tipe] ?? ['selesai' => false]; @endphp
-            <div class="rounded-xl border px-3 py-2.5 {{ $st['selesai'] ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10' : 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30' }}">
+            @php
+                $st = $statusTahap[$tipe] ?? ['selesai' => false, 'ada' => false];
+            @endphp
+            <div class="rounded-xl border px-3 py-2.5
+                {{ $st['selesai'] ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10' : ($st['ada'] ? 'border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10' : 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30') }}">
                 <div class="flex items-center gap-1.5 mb-1">
                     @if($st['selesai'])
                         <svg class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                         </svg>
+                    @elseif($st['ada'])
+                        {{-- Ada DRAFT --}}
+                        <svg class="w-3.5 h-3.5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+                        </svg>
                     @else
                         <span class="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-xs font-bold text-gray-500">{{ $i + 1 }}</span>
                     @endif
-                    <span class="text-xs font-medium {{ $st['selesai'] ? 'text-green-700 dark:text-green-400' : 'text-gray-500 dark:text-gray-400' }}">
-                        Tahap {{ $i + 1 }}
+                    <span class="text-xs font-medium
+                        {{ $st['selesai'] ? 'text-green-700 dark:text-green-400' : ($st['ada'] ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-500 dark:text-gray-400') }}">
+                        @if($st['selesai']) Posted
+                        @elseif($st['ada']) Draft
+                        @else Belum
+                        @endif
                     </span>
                 </div>
-                <p class="text-xs {{ $st['selesai'] ? 'text-green-800 dark:text-green-300' : 'text-gray-600 dark:text-gray-400' }} font-medium">
+                <p class="text-xs font-medium
+                    {{ $st['selesai'] ? 'text-green-800 dark:text-green-300' : ($st['ada'] ? 'text-yellow-800 dark:text-yellow-300' : 'text-gray-600 dark:text-gray-400') }}">
                     {{ $labelsTahap[$tipe] }}
                 </p>
             </div>
             @endforeach
         </div>
+
+        {{-- Tombol Posting cepat — hanya muncul kalau semua tahap sudah DRAFT --}}
+        @if($adaDraftSiapPosting)
+        <form action="{{ route('dashboard.jurnal-penutup.post-draft') }}" method="POST">
+            @csrf
+            <input type="hidden" name="periode_id" value="{{ $periodeAktif->id }}">
+            <button type="submit"
+                    onclick="return confirm('Posting semua jurnal penutup draft ke buku besar?')"
+                    class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Posting Semua Draft
+            </button>
+        </form>
+        @endif
     </div>
     @endif
 

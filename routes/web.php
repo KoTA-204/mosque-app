@@ -121,7 +121,7 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
     });
 
     // ── Kegiatan Khusus - Transaksi Kegiatan ───────────────────────────────
-    Route::middleware('permission:VIEW_TRANSAKSI_KEGIATAN')->group(function () {
+    
         Route::get('/kegiatan-panitia', [TransaksiKegiatanController::class, 'index'])->name('kegiatan-panitia.index');
         Route::get('/kegiatan-panitia/{kegiatan}', [TransaksiKegiatanController::class, 'show'])
             ->name('kegiatan-panitia.show')
@@ -130,16 +130,16 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
             ->whereNumber('kegiatan')
             ->whereNumber('transaksi')
             ->name('kegiatan-panitia.transaksi.show');
-    });
+    
 
-    Route::middleware('permission:CREATE_TRANSAKSI_KEGIATAN')->group(function () {
+  
         Route::get('/kegiatan-panitia/{kegiatan}/transaksi/create', [TransaksiKegiatanController::class, 'createTransaksi'])
             ->name('kegiatan-panitia.transaksi.create');
         Route::post('/kegiatan-panitia/{kegiatan}/transaksi', [TransaksiKegiatanController::class, 'storeTransaksi'])
             ->name('kegiatan-panitia.transaksi.store');
-    });
+   
 
-    Route::middleware('permission:EDIT_TRANSAKSI_KEGIATAN')->group(function () {
+   
         Route::get('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}/edit', [TransaksiKegiatanController::class, 'editTransaksi'])
             ->whereNumber('kegiatan')
             ->whereNumber('transaksi')
@@ -149,12 +149,11 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
             ->whereNumber('kegiatan')
             ->whereNumber('transaksi')
             ->name('kegiatan-panitia.transaksi.update');
-    });
-
-    Route::middleware('permission:DELETE_TRANSAKSI_KEGIATAN')->group(function () {
+   
+ 
         Route::delete('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'destroyTransaksi'])
             ->name('kegiatan-panitia.transaksi.destroy');
-    });
+ 
 
     // ── Approval ───────────────────────────────────────────────────────────
     Route::middleware('permission:VIEW_APPROVAL')->group(function () {
@@ -340,6 +339,9 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         Route::middleware('permission:CREATE_JURNAL_PENUTUP')->group(function () {
             Route::get('/jurnal-penutup/create', [JurnalPenutupController::class, 'create'])
                 ->name('jurnal-penutup.create');
+
+            Route::post('/jurnal-penutup/post-draft', [JurnalPenutupController::class, 'postDraft'])
+                ->name('jurnal-penutup.post-draft');
 
             Route::get('/jurnal-penutup/aset-detail', [JurnalPenutupController::class, 'getAsetDetail'])
                 ->name('jurnal-penutup.aset-detail');

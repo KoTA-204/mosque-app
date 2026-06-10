@@ -41,42 +41,6 @@
                   enctype="multipart/form-data" class="space-y-5">
                 @csrf
 
-                {{-- Toggle Jenis Transaksi --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        Jenis transaksi <span class="text-red-500">*</span>
-                    </label>
-                    <div class="flex rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                        <label class="flex-1 cursor-pointer">
-                            <input type="radio" name="jenis_transaksi" value="PEMASUKAN"
-                                   class="sr-only" {{ old('jenis_transaksi', 'PEMASUKAN') === 'PEMASUKAN' ? 'checked' : '' }}
-                                   onchange="updateKategori('PEMASUKAN'); updateToggleStyle('PEMASUKAN')">
-                            <span id="btn-pemasukan"
-                                  class="block py-2.5 text-center text-sm font-medium transition-colors
-                                         {{ old('jenis_transaksi', 'PEMASUKAN') === 'PEMASUKAN'
-                                            ? 'bg-green-600 text-white'
-                                            : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
-                                Pemasukan
-                            </span>
-                        </label>
-                        <label class="flex-1 cursor-pointer border-l border-gray-200 dark:border-gray-700">
-                            <input type="radio" name="jenis_transaksi" value="PENGELUARAN"
-                                   class="sr-only" {{ old('jenis_transaksi') === 'PENGELUARAN' ? 'checked' : '' }}
-                                   onchange="updateKategori('PENGELUARAN'); updateToggleStyle('PENGELUARAN')">
-                            <span id="btn-pengeluaran"
-                                  class="block py-2.5 text-center text-sm font-medium transition-colors
-                                         {{ old('jenis_transaksi') === 'PENGELUARAN'
-                                            ? 'bg-green-600 text-white'
-                                            : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
-                                Pengeluaran
-                            </span>
-                        </label>
-                    </div>
-                    @error('jenis_transaksi')
-                        <p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>
-                    @enderror
-                </div>
-
                 {{-- Tanggal + Jumlah --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -140,14 +104,13 @@
                         Kategori <span class="text-red-500">*</span>
                     </label>
                     <div class="relative">
-                        <select name="kategori_transaksi_id" id="kategori_select"
+                        <select name="kategori_transaksi_id"
                                 class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none appearance-none transition-colors
                                     {{ $errors->has('kategori_transaksi_id') ? 'border-red-400' : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }}
                                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                             <option value="">-- Pilih Kategori --</option>
                             @foreach($kategoriList as $kategori)
                                 <option value="{{ $kategori->id }}"
-                                        data-jenis="{{ $kategori->jenis_transaksi }}"
                                     {{ old('kategori_transaksi_id') == $kategori->id ? 'selected' : '' }}>
                                     {{ $kategori->nama_kategori }}
                                 </option>
@@ -212,40 +175,6 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const currentJenis = document.querySelector('input[name="jenis_transaksi"]:checked')?.value || 'PEMASUKAN';
-    updateKategori(currentJenis);
-    updateToggleStyle(currentJenis);
-});
-
-function updateKategori(jenis) {
-    const select  = document.getElementById('kategori_select');
-    const options = select.querySelectorAll('option');
-    options.forEach(opt => {
-        if (!opt.value) return;
-        opt.hidden = opt.dataset.jenis !== jenis;
-    });
-    if (select.selectedOptions[0]?.dataset.jenis !== jenis) {
-        select.value = '';
-    }
-}
-
-function updateToggleStyle(jenis) {
-    const btnPemasukan   = document.getElementById('btn-pemasukan');
-    const btnPengeluaran = document.getElementById('btn-pengeluaran');
-    if (jenis === 'PEMASUKAN') {
-        btnPemasukan.classList.add('bg-green-600', 'text-white');
-        btnPemasukan.classList.remove('text-gray-500');
-        btnPengeluaran.classList.remove('bg-green-600', 'text-white');
-        btnPengeluaran.classList.add('text-gray-500');
-    } else {
-        btnPengeluaran.classList.add('bg-green-600', 'text-white');
-        btnPengeluaran.classList.remove('text-gray-500');
-        btnPemasukan.classList.remove('bg-green-600', 'text-white');
-        btnPemasukan.classList.add('text-gray-500');
-    }
-}
-
 function showFileNames(input) {
     const label = document.getElementById('fileLabel');
     if (input.files.length > 0) {

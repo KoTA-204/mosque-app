@@ -34,6 +34,7 @@ class LaporanKeuanganController extends Controller
                 ->whereHas('jurnal', fn($q) => $q
                     ->where('periode_id', $periodeId)
                     ->where('status', 'POSTED')
+                    ->whereNull('tipe_penutupan')
                 ),
             $saldoNormal
         );
@@ -57,6 +58,27 @@ class LaporanKeuanganController extends Controller
                 ->whereHas('jurnal', fn($q) => $q
                     ->whereIn('periode_id', $periodeIds)
                     ->where('status', 'POSTED')
+                ),
+            $saldoNormal
+        );
+    }
+
+    private function saldoPosisiByPrefix(
+        string $prefix,
+        int $periodeId,
+        string $saldoNormal = 'DEBIT'
+    ): float
+    {
+        $ids = Akun::where('kode_akun', 'like', $prefix . '%')->pluck('id');
+
+        if ($ids->isEmpty()) return 0;
+
+        return $this->hitungSaldo(
+            DetailJurnal::whereIn('akun_id', $ids)
+                ->whereHas('jurnal', fn($q) => $q
+                    ->where('periode_id', $periodeId)
+                    ->where('status', 'POSTED')
+                    ->where('jenis_jurnal', 'PEMBUKA')
                 ),
             $saldoNormal
         );
@@ -117,6 +139,7 @@ class LaporanKeuanganController extends Controller
                     ->whereHas('jurnal', fn($q) => $q
                         ->where('periode_id', $periodeId)
                         ->where('status', 'POSTED')
+                        ->whereNull('tipe_penutupan')
                     ),
                 $saldoNormal
             );
@@ -447,9 +470,10 @@ class LaporanKeuanganController extends Controller
         [$periodeList, $periode, $periodePrev, $selectedId] = $this->resolvePeriode($request);
 
         $data = $this->buildPerubahanAsetNeto($periode, $periodePrev);
+        $dataPrev = $periodePrev ? $this->buildPerubahanAsetNeto($periodePrev, null) : null;
 
         return view('pages.laporan.perubahan-aset-neto', compact(
-            'periodeList', 'periode', 'periodePrev', 'data'
+            'periodeList', 'periode', 'periodePrev', 'data', 'dataPrev'
         ))->with('selectedPeriodeId', $selectedId);
     }
 
@@ -476,8 +500,8 @@ class LaporanKeuanganController extends Controller
             $saldoAwalDengan = $prevPos['asetNetoDenganPembatasan'];
         } else {
             // Periode pertama → ambil dari jurnal pembuka di periode ini saja
-            $saldoAwalTanpa  = $this->saldoByPrefix('3-1', $periode->id, 'KREDIT');
-            $saldoAwalDengan = $this->saldoByPrefix('3-2', $periode->id, 'KREDIT');
+            $saldoAwalTanpa  = $this->saldoPosisiByPrefix('3-1', $periode->id, 'KREDIT');
+            $saldoAwalDengan = $this->saldoPosisiByPrefix('3-2', $periode->id, 'KREDIT');
         }
 
         // ── Surplus dari laporan penghasilan komprehensif ──────────────────

@@ -7,6 +7,11 @@
     function signedPan($val) {
         return $val < 0 ? '(' . fmtPan($val) . ')' : fmtPan($val);
     }
+    function prevCell($dataPrev, string $key): string {
+        if (!$dataPrev) return '—';
+        $val = $dataPrev[$key] ?? 0;
+        return $val == 0 ? '—' : signedPan($val);
+    }
 @endphp
 
 @section('content')
@@ -101,12 +106,7 @@
                     <tbody class="divide-y divide-gray-50 dark:divide-gray-800/50">
 
                         {{-- ══════════════════════════════════════════════════════
-                             BLOK 1: ASET NETO TANPA PEMBATASAN DARI PEMBERI SUMBER DAYA
-                             Mengikuti urutan vertikal contoh ilustratif ISAK 35:
-                               Saldo awal
-                               Surplus tahun berjalan
-                               Aset neto dibebaskan dari pembatasan
-                               Saldo akhir
+                             BLOK 1: ASET NETO TANPA PEMBATASAN
                         ══════════════════════════════════════════════════════ --}}
                         <tr class="bg-gray-50 dark:bg-gray-800/30">
                             <td colspan="3" class="px-4 py-3">
@@ -120,27 +120,31 @@
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-colors">
                             <td class="px-4 py-2.5 text-gray-600 dark:text-gray-400">Saldo awal</td>
                             <td class="px-4 py-2.5 text-right text-gray-700 dark:text-gray-300">{{ signedPan($data['saldoAwalTanpa'] ?? 0) }}</td>
-                            <td class="px-4 py-2.5 text-right text-gray-500 dark:text-gray-500">—</td>
+                            <td class="px-4 py-2.5 text-right text-gray-500 dark:text-gray-500">{{ prevCell($dataPrev, 'saldoAwalTanpa') }}</td>
                         </tr>
 
-                        {{-- Surplus Tahun Berjalan (bold italic, sesuai contoh ISAK 35) --}}
+                        {{-- Surplus Tahun Berjalan --}}
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-colors">
                             <td class="px-4 py-2.5 font-semibold italic text-gray-700 dark:text-gray-300">Surplus tahun berjalan</td>
                             <td class="px-4 py-2.5 text-right font-semibold italic {{ ($data['surplusTanpa'] ?? 0) >= 0 ? 'text-gray-700 dark:text-gray-300' : 'text-red-500 dark:text-red-400' }}">
                                 {{ signedPan($data['surplusTanpa'] ?? 0) }}
                             </td>
-                            <td class="px-4 py-2.5 text-right text-gray-500 dark:text-gray-500">—</td>
+                            <td class="px-4 py-2.5 text-right font-semibold italic {{ ($dataPrev['surplusTanpa'] ?? 0) < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-gray-500' }}">
+                                {{ prevCell($dataPrev, 'surplusTanpa') }}
+                            </td>
                         </tr>
 
                         {{-- Aset Neto Dibebaskan dari Pembatasan --}}
-                        @if(($data['dibebaskan'] ?? 0) != 0)
+                        @if(($data['dibebaskan'] ?? 0) != 0 || ($dataPrev && ($dataPrev['dibebaskan'] ?? 0) != 0))
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-colors">
                             <td class="px-4 py-2.5 text-gray-600 dark:text-gray-400">
                                 Aset neto yang dibebaskan dari pembatasan
                                 <span class="text-xs text-gray-400 dark:text-gray-500 ml-1">(catatan C)</span>
                             </td>
-                            <td class="px-4 py-2.5 text-right text-gray-700 dark:text-gray-300">{{ signedPan($data['dibebaskan'] ?? 0) }}</td>
-                            <td class="px-4 py-2.5 text-right text-gray-500 dark:text-gray-500">—</td>
+                            <td class="px-4 py-2.5 text-right text-gray-700 dark:text-gray-300">
+                                {{ ($data['dibebaskan'] ?? 0) != 0 ? signedPan($data['dibebaskan']) : '—' }}
+                            </td>
+                            <td class="px-4 py-2.5 text-right text-gray-500 dark:text-gray-500">{{ prevCell($dataPrev, 'dibebaskan') }}</td>
                         </tr>
                         @endif
 
@@ -148,14 +152,13 @@
                         <tr class="border-t border-gray-200 dark:border-gray-700">
                             <td class="px-4 py-2.5 font-bold text-gray-800 dark:text-gray-200">Saldo akhir</td>
                             <td class="px-4 py-2.5 text-right font-bold text-gray-800 dark:text-gray-200">{{ signedPan($data['saldoAkhirTanpa'] ?? 0) }}</td>
-                            <td class="px-4 py-2.5 text-right font-bold text-gray-600 dark:text-gray-400">—</td>
+                            <td class="px-4 py-2.5 text-right font-bold text-gray-600 dark:text-gray-400">{{ prevCell($dataPrev, 'saldoAkhirTanpa') }}</td>
                         </tr>
 
                         {{-- ══════════════════════════════════════════════════════
                              BLOK 2: PENGHASILAN KOMPREHENSIF LAIN
-                             (hanya tampil jika ada nilainya)
                         ══════════════════════════════════════════════════════ --}}
-                        @if(($data['pkl'] ?? 0) != 0)
+                        @if(($data['pkl'] ?? 0) != 0 || ($dataPrev && ($dataPrev['pkl'] ?? 0) != 0))
                         <tr><td colspan="3" class="py-2"></td></tr>
                         <tr class="bg-gray-50 dark:bg-gray-800/30">
                             <td colspan="3" class="px-4 py-3">
@@ -172,31 +175,33 @@
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-colors">
                             <td class="px-4 py-2.5 text-gray-600 dark:text-gray-400">Penghasilan komprehensif tahun berjalan</td>
                             <td class="px-4 py-2.5 text-right text-gray-700 dark:text-gray-300">{{ signedPan($data['pkl'] ?? 0) }}</td>
-                            <td class="px-4 py-2.5 text-right text-gray-500 dark:text-gray-500">—</td>
+                            <td class="px-4 py-2.5 text-right text-gray-500 dark:text-gray-500">{{ prevCell($dataPrev, 'pkl') }}</td>
                         </tr>
                         <tr class="border-t border-gray-200 dark:border-gray-700">
                             <td class="px-4 py-2.5 font-bold text-gray-800 dark:text-gray-200">Saldo akhir</td>
                             <td class="px-4 py-2.5 text-right font-bold text-gray-800 dark:text-gray-200">{{ signedPan($data['pkl'] ?? 0) }}</td>
-                            <td class="px-4 py-2.5 text-right font-bold text-gray-600 dark:text-gray-400">—</td>
+                            <td class="px-4 py-2.5 text-right font-bold text-gray-600 dark:text-gray-400">{{ prevCell($dataPrev, 'pkl') }}</td>
                         </tr>
                         <tr class="border-t border-gray-200 dark:border-gray-700">
                             <td class="px-4 py-2.5 font-bold text-gray-800 dark:text-gray-200">Total</td>
                             <td class="px-4 py-2.5 text-right font-bold text-gray-800 dark:text-gray-200">
                                 {{ signedPan(($data['saldoAkhirTanpa'] ?? 0) + ($data['pkl'] ?? 0)) }}
                             </td>
-                            <td class="px-4 py-2.5 text-right font-bold text-gray-600 dark:text-gray-400">—</td>
+                            <td class="px-4 py-2.5 text-right font-bold text-gray-600 dark:text-gray-400">
+                                @if($dataPrev)
+                                    {{ signedPan(($dataPrev['saldoAkhirTanpa'] ?? 0) + ($dataPrev['pkl'] ?? 0)) }}
+                                @else
+                                    —
+                                @endif
+                            </td>
                         </tr>
                         @endif
 
-                        {{-- Spacer antar blok --}}
+                        {{-- Spacer --}}
                         <tr><td colspan="3" class="py-2"></td></tr>
 
                         {{-- ══════════════════════════════════════════════════════
-                             BLOK 3: ASET NETO DENGAN PEMBATASAN DARI PEMBERI SUMBER DAYA
-                               Saldo awal
-                               Surplus tahun berjalan (pendapatan terikat)
-                               Aset neto dibebaskan dari pembatasan (dalam kurung = pengurang)
-                               Saldo akhir
+                             BLOK 3: ASET NETO DENGAN PEMBATASAN
                         ══════════════════════════════════════════════════════ --}}
                         <tr class="bg-gray-50 dark:bg-gray-800/30">
                             <td colspan="3" class="px-4 py-3">
@@ -210,27 +215,38 @@
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-colors">
                             <td class="px-4 py-2.5 text-gray-600 dark:text-gray-400">Saldo awal</td>
                             <td class="px-4 py-2.5 text-right text-gray-700 dark:text-gray-300">{{ signedPan($data['saldoAwalDengan'] ?? 0) }}</td>
-                            <td class="px-4 py-2.5 text-right text-gray-500 dark:text-gray-500">—</td>
+                            <td class="px-4 py-2.5 text-right text-gray-500 dark:text-gray-500">{{ prevCell($dataPrev, 'saldoAwalDengan') }}</td>
                         </tr>
 
-                        {{-- Surplus Dengan Pembatasan (pendapatan terikat) --}}
+                        {{-- Surplus Dengan Pembatasan --}}
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-colors">
                             <td class="px-4 py-2.5 font-semibold italic text-gray-700 dark:text-gray-300">Surplus tahun berjalan</td>
                             <td class="px-4 py-2.5 text-right font-semibold italic {{ ($data['surplusDengan'] ?? 0) >= 0 ? 'text-gray-700 dark:text-gray-300' : 'text-red-500 dark:text-red-400' }}">
                                 {{ signedPan($data['surplusDengan'] ?? 0) }}
                             </td>
-                            <td class="px-4 py-2.5 text-right text-gray-500 dark:text-gray-500">—</td>
+                            <td class="px-4 py-2.5 text-right font-semibold italic {{ ($dataPrev['surplusDengan'] ?? 0) < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-gray-500' }}">
+                                {{ prevCell($dataPrev, 'surplusDengan') }}
+                            </td>
                         </tr>
 
-                        {{-- Aset Neto Dibebaskan — dalam kurung karena mengurangi saldo ini --}}
-                        @if(($data['dibebaskan'] ?? 0) != 0)
+                        {{-- Aset Neto Dibebaskan — pengurang di blok "Dengan Pembatasan" --}}
+                        @if(($data['dibebaskan'] ?? 0) != 0 || ($dataPrev && ($dataPrev['dibebaskan'] ?? 0) != 0))
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-colors">
                             <td class="px-4 py-2.5 text-gray-600 dark:text-gray-400">
                                 Aset neto yang dibebaskan dari pembatasan
                                 <span class="text-xs text-gray-400 dark:text-gray-500 ml-1">(catatan C)</span>
                             </td>
-                            <td class="px-4 py-2.5 text-right text-red-500 dark:text-red-400">({{ fmtPan($data['dibebaskan'] ?? 0) }})</td>
-                            <td class="px-4 py-2.5 text-right text-gray-500 dark:text-gray-500">—</td>
+                            {{-- Kolom ini selalu negatif (dalam kurung) karena mengurangi saldo terikat --}}
+                            <td class="px-4 py-2.5 text-right text-red-500 dark:text-red-400">
+                                {{ ($data['dibebaskan'] ?? 0) != 0 ? '(' . fmtPan($data['dibebaskan']) . ')' : '—' }}
+                            </td>
+                            <td class="px-4 py-2.5 text-right text-red-400 dark:text-red-500">
+                                @if($dataPrev && ($dataPrev['dibebaskan'] ?? 0) != 0)
+                                    ({{ fmtPan($dataPrev['dibebaskan']) }})
+                                @else
+                                    —
+                                @endif
+                            </td>
                         </tr>
                         @endif
 
@@ -238,7 +254,7 @@
                         <tr class="border-t border-gray-200 dark:border-gray-700">
                             <td class="px-4 py-2.5 font-bold text-gray-800 dark:text-gray-200">Saldo akhir</td>
                             <td class="px-4 py-2.5 text-right font-bold text-gray-800 dark:text-gray-200">{{ signedPan($data['saldoAkhirDengan'] ?? 0) }}</td>
-                            <td class="px-4 py-2.5 text-right font-bold text-gray-600 dark:text-gray-400">—</td>
+                            <td class="px-4 py-2.5 text-right font-bold text-gray-600 dark:text-gray-400">{{ prevCell($dataPrev, 'saldoAkhirDengan') }}</td>
                         </tr>
 
                         {{-- Spacer --}}
@@ -248,7 +264,7 @@
                         <tr class="bg-green-700 dark:bg-green-800">
                             <td class="px-4 py-3 font-bold text-white uppercase tracking-wide text-sm">Total Aset Neto</td>
                             <td class="px-4 py-3 text-right font-bold text-white">{{ signedPan($data['totalSaldoAkhir'] ?? 0) }}</td>
-                            <td class="px-4 py-3 text-right font-bold text-green-200">—</td>
+                            <td class="px-4 py-3 text-right font-bold text-green-200">{{ prevCell($dataPrev, 'totalSaldoAkhir') }}</td>
                         </tr>
 
                     </tbody>

@@ -13,6 +13,10 @@ class JurnalPenutupController extends Controller
         protected JurnalPenutupService $service
     ) {}
 
+    // ─────────────────────────────────────────────────────────────
+    // Index
+    // ─────────────────────────────────────────────────────────────
+
     public function index(Request $request)
     {
         $search    = $request->get('search', '');
@@ -24,99 +28,162 @@ class JurnalPenutupController extends Controller
         $periodeList  = $this->service->getPeriodeList();
         $periodeAktif = $this->service->getPeriodeAktif();
 
-        $statusTahap  = $periodeAktif ? $this->service->getStatusTahap($periodeAktif) : [];
-        $tahapSelesai = $periodeAktif ? $this->service->getTahapSelesai($periodeAktif) : 0;
+        $statusTahap  = $periodeAktif
+            ? $this->service->getStatusTahap($periodeAktif)
+            : [];
+
+        $tahapSelesai = $periodeAktif
+            ? $this->service->getTahapSelesai($periodeAktif)
+            : 0;
 
         return view('pages.jurnal-penutup.index', compact(
-            'jurnal', 'periodeList', 'periodeAktif',
-            'search', 'periodeId', 'status', 'perPage',
-            'statusTahap', 'tahapSelesai'
+            'jurnal',
+            'periodeList',
+            'periodeAktif',
+            'search',
+            'periodeId',
+            'status',
+            'perPage',
+            'statusTahap',
+            'tahapSelesai'
         ));
     }
+
+    // ─────────────────────────────────────────────────────────────
+    // Create
+    // ─────────────────────────────────────────────────────────────
 
     public function create()
     {
         $periodeAktif = $this->service->getPeriodeAktif();
         $periodeList  = $this->service->getPeriodeList();
 
-        $ringkasan   = null;
-        $statusTahap = null;
+        $ringkasan     = null;
+        $statusTahap   = null;
+        $existingDraft = null;
 
         if ($periodeAktif) {
-            $ringkasan   = $this->service->getRingkasanPeriode($periodeAktif);
+
+            if ($this->service->isPeriodeClosed($periodeAktif)) {
+                return redirect()
+                    ->route('dashboard.jurnal-penutup.index')
+                    ->with('error', 'Periode aktif sudah ditutup.');
+            }
+
+            $ringkasan = $this->service->getRingkasanPeriode($periodeAktif);
+
             $statusTahap = $this->service->getStatusTahap($periodeAktif);
+
+            $existingDraft = $this->service->getExistingDraft($periodeAktif);
         }
 
         return view('pages.jurnal-penutup.create', compact(
-            'periodeAktif', 'periodeList', 'ringkasan', 'statusTahap'
+            'periodeAktif',
+            'periodeList',
+            'ringkasan',
+            'statusTahap',
+            'existingDraft'
         ));
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // Store
+    // ─────────────────────────────────────────────────────────────
+
     public function store(Request $request)
     {
-        dd($request->all());
         $request->validate([
-            'periode_id'  => 'required|exists:periode,id',
-            'tanggal'     => 'required|date',
-            'submit_type' => 'required|in:draft,posting',
+            'periode_id' => 'required|exists:periode,id',
+            'tanggal'    => 'required|date',
+            'aksi'       => 'required|in:draft,posting',
         ]);
 
         $periode = Periode::findOrFail($request->periode_id);
-        $status  = $request->submit_type === 'posting' ? 'POSTED' : 'DRAFT';
 
-        $ringkasan = $this->service->getRingkasanPeriode($periode);
+        if ($this->service->isPeriodeClosed($periode)) {
+            return redirect()->back()->with('error', 'Periode sudah ditutup.');
+        }
 
-        $semua = [
-            'TUTUP_PENDAPATAN' => $this->service->generateTutupPendapatan($ringkasan),
-            'TUTUP_BEBAN'      => $this->service->generateTutupBeban($ringkasan),
-        ];
+        // Guard Opsi B — cek sebelum generate entri
+        if ($err = $this->service->guardPeriodeSiapTutup($periode)) {
+            return redirect()->back()->with('error', $err);
+        }
 
-        $this->service->storeAllTahapIfNotExists($periode, $semua, $request->tanggal, $status);
+        $aksi = $request->aksi;
 
-        $msg = $status === 'POSTED'
-            ? 'Semua jurnal penutup berhasil diposting ke buku besar.'
-            : 'Semua jurnal penutup berhasil disimpan sebagai draft.';
+        try {
+            $ringkasan = $this->service->getRingkasanPeriode($periode);
 
-        return redirect()->route('dashboard.jurnal-penutup.index')
-            ->with('success', $msg);
+            $semua = [
+                'TUTUP_PENDAPATAN' => $this->service->generateTutupPendapatan($ringkasan),
+                'TUTUP_BEBAN'      => $this->service->generateTutupBeban($ringkasan),
+            ];
+
+            // ── Posting langsung ──────────────────────────────
+            if ($aksi === 'posting') {
+                $result = $this->service->storeAndPost($periode, $semua, $request->tanggal);
+
+                if ($result !== true) {
+                    return redirect()->back()->with('error', $result);
+                }
+
+                return redirect()
+                    ->route('dashboard.jurnal-penutup.index')
+                    ->with('success', 'Jurnal penutup berhasil diposting dan periode berhasil ditutup.');
+            }
+
+            // ── Simpan draft ──────────────────────────────────
+            $this->service->storeAllTahap($periode, $semua, $request->tanggal, 'DRAFT');
+
+            return redirect()
+                ->route('dashboard.jurnal-penutup.index')
+                ->with('success', 'Jurnal penutup berhasil disimpan sebagai draft.');
+
+        } catch (\RuntimeException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 
-    public function konfirmasiTahap(Request $request)
+    // ─────────────────────────────────────────────────────────────
+    // Posting Existing Draft
+    // ─────────────────────────────────────────────────────────────
+
+    public function postDraft(Request $request)
     {
         $request->validate([
-            'periode_id'     => 'required|exists:periode,id',
-            'tipe_penutupan' => 'required|in:TUTUP_PENDAPATAN,TUTUP_BEBAN',
-            'tanggal'        => 'required|date',
+            'periode_id' => 'required|exists:periode,id',
         ]);
 
-        $periode   = Periode::findOrFail($request->periode_id);
-        $ringkasan = $this->service->getRingkasanPeriode($periode);
-        $tipe      = $request->tipe_penutupan;
+        $periode = Periode::findOrFail($request->periode_id);
 
-        $detail = match ($tipe) {
-            'TUTUP_PENDAPATAN' => $this->service->generateTutupPendapatan($ringkasan),
-            'TUTUP_BEBAN'      => $this->service->generateTutupBeban($ringkasan),
-        };
+        if ($this->service->isPeriodeClosed($periode)) {
+            return redirect()->back()->with('error', 'Periode sudah ditutup.');
+        }
 
-        $jurnal = $this->service->storeTahap($periode, $tipe, $detail, $request->tanggal, 'DRAFT');
+        $result = $this->service->postExistingDraft($periode);
 
-        return response()->json([
-            'success' => true,
-            'jurnal'  => [
-                'id'     => $jurnal->id,
-                'tipe'   => $tipe,
-                'detail' => $detail,
-            ],
-        ]);
+        if ($result !== true) {
+            return redirect()->back()->with('error', $result);
+        }
+
+        return redirect()
+            ->route('dashboard.jurnal-penutup.index')
+            ->with('success', 'Jurnal penutup berhasil diposting dan periode berhasil ditutup.');
     }
+
+    // ─────────────────────────────────────────────────────────────
+    // Show
+    // ─────────────────────────────────────────────────────────────
 
     public function show(Jurnal $jurnal)
     {
         $jurnal = $this->service->getById($jurnal);
 
         $nomorJurnal = 'JPT-'
-            . ($jurnal->periode->tanggal_awal->format('Y') ?? '0000') . '-'
-            . ($jurnal->periode->tanggal_awal->format('m') ?? '00') . '-'
+            . ($jurnal->periode->tanggal_awal->format('Y') ?? '0000')
+            . '-'
+            . ($jurnal->periode->tanggal_awal->format('m') ?? '00')
+            . '-'
             . str_pad($jurnal->id, 3, '0', STR_PAD_LEFT);
 
         return response()->json([
@@ -127,8 +194,9 @@ class JurnalPenutupController extends Controller
                 'keterangan'      => $jurnal->keterangan,
                 'status'          => $jurnal->status,
                 'tipe_penutupan'  => $jurnal->tipe_penutupan,
-                'label_penutupan' => JurnalPenutupService::TIPE_LABELS[$jurnal->tipe_penutupan] ?? $jurnal->tipe_penutupan,
-                'periode'         => [
+                'label_penutupan' => JurnalPenutupService::TIPE_LABELS[$jurnal->tipe_penutupan]
+                    ?? $jurnal->tipe_penutupan,
+                'periode' => [
                     'nama_periode' => $jurnal->periode->nama_periode ?? '—',
                 ],
                 'detail_jurnal' => $jurnal->detailJurnal->map(fn($d) => [
@@ -143,29 +211,25 @@ class JurnalPenutupController extends Controller
         ]);
     }
 
-    public function postSemua(Request $request)
-    {
-        $request->validate(['periode_id' => 'required|exists:periode,id']);
-        $periode = Periode::findOrFail($request->periode_id);
-        $result  = $this->service->postSemua($periode);
-
-        if ($result !== true) {
-            return redirect()->back()->with('error', $result);
-        }
-
-        return redirect()->route('dashboard.jurnal-penutup.index')
-            ->with('success', 'Semua jurnal penutup berhasil diposting.');
-    }
+    // ─────────────────────────────────────────────────────────────
+    // Delete
+    // ─────────────────────────────────────────────────────────────
 
     public function destroy(Jurnal $jurnal)
     {
+        if (!$jurnal->periode?->status) {
+            return redirect()->back()
+                ->with('error', 'Jurnal pada periode yang sudah ditutup tidak dapat dihapus.');
+        }
+
         $result = $this->service->delete($jurnal);
 
         if ($result !== true) {
             return redirect()->back()->with('error', $result);
         }
 
-        return redirect()->route('dashboard.jurnal-penutup.index')
+        return redirect()
+            ->route('dashboard.jurnal-penutup.index')
             ->with('success', 'Jurnal penutup berhasil dihapus.');
     }
 }
