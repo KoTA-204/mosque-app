@@ -18,18 +18,29 @@
     </div>
 
     @if(session('success'))
-    <div class="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-sm text-green-700 dark:text-green-400">
+    <div id="success-alert"
+        class="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-sm text-green-700 dark:text-green-400 transition-all duration-500">
+
         <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clip-rule="evenodd"/>
         </svg>
+
         {{ session('success') }}
     </div>
     @endif
+
     @if(session('error'))
-    <div class="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400">
+    <div id="error-alert"
+        class="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400 transition-all duration-500">
+
         <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clip-rule="evenodd"/>
         </svg>
+
         {{ session('error') }}
     </div>
     @endif
@@ -39,12 +50,11 @@
         {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-wrap">
 
-            {{-- Show entries --}}
             <div class="flex items-center gap-2">
                 <span class="text-sm text-gray-500 dark:text-gray-400">Show</span>
                 <form method="GET" id="per-page-form">
                     <input type="hidden" name="search" value="{{ request('search') }}">
-                    <input type="hidden" name="jenis"  value="{{ request('jenis') }}">
+                    <input type="hidden" name="status" value="{{ request('status') }}">
                     <select name="per_page" onchange="document.getElementById('per-page-form').submit()"
                         class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
                         @foreach([10, 25, 50] as $n)
@@ -55,17 +65,43 @@
                 <span class="text-sm text-gray-500 dark:text-gray-400">entries</span>
             </div>
 
-            {{-- Search --}}
-            <form method="GET" class="flex items-center gap-2">
+            {{-- Search & Filter --}}
+            <form method="GET" id="search-form" class="flex items-center gap-2">
                 <input type="hidden" name="per_page" value="{{ $perPage }}">
-                <input type="hidden" name="jenis"    value="{{ request('jenis') }}">
+
+                {{-- Filter Status --}}
                 <div class="relative">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    <select name="status" onchange="document.getElementById('search-form').submit()"
+                        class="text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 pr-8 appearance-none bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                        <option value="">Semua Status</option>
+                        <option value="aktif"       {{ request('status') === 'aktif'       ? 'selected' : '' }}>Aktif</option>
+                        <option value="tidak_aktif" {{ request('status') === 'tidak_aktif' ? 'selected' : '' }}>Tidak Aktif</option>
+                    </select>
+                    <svg class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
-                    <input type="text" name="search" value="{{ request('search') }}"
+                </div>
+
+                {{-- Search --}}
+                <div class="relative">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" name="search" id="search-input"
+                        value="{{ request('search') }}"
                         placeholder="Search..."
-                        class="pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 w-56 placeholder-gray-400">
+                        class="pl-9 pr-8 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 w-56 placeholder-gray-400">
+                    {{-- Clear Button --}}
+                    <button type="button" id="clear-search"
+                        onclick="clearSearch()"
+                        class="{{ request('search') ? '' : 'hidden' }} absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
                 </div>
             </form>
         </div>
@@ -80,38 +116,7 @@
                         <th class="text-left   text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3">Deskripsi</th>
                         <th class="text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3">
                             <div class="flex items-center justify-center gap-1">
-                                Jenis Transaksi
-                                {{-- Filter dropdown --}}
-                                <div class="relative" x-data="{ open: false }">
-                                    <button @click="open = !open" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/>
-                                        </svg>
-                                    </button>
-                                    <div x-show="open" @click.outside="open = false"
-                                         class="absolute right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-10 py-1 min-w-[140px]">
-                                        <a href="{{ request()->fullUrlWithQuery(['jenis' => '', 'page' => 1]) }}"
-                                           class="block px-4 py-2 text-sm {{ !request('jenis') ? 'text-green-600 font-medium' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700' }}">
-                                            Semua
-                                        </a>
-                                        <a href="{{ request()->fullUrlWithQuery(['jenis' => 'pemasukan', 'page' => 1]) }}"
-                                           class="block px-4 py-2 text-sm {{ request('jenis') === 'pemasukan' ? 'text-green-600 font-medium' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700' }}">
-                                            Pemasukan
-                                        </a>
-                                        <a href="{{ request()->fullUrlWithQuery(['jenis' => 'pengeluaran', 'page' => 1]) }}"
-                                           class="block px-4 py-2 text-sm {{ request('jenis') === 'pengeluaran' ? 'text-green-600 font-medium' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700' }}">
-                                            Pengeluaran
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </th>
-                        <th class="text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3">
-                            <div class="flex items-center justify-center gap-1">
                                 Status
-                                <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/>
-                                </svg>
                             </div>
                         </th>
                         <th class="text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-5 py-3">Action</th>
@@ -130,34 +135,29 @@
                         <span class="line-clamp-1">{{ $item->deskripsi ?? '—' }}</span>
                     </td>
                     <td class="px-4 py-3.5 text-center">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                            {{ $item->jenis_transaksi === 'PEMASUKAN'
-                                ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400'
-                                : 'bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400' }}">
-                            {{ ucfirst($item->jenis_transaksi) }}
-                        </span>
-                    </td>
-                    <td class="px-4 py-3.5 text-center">
-                        <span class="text-sm font-medium
-                            {{ $item->status === 'aktif'
-                                ? 'text-green-600 dark:text-green-400'
-                                : 'text-red-500 dark:text-red-400' }}">
-                            {{ $item->status === 'aktif' ? 'Aktif' : 'Tidak Aktif' }}
+                        <span class="inline-flex items-center px-3.5 py-1 rounded-full text-xs font-medium
+                            {{ in_array($item->status, ['aktif', 'AKTIF'])
+                                ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+                                : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' }}">
+                            {{ in_array($item->status, ['aktif']) ? 'Aktif' : 'Tidak Aktif' }}
                         </span>
                     </td>
                     <td class="px-5 py-3.5">
                         <div class="flex items-center justify-center gap-1">
-                            @if($item->status === 'tidak_aktif')
-                            <form method="POST" action="{{ route('dashboard.kategori-transaksi.destroy', $item) }}"
-                                  onsubmit="return confirm('Hapus kategori {{ $item->nama_kategori }}?')">
-                                @csrf @method('DELETE')
-                                <button type="submit"
-                                    class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                    </svg>
-                                </button>
-                            </form>
+                           @if($item->transaksi_count == 0)
+                            <button type="button"
+                                onclick="openDeleteModal(
+                                    '{{ route('dashboard.kategori-transaksi.destroy', $item) }}'
+                                )"
+                                class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
+
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
                             @endif
 
                             <button type="button" onclick="openModal('editKategoriModal{{ $item->id }}')"
@@ -175,7 +175,7 @@
                 <tr>
                     <td colspan="6" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-600">
                         Belum ada data kategori transaksi.
-                        <a href="{{ route('dashboard.kategori-transaksi.create') }}" class="text-green-600 hover:underline ml-1">Tambah sekarang</a>
+                        <a href="#" onclick="openModal('createKategoriModal')" class="text-green-600 hover:underline ml-1">Tambah sekarang</a>
                     </td>
                 </tr>
                 @endforelse
@@ -224,55 +224,61 @@
     </div>
 </div>
 
-@push('scripts')
-<script>
-    function openModal(id) {
-        const modal = document.getElementById(id);
-
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-
-    function closeModal(id) {
-        const modal = document.getElementById(id);
-
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-    }
-
-    setTimeout(() => {
-        const successAlert = document.getElementById('success-alert');
-
-        if (successAlert) {
-            successAlert.classList.add('opacity-0');
-
-            setTimeout(() => {
-                successAlert.remove();
-            }, 500);
-        }
-    }, 5000);
-
-    setTimeout(() => {
-        const errorAlert = document.getElementById('error-alert');
-
-        if (errorAlert) {
-            errorAlert.classList.add('opacity-0');
-
-            setTimeout(() => {
-                errorAlert.remove();
-            }, 500);
-        }
-    }, 5000);
-</script>
-@endpush
-
-@endsection
-
 <x-confirm-modal
     id="deleteModal"
     title="Hapus Kategori Transaksi"
     message="Data kategori transaksi yang dihapus tidak dapat dikembalikan."
 />
 
-@include('dashboard.kategori-transaksi.create')
-@include('dashboard.kategori-transaksi.edit')
+@include('pages.kategori-transaksi.create')
+@include('pages.kategori-transaksi.edit')
+
+<script>
+    function openModal(id) {
+        const modal = document.getElementById(id);
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+
+    function closeModal(id) {
+        const modal = document.getElementById(id);
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+
+    function openDeleteModal(actionUrl) {
+        const form = document.getElementById('deleteModalForm');
+        form.action = actionUrl;
+        openModal('deleteModal');
+    }
+
+    document.getElementById('search-input').addEventListener('input', function () {
+        const btn = document.getElementById('clear-search');
+        btn.classList.toggle('hidden', this.value === '');
+    });
+
+    function clearSearch() {
+        const input = document.getElementById('search-input');
+        input.value = '';
+        document.getElementById('clear-search').classList.add('hidden');
+        document.getElementById('search-form').submit();
+    }
+
+    setTimeout(() => {
+        const successAlert = document.getElementById('success-alert');
+        if (successAlert) {
+            successAlert.classList.add('opacity-0');
+            setTimeout(() => successAlert.remove(), 500);
+        }
+    }, 5000);
+
+    setTimeout(() => {
+        const errorAlert = document.getElementById('error-alert');
+        if (errorAlert) {
+            errorAlert.classList.add('opacity-0');
+            setTimeout(() => errorAlert.remove(), 500);
+        }
+    }, 5000);
+</script>
+
+@endsection

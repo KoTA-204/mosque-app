@@ -10,23 +10,20 @@ class KategoriTransaksiController extends Controller
 {
     public function index(Request $request)
     {
-        $query = KategoriTransaksi::query();
+        $perPage  = $request->input('per_page', 10);
+        $search   = $request->input('search');
 
-        // Search
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('nama_kategori', 'ilike', '%' . $request->search . '%')
-                  ->orWhere('deskripsi', 'ilike', '%' . $request->search . '%');
-            });
-        }
-
-        // Filter jenis
-        if ($request->filled('jenis')) {
-            $query->where('jenis_transaksi', $request->jenis);
-        }
-
-        $perPage    = (int) $request->get('per_page', 10);
-        $kategori   = $query->orderBy('nama_kategori')->paginate($perPage)->withQueryString();
+        $kategori = KategoriTransaksi::withCount('transaksi')
+            ->when($search, fn($q) =>
+                $q->whereRaw('LOWER(nama_kategori) LIKE ?', ['%' . strtolower($search) . '%'])
+                ->orWhereRaw('LOWER(deskripsi) LIKE ?', ['%' . strtolower($search) . '%'])
+            )
+            ->when($request->input('status'), fn($q, $status) =>
+                $q->where('status', $status)
+            )
+            ->latest()
+            ->paginate($perPage)
+            ->withQueryString();
 
         return view('pages.kategori-transaksi.index', compact('kategori', 'perPage'));
     }
@@ -40,18 +37,16 @@ class KategoriTransaksiController extends Controller
     {
         $request->validate([
             'nama_kategori'   => 'required|string|max:100|unique:kategori_transaksi,nama_kategori',
-            'jenis_transaksi' => 'required|in:PEMASUKAN,PENGELUARAN',
-            'status'          => 'required|in:AKTIF,tidak_aktif',
+            'status'          => 'required|in:aktif,tidak_aktif',
             'deskripsi'       => 'nullable|string|max:500',
         ], [
             'nama_kategori.required'   => 'Nama kategori wajib diisi.',
             'nama_kategori.unique'     => 'Nama kategori sudah digunakan.',
-            'jenis_transaksi.required' => 'Jenis transaksi wajib dipilih.',
             'status.required'          => 'Status wajib dipilih.',
         ]);
 
         KategoriTransaksi::create($request->only(
-            'nama_kategori', 'jenis_transaksi', 'status', 'deskripsi'
+            'nama_kategori', 'status', 'deskripsi'
         ));
 
         return redirect()
@@ -68,19 +63,19 @@ class KategoriTransaksiController extends Controller
     {
         $request->validate([
             'nama_kategori'   => 'required|string|max:100|unique:kategori_transaksi,nama_kategori,' . $kategoriTransaksi->id,
-            'jenis_transaksi' => 'required|in:PEMASUKAN,PENGELUARAN',
             'status'          => 'required|in:aktif,tidak_aktif',
             'deskripsi'       => 'nullable|string|max:500',
         ], [
             'nama_kategori.required'   => 'Nama kategori wajib diisi.',
             'nama_kategori.unique'     => 'Nama kategori sudah digunakan.',
-            'jenis_transaksi.required' => 'Jenis transaksi wajib dipilih.',
             'status.required'          => 'Status wajib dipilih.',
         ]);
 
-        $kategoriTransaksi->update($request->only(
-            'nama_kategori', 'jenis_transaksi', 'status', 'deskripsi'
-        ));
+        $kategoriTransaksi->update([
+            'nama_kategori'   => $request->nama_kategori,
+            'status'          => strtolower(trim($request->status)), // 🔥 FIX UTAMA
+            'deskripsi'       => $request->deskripsi,
+        ]);
 
         return redirect()
             ->route('dashboard.kategori-transaksi.index')

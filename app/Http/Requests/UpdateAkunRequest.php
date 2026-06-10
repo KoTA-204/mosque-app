@@ -27,8 +27,18 @@ class UpdateAkunRequest extends FormRequest
             'parent_id'    => 'required|exists:akun,id',
             'kode_akun'    => 'required|string|max:20|unique:akun,kode_akun,' . $akunId,
             'nama_akun'    => 'required|string|max:150',
-            'saldo_normal' => 'required|in:debit,kredit',
+            'saldo_normal' => 'required|in:DEBIT,KREDIT',
+            'deskripsi'    => 'nullable|string',
+            'status'       => 'required|in:aktif,tidak_aktif',
         ];
+    }
+
+    public function validated($key = null, $default = null): array
+    {
+        $data = parent::validated($key, $default);
+        $data['status'] = $this->input('status', 'tidak_aktif');
+
+        return $data;
     }
  
     public function messages(): array
@@ -39,6 +49,8 @@ class UpdateAkunRequest extends FormRequest
             'kode_akun.unique'      => 'Nomor akun sudah digunakan.',
             'nama_akun.required'    => 'Nama akun wajib diisi.',
             'saldo_normal.required' => 'Saldo normal wajib dipilih.',
+            'deskripsi.string'      => 'Deskripsi harus berupa teks.',
+            'status.required'       => 'Status wajib dipilih.',
         ];
     }
 }

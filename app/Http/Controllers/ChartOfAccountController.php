@@ -23,32 +23,75 @@ class ChartOfAccountController extends Controller
             ->whereHas('parent', fn($q) => $q->whereNull('parent_id'))
             ->count();
 
-        $kategoriQuery = KategoriAkun::with([
-            'akunKeuangan' => fn($q) => $q->whereNull('parent_id')
-                ->with(['children' => fn($q2) => $q2->with('children')]),
-        ])->orderBy('kode_kategori');
-
         $allKategori = KategoriAkun::orderBy('kode_kategori')->get();
 
+        $subKategoriList = Akun::whereNull('parent_id')
+            ->when($request->kategori, function ($q) use ($request) {
+                $q->where('kategori_akun_id', $request->kategori);
+            })
+            ->orderBy('kode_akun')
+            ->get();
+
+        $kategoriQuery = KategoriAkun::with([
+            'akunKeuangan' => function ($q) use ($request) {
+                $q->whereNull('parent_id')
+                ->when($request->sub_kategori, function ($query) use ($request) {
+                    $query->where('id', $request->sub_kategori);
+                })
+                ->orderBy('kode_akun')
+                ->with(['children' => function ($q) {
+                    $q->orderBy('kode_akun');
+                }]);
+            }
+        ])->orderBy('kode_kategori');
+
+        // Filter kategori
         if ($request->filled('kategori')) {
             $kategoriQuery->where('id', $request->kategori);
-            $perPage    = 1;
-            $kategori   = $kategoriQuery->paginate($perPage)->withQueryString();
-            $isFiltered = true;
-        } else {
-            $perPage    = null;
-            $kategori   = $kategoriQuery->get();
-            $isFiltered = false;
         }
+
+        // Filter sub kategori
+        if ($request->filled('sub_kategori')) {
+            $kategoriQuery->whereHas('akunKeuangan', function ($q) use ($request) {
+                $q->where('id', $request->sub_kategori);
+            });
+        }
+
+        // Search
+        if ($request->filled('search')) {
+            $search = strtolower($request->search);
+
+            $kategoriQuery->where(function ($q) use ($search) {
+
+                $q->whereRaw('LOWER(nama_kategori) LIKE ?', ["%{$search}%"])
+
+                ->orWhereHas('akunKeuangan', function ($sub) use ($search) {
+
+                    $sub->whereRaw('LOWER(nama_akun) LIKE ?', ["%{$search}%"])
+
+                        ->orWhereHas('children', function ($akun) use ($search) {
+
+                            $akun->whereRaw('LOWER(nama_akun) LIKE ?', ["%{$search}%"]);
+
+                        });
+
+                });
+
+            });
+        }
+
+        $kategori = $kategoriQuery
+            ->orderBy('kode_kategori')
+            ->paginate(10)
+            ->withQueryString();
 
         return view('pages.coa.index', compact(
             'totalKategori',
             'totalSubKategori',
             'totalAkun',
             'kategori',
-            'allKategori',
-            'perPage',
-            'isFiltered',
+            'subKategoriList',
+            'allKategori'
         ));
     }
 
@@ -84,22 +127,36 @@ class ChartOfAccountController extends Controller
 
     public function destroyKategori(KategoriAkun $kategori)
     {
-        if ($kategori->akunKeuangan()->exists()) {
-            return back()->with('error', 'Kategori tidak dapat dihapus karena masih memiliki akun.');
+        try {
+
+            if ($kategori->akunKeuangan()->exists()) {
+                return back()->with(
+                    'error',
+                    'Kategori tidak dapat dihapus karena masih memiliki sub kategori.'
+                );
+            }
+
+            $kategori->delete();
+
+            return back()->with(
+                'success',
+                'Kategori berhasil dihapus.'
+            );
+
+        } catch (\Exception $e) {
+
+            return back()->with(
+                'error',
+                'Kategori tidak dapat dihapus karena masih digunakan.'
+            );
         }
-
-        $kategori->delete();
-
-        return back()->with('success', 'Kategori akun berhasil dihapus.');
     }
 
     // Sub Kategori
 
     public function createSubKategori()
     {
-        $kategoriList = KategoriAkun::orderBy('kode_kategori')->get();
-
-        return view('pages.coa.create-subkategori', compact('kategoriList'));
+        return redirect()->route('dashboard.coa.index');
     }
 
     public function storeSubKategori(StoreSubKategoriRequest $request)
@@ -107,26 +164,37 @@ class ChartOfAccountController extends Controller
         Akun::create([
             ...$request->validated(),
             'parent_id'    => null,
-            'saldo_normal' => null,
         ]);
 
         return redirect()
             ->route('dashboard.coa.index')
             ->with('success', 'Sub kategori akun berhasil ditambahkan.');
+
+        dd($request->all());
     }
 
     public function editSubKategori(Akun $subKategori)
     {
         $kategoriList = KategoriAkun::orderBy('kode_kategori')->get();
 
-        return view('pages.coa.edit-subkategori', compact('subKategori', 'kategoriList'));
+        $subKategoriList = Akun::whereNull('parent_id')
+            ->orderBy('kode_akun')
+            ->get();
+
+        $allKategori = KategoriAkun::orderBy('kode_kategori')->get();
+
+        return view('pages.coa.edit-subkategori', compact(
+            'subKategori',
+            'kategoriList',
+            'subKategoriList',
+            'allKategori'
+        ));
     }
 
     public function updateSubKategori(UpdateSubKategoriRequest $request, Akun $subKategori)
     {
         $subKategori->update([
             ...$request->validated(),
-            'saldo_normal' => null,
         ]);
 
         return redirect()
@@ -136,14 +204,30 @@ class ChartOfAccountController extends Controller
 
     public function destroySubKategori(Akun $subKategori)
     {
-        if ($subKategori->children()->exists()) {
-            return back()->with('error', 'Sub kategori tidak dapat dihapus karena masih memiliki akun.');
+        try {
+
+            if ($subKategori->children()->exists()) {
+                return back()->with(
+                    'error',
+                    'Sub kategori tidak dapat dihapus karena masih memiliki akun.'
+                );
+            }
+
+            $subKategori->delete();
+
+            return back()->with(
+                'success',
+                'Sub kategori berhasil dihapus.'
+            );
+
+        } catch (\Exception $e) {
+
+            return back()->with(
+                'error',
+                'Sub kategori tidak dapat dihapus karena masih digunakan.'
+            );
         }
-
-        $subKategori->delete();
-
-        return back()->with('success', 'Sub kategori berhasil dihapus.');
-    }
+    }   
 
     // Akun
 
@@ -178,7 +262,15 @@ class ChartOfAccountController extends Controller
             ->orderBy('kode_akun')
             ->get();
 
-        return view('pages.coa.edit-akun', compact('akun', 'subKategoriList'));
+        $akunList = Akun::whereNotNull('parent_id')
+            ->orderBy('kode_akun')
+            ->get();
+
+        return view('pages.coa.edit-akun', compact(
+            'akun',
+            'subKategoriList',
+            'akunList'
+        ));
     }
 
     public function updateAkun(UpdateAkunRequest $request, Akun $akun)

@@ -2,10 +2,12 @@
     id="createSubKategoriModal"
     title="Tambah Sub Kategori Akun"
 >
-<form method="POST" action="{{ route('dashboard.coa.sub-kategori.store') }}" class="p-6 space-y-5" onsubmit="handleFormSubmit(this)">
+<form method="POST" 
+        action="{{ route('dashboard.coa.sub-kategori.store') }}" 
+        class="space-y-5" 
+        onsubmit="handleFormSubmit(this)">
     @csrf
 
-    {{-- Kategori --}}
     <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             Kategori <span class="text-red-500">*</span>
@@ -39,7 +41,6 @@
         @enderror
     </div>
 
-    {{-- Kode Sub Kategori --}}
     <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             Kode Sub Kategori <span class="text-red-500">*</span>
@@ -73,14 +74,37 @@
         @enderror
     </div>
 
-    {{-- Deskripsi --}}
     <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-            Deskripsi
+            Saldo Normal <span class="text-red-500">*</span>
         </label>
 
-        <textarea name="deskripsi" rows="4" placeholder="Masukan deskripsi sub kategori" class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 focus:border-green-400 rounded-xl outline-none resize-none transition-colors
-            bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400">{{ old('deskripsi') }}</textarea>
+        <div class="relative">
+            <select name="saldo_normal" class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none appearance-none transition-colors
+                {{ $errors->has('saldo_normal')
+                    ? 'border-red-400'
+                    : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }}
+                bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+
+                <option value="DEBIT"
+                    {{ old('saldo_normal','DEBIT') === 'DEBIT' ? 'selected' : '' }}>
+                    Debit
+                </option>
+
+                <option value="KREDIT"
+                    {{ old('saldo_normal') === 'KREDIT' ? 'selected' : '' }}>
+                    Kredit
+                </option>
+            </select>
+
+            <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+        </div>
+
+        @error('saldo_normal')
+        <p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>
+        @enderror
     </div>
 
     {{-- Actions --}}
@@ -91,18 +115,3 @@
     </button>
 </form>
 </x-modal>
-
-<script>
-    let isSubmitting = false;
-
-    function handleFormSubmit(form) {
-        isSubmitting = true;
-
-        const button = form.querySelector('button[type="submit"]');
-
-        if (button) {
-            button.disabled = true;
-            button.innerHTML = 'Menyimpan...';
-        }
-    }
-</script>
