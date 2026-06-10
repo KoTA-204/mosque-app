@@ -98,13 +98,6 @@
 {{-- Modal Container (create & edit) --}}
 <div id="modalContainer"></div>
 
-{{-- Delete Modal --}}
-<x-confirm-modal
-    id="deleteUserModal"
-    title="Hapus User"
-    message="Yakin ingin menghapus user ini? Tindakan ini tidak dapat dibatalkan."
-/>
-
 <script>
 const modalContainer = document.getElementById('modalContainer');
 const csrfToken      = document.querySelector('meta[name="csrf-token"]').content;
@@ -170,32 +163,29 @@ function loadModal(url) {
 
 function openCreateModal() { loadModal(`${baseUrl}/create`); }
 function openEditModal(id)  { loadModal(`${baseUrl}/${id}/edit`); }
+function openDeleteModal(id) { loadModal(`${baseUrl}/${id}/delete`); }
 
-function openDeleteModal(id) {
-    const modal = document.getElementById('deleteUserModal');
-    const form  = document.getElementById('deleteUserModalForm');
-    form.action = `${baseUrl}/${id}`;
-    modal.style.display = 'flex';
-}
-
+// Ganti fungsi showAlert yang lama dengan ini:
 function showAlert(msg, type = 'success') {
     const area   = document.getElementById('alertArea');
     const colors = {
         success: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400',
+        warning: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-400',
         error:   'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400',
     };
     const icons = {
         success: '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>',
+        warning: '<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>',
         error:   '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>',
     };
+    const c = colors[type] ?? colors.success;
+    const i = icons[type]  ?? icons.success;
     area.innerHTML = `
-        <div class="flex items-center gap-3 ${colors[type] ?? colors.success} border rounded-xl px-4 py-3 text-sm">
-            <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                ${icons[type] ?? icons.success}
-            </svg>
+        <div class="flex items-center gap-3 ${c} border rounded-xl px-4 py-3 text-sm">
+            <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">${i}</svg>
             ${msg}
         </div>`;
-    setTimeout(() => { area.innerHTML = ''; }, 4000);
+    setTimeout(() => { area.innerHTML = ''; }, 5000);
 }
 
 function updateStats(stats) {
@@ -262,13 +252,6 @@ function applyFilters() {
 document.getElementById('filterSearch').addEventListener('input', () => {
     clearTimeout(filterDebounce);
     filterDebounce = setTimeout(applyFilters, 400);
-});
-
-// Setelah delete berhasil, reload tabel
-document.getElementById('deleteUserModalForm').addEventListener('submit', function() {
-    const modal = document.getElementById('deleteUserModal');
-    modal.style.display = 'none';
-    setTimeout(() => applyFilters(), 300);
 });
 </script>
 @endsection

@@ -4,14 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\AkunDibuatNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
     public function index(Request $request)
     {
-        // Stats selalu dihitung dari semua data (tidak terpengaruh filter)
         $stats = [
             'total'       => User::count(),
             'aktif'       => User::where('status', 'active')->count(),
@@ -28,7 +29,7 @@ class UserController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'ilike', "%{$search}%")
-                ->orWhere('email', 'ilike', "%{$search}%");
+                  ->orWhere('email', 'ilike', "%{$search}%");
             });
         }
         if ($request->filled('role')) {
@@ -45,7 +46,7 @@ class UserController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'html'  => view('pages.users.table', compact('users', 'roles'))->render(),
-                'stats' => $stats, // ← ini yang hilang sebelumnya
+                'stats' => $stats,
             ]);
         }
 
@@ -68,30 +69,42 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'     => 'required|string|max:100',
-            'email'    => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
-            'role_id'  => 'required|exists:roles,id',
-            'status'   => 'required|in:active,inactive',
+            'name'    => 'required|string|max:100',
+            'email'   => 'required|email|unique:users,email',
+            'role_id' => 'required|exists:roles,id',
+            'status'  => 'required|in:active,inactive',
         ]);
 
-        User::create([
+        $user = User::create([
             'name'     => $validated['name'],
             'email'    => $validated['email'],
-            'password' => Hash::make($validated['password']),
+            'password' => Hash::make(Str::random(32)),
             'role_id'  => $validated['role_id'],
             'status'   => $validated['status'],
         ]);
 
+        $emailSent = false;
+        try {
+            $user->notify(new AkunDibuatNotification($user->name));
+            $emailSent = true;
+        } catch (\Throwable $e) {
+            // Email gagal tapi user tetap tersimpan
+            \Log::error('Gagal kirim email aktivasi user #' . $user->id . ': ' . $e->getMessage());
+        }
+
+        $message = $emailSent
+            ? 'User berhasil ditambahkan. Link pengaturan password telah dikirim ke ' . $user->email . '.'
+            : 'User berhasil ditambahkan, namun email gagal terkirim. Pastikan konfigurasi mail sudah benar.';
+
         if ($request->ajax()) {
             return response()->json([
-                'success' => true,
-                'message' => 'User berhasil ditambahkan.',
+                'success'    => true,
+                'message'    => $message,
+                'email_sent' => $emailSent,
             ]);
         }
 
-        return redirect()->route('dashboard.users.index')
-            ->with('success', 'User berhasil ditambahkan.');
+        return redirect()->route('dashboard.users.index')->with('success', $message);
     }
 
     public function edit(Request $request, User $user)
@@ -130,9 +143,6 @@ class UserController extends Controller
             ->with('success', 'User berhasil diupdate.');
     }
 
-    /**
-     * Modal konfirmasi delete — hanya render view.
-     */
     public function confirmDelete(Request $request, User $user)
     {
         if ($request->ajax()) {
@@ -146,6 +156,19 @@ class UserController extends Controller
 
     public function destroy(Request $request, User $user)
     {
+        // Tolak hapus jika user sudah mencatat transaksi
+        if ($user->hasTransaksi()) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User tidak dapat dihapus karena sudah memiliki riwayat transaksi.',
+                ], 422);
+            }
+
+            return redirect()->route('dashboard.users.index')
+                ->with('error', 'User tidak dapat dihapus karena sudah memiliki riwayat transaksi.');
+        }
+
         $user->delete();
 
         if ($request->ajax()) {
