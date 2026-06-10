@@ -524,7 +524,178 @@ class LaporanKeuanganController extends Controller
     }
 
     // =========================================================================
-    //  4. CATATAN ATAS LAPORAN KEUANGAN (CALK)
+    //  4. LAPORAN ARUS KAS
+    //
+    //  Format ISAK 35: tiga kolom (Aktivitas Operasi | Aktivitas Investasi | Aktivitas Pendanaan)
+    // ==>> Untuk laporan arus kas, kita tidak bisa hanya mengandalkan struktur CoA karena
+    //      aktivitasnya tidak selalu berhubungan langsung dengan prefix kode_akun tertentu.
+    //      Oleh karena itu, kita akan menggunakan pendekatan berbasis tagging:
+    //      1. Tambahkan field 'tag' di tabel akun untuk menandaii aktivitas (operasi, investasi, pendanaan).
+    //      2. Saat menghitung arus kas, filter akun berdasarkan tag ini, bukan hanya kode_akun.
+    //      3. Ini memungkinkan fleksibilitas penuh dalam klasifikasi akun untuk laporan arus kas, tanpa mengubah struktur CoA yang sudah ada.
+    // =========================================================================
+
+    public function arusKas(Request $request)
+    {
+        [$periodeList, $periode, $periodePrev, $selectedId] = $this->resolvePeriode($request);
+
+        $data     = $this->buildArusKas($periode);
+        $dataPrev = $periodePrev ? $this->buildArusKas($periodePrev) : null;
+
+        return view('pages.laporan.arus-kas', compact(
+            'periodeList', 'periode', 'periodePrev', 'data', 'dataPrev'
+        ))->with('selectedPeriodeId', $selectedId);
+    }
+
+    private function buildArusKas(?Periode $periode): array
+    {
+        $empty = [
+            'penerimaanOperasional' => collect(),
+            'pengeluaranOperasional' => collect(),
+            'kasNetoOperasional'    => 0,
+            'pengeluaranInvestasi'  => collect(),
+            'penerimaanInvestasi'   => collect(),
+            'kasNetoInvestasi'      => 0,
+            'penerimaanPendanaan'   => collect(),
+            'penyaluranPendanaan'   => collect(),
+            'kasNetoPendanaan'      => 0,
+            'kenaikanNeto'          => 0,
+            'kasAwal'               => 0,
+            'kasAkhir'              => 0,
+        ];
+
+        if (!$periode) return $empty;
+
+        $pid  = $periode->id;
+        $pids = $this->getPeriodeIdsUpTo($pid);
+
+        // Periode sebelumnya untuk hitung delta aset tetap
+        $periodePrevObj = Periode::where('tipe', $periode->tipe)
+            ->where('tanggal_akhir', '<', $periode->tanggal_awal)
+            ->orderByDesc('tanggal_akhir')
+            ->first();
+
+        // ── OPERASIONAL: PENERIMAAN ─────────────────────────────────────────
+        // Sumber: semua akun 4-1 (pendapatan tanpa pembatasan), periode ini
+        $penerimaanOperasional = $this->getRincianAkun('4-1', $pid, 'KREDIT')
+            ->filter(fn($r) => $r->saldo != 0)->values();
+
+        $totalPenerimaanOp = $penerimaanOperasional->sum('saldo');
+
+        // ── OPERASIONAL: PENGELUARAN ────────────────────────────────────────
+        // Sumber: semua akun 5- KECUALI yang mengandung "penyusutan"/"depresiasi"
+        // (non-kas tidak masuk arus kas metode langsung)
+        $semuaBeban = collect();
+        $headerBeban = Akun::where('kode_akun', 'like', '5-%')
+            ->whereNull('parent_id')
+            ->orderBy('kode_akun')
+            ->get();
+
+        foreach ($headerBeban as $header) {
+            $kode    = rtrim($header->kode_akun, '0');
+            $rincian = $this->getRincianAkun($kode, $pid, 'DEBIT')
+                ->filter(fn($r) => $r->saldo != 0)
+                ->filter(fn($r) => !preg_match('/penyusutan|depresiasi/i', $r->nama_akun))
+                ->values();
+            foreach ($rincian as $r) {
+                $semuaBeban->push($r);
+            }
+        }
+
+        // Pisahkan: beban operasional vs beban yang terkait dana terikat
+        // (beban zakat/santunan → masuk Pendanaan, bukan Operasional)
+        $pengeluaranOperasional = $semuaBeban
+            ->filter(fn($r) => !preg_match('/zakat|santunan|wakaf/i', $r->nama_akun))
+            ->values();
+
+        $penyaluranPendanaan = $semuaBeban
+            ->filter(fn($r) => preg_match('/zakat|santunan|wakaf/i', $r->nama_akun))
+            ->values();
+
+        $totalPengeluaranOp  = $pengeluaranOperasional->sum('saldo');
+        $kasNetoOperasional  = $totalPenerimaanOp - $totalPengeluaranOp;
+
+        // ── INVESTASI ───────────────────────────────────────────────────────
+        // Pengeluaran: delta aset tetap (1-2, saldo_normal DEBIT) vs periode lalu
+        $asetTetapSekarang = Akun::where('kode_akun', 'like', '1-2%')
+            ->whereNotNull('parent_id')
+            ->where('saldo_normal', 'DEBIT')
+            ->get()
+            ->map(fn($akun) => $this->hitungSaldo(
+                DetailJurnal::where('akun_id', $akun->id)
+                    ->whereHas('jurnal', fn($q) => $q
+                        ->whereIn('periode_id', $pids)
+                        ->where('status', 'POSTED')
+                    ),
+                'DEBIT'
+            ))->sum();
+
+        $asetTetapSebelumnya = 0;
+        if ($periodePrevObj) {
+            $prevPids = $this->getPeriodeIdsUpTo($periodePrevObj->id);
+            $asetTetapSebelumnya = Akun::where('kode_akun', 'like', '1-2%')
+                ->whereNotNull('parent_id')
+                ->where('saldo_normal', 'DEBIT')
+                ->get()
+                ->map(fn($akun) => $this->hitungSaldo(
+                    DetailJurnal::where('akun_id', $akun->id)
+                        ->whereHas('jurnal', fn($q) => $q
+                            ->whereIn('periode_id', $prevPids)
+                            ->where('status', 'POSTED')
+                        ),
+                    'DEBIT'
+                ))->sum();
+        }
+
+        $deltaAsetTetap = $asetTetapSekarang - $asetTetapSebelumnya;
+
+        // Pengeluaran investasi = pembelian (delta positif = beli)
+        $pengeluaranInvestasi = collect();
+        if ($deltaAsetTetap > 0) {
+            $pengeluaranInvestasi->push((object)[
+                'nama_akun' => 'Pembelian peralatan & inventaris',
+                'saldo'     => $deltaAsetTetap,
+            ]);
+        }
+
+        // Penerimaan investasi = akun pendapatan yang mengandung "penjualan aset"
+        $penerimaanInvestasi = $this->getRincianAkun('4-1', $pid, 'KREDIT')
+            ->filter(fn($r) => preg_match('/penjualan aset|divestasi/i', $r->nama_akun))
+            ->values();
+
+        $kasNetoInvestasi = $penerimaanInvestasi->sum('saldo') - $pengeluaranInvestasi->sum('saldo');
+
+        // ── PENDANAAN ───────────────────────────────────────────────────────
+        // Penerimaan: semua 4-2 (terikat): zakat, wakaf, infak pembangunan
+        $penerimaanPendanaan = $this->getRincianAkun('4-2', $pid, 'KREDIT')
+            ->filter(fn($r) => $r->saldo != 0)->values();
+
+        $kasNetoPendanaan = $penerimaanPendanaan->sum('saldo') - $penyaluranPendanaan->sum('saldo');
+
+        // ── REKONSILIASI ────────────────────────────────────────────────────
+        $kenaikanNeto = $kasNetoOperasional + $kasNetoInvestasi + $kasNetoPendanaan;
+
+        // Kas Awal: saldo akun 1-1 (bukan piutang) s.d. periode lalu
+        $kasAwal = 0;
+        if ($periodePrevObj) {
+            $prevPids2 = $this->getPeriodeIdsUpTo($periodePrevObj->id);
+            $kasAwal = $this->getRincianAkunKumulatif('1-1', $prevPids2, 'DEBIT')
+                ->filter(fn($r) => !preg_match('/piutang/i', $r->nama_akun))
+                ->sum('saldo');
+        }
+
+        $kasAkhir = $kasAwal + $kenaikanNeto;
+
+        return compact(
+            'penerimaanOperasional', 'pengeluaranOperasional', 'kasNetoOperasional',
+            'penerimaanInvestasi', 'pengeluaranInvestasi', 'kasNetoInvestasi',
+            'penerimaanPendanaan', 'penyaluranPendanaan', 'kasNetoPendanaan',
+            'kenaikanNeto', 'kasAwal', 'kasAkhir'
+        );
+    }
+
+    // =========================================================================
+    //  5. CATATAN ATAS LAPORAN KEUANGAN (CALK)
     // =========================================================================
 
     public function calk(Request $request)
