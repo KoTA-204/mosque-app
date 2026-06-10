@@ -130,6 +130,8 @@ class AsetController extends Controller
 
     public function show(Aset $aset)
     {
+        $aset->load('jurnalPenyesuaian.periode');
+
         if (request()->ajax()) {
             return response()->json([
                 'html' => view('pages.aset.show', compact('aset'))->render(),

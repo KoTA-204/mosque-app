@@ -126,6 +126,13 @@ class Aset extends Model
         };
     }
 
+    public function jurnalPenyesuaian()
+    {
+        return $this->belongsToMany(Jurnal::class, 'jurnal_aset', 'aset_id', 'jurnal_id')
+            ->withPivot('nominal')
+            ->orderBy('tanggal', 'desc');
+    }
+
     public function getPemilikAsetAttribute(): string
     {
         return 'Masjid Lukmanul Hakim';

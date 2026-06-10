@@ -159,8 +159,10 @@
                 @endif
             </div>
 
-            {{-- Jadwal penyusutan --}}
-            <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800">
+            {{-- Proyeksi Jadwal Penyusutan --}}
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Proyeksi Jadwal Penyusutan (Garis Lurus)</p>
+            <p class="text-xs text-gray-400 mb-3">Tabel ini adalah proyeksi teoritis, bukan catatan jurnal aktual.</p>
+            <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800 mb-6">
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-800">
@@ -173,24 +175,22 @@
                     </thead>
                     <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
                         @php
-                            $nilaiAwal        = (float) $aset->nilai_tercatat;
-                            $penyTahunan      = $aset->umur_manfaat > 0 ? $nilaiAwal / $aset->umur_manfaat : 0;
-                            $akumulasi        = 0;
-                            $tahunMulai       = $aset->tanggal_mulai_penyusutan->year;
+                            $nilaiAwal         = (float) $aset->nilai_tercatat;
+                            $penyTahunan       = $aset->umur_manfaat > 0 ? $nilaiAwal / $aset->umur_manfaat : 0;
+                            $akumulasi         = 0;
+                            $tahunMulai        = $aset->tanggal_mulai_penyusutan->year;
                             $snapshotAkumulasi = (float) $aset->akumulasi_penyusutan;
-                            $isNonaktif       = $aset->status_aset === 'TIDAK AKTIF';
-                            $sudahDihentikan  = false;
+                            $isNonaktif        = $aset->status_aset === 'TIDAK AKTIF';
+                            $sudahDihentikan   = false;
                         @endphp
                         @for($i = 1; $i <= $aset->umur_manfaat; $i++)
                         @php
-                            $nilaiBukuAwal  = $nilaiAwal - $akumulasi;
-                            $akumulasi     += $penyTahunan;
-                            $nilaiBuku      = max($nilaiAwal - $akumulasi, 0);
-                            $tahun          = $tahunMulai + $i - 1;
-                            $isCurrent      = $tahun == now()->year;
-                            $isPast         = $tahun < now()->year;
-
-                            // Tandai baris dihentikan: saat nonaktif dan akumulasi baris ini melebihi snapshot
+                            $nilaiBukuAwal = $nilaiAwal - $akumulasi;
+                            $akumulasi    += $penyTahunan;
+                            $nilaiBuku     = max($nilaiAwal - $akumulasi, 0);
+                            $tahun         = $tahunMulai + $i - 1;
+                            $isCurrent     = $tahun == now()->year;
+                            $isPast        = $tahun < now()->year;
                             if ($isNonaktif && !$sudahDihentikan && $akumulasi > $snapshotAkumulasi + 1) {
                                 $sudahDihentikan = true;
                             }
@@ -198,14 +198,14 @@
                         <tr class="
                             {{ $sudahDihentikan ? 'opacity-30 bg-gray-50 dark:bg-gray-800/30' : '' }}
                             {{ !$sudahDihentikan && $isCurrent ? 'bg-green-50 dark:bg-green-900/10' : '' }}
-                            {{ !$sudahDihentikan && $isPast ? 'opacity-50' : '' }}
+                            {{ !$sudahDihentikan && $isPast && !$isNonaktif ? 'opacity-50' : '' }}
                             hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                             <td class="px-4 py-2.5 text-xs {{ !$sudahDihentikan && $isCurrent ? 'font-semibold text-green-700 dark:text-green-400' : 'text-gray-700 dark:text-gray-300' }}">
                                 {{ $tahun }}
                                 @if(!$sudahDihentikan && $isCurrent)
-                                    <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Tahun Ini</span>
+                                    <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-700">Tahun Ini</span>
                                 @endif
-                                @if($sudahDihentikan && $akumulasi - $penyTahunan <= $snapshotAkumulasi + 1)
+                                @if($sudahDihentikan && ($akumulasi - $penyTahunan) <= $snapshotAkumulasi + 1)
                                     <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-red-100 text-red-600">Dihentikan</span>
                                 @endif
                             </td>
@@ -218,7 +218,68 @@
                     </tbody>
                 </table>
             </div>
-            <p class="text-xs text-gray-400 mt-2">* Metode: Garis Lurus (Straight-Line)</p>
+            <p class="text-xs text-gray-400 mb-6">* Metode: Garis Lurus (Straight-Line)</p>
+
+            {{-- Riwayat Jurnal Penyesuaian Aktual --}}
+            @php $jurnalAset = $aset->jurnalPenyesuaian; @endphp
+            @if($jurnalAset->count() > 0)
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Riwayat Jurnal Penyesuaian Aktual</p>
+            <p class="text-xs text-gray-400 mb-3">Penyusutan yang sudah benar-benar dicatat di jurnal penyesuaian.</p>
+            <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-800">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-800">
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Tanggal</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Periode</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Keterangan</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Nominal</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+                        @foreach($jurnalAset as $j)
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                            <td class="px-4 py-2.5 text-xs text-gray-700 dark:text-gray-300">
+                                {{ $j->tanggal->translatedFormat('d F Y') }}
+                            </td>
+                            <td class="px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">
+                                {{ $j->periode->nama_periode ?? '—' }}
+                            </td>
+                            <td class="px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400">
+                                {{ $j->keterangan ?? '—' }}
+                            </td>
+                            <td class="px-4 py-2.5 text-right text-xs font-semibold text-red-500">
+                                Rp {{ number_format($j->pivot->nominal, 0, ',', '.') }}
+                            </td>
+                            <td class="px-4 py-2.5 text-center">
+                                @if($j->status === 'POSTED')
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Posted</span>
+                                @else
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">Draft</span>
+                                @endif
+                            </td>
+                        </tr>
+                        @endforeach
+                        {{-- Total --}}
+                        <tr class="bg-gray-50 dark:bg-gray-800">
+                            <td colspan="3" class="px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-300">Total Penyusutan Tercatat</td>
+                            <td class="px-4 py-2.5 text-right text-xs font-bold text-red-500">
+                                Rp {{ number_format($jurnalAset->sum('pivot.nominal'), 0, ',', '.') }}
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            @else
+            <div class="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Belum ada jurnal penyesuaian yang dicatat untuk aset ini.</p>
+            </div>
+            @endif
+
         </div>
         @else
         <div class="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
