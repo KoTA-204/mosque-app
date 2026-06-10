@@ -5,9 +5,9 @@
 
     {{-- Breadcrumb --}}
     <nav class="mb-5 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-        <a href="{{ route('dashboard.kegiatan-panitia.index') }}" class="hover:text-primary">Kegiatan</a>
+        <a href="{{ route('dashboard.transaksi-kegiatan.index') }}" class="hover:text-primary">Kegiatan</a>
         <span>/</span>
-        <a href="{{ route('dashboard.kegiatan-panitia.show', $kegiatan) }}" class="hover:text-primary">{{ $kegiatan->nama_kegiatan }}</a>
+        <a href="{{ route('dashboard.transaksi-kegiatan.show', $kegiatan) }}" class="hover:text-primary">{{ $kegiatan->nama_kegiatan }}</a>
         <span>/</span>
         <span class="text-black dark:text-white">Edit</span>
     </nav>
@@ -21,16 +21,16 @@
         </div>
 
         {{-- Form --}}
-        <form action="{{ route('dashboard.kegiatan-panitia.update', $kegiatan) }}" method="POST">
+        <form action="{{ route('dashboard.transaksi-kegiatan.update', $kegiatan) }}" method="POST">
             @csrf
             @method('PUT')
 
             <div class="px-6 py-6">
-                @include('dashboard.kegiatan-panitia._form')
+                @include('dashboard.transaksi-kegiatan._form')
             </div>
 
             <div class="border-t border-stroke px-6 py-4 dark:border-strokedark flex items-center justify-end gap-3">
-                <a href="{{ route('dashboard.kegiatan-panitia.show', $kegiatan) }}"
+                <a href="{{ route('dashboard.transaksi-kegiatan.show', $kegiatan) }}"
                    class="rounded-lg border border-stroke px-5 py-2.5 text-sm font-medium text-black hover:bg-gray-100 dark:border-strokedark dark:text-white dark:hover:bg-meta-4">
                     Batal
                 </a>

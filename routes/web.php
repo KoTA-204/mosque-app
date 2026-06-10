@@ -122,37 +122,37 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
 
     // ── Kegiatan Khusus - Transaksi Kegiatan ───────────────────────────────
     
-        Route::get('/kegiatan-panitia', [TransaksiKegiatanController::class, 'index'])->name('kegiatan-panitia.index');
-        Route::get('/kegiatan-panitia/{kegiatan}', [TransaksiKegiatanController::class, 'show'])
-            ->name('kegiatan-panitia.show')
+        Route::get('/transaksi-kegiatan', [TransaksiKegiatanController::class, 'index'])->name('transaksi-kegiatan.index');
+        Route::get('/transaksi-kegiatan/{kegiatan}', [TransaksiKegiatanController::class, 'show'])
+            ->name('transaksi-kegiatan.show')
             ->whereNumber('kegiatan');
-        Route::get('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'showTransaksi'])
+        Route::get('/transaksi-kegiatan/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'showTransaksi'])
             ->whereNumber('kegiatan')
             ->whereNumber('transaksi')
-            ->name('kegiatan-panitia.transaksi.show');
+            ->name('transaksi-kegiatan.transaksi.show');
     
 
   
-        Route::get('/kegiatan-panitia/{kegiatan}/transaksi/create', [TransaksiKegiatanController::class, 'createTransaksi'])
-            ->name('kegiatan-panitia.transaksi.create');
-        Route::post('/kegiatan-panitia/{kegiatan}/transaksi', [TransaksiKegiatanController::class, 'storeTransaksi'])
-            ->name('kegiatan-panitia.transaksi.store');
+        Route::get('/transaksi-kegiatan/{kegiatan}/transaksi/create', [TransaksiKegiatanController::class, 'createTransaksi'])
+            ->name('transaksi-kegiatan.transaksi.create');
+        Route::post('/transaksi-kegiatan/{kegiatan}/transaksi', [TransaksiKegiatanController::class, 'storeTransaksi'])
+            ->name('transaksi-kegiatan.transaksi.store');
    
 
    
-        Route::get('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}/edit', [TransaksiKegiatanController::class, 'editTransaksi'])
+        Route::get('/transaksi-kegiatan/{kegiatan}/transaksi/{transaksi}/edit', [TransaksiKegiatanController::class, 'editTransaksi'])
             ->whereNumber('kegiatan')
             ->whereNumber('transaksi')
-            ->name('kegiatan-panitia.transaksi.edit');
+            ->name('transaksi-kegiatan.transaksi.edit');
 
-        Route::put('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'updateTransaksi'])
+        Route::put('/transaksi-kegiatan/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'updateTransaksi'])
             ->whereNumber('kegiatan')
             ->whereNumber('transaksi')
-            ->name('kegiatan-panitia.transaksi.update');
+            ->name('transaksi-kegiatan.transaksi.update');
    
  
-        Route::delete('/kegiatan-panitia/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'destroyTransaksi'])
-            ->name('kegiatan-panitia.transaksi.destroy');
+        Route::delete('/transaksi-kegiatan/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'destroyTransaksi'])
+            ->name('transaksi-kegiatan.transaksi.destroy');
  
 
     // ── Approval ───────────────────────────────────────────────────────────

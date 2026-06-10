@@ -29,16 +29,16 @@
 
         {{-- Filter Tab --}}
         <div class="flex items-center gap-2">
-            @foreach(['', 'BERJALAN', 'SELESAI'] as $tab)
+            @foreach(['', 'AKTIF', 'DITUTUP'] as $tab)
                 @php
                     $label = match($tab) {
-                        'BERJALAN' => 'Aktif',
-                        'SELESAI'  => 'Selesai',
+                        'AKTIF' => 'Aktif',
+                        'DITUTUP'  => 'Selesai',
                         default    => 'Semua',
                     };
                     $isActive = ($status ?? '') == $tab;
                 @endphp
-                <a href="{{ route('dashboard.kegiatan-panitia.index', ['status' => $tab, 'search' => $search]) }}"
+                <a href="{{ route('dashboard.transaksi-kegiatan.index', ['status' => $tab, 'search' => $search]) }}"
                    class="rounded-full px-5 py-2 text-sm font-medium transition-all duration-200
                        {{ $isActive
                            ? 'bg-green-600 text-white shadow-sm'
@@ -49,7 +49,7 @@
         </div>
 
         {{-- Search --}}
-        <form method="GET" action="{{ route('dashboard.kegiatan-panitia.index') }}" class="relative w-64">
+        <form method="GET" action="{{ route('dashboard.transaksi-kegiatan.index') }}" class="relative w-64">
             <input type="hidden" name="status" value="{{ $status }}">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -79,16 +79,16 @@
                 ? min(100, round(($item->transaksi->where('status_approval', 'APPROVED')->sum('jumlah') / $item->anggaran) * 100))
                 : 0;
             $statusColor = match($item->status) {
-                'BERJALAN'   => 'text-green-600',
+                'AKTIF'   => 'text-green-600',
                 'DRAFT'      => 'text-gray-500',
-                'SELESAI'    => 'text-blue-600',
+                'DITUTUP'    => 'text-blue-600',
                 'DIBATALKAN' => 'text-red-500',
                 default      => 'text-gray-500',
             };
             $statusLabel = match($item->status) {
-                'BERJALAN'   => 'Aktif',
+                'AKTIF'   => 'Aktif',
                 'DRAFT'      => 'Draft',
-                'SELESAI'    => 'Selesai',
+                'DITUTUP'    => 'Selesai',
                 'DIBATALKAN' => 'Dibatalkan',
                 default      => $item->status,
             };
@@ -100,7 +100,7 @@
                 default  => 'bg-gray-100',
             };
         @endphp
-        <a href="{{ route('dashboard.kegiatan-panitia.show', $item) }}"
+        <a href="{{ route('dashboard.transaksi-kegiatan.show', $item) }}"
            class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 hover:border-green-400 dark:hover:border-green-600 transition-colors">
             <div class="flex items-center justify-between">
                 {{-- Kiri --}}

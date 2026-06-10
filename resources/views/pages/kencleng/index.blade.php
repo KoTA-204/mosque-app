@@ -14,9 +14,6 @@
         <div class="flex items-center gap-2">
             <a href="{{ route('dashboard.kencleng.create') }}"
                class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14"/>
-                </svg>
                 Catat Kencleng Baru
             </a>
         </div>
