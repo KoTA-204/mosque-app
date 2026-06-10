@@ -414,7 +414,9 @@
 </x-modal>
 
 <x-modal id="modalImpor" title="Impor Transaksi">
-    @include('pages.transaksi.import')
+    @include('pages.transaksi.import', [
+        'dompets' => $dompets,
+    ])
 </x-modal>
 
 <x-confirm-modal
