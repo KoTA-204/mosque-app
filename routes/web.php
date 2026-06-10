@@ -54,6 +54,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('auth.logout');
 });
 
+// ── Dashboard Public ───────────────────────────────────────────────────────
+Route::get('/laporan-keuangan', [DashboardController::class, 'laporanKeuangan'])
+    ->name('laporan-keuangan.index');
+
 // ── Dashboard ──────────────────────────────────────────────────────────────
 Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(function () {
 
