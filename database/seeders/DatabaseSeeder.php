@@ -23,9 +23,9 @@ class DatabaseSeeder extends Seeder
             MenuSeeder::class,
             UserSeeder::class,
             PermissionRoleSeeder::class,
+            KategoriTransaksiSeeder::class,
             DompetSeeder::class,
             KegiatanSeeder::class,
-            KategoriTransaksiSeeder::class,
             TransaksiSeeder::class,
             KenclengSeeder::class,
             KenclengDetailSeeder::class,
@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
             AkunSeeder::class,
             AsetSeeder::class,
             PeriodeSeeder::class,
+            TransaksiKegiatanSeeder::class,
         ]);
     }
 }

@@ -78,21 +78,39 @@ class Kegiatan extends Model
 
     public function bisaInputTransaksi(): bool
     {
-        return $this->status === self::STATUS_AKTIF;
+        if ($this->status !== self::STATUS_AKTIF) return false;
+
+        // Kalau tanggal sudah lewat, panitia tidak bisa catat transaksi baru
+        return ! $this->tanggalSudahSelesai();
     }
 
-    public function totalRealisasi(): float
+        public function totalRealisasi(): float
     {
         return (float) $this->transaksi()
             ->where('status_approval', 'APPROVED')
             ->sum('jumlah');
     }
 
+    /**
+     * Cek apakah tanggal kegiatan sudah selesai (lewat hari ini).
+     * Jika tidak ada tanggal_selesai, gunakan tanggal_mulai sebagai acuan.
+     */
+    public function tanggalSudahSelesai(): bool
+    {
+        $acuan = $this->tanggal_selesai ?? $this->tanggal_mulai;
+
+        return $acuan !== null && $acuan->isPast();
+    }
+
     // ── Status otomatis ────────────────────────────────────────
 
     /**
-     * Tutup kegiatan otomatis jika semua transaksi sudah APPROVED.
-     * Dipanggil setiap kali bendahara approve sebuah transaksi.
+     * Tutup kegiatan otomatis jika:
+     *  1. Semua transaksi sudah APPROVED, DAN
+     *  2. Tanggal kegiatan sudah selesai (lewat hari ini).
+     *
+     * Dipanggil setiap kali bendahara approve sebuah transaksi,
+     * dan juga oleh scheduled command harian.
      */
     public function tutupJikaSelesai(): void
     {
@@ -101,14 +119,18 @@ class Kegiatan extends Model
         // Harus ada minimal 1 transaksi
         if (! $this->transaksi()->exists()) return;
 
-        // Cek tidak ada transaksi yang belum APPROVED
+        // Syarat 1: tidak ada transaksi yang belum APPROVED
         $adaBelumApproved = $this->transaksi()
+            ->whereNotNull('status_approval')        
             ->whereNotIn('status_approval', ['APPROVED'])
             ->exists();
 
-        if (! $adaBelumApproved) {
-            $this->update(['status' => self::STATUS_DITUTUP]);
-        }
+        if ($adaBelumApproved) return;
+
+        // Syarat 2: tanggal kegiatan sudah selesai / lewat hari ini
+        if (! $this->tanggalSudahSelesai()) return;
+
+        $this->update(['status' => self::STATUS_DITUTUP]);
     }
 
     /**
