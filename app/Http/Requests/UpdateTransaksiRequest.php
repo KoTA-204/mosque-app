@@ -5,17 +5,17 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreTransaksiRequest extends FormRequest
+class UpdateTransaksiRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // otorisasi detail ditangani di controller
+        return true;
     }
 
     public function rules(): array
     {
         return [
-            'jenis_transaksi'       => ['required', Rule::in(['PEMASUKAN', 'PENGELUARAN'])],
+            'jenis_transaksi'       => ['required', Rule::in(['PEMASUKAN', 'PENGELUARAN'])], // ✅ ditambah
             'tanggal_transaksi'     => ['required', 'date'],
             'jumlah'                => ['required', 'numeric', 'min:1'],
             'dompet_id'             => ['required', 'exists:dompet,id'],
@@ -23,14 +23,8 @@ class StoreTransaksiRequest extends FormRequest
             'deskripsi'             => ['nullable', 'string', 'max:500'],
             'bukti_transaksi'       => ['nullable', 'array'],
             'bukti_transaksi.*'     => ['file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'jumlah.min'            => 'Jumlah minimal Rp 1.',
-            'bukti_transaksi.*.max' => 'Ukuran tiap bukti maksimal 5MB.',
+            'hapus_bukti'           => ['nullable', 'array'],
+            'hapus_bukti.*'         => ['integer', 'exists:bukti_transaksi,id'],
         ];
     }
 }

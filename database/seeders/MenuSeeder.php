@@ -84,7 +84,7 @@ class MenuSeeder extends Seeder
 
         Menu::create([
             'menu_name'     => 'Transaksi Kegiatan',
-            'route_name'    => 'dashboard.kegiatan-panitia.index',
+            'route_name'    => 'dashboard.transaksi-kegiatan.index',
             'icon'          => 'receipt',
             'parent_id'     => $pencatatan->id,
             'sort_order'    => 22,
