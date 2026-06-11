@@ -19,6 +19,11 @@ class Menu extends Model
         'is_active',
     ];
 
+    protected $casts = [
+        'is_active'  => 'boolean',
+        'sort_order' => 'integer',
+    ];
+
     public function permissions()
     {
         return $this->belongsTo(Permission::class, 'permission_id');

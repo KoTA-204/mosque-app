@@ -49,8 +49,20 @@
             <h3 class="text-base font-semibold text-gray-900 dark:text-white">Daftar Transaksi</h3>
             <div class="flex items-center gap-2">
                 <form method="GET" id="search-form">
-                    <input type="text" name="search" id="search-input" value="{{ request('search') }}" placeholder="Cari transaksi..."
-                           class="pl-4 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 w-56 placeholder-gray-400">
+                    <select name="jenis" onchange="this.form.submit()"
+                            class="text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 pr-8 appearance-none bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                        <option value="" {{ request('jenis') === '' ? 'selected' : '' }}>Semua Jenis</option>
+                        <option value="PEMASUKAN" {{ request('jenis') === 'PEMASUKAN' ? 'selected' : '' }}>Pemasukan</option>
+                        <option value="PENGELUARAN" {{ request('jenis') === 'PENGELUARAN' ? 'selected' : '' }}>Pengeluaran</option>
+                    </select>
+                    <select name="status" onchange="this.form.submit()"
+                            class="text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 pr-8 appearance-none bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                        <option value="" {{ request('status') === '' ? 'selected' : '' }}>Semua Status</option>
+                        <option value="PENDING" {{ request('status') === 'PENDING' ? 'selected' : '' }}>Pending</option>
+                        <option value="REVISION" {{ request('status') === 'REVISION' ? 'selected' : '' }}>Revisi</option>
+                        <option value="APPROVED" {{ request('status') === 'APPROVED' ? 'selected' : '' }}>Approved</option>
+                        <option value="REJECTED" {{ request('status') === 'REJECTED' ? 'selected' : '' }}>Rejected</option>
+                    </select>
                 </form>
                 @if($kegiatan->status === 'AKTIF')
                     <button type="button" onclick="openModal('modal-catat-transaksi')"

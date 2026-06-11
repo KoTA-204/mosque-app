@@ -32,14 +32,16 @@ class TransaksiKegiatanController extends Controller
         $this->authorizeKegiatan($kegiatan);
 
         $search        = $request->get('search', '');
-        $transaksi     = $this->transaksiKegiatanService->getTransaksiByKegiatan($kegiatan, $search);
+        $jenis         = $request->get('jenis', '');
+        $status        = $request->get('status', '');
+        $transaksi     = $this->transaksiKegiatanService->getTransaksiByKegiatan($kegiatan, $search, $jenis, $status);
         $porsi         = $this->transaksiKegiatanService->getPorsiAnggaran($kegiatan);
         $dompetList    = $this->transaksiKegiatanService->getDompetList();
         $kategoriList  = $this->transaksiKegiatanService->getKategoriList();
         $kodeTransaksi = $this->transaksiKegiatanService->generateKodeTransaksi();
 
         return view('pages.transaksi-kegiatan.show', compact(
-            'kegiatan', 'transaksi', 'porsi', 'search',
+            'kegiatan', 'transaksi', 'porsi', 'search', 'jenis', 'status',
             'dompetList', 'kategoriList', 'kodeTransaksi'
         ));
     }
