@@ -173,6 +173,14 @@
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">Kegiatan</span>
                                 @endif
                                 <span class="text-gray-700 dark:text-gray-300 truncate max-w-[140px]" title="{{ $label }}">{{ $label }}</span>
+
+                                @if(!$isKencleng && $jenis === 'PENGELUARAN'
+                                    && $item->kegiatan && $item->kegiatan->selisihLebihAnggaran() > 0)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+                                        title="Pengeluaran kegiatan ini melebihi anggaran">
+                                        Over-budget
+                                    </span>
+                                @endif
                             </div>
                         </td>
                         <td class="px-4 py-3.5 text-gray-500 dark:text-gray-400">{{ $item->user->name }}</td>

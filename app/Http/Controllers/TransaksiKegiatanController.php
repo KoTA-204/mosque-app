@@ -55,11 +55,24 @@ class TransaksiKegiatanController extends Controller
             return back()->with('error', 'Kegiatan tidak sedang aktif');
         }
 
+        $data = $request->validated();
         $this->transaksiKegiatanService->storeTransaksi($kegiatan, $request->validated());
 
-        return redirect()
+       $redirect = redirect()
             ->route('dashboard.transaksi-kegiatan.show', $kegiatan)
             ->with('success', 'Transaksi berhasil dicatat');
+
+        if ($data['jenis_transaksi'] === 'PENGELUARAN') {
+            $lebih = $kegiatan->selisihLebihAnggaran();
+            if ($lebih > 0) {
+                $redirect->with('warning',
+                    'Perhatian: total pengeluaran kegiatan melebihi anggaran sebesar Rp '
+                    . number_format($lebih, 0, ',', '.')
+                    . '. Transaksi tetap tercatat untuk ditinjau bendahara.');
+            }
+        }
+
+        return $redirect;
     }
 
     // ── Detail Transaksi ───────────────────────────────────────
@@ -84,11 +97,23 @@ class TransaksiKegiatanController extends Controller
             abort(403);
         }
 
+        $data = $request->validated();
         $this->transaksiKegiatanService->updateTransaksi($transaksi, $request->validated());
 
-        return redirect()
+        $redirect = redirect()
             ->route('dashboard.transaksi-kegiatan.show', $kegiatan)
             ->with('success', 'Transaksi berhasil diperbarui');
+
+        if ($data['jenis_transaksi'] === 'PENGELUARAN') {
+            $lebih = $kegiatan->selisihLebihAnggaran();
+            if ($lebih > 0) {
+                $redirect->with('warning',
+                    'Perhatian: total pengeluaran kegiatan melebihi anggaran sebesar Rp '
+                    . number_format($lebih, 0, ',', '.') . '.');
+            }
+        }
+
+        return $redirect;
     }
 
     // ── Hapus Transaksi ────────────────────────────────────────

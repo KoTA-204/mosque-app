@@ -110,4 +110,32 @@ class Kegiatan extends Model
             $this->update(['status' => self::STATUS_DITUTUP]);
         }
     }
+
+    public function totalPengeluaranBerjalan(?int $kecualiId = null): float
+    {
+        return (float) $this->transaksi()
+            ->where('jenis_transaksi', 'PENGELUARAN')
+            ->whereIn('status_approval', ['PENDING', 'REVISION', 'APPROVED'])
+            ->when($kecualiId, fn ($q) => $q->where('id', '!=', $kecualiId))
+            ->sum('jumlah');
+    }
+
+    public function sisaAnggaran(?int $kecualiId = null): float
+    {
+        return (float) $this->anggaran - $this->totalPengeluaranBerjalan($kecualiId);
+    }
+
+    public function persenPengeluaran(): int
+    {
+        if ($this->anggaran <= 0) return 0; // anggaran 0 = dianggap tanpa batas
+        return (int) round($this->totalPengeluaranBerjalan() / $this->anggaran * 100);
+    }
+
+    // Berapa rupiah kelebihannya (0 kalau masih dalam anggaran).
+    public function selisihLebihAnggaran(float $jumlahBaru = 0, ?int $kecualiId = null): float
+    {
+        if ($this->anggaran <= 0) return 0;
+        $total = $this->totalPengeluaranBerjalan($kecualiId) + $jumlahBaru;
+        return max(0, $total - (float) $this->anggaran);
+    }
 }

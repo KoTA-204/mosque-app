@@ -7,6 +7,8 @@ use Illuminate\Validation\Rule;
 
 class StoreTransaksiRequest extends FormRequest
 {
+    protected $errorBag = 'createTransaksi';    
+
     public function authorize(): bool
     {
         return true; // otorisasi detail ditangani di controller
