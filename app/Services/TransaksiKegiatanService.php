@@ -12,63 +12,42 @@ use Illuminate\Support\Facades\Storage;
 
 class TransaksiKegiatanService
 {
-    // ── Kegiatan ──────────────────────────────────────────────
-
+    // ── Kegiatan ───────────────────────────────────────────────
     public function getKegiatanList(?string $search = null, ?string $status = null, int $perPage = 10)
     {
         return Kegiatan::with('panitia')
             ->withCount('transaksi')
             ->withCount([
-                'transaksi as transaksi_pending_count' => fn($q) =>
-                    $q->where('status_approval', 'PENDING')
+                'transaksi as transaksi_pending_count' => fn ($q) =>
+                    $q->where('status_approval', 'PENDING'),
             ])
-            ->when(auth()->user()->hasRole('panitia-khusus'), fn($q) =>
-                $q->where('panitia_id', auth()->id())
-            )
-            ->when($search, fn($q) =>
-                $q->where('nama_kegiatan', 'ilike', "%{$search}%")
-            )
-            ->when($status, fn($q) =>
-                $q->where('status', strtoupper($status))
-            )
-            ->orderByRaw("
-                CASE status
-                    WHEN 'AKTIF'   THEN 1
-                    WHEN 'DITUTUP' THEN 2
-                    ELSE 3
-                END
-            ")
+            ->when(auth()->user()->hasRole('panitia-khusus'), fn ($q) =>
+                $q->where('panitia_id', auth()->id()))
+            // 'like' agar portable. Jika pakai PostgreSQL boleh ganti 'ilike'.
+            ->when($search, fn ($q) =>
+                $q->where('nama_kegiatan', 'like', "%{$search}%"))
+            ->when($status, fn ($q) =>
+                $q->where('status', strtoupper($status)))
+            ->orderByRaw("CASE status WHEN 'AKTIF' THEN 1 WHEN 'DITUTUP' THEN 2 ELSE 3 END")
             ->orderBy('tanggal_mulai', 'desc')
             ->paginate($perPage)
             ->withQueryString();
     }
 
-    public function getKegiatanById(Kegiatan $kegiatan): Kegiatan
-    {
-        return $kegiatan->load('panitia', 'transaksi.kategoriTransaksi', 'transaksi.user');
-    }
-
     public function getSummary(): array
     {
         $query = Kegiatan::query()
-            ->when(auth()->user()->hasRole('panitia-khusus'), fn($q) =>
-                $q->where('panitia_id', auth()->id())
-            );
+            ->when(auth()->user()->hasRole('panitia-khusus'), fn ($q) =>
+                $q->where('panitia_id', auth()->id()));
 
         return [
             'total'   => (clone $query)->count(),
-
-            'aktif'   => (clone $query)
-                ->where('status', 'BERJALAN')
+            'aktif'   => (clone $query)->where('status', Kegiatan::STATUS_AKTIF)->count(),
+            'pending' => Transaksi::whereHas('kegiatan', fn ($q) =>
+                    $q->when(auth()->user()->hasRole('panitia-khusus'), fn ($q) =>
+                        $q->where('panitia_id', auth()->id())))
+                ->where('status_approval', 'PENDING')
                 ->count(),
-
-            'pending' => Transaksi::whereHas('kegiatan', function ($q) {
-                $q->when(auth()->user()->hasRole('panitia-khusus'), fn($q) =>
-                    $q->where('panitia_id', auth()->id())
-                );
-            })
-            ->where('status_approval', 'PENDING')
-            ->count(),
         ];
     }
 
@@ -78,34 +57,21 @@ class TransaksiKegiatanService
             return 0;
         }
 
-        $totalTransaksi = $kegiatan->transaksi()
-            ->whereHas('kategoriTransaksi', fn($q) =>
-                $q->where('jenis_transaksi', 'PEMASUKAN')
-            )
+        $totalPemasukan = $kegiatan->transaksi()
+            ->where('jenis_transaksi', 'PEMASUKAN')
             ->where('status_approval', 'APPROVED')
             ->sum('jumlah');
 
-        return min(100, (int) round(($totalTransaksi / $kegiatan->anggaran) * 100));
+        return min(100, (int) round(($totalPemasukan / $kegiatan->anggaran) * 100));
     }
 
-    // ── Transaksi ──────────────────────────────────────────────
-
-    public function getTransaksiByKegiatan(
-        Kegiatan $kegiatan,
-        ?string $search = null,
-        int $perPage = 10
-    )
+    // ── Transaksi ────────────────────────────────────────────
+    public function getTransaksiByKegiatan(Kegiatan $kegiatan, ?string $search = null, int $perPage = 10)
     {
         return $kegiatan->transaksi()
-            ->with([
-                'dompet',
-                'kategoriTransaksi',
-                'user',
-                'buktiTransaksi'
-            ])
-            ->when($search, fn($q) =>
-                $q->where('deskripsi', 'ilike', "%{$search}%")
-            )
+            ->with(['dompet', 'kategoriTransaksi', 'user', 'buktiTransaksi'])
+            ->when($search, fn ($q) =>
+                $q->where('deskripsi', 'like', "%{$search}%"))
             ->orderBy('tanggal_transaksi', 'desc')
             ->paginate($perPage)
             ->withQueryString();
@@ -113,13 +79,7 @@ class TransaksiKegiatanService
 
     public function getTransaksiById(Transaksi $transaksi): Transaksi
     {
-        return $transaksi->load(
-            'dompet',
-            'kategoriTransaksi',
-            'user',
-            'kegiatan',
-            'buktiTransaksi'
-        );
+        return $transaksi->load('dompet', 'kategoriTransaksi', 'user', 'kegiatan', 'buktiTransaksi');
     }
 
     public function getDompetList()
@@ -127,13 +87,9 @@ class TransaksiKegiatanService
         return Dompet::orderBy('nama_dompet')->get();
     }
 
-    public function getKategoriList(string $jenis = '')
+    public function getKategoriList()
     {
-        return KategoriTransaksi::when($jenis, fn($q) =>
-            $q->where('jenis_transaksi', strtoupper($jenis))
-        )
-        ->orderBy('nama_kategori')
-        ->get();
+        return KategoriTransaksi::orderBy('nama_kategori')->get();
     }
 
     public function generateKodeTransaksi(): string
@@ -147,7 +103,6 @@ class TransaksiKegiatanService
     public function storeTransaksi(Kegiatan $kegiatan, array $data): Transaksi
     {
         return DB::transaction(function () use ($kegiatan, $data) {
-
             $transaksi = Transaksi::create([
                 'dompet_id'             => $data['dompet_id'],
                 'kegiatan_id'           => $kegiatan->id,
@@ -161,56 +116,15 @@ class TransaksiKegiatanService
                 'status_jurnal'         => 'UNMAPPED',
             ]);
 
-            // Upload bukti transaksi
-            if (!empty($data['bukti_transaksi'])) {
-
-                foreach ($data['bukti_transaksi'] as $file) {
-
-                    $path = $file->store('bukti_transaksi', 'public');
-
-                    BuktiTransaksi::create([
-                        'transaksi_id' => $transaksi->id,
-                        'nama_file'    => $file->getClientOriginalName(),
-                        'path_file'    => $path,
-                    ]);
-                }
-            }
+            $this->simpanBukti($transaksi, $data['bukti_transaksi'] ?? []);
 
             return $transaksi->load('buktiTransaksi');
         });
     }
 
-    public function deleteTransaksi(Transaksi $transaksi): bool|string
-    {
-        if ($transaksi->status_approval !== 'PENDING') {
-            return 'Transaksi yang sudah diproses tidak bisa dihapus';
-        }
-
-        if ($transaksi->user_id !== auth()->id()) {
-            return 'Anda tidak bisa menghapus transaksi orang lain';
-        }
-
-        DB::transaction(function () use ($transaksi) {
-
-            foreach ($transaksi->buktiTransaksi as $bukti) {
-
-                Storage::disk('public')->delete($bukti->path_file);
-
-                $bukti->delete();
-            }
-
-            $transaksi->delete();
-        });
-
-        return true;
-    }
-
-    // ── Edit Transaksi (Panitia setelah REVISION) ──────────────
-
     public function updateTransaksi(Transaksi $transaksi, array $data): Transaksi
     {
         return DB::transaction(function () use ($transaksi, $data) {
-
             $transaksi->update([
                 'dompet_id'             => $data['dompet_id'],
                 'kategori_transaksi_id' => $data['kategori_transaksi_id'],
@@ -218,42 +132,56 @@ class TransaksiKegiatanService
                 'jenis_transaksi'       => $data['jenis_transaksi'],
                 'jumlah'                => $data['jumlah'],
                 'deskripsi'             => $data['deskripsi'] ?? null,
+                // setelah revisi diperbaiki, kembalikan ke PENDING untuk ditinjau ulang
                 'status_approval'       => 'PENDING',
-                'catatan_revisi'        => null,
+                'catatan'               => null, // ✅ diperbaiki (sebelumnya 'catatan_revisi' yg tak ada)
             ]);
 
-            // Tambah bukti baru
-            if (!empty($data['bukti_transaksi'])) {
-
-                foreach ($data['bukti_transaksi'] as $file) {
-
-                    $path = $file->store('bukti_transaksi', 'public');
-
-                    BuktiTransaksi::create([
-                        'transaksi_id' => $transaksi->id,
-                        'nama_file'    => $file->getClientOriginalName(),
-                        'path_file'    => $path,
-                    ]);
+            // Hapus bukti lama yang dipilih
+            foreach ($data['hapus_bukti'] ?? [] as $buktiId) {
+                $bukti = BuktiTransaksi::where('transaksi_id', $transaksi->id)->find($buktiId);
+                if ($bukti) {
+                    Storage::disk('public')->delete($bukti->path_file);
+                    $bukti->delete();
                 }
             }
 
-            // Hapus bukti lama
-            if (!empty($data['hapus_bukti'])) {
-
-                foreach ($data['hapus_bukti'] as $buktiId) {
-
-                    $bukti = BuktiTransaksi::find($buktiId);
-
-                    if ($bukti && $bukti->transaksi_id === $transaksi->id) {
-
-                        Storage::disk('public')->delete($bukti->path_file);
-
-                        $bukti->delete();
-                    }
-                }
-            }
+            $this->simpanBukti($transaksi, $data['bukti_transaksi'] ?? []);
 
             return $transaksi->fresh()->load('buktiTransaksi');
         });
+    }
+
+    public function deleteTransaksi(Transaksi $transaksi): bool|string
+    {
+        if (! $transaksi->bisaDiedit()) {
+            return 'Transaksi yang sudah diproses tidak bisa dihapus';
+        }
+        if ($transaksi->user_id !== auth()->id()) {
+            return 'Anda tidak bisa menghapus transaksi orang lain';
+        }
+
+        DB::transaction(function () use ($transaksi) {
+            foreach ($transaksi->buktiTransaksi as $bukti) {
+                Storage::disk('public')->delete($bukti->path_file);
+                $bukti->delete();
+            }
+            $transaksi->delete();
+        });
+
+        return true;
+    }
+
+    // Helper privat untuk menyimpan file bukti
+    private function simpanBukti(Transaksi $transaksi, array $files): void
+    {
+        foreach ($files as $file) {
+            $path = $file->store('bukti_transaksi', 'public');
+            BuktiTransaksi::create([
+                'transaksi_id' => $transaksi->id,
+                'nama_file'    => $file->getClientOriginalName(),
+                'path_file'    => $path,
+            ]);
+        }
     }
 }
