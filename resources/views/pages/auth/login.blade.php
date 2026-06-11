@@ -16,6 +16,36 @@
             <h1 class="w-full max-w-md flex flex-col items-center text-center mb-2 text-3xl font-sans font-bold text-gray-800 dark:text-white">Log in</h1>
             <p class="w-full max-w-md flex flex-col items-center text-center mb-8 text-sm text-gray-500 dark:text-gray-400">Gunakan kredensial yang diberikan oleh Admin.</p>
 
+            @if(session('status') === 'session-expired' || request()->has('expired'))
+            <div class="mb-5 flex items-center gap-3 bg-gray-100 border border-gray-300 rounded-xl px-4 py-3" id="alert-session">
+                <svg class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <p class="text-sm text-red-500 flex-1">Sesi Anda telah berakhir. Silakan login kembali.</p>
+                <button onclick="document.getElementById('alert-session').remove()"
+                    class="text-gray-400 hover:text-gray-600 transition-colors shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            @endif
+
+            @if(session('auth_redirect'))
+            <div class="mb-5 flex items-center gap-3 bg-gray-100 border border-gray-300 rounded-xl px-4 py-3" id="alert-intended">
+                <svg class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <p class="text-sm text-red-500 flex-1">Anda harus login terlebih dahulu untuk mengakses halaman tersebut.</p>
+                <button onclick="document.getElementById('alert-intended').remove()"
+                    class="text-gray-400 hover:text-gray-600 transition-colors shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            @endif
+
             {{-- Alert Error --}}
             @if (session('error'))
                 <x-ui.alert
@@ -84,7 +114,7 @@
 
             <button
                 type="submit"
-                class="w-full rounded-3xl bg-yellow-400 py-2 text-white font-sans font-medium hover:bg-gray-400 transition">
+                class="w-full rounded-3xl bg-brand-400 py-2 text-white font-sans font-medium hover:bg-gray-400 transition">
                 Sign in
             </button>
         </form>
@@ -132,10 +162,12 @@
 
 @push('scripts')
 <script>
-    document.getElementById('loginForm').addEventListener('submit', function () {
-        const btn = document.getElementById('loginBtn');
-        btn.disabled = true;
-        btn.textContent = 'Masuk...';
+    document.querySelector('form').addEventListener('submit', function () {
+        const btn = this.querySelector('button[type="submit"]');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Masuk...';
+        }
     });
 </script>
 @endpush
