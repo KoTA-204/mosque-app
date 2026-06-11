@@ -19,6 +19,10 @@ class Permission extends Model
         'is_active',
     ];
 
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
     public function getSlugAttribute(): string
     {
         return Str::slug($this->permission_code);
@@ -31,6 +35,6 @@ class Permission extends Model
 
     public function menus()
     {
-        return $this->hasMany(Menu::class);
+        return $this->hasMany(Menu::class, 'permission_id');
     }
 }

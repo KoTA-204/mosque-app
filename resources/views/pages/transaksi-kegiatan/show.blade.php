@@ -11,6 +11,9 @@
     @if(session('error'))
         <div id="error-alert" class="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-300 transition-opacity duration-500">{{ session('error') }}</div>
     @endif
+    @if(session('warning'))
+        <div id="warning-alert" class="rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-4 py-3 text-sm text-amber-700 dark:text-amber-300 transition-opacity duration-500"><?php echo session('warning'); ?></div>
+    @endif
 
     {{-- Header --}}
     <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
@@ -49,8 +52,20 @@
             <h3 class="text-base font-semibold text-gray-900 dark:text-white">Daftar Transaksi</h3>
             <div class="flex items-center gap-2">
                 <form method="GET" id="search-form">
-                    <input type="text" name="search" id="search-input" value="{{ request('search') }}" placeholder="Cari transaksi..."
-                           class="pl-4 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 w-56 placeholder-gray-400">
+                    <select name="jenis" onchange="this.form.submit()"
+                            class="text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 pr-8 appearance-none bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                        <option value="" {{ request('jenis') === '' ? 'selected' : '' }}>Semua Jenis</option>
+                        <option value="PEMASUKAN" {{ request('jenis') === 'PEMASUKAN' ? 'selected' : '' }}>Pemasukan</option>
+                        <option value="PENGELUARAN" {{ request('jenis') === 'PENGELUARAN' ? 'selected' : '' }}>Pengeluaran</option>
+                    </select>
+                    <select name="status" onchange="this.form.submit()"
+                            class="text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 pr-8 appearance-none bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                        <option value="" {{ request('status') === '' ? 'selected' : '' }}>Semua Status</option>
+                        <option value="PENDING" {{ request('status') === 'PENDING' ? 'selected' : '' }}>Pending</option>
+                        <option value="REVISION" {{ request('status') === 'REVISION' ? 'selected' : '' }}>Revisi</option>
+                        <option value="APPROVED" {{ request('status') === 'APPROVED' ? 'selected' : '' }}>Approved</option>
+                        <option value="REJECTED" {{ request('status') === 'REJECTED' ? 'selected' : '' }}>Rejected</option>
+                    </select>
                 </form>
                 @if($kegiatan->status === 'AKTIF')
                     <button type="button" onclick="openModal('modal-catat-transaksi')"
@@ -229,7 +244,7 @@
         document.getElementById('edit-pencatat').textContent = data.pencatat;
 
         // set jenis + filter kategori DULU, baru isi value kategori
-        const radio = document.querySelector('input[name="jenis_transaksi"][value="' + data.jenis_transaksi + '"]');
+        const radio = document.querySelector('#form-edit-transaksi input[name="jenis_transaksi"][value="' + data.jenis_transaksi + '"]');
         if (radio) radio.checked = true;
         updateEditToggleStyle(data.jenis_transaksi);
 
@@ -251,15 +266,16 @@
         const buktiList = document.getElementById('edit-bukti-list');
         const buktiHint = document.getElementById('edit-bukti-hint');
         buktiList.innerHTML = '';
+
         if (data.bukti && data.bukti.length > 0) {
             buktiHint.classList.remove('hidden');
             data.bukti.forEach(function (b) {
                 buktiList.insertAdjacentHTML('beforeend',
-                    '<div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">' +
-                        '<a href="' + b.url + '" target="_blank" class="text-xs text-gray-600 dark:text-gray-300 hover:text-green-600 truncate max-w-[140px]">' + b.nama_file + '</a>' +
-                        '<label class="cursor-pointer ml-1" title="Hapus file ini">' +
-                            '<input type="checkbox" name="hapus_bukti[]" value="' + b.id + '" class="sr-only peer">' +
-                            '<span class="text-gray-300 peer-checked:text-red-500 hover:text-red-400 transition-colors text-xs select-none">✕</span>' +
+                    '<div class="bukti-item flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">' +
+                        '<a href="' + b.url + '" target="_blank" class="bukti-name text-xs text-gray-600 dark:text-gray-300 hover:text-green-600 truncate max-w-[140px]">' + b.nama_file + '</a>' +
+                        '<label class="cursor-pointer ml-1 select-none" title="Tandai untuk dihapus">' +
+                            '<input type="checkbox" name="hapus_bukti[]" value="' + b.id + '" class="sr-only" onchange="toggleHapusBukti(this)">' +
+                            '<span class="hapus-x text-gray-400 hover:text-red-500 transition-colors text-sm font-semibold">✕</span>' +
                         '</label>' +
                     '</div>');
             });
@@ -276,7 +292,29 @@
         openModal('modal-edit-transaksi');
     }
 
+    function toggleHapusBukti(input) {
+        const item = input.closest('.bukti-item');
+        if (!item) return;
+        const name = item.querySelector('.bukti-name');
+        const mark = item.querySelector('.hapus-x');
+        if (input.checked) {
+            item.classList.add('opacity-60');
+            if (name) name.classList.add('line-through', 'text-red-500');
+            if (mark) mark.classList.add('text-red-600');
+        } else {
+            item.classList.remove('opacity-60');
+            if (name) name.classList.remove('line-through', 'text-red-500');
+            if (mark) mark.classList.remove('text-red-600');
+        }
+    }
+
     function validateAndSubmitEdit() {
+        const form = document.getElementById('form-edit-transaksi');
+        if (!form.getAttribute('action')) {        
+            alert('Form edit belum siap. Tutup modal lalu klik Edit lagi.');
+            return;
+        }
+    
         let valid = true;
 
         // Tanggal
@@ -319,13 +357,13 @@
         }
 
         if (valid) {
-            document.getElementById('form-edit-transaksi').submit();
+            form.submit();
         }
     }
 
     // Auto-hide flash message (dengan guard, tidak error jika elemen tak ada)
     document.addEventListener('DOMContentLoaded', function () {
-        ['success-alert', 'error-alert'].forEach(function (id) {
+        ['success-alert', 'error-alert', 'warning-alert'].forEach(function (id) {
             const el = document.getElementById(id);
             if (!el) return;
             setTimeout(function () {

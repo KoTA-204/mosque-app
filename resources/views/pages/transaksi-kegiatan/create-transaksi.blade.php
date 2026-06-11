@@ -18,7 +18,8 @@
     </div>
 
     <form id="form-create-transaksi" action="{{ route('dashboard.transaksi-kegiatan.transaksi.store', $kegiatan) }}" method="POST"
-          enctype="multipart/form-data" class="space-y-5">
+          enctype="multipart/form-data" class="space-y-5" data-anggaran="<?php echo (int) $kegiatan->anggaran; ?>"
+          data-pengeluaran="<?php echo (int) $kegiatan->totalPengeluaranBerjalan(); ?>">
         @csrf
 
         {{-- Toggle Jenis Transaksi --}}
@@ -38,7 +39,7 @@
                     <span id="btn-pengeluaran" class="block py-2.5 text-center text-sm font-medium transition-colors text-gray-500">Pengeluaran</span>
                 </label>
             </div>
-            @error('jenis_transaksi')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+            @error('jenis_transaksi', 'createTransaksi')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
         </div>
 
         {{-- Tanggal + Jumlah --}}
@@ -49,13 +50,14 @@
                        value="{{ old('tanggal_transaksi', now()->format('Y-m-d')) }}"
                        class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors {{ $errors->has('tanggal_transaksi') ? 'border-red-400' : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }} bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                 <p id="create-tanggal-error" class="hidden mt-1.5 text-xs text-red-500">Tanggal wajib diisi.</p>
-                @error('tanggal_transaksi')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                @error('tanggal_transaksi', 'createTransaksi')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Jumlah (Rp) <span class="text-red-500">*</span></label>
                 <input type="number" name="jumlah" value="{{ old('jumlah', 0) }}" min="1"
                        class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors {{ $errors->has('jumlah') ? 'border-red-400' : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }} bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                @error('jumlah')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                @error('jumlah', 'createTransaksi'))<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                <p id="create-over-warning" class="hidden mt-1.5 text-xs text-amber-600"></p>
             </div>
         </div>
 
@@ -70,7 +72,7 @@
                 @endforeach
             </select>
             <p id="create-dompet-error" class="hidden mt-1.5 text-xs text-red-500">Dompet wajib dipilih.</p>
-            @error('dompet_id')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+            @error('dompet_id', 'createTransaksi')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
         </div>
 
         {{-- Kategori --}}
@@ -87,7 +89,7 @@
                 @endforeach
             </select>
             <p id="create-kategori-error" class="hidden mt-1.5 text-xs text-red-500">Kategori wajib dipilih.</p>
-            @error('kategori_transaksi_id')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+            @error('kategori_transaksi_id', 'createTransaksi')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
         </div>
 
         {{-- Deskripsi --}}
@@ -110,7 +112,7 @@
                     <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Maks. 5MB · JPG, PNG, PDF</p>
                 </div>
             </label>
-            @error('bukti_transaksi.*')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+            @error('bukti_transaksi.*', 'createTransaksi')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
         </div>
 
         {{-- Buttons --}}
@@ -139,7 +141,7 @@
             defaultDate: '{{ now()->format('Y-m-d') }}',
         });
 
-        @if($errors->any())
+        @if($errors->createTransaksi->isNotEmpty())
             openModal('modal-catat-transaksi');
         @endif
     });
@@ -158,6 +160,28 @@
             btnPengeluaran.classList.remove('text-gray-500');
             btnPemasukan.classList.remove('bg-green-600', 'text-white');
             btnPemasukan.classList.add('text-gray-500');
+        }
+
+        cekAnggaranCreate();
+    }
+
+    function cekAnggaranCreate() {
+        const form = document.getElementById('form-create-transaksi');
+        const warn = document.getElementById('create-over-warning');
+        if (!form || !warn) return;
+
+        const anggaran = parseFloat(form.dataset.anggaran || '0');
+        const terpakai = parseFloat(form.dataset.pengeluaran || '0');
+        const jenisEl  = form.querySelector('input[name="jenis_transaksi"]:checked');
+        const jumlahEl = form.querySelector('input[name="jumlah"]');
+        const jumlah   = parseFloat(jumlahEl ? jumlahEl.value : '0') || 0;
+
+        if (anggaran > 0 && jenisEl && jenisEl.value === 'PENGELUARAN' && (terpakai + jumlah) > anggaran) {
+            const lebih = (terpakai + jumlah) - anggaran;
+            warn.textContent = '⚠️ Melebihi anggaran sebesar Rp ' + lebih.toLocaleString('id-ID') + ' — transaksi tetap bisa disimpan.';
+            warn.classList.remove('hidden');
+        } else {
+            warn.classList.add('hidden');
         }
     }
 

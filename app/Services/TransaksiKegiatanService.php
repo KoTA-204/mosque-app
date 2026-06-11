@@ -66,12 +66,16 @@ class TransaksiKegiatanService
     }
 
     // ── Transaksi ────────────────────────────────────────────
-    public function getTransaksiByKegiatan(Kegiatan $kegiatan, ?string $search = null, int $perPage = 10)
+    public function getTransaksiByKegiatan(Kegiatan $kegiatan, ?string $search = null, ?string $jenis = null, ?string $status = null, int $perPage = 10)
     {
         return $kegiatan->transaksi()
             ->with(['dompet', 'kategoriTransaksi', 'user', 'buktiTransaksi'])
             ->when($search, fn ($q) =>
                 $q->where('deskripsi', 'like', "%{$search}%"))
+            ->when($jenis, fn ($q) =>
+                $q->where('jenis_transaksi', strtoupper($jenis)))
+            ->when($status, fn ($q) =>
+                $q->where('status_approval', strtoupper($status)))
             ->orderBy('tanggal_transaksi', 'desc')
             ->paginate($perPage)
             ->withQueryString();

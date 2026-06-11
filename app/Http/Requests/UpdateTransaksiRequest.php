@@ -7,6 +7,8 @@ use Illuminate\Validation\Rule;
 
 class UpdateTransaksiRequest extends FormRequest
 {
+    protected $errorBag = 'editTransaksi';
+    
     public function authorize(): bool
     {
         return true;

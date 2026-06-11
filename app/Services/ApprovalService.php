@@ -2,69 +2,59 @@
 
 namespace App\Services;
 
+use App\Models\Kegiatan;
 use App\Models\Transaksi;
 use Illuminate\Support\Facades\DB;
 
 class ApprovalService
 {
-    // ── Approval (Bendahara) ───────────────────────────────────
-
-    public function getTransaksiPending(
-        string $search  = '',
-        string $sumber  = '',   // '' | 'kegiatan' | 'kencleng'
-        string $dari    = '',
-        string $sampai  = '',
-        string $urut    = 'asc', // 'asc' | 'desc'
-        int    $perPage = 10
-    ) {
-        return Transaksi::with([
-                'dompet',
-                'kategoriTransaksi',
-                'user',
-                'kegiatan',
-                'buktiTransaksi',
-                'kencleng.detail',
-            ])
-            ->where('status_approval', 'PENDING')
-
-            // Hanya tampilkan yang punya kegiatan atau kencleng
+    // ── Query Dasar ───────────────────────────────────────────────────────
+    private function baseQuery()
+    {
+        return Transaksi::query()
             ->where(function ($q) {
                 $q->whereNotNull('kegiatan_id')
                   ->orWhereHas('kencleng');
-            })
+            });
+    }
 
-            // Filter sumber
-            ->when($sumber === 'kegiatan', fn($q) =>
-                $q->whereNotNull('kegiatan_id')->whereDoesntHave('kencleng')
-            )
-            ->when($sumber === 'kencleng', fn($q) =>
-                $q->whereHas('kencleng')
-            )
+    public function getStats(): array
+    {
+        return [
+            'kencleng' => $this->baseQuery()->whereHas('kencleng')->count(),
+            'kegiatan' => $this->baseQuery()->whereNotNull('kegiatan_id')->whereDoesntHave('kencleng')->count(),
+            'pending'  => $this->baseQuery()->where('status_approval', 'PENDING')->count(),
+            'approved' => $this->baseQuery()->where('status_approval', 'APPROVED')->count(),
+            'rejected' => $this->baseQuery()->where('status_approval', 'REJECTED')->count(),
+            'revision' => $this->baseQuery()->where('status_approval', 'REVISION')->count(),
+        ];
+    }
 
-            // Filter tanggal
-            ->when($dari, fn($q) =>
-                $q->whereDate('tanggal_transaksi', '>=', $dari)
-            )
-            ->when($sampai, fn($q) =>
-                $q->whereDate('tanggal_transaksi', '<=', $sampai)
-            )
-
-            // Filter search
-            ->when($search, fn($q) =>
-                $q->where(function ($inner) use ($search) {
-                    $inner->whereHas('kegiatan', fn($k) =>
-                              $k->where('nama_kegiatan', 'ilike', "%{$search}%")
-                          )
-                          ->orWhereHas('user', fn($u) =>
-                              $u->where('name', 'ilike', "%{$search}%")
-                          )
-                          ->orWhere('deskripsi', 'ilike', "%{$search}%");
-                })
-            )
-
-            // Urutan berdasarkan tanggal transaksi
+    // ── Query List ────────────────────────────────────────────────────────
+    public function getTransaksiByStatus(
+        string $status,
+        string $search  = '',
+        string $sumber  = '',
+        string $dari    = '',
+        string $sampai  = '',
+        string $urut    = 'asc',
+        int    $perPage = 10
+    ) {
+        return $this->baseQuery()
+            ->with(['dompet', 'kategoriTransaksi', 'user', 'kegiatan', 'buktiTransaksi', 'kencleng.detail'])
+            ->where('status_approval', $status)
+            ->when($sumber === 'kegiatan', fn($q) => $q->whereNotNull('kegiatan_id')->whereDoesntHave('kencleng'))
+            ->when($sumber === 'kencleng', fn($q) => $q->whereHas('kencleng'))
+            ->when($dari,   fn($q) => $q->whereDate('tanggal_transaksi', '>=', $dari))
+            ->when($sampai, fn($q) => $q->whereDate('tanggal_transaksi', '<=', $sampai))
+            ->when($search, fn($q) => $q->where(function ($inner) use ($search) {
+                $inner->whereHas('kegiatan', fn($k) => $k->where('nama_kegiatan', 'ilike', "%{$search}%"))
+                      ->orWhereHas('user',    fn($u) => $u->where('name', 'ilike', "%{$search}%"))
+                      ->orWhere('deskripsi', 'ilike', "%{$search}%");
+            }))
             ->orderBy('tanggal_transaksi', in_array($urut, ['asc', 'desc']) ? $urut : 'asc')
-            ->paginate($perPage);
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     public function getTransaksiById(Transaksi $transaksi): Transaksi
@@ -72,112 +62,87 @@ class ApprovalService
         return $transaksi->load('dompet', 'kategoriTransaksi', 'user', 'kegiatan', 'buktiTransaksi');
     }
 
-    public function approve(Transaksi $transaksi): bool|string
+    // ── Core ──────────────────────────────────────────────────────────────
+    private function changeStatus(Transaksi $transaksi, string $status, ?string $catatan = null): true|string
     {
         if ($transaksi->status_approval !== 'PENDING') {
             return 'Transaksi tidak dalam status PENDING';
         }
 
-        DB::transaction(function () use ($transaksi) {
-            $transaksi->update([
-                'status_approval' => 'APPROVED',
-                'catatan_revisi'  => null,
-            ]);
+        $transaksi->update(['status_approval' => $status, 'catatan' => $catatan]);
 
-            // Jika transaksi ini milik kegiatan, cek apakah kegiatan bisa ditutup
-            if ($transaksi->kegiatan_id) {
+        return true;
+    }
+
+    // ── Single Actions ────────────────────────────────────────────────────
+    public function approve(Transaksi $transaksi): true|string
+    {
+        return DB::transaction(function () use ($transaksi) {
+            $result = $this->changeStatus($transaksi, 'APPROVED');
+
+            if ($result === true && $transaksi->kegiatan_id) {
                 $transaksi->kegiatan->tutupJikaSelesai();
+            }
+
+            return $result;
+        });
+    }
+
+    public function reject(Transaksi $transaksi, string $catatan = ''): true|string
+    {
+        return $this->changeStatus($transaksi, 'REJECTED', $catatan ?: null);
+    }
+
+    public function revision(Transaksi $transaksi, string $catatan): true|string
+    {
+        return $this->changeStatus($transaksi, 'REVISION', $catatan);
+    }
+
+    // ── Bulk Actions ──────────────────────────────────────────────────────
+    private function bulkChangeStatus(array $catatanMap, string $status): array
+    {
+        $done    = 0;
+        $skipped = 0;
+
+        DB::transaction(function () use ($catatanMap, $status, &$done, &$skipped) {
+            $kegiatanIds = [];
+
+            Transaksi::whereIn('id', array_keys($catatanMap))->get()
+                ->each(function ($t) use ($catatanMap, $status, &$done, &$skipped, &$kegiatanIds) {
+                    $result = $this->changeStatus($t, $status, $catatanMap[$t->id] ?? null);
+
+                    if ($result !== true) {
+                        $skipped++;
+                        return;
+                    }
+
+                    if ($status === 'APPROVED' && $t->kegiatan_id) {
+                        $kegiatanIds[] = $t->kegiatan_id;
+                    }
+
+                    $done++;
+                });
+
+            foreach (array_unique($kegiatanIds) as $kegiatanId) {
+                Kegiatan::find($kegiatanId)?->tutupJikaSelesai();
             }
         });
 
-        return true;
+        return compact('done', 'skipped');
     }
-
-    public function reject(Transaksi $transaksi, string $catatan = ''): bool|string
-    {
-        if ($transaksi->status_approval !== 'PENDING') {
-            return 'Transaksi tidak dalam status PENDING';
-        }
-
-        $transaksi->update([
-            'status_approval' => 'REJECTED',
-            'catatan_revisi'  => $catatan,
-        ]);
-
-        return true;
-    }
-
-    public function revision(Transaksi $transaksi, string $catatan): bool|string
-    {
-        if ($transaksi->status_approval !== 'PENDING') {
-            return 'Transaksi tidak dalam status PENDING';
-        }
-
-        $transaksi->update([
-            'status_approval' => 'REVISION',
-            'catatan_revisi'  => $catatan,
-        ]);
-
-        return true;
-    }
-
-    // ── Bulk Approval ──────────────────────────────────────────
 
     public function bulkApprove(array $ids): array
     {
-        $approved = 0;
-        $skipped  = 0;
-
-        // Kumpulkan kegiatan_id yang terlibat untuk di-cek setelah semua approve
-        $kegiatanIds = [];
-
-        DB::transaction(function () use ($ids, &$approved, &$skipped, &$kegiatanIds) {
-            $transaksiList = Transaksi::whereIn('id', $ids)->get();
-
-            foreach ($transaksiList as $transaksi) {
-                if ($transaksi->status_approval !== 'PENDING') {
-                    $skipped++;
-                    continue;
-                }
-
-                $transaksi->update([
-                    'status_approval' => 'APPROVED',
-                    'catatan_revisi'  => null,
-                ]);
-
-                if ($transaksi->kegiatan_id) {
-                    $kegiatanIds[] = $transaksi->kegiatan_id;
-                }
-
-                $approved++;
-            }
-
-            // Cek setiap kegiatan yang terlibat apakah bisa ditutup
-            foreach (array_unique($kegiatanIds) as $kegiatanId) {
-                $kegiatan = Kegiatan::find($kegiatanId);
-                $kegiatan?->tutupJikaSelesai();
-            }
-        });
-
-        return compact('approved', 'skipped');
+        return $this->bulkChangeStatus(array_fill_keys($ids, null), 'APPROVED');
     }
 
     public function bulkReject(array $catatanMap): array
     {
-        $rejected = 0;
-        $skipped  = 0;
+        return $this->bulkChangeStatus($catatanMap, 'REJECTED');
+    }
 
-        DB::transaction(function () use ($catatanMap, &$rejected, &$skipped) {
-            Transaksi::whereIn('id', array_keys($catatanMap))->get()->each(function ($t) use ($catatanMap, &$rejected, &$skipped) {
-                if ($t->status_approval !== 'PENDING') { $skipped++; return; }
-                $t->update([
-                    'status_approval' => 'REJECTED',
-                    'catatan_revisi'  => $catatanMap[$t->id] ?? null,
-                ]);
-                $rejected++;
-            });
-        });
-
-        return compact('rejected', 'skipped');
+    public function bulkRevisi(array $catatanMap): array
+    {
+        return $this->bulkChangeStatus($catatanMap, 'REVISION');
     }
 }
