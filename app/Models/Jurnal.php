@@ -77,6 +77,30 @@ class Jurnal extends Model
         return round($this->total_debit, 2) === round($this->total_kredit, 2);
     }
 
+    public function getKodeJurnalAttribute(): string
+    {
+        if (!$this->id || !$this->tanggal || !$this->jenis_jurnal) {
+            return '—';
+        }
+
+        $prefix = match (strtoupper($this->jenis_jurnal)) {
+            'PEMBUKA'     => 'JP',
+            'UMUM'        => 'JU',
+            'PENYESUAIAN' => 'JPS',
+            'KOREKSI'     => 'JK',
+            'PENUTUP'     => 'JPT',
+            default       => 'JX',
+        };
+
+        $tahun     = $this->tanggal->format('Y');
+        $bulan     = $this->tanggal->format('m');
+        $nomorUrut = str_pad($this->id, 3, '0', STR_PAD_LEFT);
+
+        return strtoupper($this->jenis_jurnal) === 'PENUTUP'
+            ? "{$prefix}-{$tahun}-{$nomorUrut}"
+            : "{$prefix}-{$tahun}-{$bulan}-{$nomorUrut}";
+    }
+
     // ── Scope ─────────────────────────────────────────────────────────────
 
     public function scopeDraft($query)
@@ -87,6 +111,11 @@ class Jurnal extends Model
     public function scopePosted($query)
     {
         return $query->where('status', 'POSTED');
+    }
+
+    public function scopePembuka($query)
+    {
+        return $query->where('jenis_jurnal', 'PEMBUKA');
     }
 
     public function scopeUmum($query)

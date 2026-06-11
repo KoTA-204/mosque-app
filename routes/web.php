@@ -17,6 +17,7 @@ use App\Http\Controllers\ChartOfAccountController;
 use App\Http\Controllers\KenclengController;
 use App\Http\Controllers\KategoriTransaksiController;
 use App\Http\Controllers\AsetController;
+use App\Http\Controllers\JurnalPembukaController;
 use App\Http\Controllers\JurnalUmumController;
 use App\Http\Controllers\JurnalPenyesuaianController;
 use App\Http\Controllers\JurnalKoreksiController;
@@ -54,6 +55,10 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('auth.logout');
 });
+
+// ── Dashboard Public ───────────────────────────────────────────────────────
+Route::get('/laporan-keuangan', [DashboardController::class, 'laporanKeuangan'])
+    ->name('laporan-keuangan.index');
 
 // ── Dashboard ──────────────────────────────────────────────────────────────
 Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(function () {
@@ -323,6 +328,43 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         });
     });
 
+    // ── Akuntansi - Jurnal Pembuka ─────────────────────────────────────────
+    Route::middleware('permission:VIEW_JURNAL_PEMBUKA')->group(function () {
+        Route::get('/jurnal-pembuka', [JurnalPembukaController::class, 'index'])
+            ->name('jurnal-pembuka.index');
+ 
+        Route::get('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'show'])
+            ->name('jurnal-pembuka.show')
+            ->whereNumber('jurnalPembuka');
+
+        Route::patch('/jurnal-pembuka/{jurnalPembuka}/posting', [JurnalPembukaController::class, 'posting'])
+                ->name('jurnal-pembuka.posting')
+                ->whereNumber('jurnalPembuka');
+
+        Route::middleware('permission:CREATE_JURNAL_PEMBUKA')->group(function () {
+            Route::get('/jurnal-pembuka/create', [JurnalPembukaController::class, 'create'])
+                ->name('jurnal-pembuka.create');
+            Route::post('/jurnal-pembuka', [JurnalPembukaController::class, 'store'])
+                ->name('jurnal-pembuka.store');
+        });
+
+        Route::middleware('permission:EDIT_JURNAL_PEMBUKA')->group(function () {
+            Route::get('/jurnal-pembuka/{jurnalPembuka}/edit', [JurnalPembukaController::class, 'edit'])
+                ->name('jurnal-pembuka.edit')
+                ->whereNumber('jurnalPembuka');
+            Route::put('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'update'])
+                ->name('jurnal-pembuka.update')
+                ->whereNumber('jurnalPembuka');
+        });
+
+        Route::middleware('permission:DELETE_JURNAL_PEMBUKA')->group(function () {
+            Route::delete('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'destroy'])
+                ->name('jurnal-pembuka.destroy')
+                ->whereNumber('jurnalPembuka');
+        });
+    });
+
+    // ── Akuntansi - Jurnal Penyesuaian ─────────────────────────────────────────
     Route::middleware('permission:VIEW_JURNAL_PENYESUAIAN')->group(function () {
         Route::get('/jurnal-penyesuaian', [JurnalPenyesuaianController::class, 'index'])
             ->name('jurnal-penyesuaian.index');
@@ -350,6 +392,7 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         });
     });
 
+    // ── Akuntansi - Jurnal Koreksi ─────────────────────────────────────────
     Route::middleware('permission:VIEW_JURNAL_KOREKSI')->group(function () {
         Route::get('/jurnal-koreksi', [JurnalKoreksiController::class, 'index'])
             ->name('jurnal-koreksi.index');
@@ -377,6 +420,7 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         });
     });
 
+    // ── Akuntansi - Jurnal Penutup ─────────────────────────────────────────
     Route::middleware('permission:VIEW_JURNAL_PENUTUP')->group(function () {
         Route::get('/jurnal-penutup', [JurnalPenutupController::class, 'index'])
             ->name('jurnal-penutup.index');
