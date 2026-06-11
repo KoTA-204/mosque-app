@@ -28,6 +28,19 @@
                 </div>
             </div>
 
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Dompet <span class="text-red-500">*</span>
+                </label>
+                <select name="dompet_id" required
+                    class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                    <option value="">Pilih dompet</option>
+                    @foreach ($dompets as $d)
+                        <option value="{{ $d->id }}">{{ $d->nama_dompet }}</option>
+                    @endforeach
+                </select>
+            </div>
+
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Unggah File</label>
                 <div id="dropzoneImpor"

@@ -23,6 +23,7 @@ class ImportTransaksiRequest extends FormRequest
     {
         return [
             'bank'            => 'required|in:BSI,BRI',
+            'dompet_id'       => 'required|exists:dompet,id',
             'jenis_transaksi' => 'required|in:PEMASUKAN,PENGELUARAN',
             'file'            => 'required|file|mimes:xlsx,xls|max:10240',
         ];
@@ -33,6 +34,7 @@ class ImportTransaksiRequest extends FormRequest
         return [
             'bank.required'            => 'Bank wajib dipilih.',
             'bank.in'                  => 'Bank tidak valid. Pilih BSI atau BRI.',
+            'dompet_id.required'       => 'Dompet wajib dipilih.',
             'jenis_transaksi.required' => 'Jenis transaksi wajib dipilih.',
             'jenis_transaksi.in'       => 'Jenis transaksi tidak valid.',
             'file.required'            => 'File mutasi bank wajib diunggah.',
