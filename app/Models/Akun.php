@@ -17,6 +17,8 @@ class Akun extends Model
         'kode_akun',
         'nama_akun',
         'saldo_normal',
+        'deskripsi',   
+        'status',
     ];
 
     public function kategoriAkun()

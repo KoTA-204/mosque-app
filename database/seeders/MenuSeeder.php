@@ -74,6 +74,15 @@ class MenuSeeder extends Seeder
         ]);
 
         Menu::create([
+            'menu_name'     => 'Pencatatan Transaksi',   
+            'route_name'    => 'dashboard.transaksi.index',
+            'icon'          => 'arrows-exchange',
+            'parent_id'     => $pencatatan->id,
+            'sort_order'    => 20,
+            'permission_id' => $perm('VIEW_TRANSAKSI'),
+        ]);
+
+        Menu::create([
             'menu_name'     => 'Kencleng',
             'route_name'    => 'dashboard.kencleng.index',
             'icon'          => 'pig-money',
@@ -84,7 +93,7 @@ class MenuSeeder extends Seeder
 
         Menu::create([
             'menu_name'     => 'Transaksi Kegiatan',
-            'route_name'    => 'dashboard.kegiatan-panitia.index',
+            'route_name'    => 'dashboard.transaksi-kegiatan.index',
             'icon'          => 'receipt',
             'parent_id'     => $pencatatan->id,
             'sort_order'    => 22,
@@ -135,7 +144,7 @@ class MenuSeeder extends Seeder
 
         Menu::create([
             'menu_name'     => 'Jurnal Umum',
-            'route_name'    => 'dashboard.jurnal.index',
+            'route_name'    => 'dashboard.jurnal-umum.index',
             'icon'          => 'book-open',
             'parent_id'     => $akuntansi->id,
             'sort_order'    => 46,

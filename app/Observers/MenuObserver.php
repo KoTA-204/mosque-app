@@ -13,11 +13,6 @@ class MenuObserver
         if ($menu->route_name) {
             $this->attachViewPermission($menu);
         }
-
-        // Update permission parent menu
-        if ($menu->parent_id && $menu->parent) {
-            $this->syncParentPermissions($menu->parent);
-        }
     }
 
     public function deleted(Menu $menu): void
@@ -39,7 +34,8 @@ class MenuObserver
             ->first();
 
         if ($permission) {
-            $menu->permissions()->syncWithoutDetaching([$permission->id]);
+            $menu->permission()->associate($permission);
+            $menu->saveQuietly();
         }
     }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreTransaksiRequest;
+use App\Http\Requests\UpdateTransaksiRequest;
 use App\Models\Kegiatan;
 use App\Models\Transaksi;
 use App\Services\TransaksiKegiatanService;
@@ -14,8 +15,7 @@ class TransaksiKegiatanController extends Controller
         protected TransaksiKegiatanService $transaksiKegiatanService
     ) {}
 
-    // ── List Kegiatan ──────────────────────────────────────────
-
+    // ── List Kegiatan ─────────────────────────────────────────
     public function index(Request $request)
     {
         $search   = $request->get('search', '');
@@ -27,165 +27,97 @@ class TransaksiKegiatanController extends Controller
     }
 
     // ── List Transaksi per Kegiatan ────────────────────────────
-
     public function show(Kegiatan $kegiatan, Request $request)
     {
-        // Panitia hanya bisa lihat kegiatan miliknya
-        if (auth()->user()->hasRole('panitia-khusus') &&
-            $kegiatan->panitia_id !== auth()->id()) {
-            abort(403);
-        }
+        $this->authorizeKegiatan($kegiatan);
 
-        $search    = $request->get('search', '');
-        $transaksi = $this->transaksiKegiatanService->getTransaksiByKegiatan($kegiatan, $search);
-        $porsi     = $this->transaksiKegiatanService->getPorsiAnggaran($kegiatan);
-
-        return view('pages.transaksi-kegiatan.show', compact('kegiatan', 'transaksi', 'porsi', 'search'));
-    }
-
-    // ── Form Catat Transaksi ───────────────────────────────────
-
-    public function createTransaksi(Kegiatan $kegiatan)
-    {
-        // Cek kegiatan masih berjalan
-        if ($kegiatan->status !== Kegiatan::STATUS_AKTIF) {
-            return redirect()->route('dashboard.kegiatan-panitia.show', $kegiatan)
-                ->with('error', 'Kegiatan tidak sedang aktif');
-        }
-
-        // Panitia hanya bisa input ke kegiatan miliknya
-        if (auth()->user()->hasRole('panitia-khusus') &&
-            $kegiatan->panitia_id !== auth()->id()) {
-            abort(403);
-        }
-
+        $search        = $request->get('search', '');
+        $transaksi     = $this->transaksiKegiatanService->getTransaksiByKegiatan($kegiatan, $search);
+        $porsi         = $this->transaksiKegiatanService->getPorsiAnggaran($kegiatan);
         $dompetList    = $this->transaksiKegiatanService->getDompetList();
         $kategoriList  = $this->transaksiKegiatanService->getKategoriList();
         $kodeTransaksi = $this->transaksiKegiatanService->generateKodeTransaksi();
 
-        return view('pages.transaksi-kegiatan.create-transaksi', compact(
-            'kegiatan', 'dompetList', 'kategoriList', 'kodeTransaksi'
+        return view('pages.transaksi-kegiatan.show', compact(
+            'kegiatan', 'transaksi', 'porsi', 'search',
+            'dompetList', 'kategoriList', 'kodeTransaksi'
         ));
     }
 
     // ── Simpan Transaksi ───────────────────────────────────────
-
     public function storeTransaksi(StoreTransaksiRequest $request, Kegiatan $kegiatan)
     {
-        if ($kegiatan->status !== Kegiatan::STATUS_AKTIF) {
-            return redirect()->back()->with('error', 'Kegiatan tidak sedang aktif');
-        }
+        $this->authorizeKegiatan($kegiatan);
 
-        if (auth()->user()->hasRole('panitia-khusus') &&
-            $kegiatan->panitia_id !== auth()->id()) {
-            abort(403);
+        if (! $kegiatan->isAktif()) {
+            return back()->with('error', 'Kegiatan tidak sedang aktif');
         }
 
         $this->transaksiKegiatanService->storeTransaksi($kegiatan, $request->validated());
 
-        return redirect()->route('dashboard.kegiatan-panitia.show', $kegiatan)
+        return redirect()
+            ->route('dashboard.transaksi-kegiatan.show', $kegiatan)
             ->with('success', 'Transaksi berhasil dicatat');
     }
 
     // ── Detail Transaksi ───────────────────────────────────────
-
     public function showTransaksi(Kegiatan $kegiatan, Transaksi $transaksi)
     {
-        if ($transaksi->kegiatan_id !== $kegiatan->id) {
-            abort(404);
-        }
+        $this->ensureMilikKegiatan($kegiatan, $transaksi);
 
         $transaksi = $this->transaksiKegiatanService->getTransaksiById($transaksi);
 
         return view('pages.transaksi-kegiatan.show-transaksi', compact('kegiatan', 'transaksi'));
     }
 
-    // ── Hapus Transaksi ────────────────────────────────────────
+    // ── Update Transaksi (hanya PENDING / REVISION) ───────────
+    public function updateTransaksi(UpdateTransaksiRequest $request, Kegiatan $kegiatan, Transaksi $transaksi)
+    {
+        $this->ensureMilikKegiatan($kegiatan, $transaksi);
 
+        if (! $transaksi->bisaDiedit()) {
+            return back()->with('error', 'Transaksi tidak dapat diedit karena sudah diproses');
+        }
+        if ($transaksi->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $this->transaksiKegiatanService->updateTransaksi($transaksi, $request->validated());
+
+        return redirect()
+            ->route('dashboard.transaksi-kegiatan.show', $kegiatan)
+            ->with('success', 'Transaksi berhasil diperbarui');
+    }
+
+    // ── Hapus Transaksi ────────────────────────────────────────
     public function destroyTransaksi(Kegiatan $kegiatan, Transaksi $transaksi)
     {
-        if ($transaksi->kegiatan_id !== $kegiatan->id) {
-            abort(404);
-        }
+        $this->ensureMilikKegiatan($kegiatan, $transaksi);
 
         $result = $this->transaksiKegiatanService->deleteTransaksi($transaksi);
 
         if ($result !== true) {
-            return redirect()->back()->with('error', $result);
+            return back()->with('error', $result);
         }
 
-        return redirect()->route('dashboard.kegiatan-panitia.show', $kegiatan)
+        return redirect()
+            ->route('dashboard.transaksi-kegiatan.show', $kegiatan)
             ->with('success', 'Transaksi berhasil dihapus');
     }
 
-    // ── Edit Transaksi setelah REVISION (Panitia) ──────────────
-
-    public function editTransaksi(Kegiatan $kegiatan, Transaksi $transaksi)
+    // ── Helpers ────────────────────────────────────────────────
+    private function authorizeKegiatan(Kegiatan $kegiatan): void
     {
-        if (!in_array($transaksi->status_approval, ['REVISION', 'PENDING'])) {
-            return redirect()->back()->with(
-                'error',
-                'Transaksi tidak dapat diedit'
-            );
-        }
-
-        if ($transaksi->user_id !== auth()->id()) {
+        if (auth()->user()->hasRole('panitia-khusus') && $kegiatan->panitia_id !== auth()->id()) {
             abort(403);
         }
-
-        $transaksi    = $this->transaksiKegiatanService->getTransaksiById($transaksi);
-        $dompetList   = $this->transaksiKegiatanService->getDompetList();
-        $kategoriList = $this->transaksiKegiatanService->getKategoriList();
-
-        return view(
-            'pages.transaksi-kegiatan.edit-transaksi',
-            compact(
-                'kegiatan',
-                'transaksi',
-                'dompetList',
-                'kategoriList'
-            )
-        );
     }
 
-    public function updateTransaksi(
-        Request $request,
-        Kegiatan $kegiatan,
-        Transaksi $transaksi
-    ) {
-        if (!in_array($transaksi->status_approval, ['REVISION', 'PENDING'])) {
-            return redirect()->back()->with(
-                'error',
-                'Transaksi tidak dapat diedit'
-            );
+    private function ensureMilikKegiatan(Kegiatan $kegiatan, Transaksi $transaksi): void
+    {
+        if ($transaksi->kegiatan_id !== $kegiatan->id) {
+            abort(404);
         }
-
-        if ($transaksi->user_id !== auth()->id()) {
-            abort(403);
-        }
-
-        $request->validate([
-            'tanggal_transaksi'     => 'required|date',
-            'jumlah'                => 'required|numeric|min:1',
-            'dompet_id'             => 'required|exists:dompet,id',
-            'kategori_transaksi_id' => 'required|exists:kategori_transaksi,id',
-            'deskripsi'             => 'nullable|string|max:500',
-            'bukti_transaksi'       => 'nullable|array',
-            'bukti_transaksi.*'     => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'hapus_bukti'           => 'nullable|array',
-            'hapus_bukti.*'         => 'integer|exists:bukti_transaksi,id',
-        ]);
-
-        $this->transaksiKegiatanService->updateTransaksi(
-            $transaksi,
-            $request->all()
-        );
-
-        return redirect()
-            ->route('dashboard.kegiatan-panitia.show', $kegiatan)
-            ->with(
-                'success',
-                'Transaksi berhasil diperbarui'
-            );
+        $this->authorizeKegiatan($kegiatan);
     }
 }

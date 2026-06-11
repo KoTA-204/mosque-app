@@ -30,6 +30,19 @@ class Transaksi extends Model
         'jumlah' => 'decimal:2',
     ];
 
+    const STATUS_DRAFT    = 'DRAFT';
+    const STATUS_PENDING  = 'PENDING';
+    const STATUS_APPROVED = 'APPROVED';
+    const STATUS_REJECTED = 'REJECTED';
+    const STATUS_REVISION = 'REVISION';
+
+    const STATUS_EDITABLE = [self::STATUS_DRAFT, self::STATUS_PENDING, self::STATUS_REVISION];
+
+    public function bisaDiedit(): bool
+    {
+        return in_array($this->status_approval, self::STATUS_EDITABLE, true);
+    }
+
     public function dompet()
     {
         return $this->belongsTo(Dompet::class);
@@ -58,5 +71,31 @@ class Transaksi extends Model
     public function buktiTransaksi()
     {
         return $this->hasMany(BuktiTransaksi::class);
+    }
+
+    public function jurnal()
+    {
+        return $this->hasMany(Jurnal::class);
+    }
+ 
+    public function aset()
+    {
+        return $this->hasOne(Aset::class);
+    }
+ 
+    // ─── Scope ───────────────────────────────────────────────────────────────
+ 
+    public function scopePeriode($query, $bulan, $tahun)
+    {
+        return $query
+            ->whereMonth('tanggal_transaksi', $bulan)
+            ->whereYear('tanggal_transaksi', $tahun);
+    }
+ 
+    // ─── Accessor ────────────────────────────────────────────────────────────
+ 
+    public function getJumlahFormattedAttribute(): string
+    {
+        return 'Rp ' . number_format($this->jumlah, 0, ',', '.');
     }
 }

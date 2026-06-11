@@ -3,36 +3,28 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreTransaksiRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return true; // otorisasi detail ditangani di controller
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            'jenis_transaksi'       => 'required|in:PEMASUKAN,PENGELUARAN',
-            'tanggal_transaksi'     => 'required|date',
-            'jumlah'                => 'required|numeric|min:1',
-            'dompet_id'             => 'required|exists:dompet,id',
-            'kategori_transaksi_id' => 'required|exists:kategori_transaksi,id',
-            'deskripsi'             => 'nullable|string|max:500',
-            'bukti_transaksi'       => 'nullable|array',
-            'bukti_transaksi.*'     => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'jenis_transaksi'       => ['required', Rule::in(['PEMASUKAN', 'PENGELUARAN'])],
+            'tanggal_transaksi'     => ['required', 'date'],
+            'jumlah'                => ['required', 'numeric', 'min:1'],
+            'dompet_id'             => ['required', 'exists:dompet,id'],
+            'kategori_transaksi_id' => ['required', 'exists:kategori_transaksi,id'],
+            'deskripsi'             => ['nullable', 'string', 'max:500'],
+            'bukti_transaksi'       => ['nullable', 'array'],
+            'bukti_transaksi.*'     => ['file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
         ];
     }
-
     public function messages(): array
     {
         return [
@@ -40,10 +32,31 @@ class StoreTransaksiRequest extends FormRequest
             'tanggal_transaksi.required'     => 'Tanggal wajib diisi',
             'jumlah.required'                => 'Jumlah wajib diisi',
             'jumlah.min'                     => 'Jumlah harus lebih dari 0',
+            'akun_debit_id.required'         => 'Akun debit wajib dipilih.',
+            'akun_kredit_id.required'        => 'Akun kredit wajib dipilih.',
             'dompet_id.required'             => 'Dompet wajib dipilih',
             'kategori_transaksi_id.required' => 'Kategori wajib dipilih',
             'bukti_transaksi.*.mimes'        => 'File harus berformat JPG, PNG, atau PDF',
             'bukti_transaksi.*.max'          => 'Ukuran file maksimal 5MB',
+            'catatan.max'                    => 'Catatan tidak boleh lebih dari 500 karakter',
+            'nama_aset.required'             => 'Nama aset wajib diisi.',
+            'tanggal_perolehan.required'     => 'Tanggal perolehan aset wajib diisi.',
+            'kondisi_aset.required'          => 'Kondisi aset wajib dipilih.',
+            'sumber_perolehan.required'      => 'Sumber perolehan aset wajib dipilih.',
+            'lokasi_aset.required'           => 'Lokasi aset wajib diisi.',
+            'jumlah_unit.required'           => 'Jumlah unit aset wajib diisi.',
+            'tanggal_mulai_penyusutan.required' => 'Tanggal mulai penyusutan wajib diisi.',
+            'umur_manfaat.required'          => 'Umur manfaat aset wajib diisi.',
+            'dokumen_aset.max'               => 'Ukuran file dokumen aset maksimal 5MB',
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('is_aset')) {
+            $this->merge([
+                'is_aset' => filter_var($this->is_aset, FILTER_VALIDATE_BOOLEAN),
+            ]);
+        }
     }
 }

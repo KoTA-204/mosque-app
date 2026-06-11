@@ -139,7 +139,7 @@
                 <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
                     @forelse($transaksi as $item)
                     @php
-                        $jenis      = $item->kategoriTransaksi->jenis_transaksi;
+                        $jenis      = $item->jenis_transaksi;
                         $isKencleng = $item->kencleng !== null;
                         $label      = $isKencleng
                             ? 'Kencleng'

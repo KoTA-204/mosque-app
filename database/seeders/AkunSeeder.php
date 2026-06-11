@@ -2,17 +2,12 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use App\Models\KategoriAkun;
 use App\Models\Akun;
 
 class AkunSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $aset       = KategoriAkun::where('kode_kategori', '1')->first();
@@ -21,7 +16,7 @@ class AkunSeeder extends Seeder
         $pendapatan = KategoriAkun::where('kode_kategori', '4')->first();
         $beban      = KategoriAkun::where('kode_kategori', '5')->first();
 
-        // ── 1. ASET ────────────────────────────────────────────────
+        // ── 1. ASET ────────────────────────────────────────────────────────
         $asetLancar = Akun::create([
             'kategori_akun_id' => $aset->id,
             'parent_id'        => null,
@@ -134,7 +129,7 @@ class AkunSeeder extends Seeder
             'saldo_normal'     => 'KREDIT',
         ]);
 
-        // ── 2. LIABILITAS ─────────────────────────────────────────
+        // ── 2. LIABILITAS ──────────────────────────────────────────────────
         $liabilitasLancar = Akun::create([
             'kategori_akun_id' => $liabilitas->id,
             'parent_id'        => null,
@@ -183,42 +178,45 @@ class AkunSeeder extends Seeder
             'saldo_normal'     => 'KREDIT',
         ]);
 
-        // ── 3. ASET NETO ──────────────────────────────────────────
-        $asetNetoTidakTerikat = Akun::create([
+        // ── 3. ASET NETO ───────────────────────────────────────────────────
+        //
+        // Terminologi diselaraskan dengan ISAK 335:
+        //   "Tanpa Pembatasan" (without restrictions) — sebelumnya "Tidak Terikat"
+        //   "Dengan Pembatasan" (with restrictions)   — sebelumnya "Terikat Temporer"
+        //
+        // Akun 3-1200 Surplus/Defisit Tahun Berjalan DIHAPUS — tidak diperlukan
+        // karena surplus sudah tercermin otomatis di saldo 3-1000 setelah
+        // jurnal penutup diposting.
+
+        $asetNetoTanpaPembatasan = Akun::create([
             'kategori_akun_id' => $asetNeto->id,
             'parent_id'        => null,
             'kode_akun'        => '3-1000',
-            'nama_akun'        => 'Aset Neto Tidak Terikat',
+            'nama_akun'        => 'Aset Neto Tanpa Pembatasan',  // ← diperbarui
             'saldo_normal'     => 'KREDIT',
         ]);
 
         Akun::create([
             'kategori_akun_id' => $asetNeto->id,
-            'parent_id'        => $asetNetoTidakTerikat->id,
+            'parent_id'        => $asetNetoTanpaPembatasan->id,
             'kode_akun'        => '3-1100',
             'nama_akun'        => 'Saldo Awal',
             'saldo_normal'     => 'KREDIT',
         ]);
 
-        Akun::create([
-            'kategori_akun_id' => $asetNeto->id,
-            'parent_id'        => $asetNetoTidakTerikat->id,
-            'kode_akun'        => '3-1200',
-            'nama_akun'        => 'Surplus / Defisit Tahun Berjalan',
-            'saldo_normal'     => 'KREDIT',
-        ]);
+        // 3-1200 Surplus/Defisit Tahun Berjalan → DIHAPUS
 
-        $asetNetoTerikat = Akun::create([
+        $asetNetoDenganPembatasan = Akun::create([
             'kategori_akun_id' => $asetNeto->id,
             'parent_id'        => null,
             'kode_akun'        => '3-2000',
-            'nama_akun'        => 'Aset Neto Terikat Temporer',
+            'nama_akun'        => 'Aset Neto Dengan Pembatasan', // ← diperbarui
             'saldo_normal'     => 'KREDIT',
         ]);
 
         Akun::create([
             'kategori_akun_id' => $asetNeto->id,
-            'parent_id'        => $asetNetoTerikat->id,
+            'parent_id'        => $asetNetoDenganPembatasan->id,
             'kode_akun'        => '3-2100',
             'nama_akun'        => 'Dana Wakaf',
             'saldo_normal'     => 'KREDIT',
@@ -226,13 +224,20 @@ class AkunSeeder extends Seeder
 
         Akun::create([
             'kategori_akun_id' => $asetNeto->id,
-            'parent_id'        => $asetNetoTerikat->id,
+            'parent_id'        => $asetNetoDenganPembatasan->id,
             'kode_akun'        => '3-2200',
             'nama_akun'        => 'Dana Pembangunan',
             'saldo_normal'     => 'KREDIT',
         ]);
 
-        // ── 4. PENDAPATAN ─────────────────────────────────────────
+        // ── 4. PENDAPATAN ──────────────────────────────────────────────────
+        //
+        // Struktur sudah benar — dua parent sesuai klasifikasi ISAK 35:
+        //   4-1000 Pendapatan Tidak Terikat  → PREFIX_DENGAN_PEMBATASAN tidak cocok
+        //                                      → closing ke 3-1000
+        //   4-2000 Pendapatan Terikat        → prefix '4-2' cocok
+        //                                      → closing ke 3-2000
+
         $pendapatanTidakTerikat = Akun::create([
             'kategori_akun_id' => $pendapatan->id,
             'parent_id'        => null,
@@ -321,7 +326,11 @@ class AkunSeeder extends Seeder
             'saldo_normal'     => 'KREDIT',
         ]);
 
-        // ── 5. BEBAN ──────────────────────────────────────────────
+        // ── 5. BEBAN ───────────────────────────────────────────────────────
+        //
+        // Semua beban → Tanpa Pembatasan (sesuai ISAK 335).
+        // Tidak perlu pembagian terikat/tidak terikat di sini.
+
         $bebanOperasional = Akun::create([
             'kategori_akun_id' => $beban->id,
             'parent_id'        => null,
