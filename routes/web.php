@@ -420,6 +420,9 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         Route::get('/perubahan-aset-neto', [LaporanKeuanganController::class, 'perubahanAsetNeto'])
             ->name('perubahan-aset-neto');
 
+        Route::get('/arus-kas', [LaporanKeuanganController::class, 'arusKas'])
+            ->name('arus-kas');
+
         Route::get('/calk', [LaporanKeuanganController::class, 'calk'])
             ->name('calk');
     });
