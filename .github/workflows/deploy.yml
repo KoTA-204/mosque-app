@@ -1,13 +1,13 @@
 name: deploy-to-azure
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 env:
   ACR_NAME: acrkeuanganmasjid
   IMAGE: keuangan-masjid
   RESOURCE_GROUP: rg-keuangan-masjid
-  CONTAINER_APP: mosque-app    
+  CONTAINER_APP: mosque-app
 
 jobs:
   build-and-deploy:
@@ -18,15 +18,15 @@ jobs:
       - name: Login ke Azure
         uses: azure/login@v2
         with:
-          creds: $ secrets.AZURE_CREDENTIALS 
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Build & push image ke ACR
         run: |
           az acr build --registry $ACR_NAME \
-            --image $IMAGE:$ github.sha  --image $IMAGE:latest .
+            --image $IMAGE:${{ github.sha }}  --image $IMAGE:latest .
 
       - name: Deploy ke Container Apps
         run: |
           az containerapp update \
             --name $CONTAINER_APP --resource-group $RESOURCE_GROUP \
-            --image $ACR_NAME.azurecr.io/$IMAGE:$ github.sha 
+            --image $ACR_NAME.azurecr.io/$IMAGE:${{ github.sha }}
