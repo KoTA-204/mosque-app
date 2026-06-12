@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Menu;
 use App\Observers\MenuObserver;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,5 +23,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Menu::observe(MenuObserver::class);
+        if (app()->environment(['production', 'staging'])) {
+            URL::forceScheme('https');
+        }
     }
 }
