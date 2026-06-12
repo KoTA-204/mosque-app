@@ -56,14 +56,41 @@
     @endif
 
     <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-                </svg>
-                <span class="text-sm font-medium text-gray-800">Impor Mutasi Bank</span>
-                <span class="text-xs text-gray-400">Klasifikasi akun debit dan kredit</span>
+        {{-- Bulk Action Bar --}}
+        <div id="bulkActionBar"
+            class="hidden px-5 py-3 bg-green-50 border-b border-green-100 items-center gap-3 flex-wrap">
+            <span id="bulkCount" class="text-sm font-medium text-green-800">0 baris dipilih</span>
+            <div class="flex items-center gap-2 flex-wrap ml-auto">
+                {{-- Bulk Akun Debit --}}
+                <select id="bulkDebit"
+                    class="h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500">
+                    <option value="">Akun debit...</option>
+                    @foreach($akuns as $a)
+                        <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
+                    @endforeach
+                </select>
+                {{-- Bulk Akun Kredit --}}
+                <select id="bulkKredit"
+                    class="h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500">
+                    <option value="">Akun kredit...</option>
+                    @foreach($akuns as $a)
+                        <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
+                    @endforeach
+                </select>
+                <button type="button" onclick="applyBulk()"
+                    class="h-8 px-3 bg-green-700 text-white text-xs font-medium rounded-lg hover:bg-green-800 transition-colors">
+                    Terapkan
+                </button>
+                <div class="w-px h-5 bg-gray-300"></div>
+                {{-- Bulk Hapus --}}
+                <button type="button" onclick="bulkHapus()"
+                    class="h-8 px-3 bg-red-50 text-red-600 border border-red-200 text-xs font-medium rounded-lg hover:bg-red-100 transition-colors flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Hapus
+                </button>
             </div>
         </div>
 
@@ -97,7 +124,7 @@
                         ])>
                             <td class="px-4 py-3">
                                 @if(!$row['is_duplikat'])
-                                    <input type="checkbox" name="klasifikasi[{{ $i }}][skip]" value="0"
+                                    <input type="checkbox"
                                         class="rowCheck rounded border-gray-300"
                                         data-idx="{{ $i }}">
                                     <input type="hidden" name="klasifikasi[{{ $i }}][no_referensi]"
@@ -132,7 +159,7 @@
                             <td class="px-3 py-3">
                                 @if(!$row['is_duplikat'])
                                     <select name="klasifikasi[{{ $i }}][akun_debit_id]" required
-                                        class="w-full h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500">
+                                        class="debitSelect w-full h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500">
                                         <option value="">Pilih akun</option>
                                         @foreach($akuns as $a)
                                             <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
@@ -146,7 +173,7 @@
                             <td class="px-3 py-3">
                                 @if(!$row['is_duplikat'])
                                     <select name="klasifikasi[{{ $i }}][akun_kredit_id]" required
-                                        class="w-full h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500">
+                                        class="kreditSelect w-full h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500">
                                         <option value="">Pilih akun</option>
                                         @foreach($akuns as $a)
                                             <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
@@ -156,15 +183,16 @@
                                     <span class="text-xs text-gray-400">-</span>
                                 @endif
                             </td>
-                            {{-- Skip --}}
+                            {{-- Hapus --}}
                             <td class="px-3 py-3 text-center">
                                 @if(!$row['is_duplikat'])
                                     <button type="button"
-                                        onclick="skipRow({{ $i }}, this)"
-                                        class="text-xs text-gray-400 hover:text-red-500 transition-colors"
-                                        title="Lewati baris ini">
+                                        onclick="hapusRow(this)"
+                                        class="text-gray-400 hover:text-red-500 transition-colors"
+                                        title="Hapus baris ini">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                         </svg>
                                     </button>
                                 @endif
@@ -183,7 +211,7 @@
     </div>
 
     <div class="bg-white rounded-2xl border border-gray-200 px-6 py-4 flex items-center justify-between">
-        <span class="text-sm text-gray-500">
+        <span class="text-sm text-gray-500" data-entry-count>
             Showing 1 to {{ $stats['total'] }} of {{ $stats['total'] }} entries
         </span>
         <button type="button" onclick="simpanKlasifikasi()"
@@ -206,26 +234,80 @@
 ])
 
 <script>
+// ── Checkbox & Bulk Action ──────────────────────────────────────
+
 function toggleCheckAll(master) {
     document.querySelectorAll('.rowCheck').forEach(cb => cb.checked = master.checked);
+    updateBulkBar();
 }
 
-function skipRow(idx, btn) {
-    const row = btn.closest('tr');
-    row.classList.toggle('opacity-40');
+function updateBulkBar() {
+    const checked = document.querySelectorAll('.rowCheck:checked').length;
+    const bar     = document.getElementById('bulkActionBar');
+    const count   = document.getElementById('bulkCount');
 
-    const skipInput = document.querySelector(`[name="klasifikasi[${idx}][skip]"]`);
-    if (skipInput) {
-        skipInput.value = skipInput.value === '1' ? '0' : '1';
-        // Toggle required pada select di baris ini
-        row.querySelectorAll('select').forEach(sel => {
-            if (skipInput.value === '1') sel.removeAttribute('required');
-            else sel.setAttribute('required', '');
-        });
+    if (checked > 0) {
+        bar.classList.remove('hidden');
+        bar.classList.add('flex');
+        count.textContent = checked + ' baris dipilih';
+    } else {
+        bar.classList.add('hidden');
+        bar.classList.remove('flex');
     }
-    btn.classList.toggle('text-gray-400');
-    btn.classList.toggle('text-red-500');
+
+    const total = document.querySelectorAll('.rowCheck').length;
+    document.getElementById('checkAll').checked = total > 0 && total === checked;
 }
+
+document.querySelectorAll('.rowCheck').forEach(cb => {
+    cb.addEventListener('change', () => updateBulkBar());
+});
+
+function applyBulk() {
+    const debitVal  = document.getElementById('bulkDebit').value;
+    const kreditVal = document.getElementById('bulkKredit').value;
+
+    if (!debitVal && !kreditVal) {
+        alert('Pilih minimal akun debit atau akun kredit untuk diterapkan.');
+        return;
+    }
+
+    document.querySelectorAll('.rowCheck:checked').forEach(cb => {
+        const idx = cb.dataset.idx;
+        if (debitVal) {
+            const sel = document.querySelector(`.debitSelect[data-idx="${idx}"]`);
+            if (sel) sel.value = debitVal;
+        }
+        if (kreditVal) {
+            const sel = document.querySelector(`.kreditSelect[data-idx="${idx}"]`);
+            if (sel) sel.value = kreditVal;
+        }
+    });
+}
+
+function bulkHapus() {
+    const checked = document.querySelectorAll('.rowCheck:checked');
+    if (checked.length === 0) return;
+    if (!confirm(`Hapus ${checked.length} baris yang dipilih?`)) return;
+
+    checked.forEach(cb => cb.closest('tr').remove());
+    updateBulkBar();
+    updateEntryCount();
+}
+
+function hapusRow(btn) {
+    btn.closest('tr').remove();
+    updateBulkBar();
+    updateEntryCount();
+}
+
+function updateEntryCount() {
+    const total   = document.querySelectorAll('tbody tr').length;
+    const countEl = document.querySelector('[data-entry-count]');
+    if (countEl) countEl.textContent = `Showing 1 to ${total} of ${total} entries`;
+}
+
+// ── Simpan ──────────────────────────────────────────────────────
 
 async function simpanKlasifikasi() {
     const btn     = document.getElementById('btnSimpanKlasifikasi');
@@ -233,13 +315,11 @@ async function simpanKlasifikasi() {
     const errBox  = document.getElementById('reviewErrorBox');
     const errList = document.getElementById('reviewErrorList');
 
-    // Validasi: setiap baris non-skip & non-duplikat harus punya akun
     let valid = true;
     errList.innerHTML = '';
 
-    document.querySelectorAll('tbody tr:not(.opacity-60)').forEach((row, i) => {
-        const selects = row.querySelectorAll('select');
-        selects.forEach(sel => {
+    document.querySelectorAll('tbody tr').forEach(row => {
+        row.querySelectorAll('select').forEach(sel => {
             if (sel.hasAttribute('required') && !sel.value) {
                 valid = false;
                 sel.classList.add('border-red-400');
@@ -250,7 +330,8 @@ async function simpanKlasifikasi() {
     });
 
     if (!valid) {
-        errList.insertAdjacentHTML('beforeend', '<li>Pilih akun debit dan kredit untuk setiap baris yang aktif.</li>');
+        errList.insertAdjacentHTML('beforeend',
+            '<li>Pilih akun debit dan kredit untuk setiap baris yang aktif.</li>');
         errBox.classList.remove('hidden');
         errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         return;
@@ -273,12 +354,10 @@ async function simpanKlasifikasi() {
         const data = await res.json();
 
         if (data.success && data.type === 'import_success') {
-            // Isi modal sukses
-            document.getElementById('hasilTersimpan').textContent = data.tersimpan;
-            document.getElementById('hasilDuplikat').textContent  = data.duplikat;
-            document.getElementById('hasilTotal').textContent     = data.total;
-            document.getElementById('hasilPeriode').textContent   = data.periode;
-            document.getElementById('hasilState').setAttribute('data-state', 'sukses');
+            document.getElementById('hasilTersimpan').textContent    = data.tersimpan;
+            document.getElementById('hasilDuplikat').textContent     = data.duplikat;
+            document.getElementById('hasilTotal').textContent        = data.total;
+            document.getElementById('hasilPeriode').textContent      = data.periode ?? '';
             openModal('modalHasilImport');
         } else {
             if (res.status === 422 && data.errors) {
@@ -286,7 +365,8 @@ async function simpanKlasifikasi() {
                     errList.insertAdjacentHTML('beforeend', `<li>${msg}</li>`);
                 });
             } else {
-                errList.insertAdjacentHTML('beforeend', `<li>${data.message ?? 'Terjadi kesalahan.'}</li>`);
+                errList.insertAdjacentHTML('beforeend',
+                    `<li>${data.message ?? 'Terjadi kesalahan.'}</li>`);
             }
             errBox.classList.remove('hidden');
         }

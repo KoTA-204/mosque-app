@@ -272,9 +272,10 @@ class TransaksiController extends Controller
         ];
 
         $akuns = Akun::orderBy('kode_akun')->get();
+        $dompets = Dompet::orderBy('nama_dompet')->get();
 
         return view('pages.transaksi.import-review', compact(
-            'rows', 'meta', 'stats', 'warnings', 'key', 'akuns'
+            'rows', 'meta', 'stats', 'warnings', 'key', 'akuns', 'dompets'
         ));
     }
 
@@ -284,10 +285,12 @@ class TransaksiController extends Controller
             'import_key'                    => 'required|string',
             'klasifikasi'                   => 'required|array',
             'klasifikasi.*.no_referensi'    => 'required|string',
+            'klasifikasi.*.dompet_id'       => 'required|exists:dompet,id',
             'klasifikasi.*.akun_debit_id'   => 'required|exists:akun,id',
             'klasifikasi.*.akun_kredit_id'  => 'required|exists:akun,id',
             'klasifikasi.*.skip'            => 'nullable|boolean',
         ], [
+            'klasifikasi.*.dompet_id.required'      => 'Dompet wajib dipilih pada setiap baris.',
             'klasifikasi.*.akun_debit_id.required'  => 'Akun debit wajib dipilih pada setiap baris.',
             'klasifikasi.*.akun_kredit_id.required' => 'Akun kredit wajib dipilih pada setiap baris.',
         ]);

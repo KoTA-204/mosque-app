@@ -129,7 +129,7 @@ class TransaksiService
                 $klas = $klasMap->get($ref);
 
                 // Skip jika tidak ada klasifikasi atau ditandai skip
-                if (!$klas || !empty($klas['skip'])) {
+                if (!$klas) {
                     $dilewati++;
                     continue;
                 }

@@ -225,23 +225,58 @@ class MutasiBankParserService
 
     private function parseNumber(string $value): float
     {
-        // Format: 1.234.567,89  →  pisahkan ribuan (titik) dan desimal (koma)
-        $clean = preg_replace('/[^0-9,.]/', '', $value);
+        $clean = trim(preg_replace('/[^0-9,.]/', '', $value));
 
-        // Jika ada koma dan titik: titik = ribuan, koma = desimal
-        if (strpos($clean, ',') !== false && strpos($clean, '.') !== false) {
-            $clean = str_replace('.', '', $clean);
-            $clean = str_replace(',', '.', $clean);
-        } elseif (substr_count($clean, '.') > 1) {
-            // Banyak titik → ribuan
-            $clean = str_replace('.', '', $clean);
-        } elseif (strpos($clean, ',') !== false) {
-            $clean = str_replace(',', '.', $clean);
+        if ($clean === '') return 0.0;
+
+        // Deteksi format berdasarkan posisi koma dan titik terakhir
+        $lastComma = strrpos($clean, ',');
+        $lastDot   = strrpos($clean, '.');
+
+        if ($lastComma !== false && $lastDot !== false) {
+            if ($lastDot > $lastComma) {
+                // Format: 1,234,567.89 (titik = desimal, koma = ribuan) → Amerika
+                $clean = str_replace(',', '', $clean);
+            } else {
+                // Format: 1.234.567,89 (koma = desimal, titik = ribuan) → Indonesia
+                $clean = str_replace('.', '', $clean);
+                $clean = str_replace(',', '.', $clean);
+            }
+        } elseif ($lastComma !== false) {
+            // Hanya ada koma
+            $commaCount = substr_count($clean, ',');
+            if ($commaCount === 1) {
+                $afterComma = strlen($clean) - $lastComma - 1;
+                if ($afterComma <= 2) {
+                    // Contoh: 20,00 → koma sebagai desimal
+                    $clean = str_replace(',', '.', $clean);
+                } else {
+                    // Contoh: 20,000 → koma sebagai ribuan
+                    $clean = str_replace(',', '', $clean);
+                }
+            } else {
+                // Banyak koma → semua koma adalah ribuan
+                $clean = str_replace(',', '', $clean);
+            }
+        } elseif ($lastDot !== false) {
+            // Hanya ada titik
+            $dotCount = substr_count($clean, '.');
+            if ($dotCount === 1) {
+                $afterDot = strlen($clean) - $lastDot - 1;
+                if ($afterDot <= 2) {
+                    // Contoh: 20000.00 → titik sebagai desimal, biarkan
+                } else {
+                    // Contoh: 20.000 → titik sebagai ribuan
+                    $clean = str_replace('.', '', $clean);
+                }
+            } else {
+                // Banyak titik → semua titik adalah ribuan
+                $clean = str_replace('.', '', $clean);
+            }
         }
 
-        return (float) ($clean ?: '0');
+        return (float) $clean;
     }
-
     private function extractNumber(string $str): float
     {
         if (preg_match('/([\d.,]+)/', $str, $m)) {
