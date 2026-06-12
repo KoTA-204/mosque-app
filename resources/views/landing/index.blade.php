@@ -89,7 +89,7 @@
  
             <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
                 <div>
-                    <span class="block text-[10px] font-semibold tracking-widest text-gray-400 uppercase">Jadwal Shalat</span>
+                    <span class="block text-[10px] font-semibold tracking-widest text-gray-400 uppercase">Jadwal Shalat 5 Waktu</span>
                     <span class="block text-sm font-medium text-gray-800 leading-tight" id="jadwal-tanggal">Memuat...</span>
                 </div>
                 <div class="flex items-center gap-3">
