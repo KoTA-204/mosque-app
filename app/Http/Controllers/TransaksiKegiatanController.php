@@ -31,6 +31,10 @@ class TransaksiKegiatanController extends Controller
     {
         $this->authorizeKegiatan($kegiatan);
 
+        // Cek & tutup otomatis saat halaman dibuka (tangkap kegiatan yg tglnya baru lewat)
+        $kegiatan->tutupJikaSelesai();
+        $kegiatan->refresh();
+
         $search        = $request->get('search', '');
         $transaksi     = $this->transaksiKegiatanService->getTransaksiByKegiatan($kegiatan, $search);
         $porsi         = $this->transaksiKegiatanService->getPorsiAnggaran($kegiatan);
@@ -49,8 +53,9 @@ class TransaksiKegiatanController extends Controller
     {
         $this->authorizeKegiatan($kegiatan);
 
-        if (! $kegiatan->isAktif()) {
-            return back()->with('error', 'Kegiatan tidak sedang aktif');
+        // Gunakan bisaInputTransaksi() bukan isAktif() — cek status + tanggal
+        if (! $kegiatan->bisaInputTransaksi()) {
+            return back()->with('error', 'Kegiatan tidak dapat menerima transaksi baru');
         }
 
         $this->transaksiKegiatanService->storeTransaksi($kegiatan, $request->validated());
@@ -78,6 +83,7 @@ class TransaksiKegiatanController extends Controller
         if (! $transaksi->bisaDiedit()) {
             return back()->with('error', 'Transaksi tidak dapat diedit karena sudah diproses');
         }
+
         if ($transaksi->user_id !== auth()->id()) {
             abort(403);
         }
@@ -118,6 +124,7 @@ class TransaksiKegiatanController extends Controller
         if ($transaksi->kegiatan_id !== $kegiatan->id) {
             abort(404);
         }
+
         $this->authorizeKegiatan($kegiatan);
     }
 }

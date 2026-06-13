@@ -13,7 +13,6 @@ class ApprovalController extends Controller
     ) {}
 
     // ── Approval (Bendahara) ───────────────────────────────────
-
     public function approvalIndex(Request $request)
     {
         $search  = $request->get('search', '') ?? '';
@@ -51,6 +50,11 @@ class ApprovalController extends Controller
             return redirect()->back()->with('error', $result);
         }
 
+        // Tutup kegiatan otomatis jika semua transaksi sudah APPROVED & tgl lewat
+        if ($transaksi->kegiatan) {
+            $transaksi->kegiatan->tutupJikaSelesai();
+        }
+
         return redirect()->route('dashboard.approval.index')
             ->with('success', 'Transaksi berhasil disetujui');
     }
@@ -65,6 +69,11 @@ class ApprovalController extends Controller
 
         if ($result !== true) {
             return redirect()->back()->with('error', $result);
+        }
+
+        // Buka kembali kegiatan jika sebelumnya sudah ditutup
+        if ($transaksi->kegiatan) {
+            $transaksi->kegiatan->bukaKembali();
         }
 
         return redirect()->route('dashboard.approval.index')
@@ -83,12 +92,16 @@ class ApprovalController extends Controller
             return redirect()->back()->with('error', $result);
         }
 
+        // Buka kembali kegiatan jika sebelumnya sudah ditutup
+        if ($transaksi->kegiatan) {
+            $transaksi->kegiatan->bukaKembali();
+        }
+
         return redirect()->route('dashboard.approval.index')
             ->with('success', 'Transaksi dikembalikan untuk revisi');
     }
 
     // ── Bulk Approval (Bendahara) ──────────────────────────────
-
     public function bulkApprove(Request $request)
     {
         $request->validate(['ids' => 'required|string']);
@@ -99,7 +112,18 @@ class ApprovalController extends Controller
             return redirect()->back()->with('error', 'Tidak ada transaksi yang dipilih');
         }
 
+        // Ambil transaksi sebelum di-approve untuk bisa akses kegiatan-nya
+        $transaksiList = \App\Models\Transaksi::whereIn('id', $ids)
+            ->with('kegiatan')
+            ->get();
+
         $result = $this->approvalService->bulkApprove($ids);
+
+        // Cek semua kegiatan yang terlibat, hindari duplikat
+        $transaksiList->pluck('kegiatan')
+            ->filter()
+            ->unique('id')
+            ->each(fn($kegiatan) => $kegiatan->tutupJikaSelesai());
 
         $msg = "{$result['approved']} transaksi berhasil disetujui";
         if ($result['skipped'] > 0) {
