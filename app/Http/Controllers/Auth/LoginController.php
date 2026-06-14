@@ -32,15 +32,29 @@ class LoginController extends Controller
             ]);
         }
 
-        $request->session()->regenerate();
+        // ── PERBAIKAN: tolak login jika akun dinonaktifkan ───────────────────
+        // Kredensial sudah benar (Auth::attempt sukses & sesi sudah dibuat),
+        // tapi kita masih harus memastikan akunnya berstatus 'active'.
+        // Kalau tidak aktif: bongkar lagi sesi yang baru dibuat, lalu tolak.
+        // Nilai 'active' menyesuaikan kolom users.status pada seeder.
+        if (Auth::user()->status !== 'active') {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
 
+            return back()->withErrors([
+                'email' => 'Akun Anda dinonaktifkan. Silakan hubungi administrator.',
+            ]);
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
+        $request->session()->regenerate();
         return redirect()->intended(route('dashboard.index'));
     }
 
     public function destroy(Request $request): RedirectResponse
     {
         Auth::logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

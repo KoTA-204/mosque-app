@@ -61,8 +61,7 @@ Route::get('/laporan-keuangan', [DashboardController::class, 'laporanKeuangan'])
     ->name('laporan-keuangan.index');
 
 // ── Dashboard ──────────────────────────────────────────────────────────────
-Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(function () {
-
+Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('index');
 
     // ── Manajemen User ─────────────────────────────────────────────────────

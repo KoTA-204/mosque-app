@@ -13,7 +13,7 @@ class ApprovalController extends Controller
         protected ApprovalService $approvalService
     ) {}
 
-    // ── Approval (Bendahara) ───────────────────────────────────
+    // ── Index & Show ──────────────────────────────────────────────────────
     public function approvalIndex(Request $request)
     {
         $search  = $request->get('search', '') ?? '';
@@ -52,17 +52,9 @@ class ApprovalController extends Controller
     {
         $result = $this->approvalService->approve($transaksi);
 
-        if ($result !== true) {
-            return redirect()->back()->with('error', $result);
-        }
-
-        // Tutup kegiatan otomatis jika semua transaksi sudah APPROVED & tgl lewat
-        if ($transaksi->kegiatan) {
-            $transaksi->kegiatan->tutupJikaSelesai();
-        }
-
-        return redirect()->route('dashboard.approval.index')
-            ->with('success', 'Transaksi berhasil disetujui');
+        return $result !== true
+            ? redirect()->back()->with('error', $result)
+            : redirect()->route('dashboard.approval.index')->with('success', 'Transaksi berhasil disetujui');
     }
 
     public function reject(Request $request, Transaksi $transaksi): RedirectResponse
@@ -71,17 +63,9 @@ class ApprovalController extends Controller
 
         $result = $this->approvalService->reject($transaksi, $request->catatan ?? '');
 
-        if ($result !== true) {
-            return redirect()->back()->with('error', $result);
-        }
-
-        // Buka kembali kegiatan jika sebelumnya sudah ditutup
-        if ($transaksi->kegiatan) {
-            $transaksi->kegiatan->bukaKembali();
-        }
-
-        return redirect()->route('dashboard.approval.index')
-            ->with('success', 'Transaksi berhasil ditolak');
+        return $result !== true
+            ? redirect()->back()->with('error', $result)
+            : redirect()->route('dashboard.approval.index')->with('success', 'Transaksi berhasil ditolak');
     }
 
     public function revision(Request $request, Transaksi $transaksi): RedirectResponse
@@ -90,23 +74,13 @@ class ApprovalController extends Controller
 
         $result = $this->approvalService->revision($transaksi, $request->catatan);
 
-        if ($result !== true) {
-            return redirect()->back()->with('error', $result);
-        }
-
-        // Buka kembali kegiatan jika sebelumnya sudah ditutup
-        if ($transaksi->kegiatan) {
-            $transaksi->kegiatan->bukaKembali();
-        }
-
-        return redirect()->route('dashboard.approval.index')
-            ->with('success', 'Transaksi dikembalikan untuk revisi');
+        return $result !== true
+            ? redirect()->back()->with('error', $result)
+            : redirect()->route('dashboard.approval.index')->with('success', 'Transaksi dikembalikan untuk revisi');
     }
 
     // ── Bulk Actions ──────────────────────────────────────────────────────
     private function handleBulk(Request $request, string $action): RedirectResponse
-    // ── Bulk Approval (Bendahara) ──────────────────────────────
-    public function bulkApprove(Request $request)
     {
         $labels = [
             'approve' => 'disetujui',
@@ -122,20 +96,24 @@ class ApprovalController extends Controller
                 return redirect()->back()->with('error', 'Tidak ada transaksi yang dipilih');
             }
 
-        // Ambil transaksi sebelum di-approve untuk bisa akses kegiatan-nya
-        $transaksiList = \App\Models\Transaksi::whereIn('id', $ids)
-            ->with('kegiatan')
-            ->get();
+            $result = $this->approvalService->bulkApprove($ids);
+        } else {
+            $request->validate([
+                'ids'       => 'required|array|min:1',
+                'ids.*'     => 'integer|exists:transaksi,id',
+                'catatan.*' => 'nullable|string|max:500',
+            ]);
 
-        $result = $this->approvalService->bulkApprove($ids);
+            $catatanMap = collect($request->ids)
+                ->mapWithKeys(fn($id) => [(int) $id => $request->catatan[$id] ?? null])
+                ->all();
 
-        // Cek semua kegiatan yang terlibat, hindari duplikat
-        $transaksiList->pluck('kegiatan')
-            ->filter()
-            ->unique('id')
-            ->each(fn($kegiatan) => $kegiatan->tutupJikaSelesai());
+            $result = $action === 'reject'
+                ? $this->approvalService->bulkReject($catatanMap)
+                : $this->approvalService->bulkRevisi($catatanMap);
+        }
 
-        $msg = "{$result['approved']} transaksi berhasil disetujui";
+        $msg = "{$result['done']} transaksi berhasil {$labels[$action]}";
         if ($result['skipped'] > 0) {
             $msg .= ", {$result['skipped']} dilewati (bukan PENDING)";
         }
