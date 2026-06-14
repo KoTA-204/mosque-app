@@ -1,7 +1,5 @@
 @extends('layouts.app')
-
 @section('title', 'Kategori Transaksi')
-
 @section('content')
 <div class="p-6 space-y-6">
 

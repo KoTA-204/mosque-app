@@ -221,6 +221,7 @@ class TransaksiController extends Controller
             $key = 'import_' . Auth::id() . '_' . time();
             session([$key => [
                 'bank'            => $request->bank,
+                'dompet_id'       => $request->dompet_id,
                 'jenis_transaksi' => $request->jenis_transaksi,
                 'rows'            => $result['rows'],
                 'meta'            => $result['meta'],
@@ -234,7 +235,7 @@ class TransaksiController extends Controller
                 'success'    => true,
                 'type'       => 'parse_success',
                 'import_key' => $key,
-                'redirect'   => route('transaksi.import.review', ['key' => $key]),
+                'redirect'   => route('dashboard.transaksi.import.review', ['key' => $key]),
                 'stats'      => [
                     'total'    => $total,
                     'duplikat' => $duplikat,
@@ -256,7 +257,7 @@ class TransaksiController extends Controller
         $data = session($key);
 
         if (!$data) {
-            return redirect()->route('transaksi.index')
+            return redirect()->route('dashboard.transaksi.index')
                 ->with('error', 'Sesi import tidak ditemukan atau sudah kedaluwarsa.');
         }
 
@@ -272,7 +273,7 @@ class TransaksiController extends Controller
 
         $akuns = Akun::orderBy('kode_akun')->get();
 
-        return view('transaksi.import-review', compact(
+        return view('pages.transaksi.import-review', compact(
             'rows', 'meta', 'stats', 'warnings', 'key', 'akuns'
         ));
     }

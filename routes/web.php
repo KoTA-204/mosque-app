@@ -17,6 +17,7 @@ use App\Http\Controllers\ChartOfAccountController;
 use App\Http\Controllers\KenclengController;
 use App\Http\Controllers\KategoriTransaksiController;
 use App\Http\Controllers\AsetController;
+use App\Http\Controllers\JurnalPembukaController;
 use App\Http\Controllers\JurnalUmumController;
 use App\Http\Controllers\JurnalPenyesuaianController;
 use App\Http\Controllers\JurnalKoreksiController;
@@ -37,6 +38,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/forgot-password', [ForgotPasswordController::class, 'index'])->name('auth.forgot-password');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->name('auth.forgot-password.post');
     Route::get('/forgot-password/check-email', [ForgotPasswordController::class, 'checkEmail'])->name('auth.check-email');
+    Route::get('/forgot-password/check-status', [ForgotPasswordController::class, 'checkResetStatus'])->name('auth.check-reset-status');
     Route::post('/forgot-password/resend', [ForgotPasswordController::class, 'resendEmail'])->name('auth.forgot-password.resend');
     Route::get('/reset-password', [ForgotPasswordController::class, 'resetPasswordForm'])->name('auth.reset-password');
     Route::get('/reset-password/success', [ForgotPasswordController::class, 'resetSuccess'])->name('auth.reset-success');
@@ -53,6 +55,10 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('auth.logout');
 });
+
+// ── Dashboard Public ───────────────────────────────────────────────────────
+Route::get('/laporan-keuangan', [DashboardController::class, 'laporanKeuangan'])
+    ->name('laporan-keuangan.index');
 
 // ── Dashboard ──────────────────────────────────────────────────────────────
 Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(function () {
@@ -208,6 +214,7 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         Route::get('/approval/transaksi/{transaksi}', [ApprovalController::class, 'approvalShow'])->name('approval.show');
         Route::post('/approval/transaksi/bulk-approve', [ApprovalController::class, 'bulkApprove'])->name('approval.bulk-approve');
         Route::post('/approval/transaksi/bulk-reject', [ApprovalController::class, 'bulkReject'])->name('approval.bulk-reject');
+        Route::post('/approval/transaksi/bulk-revisi', [ApprovalController::class, 'bulkRevisi'])->name('approval.bulk-revisi');
         Route::post('/approval/transaksi/{transaksi}/approve', [ApprovalController::class, 'approve'])->name('approval.approve');
         Route::post('/approval/transaksi/{transaksi}/reject', [ApprovalController::class, 'reject'])->name('approval.reject');
         Route::post('/approval/transaksi/{transaksi}/revision', [ApprovalController::class, 'revision'])->name('approval.revision');
@@ -321,6 +328,43 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         });
     });
 
+    // ── Akuntansi - Jurnal Pembuka ─────────────────────────────────────────
+    Route::middleware('permission:VIEW_JURNAL_PEMBUKA')->group(function () {
+        Route::get('/jurnal-pembuka', [JurnalPembukaController::class, 'index'])
+            ->name('jurnal-pembuka.index');
+ 
+        Route::get('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'show'])
+            ->name('jurnal-pembuka.show')
+            ->whereNumber('jurnalPembuka');
+
+        Route::patch('/jurnal-pembuka/{jurnalPembuka}/posting', [JurnalPembukaController::class, 'posting'])
+                ->name('jurnal-pembuka.posting')
+                ->whereNumber('jurnalPembuka');
+
+        Route::middleware('permission:CREATE_JURNAL_PEMBUKA')->group(function () {
+            Route::get('/jurnal-pembuka/create', [JurnalPembukaController::class, 'create'])
+                ->name('jurnal-pembuka.create');
+            Route::post('/jurnal-pembuka', [JurnalPembukaController::class, 'store'])
+                ->name('jurnal-pembuka.store');
+        });
+
+        Route::middleware('permission:EDIT_JURNAL_PEMBUKA')->group(function () {
+            Route::get('/jurnal-pembuka/{jurnalPembuka}/edit', [JurnalPembukaController::class, 'edit'])
+                ->name('jurnal-pembuka.edit')
+                ->whereNumber('jurnalPembuka');
+            Route::put('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'update'])
+                ->name('jurnal-pembuka.update')
+                ->whereNumber('jurnalPembuka');
+        });
+
+        Route::middleware('permission:DELETE_JURNAL_PEMBUKA')->group(function () {
+            Route::delete('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'destroy'])
+                ->name('jurnal-pembuka.destroy')
+                ->whereNumber('jurnalPembuka');
+        });
+    });
+
+    // ── Akuntansi - Jurnal Penyesuaian ─────────────────────────────────────────
     Route::middleware('permission:VIEW_JURNAL_PENYESUAIAN')->group(function () {
         Route::get('/jurnal-penyesuaian', [JurnalPenyesuaianController::class, 'index'])
             ->name('jurnal-penyesuaian.index');
@@ -348,6 +392,7 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         });
     });
 
+    // ── Akuntansi - Jurnal Koreksi ─────────────────────────────────────────
     Route::middleware('permission:VIEW_JURNAL_KOREKSI')->group(function () {
         Route::get('/jurnal-koreksi', [JurnalKoreksiController::class, 'index'])
             ->name('jurnal-koreksi.index');
@@ -375,6 +420,7 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         });
     });
 
+    // ── Akuntansi - Jurnal Penutup ─────────────────────────────────────────
     Route::middleware('permission:VIEW_JURNAL_PENUTUP')->group(function () {
         Route::get('/jurnal-penutup', [JurnalPenutupController::class, 'index'])
             ->name('jurnal-penutup.index');
@@ -417,6 +463,9 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
     
         Route::get('/perubahan-aset-neto', [LaporanKeuanganController::class, 'perubahanAsetNeto'])
             ->name('perubahan-aset-neto');
+
+        Route::get('/arus-kas', [LaporanKeuanganController::class, 'arusKas'])
+            ->name('arus-kas');
 
         Route::get('/calk', [LaporanKeuanganController::class, 'calk'])
             ->name('calk');

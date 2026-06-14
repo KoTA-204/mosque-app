@@ -137,7 +137,7 @@ class TransaksiService
                 // Simpan transaksi
                 $tanggal   = substr($row['waktu_transaksi'] ?? $row['tanggal'], 0, 10);
                 $transaksi = Transaksi::create([
-                    'dompet_id'             => null, 
+                    'dompet_id'             => $sessionData['dompet_id'], 
                     'user_id'               => Auth::id(),
                     'kategori_transaksi_id' => null,
                     'tanggal_transaksi'     => $tanggal,

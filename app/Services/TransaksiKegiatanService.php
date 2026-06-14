@@ -66,12 +66,16 @@ class TransaksiKegiatanService
     }
 
     // ── Transaksi ────────────────────────────────────────────
-    public function getTransaksiByKegiatan(Kegiatan $kegiatan, ?string $search = null, int $perPage = 10)
+    public function getTransaksiByKegiatan(Kegiatan $kegiatan, ?string $search = null, ?string $jenis = null, ?string $status = null, int $perPage = 10)
     {
         return $kegiatan->transaksi()
             ->with(['dompet', 'kategoriTransaksi', 'user', 'buktiTransaksi'])
             ->when($search, fn ($q) =>
                 $q->where('deskripsi', 'like', "%{$search}%"))
+            ->when($jenis, fn ($q) =>
+                $q->where('jenis_transaksi', strtoupper($jenis)))
+            ->when($status, fn ($q) =>
+                $q->where('status_approval', strtoupper($status)))
             ->orderBy('tanggal_transaksi', 'desc')
             ->paginate($perPage)
             ->withQueryString();
@@ -141,7 +145,7 @@ class TransaksiKegiatanService
             foreach ($data['hapus_bukti'] ?? [] as $buktiId) {
                 $bukti = BuktiTransaksi::where('transaksi_id', $transaksi->id)->find($buktiId);
                 if ($bukti) {
-                    Storage::disk('public')->delete($bukti->path_file);
+                    Storage::disk('azure')->delete($bukti->path_file);
                     $bukti->delete();
                 }
             }
@@ -163,7 +167,7 @@ class TransaksiKegiatanService
 
         DB::transaction(function () use ($transaksi) {
             foreach ($transaksi->buktiTransaksi as $bukti) {
-                Storage::disk('public')->delete($bukti->path_file);
+                Storage::disk('azure')->delete($bukti->path_file);
                 $bukti->delete();
             }
             $transaksi->delete();
@@ -176,7 +180,7 @@ class TransaksiKegiatanService
     private function simpanBukti(Transaksi $transaksi, array $files): void
     {
         foreach ($files as $file) {
-            $path = $file->store('bukti_transaksi', 'public');
+            $path = $file->store('bukti_transaksi', 'azure');
             BuktiTransaksi::create([
                 'transaksi_id' => $transaksi->id,
                 'nama_file'    => $file->getClientOriginalName(),
