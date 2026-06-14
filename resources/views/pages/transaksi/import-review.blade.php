@@ -23,13 +23,30 @@
         </a>
     </div>
 
+    {{-- Alert — letakkan di sini --}}
+    <div id="success-alert"
+        class="hidden items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
+        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span id="success-alert-msg"></span>
+    </div>
+
+    <div id="error-alert"
+        class="hidden items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <span id="error-alert-msg"></span>
+    </div>
+
     <div class="grid grid-cols-3 gap-4">
         <div class="bg-white rounded-2xl border border-gray-200 p-4 text-center">
-            <p class="text-3xl font-semibold text-gray-900">{{ $stats['total'] }}</p>
+            <p id="statTotalBaris" class="text-3xl font-semibold text-gray-900">{{ $stats['total'] }}</p>
             <p class="text-sm text-gray-500 mt-1">Total baris</p>
         </div>
         <div class="bg-white rounded-2xl border border-gray-200 p-4 text-center">
-            <p class="text-3xl font-semibold text-green-700">{{ $stats['bersih'] }}</p>
+            <p id="statPerluKlasifikasi" class="text-3xl font-semibold text-green-700">{{ $stats['bersih'] }}</p>
             <p class="text-sm text-gray-500 mt-1">Perlu diklasifikasi</p>
         </div>
         <div class="bg-white rounded-2xl border border-gray-200 p-4 text-center">
@@ -159,7 +176,8 @@
                             <td class="px-3 py-3">
                                 @if(!$row['is_duplikat'])
                                     <select name="klasifikasi[{{ $i }}][akun_debit_id]" required
-                                        class="debitSelect w-full h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500">
+                                        class="debitSelect w-full h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                                        data-idx="{{ $i }}">   {{-- ← tambah ini --}}
                                         <option value="">Pilih akun</option>
                                         @foreach($akuns as $a)
                                             <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
@@ -173,7 +191,8 @@
                             <td class="px-3 py-3">
                                 @if(!$row['is_duplikat'])
                                     <select name="klasifikasi[{{ $i }}][akun_kredit_id]" required
-                                        class="kreditSelect w-full h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500">
+                                        class="kreditSelect w-full h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                                        data-idx="{{ $i }}">   {{-- ← tambah ini --}}
                                         <option value="">Pilih akun</option>
                                         @foreach($akuns as $a)
                                             <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
@@ -234,6 +253,21 @@
 ])
 
 <script>
+// ── Modal ──────────────────────────────────────────────────────
+function openModal(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+}
+
 // ── Checkbox & Bulk Action ──────────────────────────────────────
 
 function toggleCheckAll(master) {
@@ -283,6 +317,14 @@ function applyBulk() {
             if (sel) sel.value = kreditVal;
         }
     });
+
+    document.querySelectorAll('.rowCheck').forEach(cb => cb.checked = false);
+    document.getElementById('checkAll').checked = false;
+
+    document.getElementById('bulkDebit').value  = '';
+    document.getElementById('bulkKredit').value = '';
+
+    updateBulkBar();
 }
 
 function bulkHapus() {
@@ -302,9 +344,17 @@ function hapusRow(btn) {
 }
 
 function updateEntryCount() {
-    const total   = document.querySelectorAll('tbody tr').length;
+    const totalRows  = document.querySelectorAll('tbody tr').length;
+    const aktifRows  = document.querySelectorAll('tbody tr:not(.bg-amber-50\\/60)').length;
+
     const countEl = document.querySelector('[data-entry-count]');
-    if (countEl) countEl.textContent = `Showing 1 to ${total} of ${total} entries`;
+    if (countEl) countEl.textContent = `Showing 1 to ${totalRows} of ${totalRows} entries`;
+
+    const totalEl = document.getElementById('statTotalBaris');
+    if (totalEl) totalEl.textContent = totalRows;
+
+    const perluEl = document.getElementById('statPerluKlasifikasi');
+    if (perluEl) perluEl.textContent = aktifRows;
 }
 
 // ── Simpan ──────────────────────────────────────────────────────
@@ -312,12 +362,12 @@ function updateEntryCount() {
 async function simpanKlasifikasi() {
     const btn     = document.getElementById('btnSimpanKlasifikasi');
     const spinner = document.getElementById('spinnerKlasifikasi');
-    const errBox  = document.getElementById('reviewErrorBox');
-    const errList = document.getElementById('reviewErrorList');
+
+    if (btn.disabled) return;
+    hideAlert('success');
+    hideAlert('error');
 
     let valid = true;
-    errList.innerHTML = '';
-
     document.querySelectorAll('tbody tr').forEach(row => {
         row.querySelectorAll('select').forEach(sel => {
             if (sel.hasAttribute('required') && !sel.value) {
@@ -330,14 +380,10 @@ async function simpanKlasifikasi() {
     });
 
     if (!valid) {
-        errList.insertAdjacentHTML('beforeend',
-            '<li>Pilih akun debit dan kredit untuk setiap baris yang aktif.</li>');
-        errBox.classList.remove('hidden');
-        errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        showAlert('error', 'Pilih akun debit dan kredit untuk setiap baris yang aktif.');
         return;
     }
 
-    errBox.classList.add('hidden');
     btn.disabled = true;
     spinner.classList.remove('hidden');
 
@@ -350,33 +396,67 @@ async function simpanKlasifikasi() {
                 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
                 'Accept': 'application/json',
             },
+            credentials: 'same-origin',
         });
+
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await res.text();
+            console.error('Non-JSON response:', text);
+            showAlert('error', 'Server mengembalikan response tidak valid. Cek console untuk detail.');
+            btn.disabled = false;
+            return;
+        }
+
         const data = await res.json();
 
         if (data.success && data.type === 'import_success') {
-            document.getElementById('hasilTersimpan').textContent    = data.tersimpan;
-            document.getElementById('hasilDuplikat').textContent     = data.duplikat;
-            document.getElementById('hasilTotal').textContent        = data.total;
-            document.getElementById('hasilPeriode').textContent      = data.periode ?? '';
+            const setEl = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = val ?? '';
+            };
+            setEl('hasilTersimpan',    data.tersimpan);
+            setEl('hasilTersimpanBox', data.tersimpan);
+            setEl('hasilDuplikat',     data.duplikat);
+            setEl('hasilTotal',        data.total);
+            setEl('hasilPeriode',      (data.periode ?? '') + ' ' + (data.pesan_tambahan ?? ''));
             openModal('modalHasilImport');
         } else {
+            let pesan = data.message ?? 'Terjadi kesalahan.';
             if (res.status === 422 && data.errors) {
-                Object.values(data.errors).flat().forEach(msg => {
-                    errList.insertAdjacentHTML('beforeend', `<li>${msg}</li>`);
-                });
-            } else {
-                errList.insertAdjacentHTML('beforeend',
-                    `<li>${data.message ?? 'Terjadi kesalahan.'}</li>`);
+                pesan = Object.values(data.errors).flat().join(' ');
             }
-            errBox.classList.remove('hidden');
+            showAlert('error', pesan);
+            btn.disabled = false;
         }
-    } catch {
-        errList.insertAdjacentHTML('beforeend', '<li>Gagal menghubungi server. Coba lagi.</li>');
-        errBox.classList.remove('hidden');
-    } finally {
+    } catch (e) {
+        console.error('Fetch error:', e);
+        showAlert('error', 'Gagal menghubungi server. Coba lagi.');
         btn.disabled = false;
+    } finally {
         spinner.classList.add('hidden');
     }
+}
+
+function showAlert(type, message) {
+    const el  = document.getElementById(type + '-alert');
+    const msg = document.getElementById(type + '-alert-msg');
+    if (!el || !msg) return;
+    msg.textContent = message;
+    el.classList.remove('hidden');
+    el.classList.add('flex');
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(() => {
+        el.classList.add('hidden');
+        el.classList.remove('flex');
+    }, 4000);
+}
+
+function hideAlert(type) {
+    const el = document.getElementById(type + '-alert');
+    if (!el) return;
+    el.classList.add('hidden');
+    el.classList.remove('flex');
 }
 </script>
 @endsection

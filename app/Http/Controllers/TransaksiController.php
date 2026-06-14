@@ -39,9 +39,7 @@ class TransaksiController extends Controller
             ->where(function ($q) {
                 $q->whereNull('status_approval')
                 ->orWhere('status_approval', 'APPROVED');
-            })
-            ->orderByDesc('tanggal_transaksi')
-            ->orderByDesc('id');
+            });
 
         // Filter
         if ($request->filled('dari') && $request->filled('sampai')) {
@@ -64,24 +62,26 @@ class TransaksiController extends Controller
             $query->where('deskripsi', 'like', '%' . $request->search . '%');
         }
 
-        $perPage     = (int) $request->input('per_page', 10);
-        $transaksis  = $query->paginate($perPage)->withQueryString();
+        $statsQuery = $query->toBase()->reorder();
 
-        $statsQuery = Transaksi::where(function ($q) {
-            $q->whereNull('status_approval')
-            ->orWhere('status_approval', 'APPROVED');
-        });
-
-        // Stats
         $stats = [
-            'total'       => (clone $statsQuery)->count(),
-            'pemasukan'   => (clone $statsQuery)->where('jenis_transaksi', 'PEMASUKAN')->count(),
-            'pengeluaran' => (clone $statsQuery)->where('jenis_transaksi', 'PENGELUARAN')->count(),
+            'total'              => (clone $statsQuery)->count(),
+            'jumlah_pemasukan'   => (clone $statsQuery)->where('jenis_transaksi', 'PEMASUKAN')->sum('jumlah'),
+            'jumlah_pengeluaran' => (clone $statsQuery)->where('jenis_transaksi', 'PENGELUARAN')->sum('jumlah'),
+            'count_pemasukan'    => (clone $statsQuery)->where('jenis_transaksi', 'PEMASUKAN')->count(),
+            'count_pengeluaran'  => (clone $statsQuery)->where('jenis_transaksi', 'PENGELUARAN')->count(),
         ];
+
+        $perPage    = (int) $request->input('per_page', 10);
+        $transaksis = $query
+            ->orderByDesc('tanggal_transaksi')
+            ->orderByDesc('id')
+            ->paginate($perPage)
+            ->withQueryString();
 
         // Dropdown data
         $kategoris = KategoriTransaksi::orderBy('nama_kategori')->get();
-        $akuns     = Akun::orderBy('kode_akun')->get();
+        $akuns = Akun::whereDoesntHave('children')->orderBy('kode_akun')->get();
         $dompets   = Dompet::orderBy('nama_dompet')->get();
         $kegiatans = Kegiatan::orderBy('nama_kegiatan')->get();
 
@@ -93,7 +93,8 @@ class TransaksiController extends Controller
     public function store(StoreTransaksiRequest $request)
     {
         try {
-            $transaksi = $this->transaksiService->store($request);
+            $force     = $request->boolean('force');
+            $transaksi = $this->transaksiService->store($request, $force);
 
             return response()->json([
                 'success' => true,
@@ -101,6 +102,17 @@ class TransaksiController extends Controller
                 'data'    => $transaksi,
             ]);
         } catch (\Throwable $e) {
+            if (str_starts_with($e->getMessage(), 'DUPLIKAT_WARNING:')) {
+                $raw     = str_replace('DUPLIKAT_WARNING:', '', $e->getMessage());
+                $detail  = json_decode($raw, true);
+
+                return response()->json([
+                    'success' => false,
+                    'type'    => 'duplikat_warning',
+                    'detail'  => $detail,
+                ], 409);
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menyimpan transaksi: ' . $e->getMessage(),
@@ -271,7 +283,7 @@ class TransaksiController extends Controller
             'bersih'   => count(array_filter($rows, fn($r) => !$r['is_duplikat'])),
         ];
 
-        $akuns = Akun::orderBy('kode_akun')->get();
+        $akuns = Akun::whereDoesntHave('children')->orderBy('kode_akun')->get();
         $dompets = Dompet::orderBy('nama_dompet')->get();
 
         return view('pages.transaksi.import-review', compact(
@@ -285,12 +297,10 @@ class TransaksiController extends Controller
             'import_key'                    => 'required|string',
             'klasifikasi'                   => 'required|array',
             'klasifikasi.*.no_referensi'    => 'required|string',
-            'klasifikasi.*.dompet_id'       => 'required|exists:dompet,id',
             'klasifikasi.*.akun_debit_id'   => 'required|exists:akun,id',
             'klasifikasi.*.akun_kredit_id'  => 'required|exists:akun,id',
             'klasifikasi.*.skip'            => 'nullable|boolean',
         ], [
-            'klasifikasi.*.dompet_id.required'      => 'Dompet wajib dipilih pada setiap baris.',
             'klasifikasi.*.akun_debit_id.required'  => 'Akun debit wajib dipilih pada setiap baris.',
             'klasifikasi.*.akun_kredit_id.required' => 'Akun kredit wajib dipilih pada setiap baris.',
         ]);
@@ -308,8 +318,17 @@ class TransaksiController extends Controller
         try {
             $result = $this->transaksiService->simpanImport($data, $request->klasifikasi);
 
-            // Bersihkan session
             session()->forget($key);
+            session()->save();
+
+            $pesanTambahan = '';
+            if (!empty($result['gagalPeriode'])) {
+                $bulanList = [];
+                foreach ($result['gagalPeriode'] as $tanggal => $jumlah) {
+                    $bulanList[] = \Carbon\Carbon::parse($tanggal)->translatedFormat('F Y') . " ({$jumlah} transaksi)";
+                }
+                $pesanTambahan = ' Beberapa transaksi dilewati karena periode belum aktif: ' . implode(', ', array_unique($bulanList)) . '. Aktifkan periode tersebut lalu impor ulang.';
+            }
 
             return response()->json([
                 'success'   => true,
@@ -319,6 +338,7 @@ class TransaksiController extends Controller
                 'duplikat'  => $result['duplikat'],
                 'total'     => $result['total'],
                 'periode'   => $data['meta']['periode'] ?? '-',
+                'pesan_tambahan' => $pesanTambahan,
             ]);
         } catch (\Throwable $e) {
             return response()->json([

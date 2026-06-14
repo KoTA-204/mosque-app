@@ -20,8 +20,8 @@ class StoreTransaksiRequest extends FormRequest
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
-    {
-        $rules = [
+        {
+            $rules = [
             'jenis_transaksi'       => 'required|in:PEMASUKAN,PENGELUARAN',
             'tanggal_transaksi'     => 'required|date',
             'jumlah'                => 'required|numeric|min:1',
@@ -33,6 +33,7 @@ class StoreTransaksiRequest extends FormRequest
             'bukti_transaksi'       => 'nullable|array',
             'bukti_transaksi.*'     => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
             'is_aset'               => 'nullable|boolean',
+            'force'                 => 'nullable|boolean',  
         ];
 
         if ($this->boolean('is_aset')) {

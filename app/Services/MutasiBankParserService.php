@@ -13,7 +13,7 @@ class MutasiBankParserService
         'BSI' => [
             'no'              => 'no',
             'waktu_transaksi' => 'waktu transaksi',
-            'no_referensi'    => 'no.referensi',
+            'no_referensi'    => 'no. referensi',
             'nama_pengirim'   => 'nama pengirim',
             'bank_pengirim'   => 'bank pengirim',
             'nama_penerima'   => 'nama penerima',
@@ -67,14 +67,15 @@ class MutasiBankParserService
         }
 
         $headerMap = $this->mapHeaders($rawRows[$headerRowIdx], $bank);
+        \Log::debug('Header row raw:', $rawRows[$headerRowIdx]);
+        \Log::debug('Header map result:', $headerMap);
         $meta      = $this->parseMeta($rawRows, $headerRowIdx);
 
         $rows   = [];
         $errors = [];
 
-        // Ambil no_referensi yang sudah ada untuk deteksi duplikat
-        $existingRefs = Transaksi::whereNotNull('catatan')
-            ->pluck('catatan')
+        $existingRefs = Transaksi::whereNotNull('no_referensi')
+            ->pluck('no_referensi')
             ->toArray();
 
         for ($i = $headerRowIdx + 1; $i < count($rawRows); $i++) {
@@ -84,7 +85,9 @@ class MutasiBankParserService
 
             try {
                 $parsed = $this->parseRow($row, $headerMap, $bank);
+
                 $parsed['is_duplikat'] = in_array($parsed['no_referensi'], $existingRefs);
+
                 $rows[] = $parsed;
             } catch (\Throwable $e) {
                 $errors[] = "Baris " . ($i + 1) . ": " . $e->getMessage();
@@ -177,16 +180,24 @@ class MutasiBankParserService
         $kredit = $this->parseNumber((string) ($get('kredit') ?? '0'));
         $jumlah = max($debet, $kredit);
 
-        $noRef = trim((string) ($get('no_referensi') ?? ''));
-
-        // Waktu transaksi: BSI punya 'waktu_transaksi', BRI punya 'tanggal'
         $waktuRaw = $get('waktu_transaksi') ?? $get('tanggal');
         $waktu    = $this->parseDateTime($waktuRaw);
+
+        $noRef = trim((string) ($get('no_referensi') ?? ''));
+        if (!$noRef) {
+            $fingerprint = implode('|', [
+                $waktu,
+                $jumlah,
+                trim((string) ($get('deskripsi') ?? '')),
+                trim((string) ($get('kode') ?? '')),
+            ]);
+            $noRef = 'AUTO-' . substr(md5($fingerprint), 0, 16);
+        }
 
         return [
             'no'              => (int) ($get('no') ?? 0),
             'waktu_transaksi' => $waktu,
-            'no_referensi'    => $noRef ?: ('REF-' . uniqid()),
+            'no_referensi' => $noRef,
             'nama_pengirim'   => trim((string) ($get('nama_pengirim') ?? '')),
             'bank_pengirim'   => trim((string) ($get('bank_pengirim') ?? '')),
             'nama_penerima'   => trim((string) ($get('nama_penerima') ?? '')),
