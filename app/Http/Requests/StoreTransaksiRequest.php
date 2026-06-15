@@ -6,6 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreTransaksiRequest extends FormRequest
 {
+    protected $errorBag = 'createTransaksi';
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -24,6 +26,7 @@ class StoreTransaksiRequest extends FormRequest
             $rules = [
             'jenis_transaksi'       => 'required|in:PEMASUKAN,PENGELUARAN',
             'tanggal_transaksi'     => 'required|date',
+            'kategori_transaksi'    => 'nullable|exists:kategori_transaksi_id',
             'jumlah'                => 'required|numeric|min:1',
             'dompet_id'             => 'required|exists:dompet,id',
             'akun_debit_id'         => 'required|exists:akun,id',
