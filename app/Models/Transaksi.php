@@ -20,6 +20,7 @@ class Transaksi extends Model
         'jenis_transaksi',
         'jumlah',
         'deskripsi',
+        'no_referensi',
         'status_approval',
         'catatan',
         'status_jurnal',

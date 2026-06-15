@@ -3,14 +3,24 @@
       method="POST"
       enctype="multipart/form-data">
     @csrf
+    <input type="hidden" name="force" id="forceSubmit" value="0">
 
     <div class="grid grid-cols-2 gap-4 mb-4">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
                 Tanggal <span class="text-red-500">*</span>
             </label>
-            <input type="date" name="tanggal_transaksi" required
-                class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+            <div class="relative">
+                <input type="text" id="inputTanggalTambah" name="tanggal_transaksi" required
+                    placeholder="Pilih tanggal"
+                    readonly
+                    class="w-full h-10 px-3 pr-9 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 cursor-pointer bg-white">
+                <svg class="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </div>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -301,6 +311,26 @@
 </form>
 
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    flatpickr('#inputTanggalTambah', {
+        dateFormat: 'Y-m-d',
+        altInput: true,
+        altFormat: 'd M Y',
+        allowInput: false,
+        locale: {
+            firstDayOfWeek: 1,
+            weekdays: {
+                shorthand: ['Min','Sen','Sel','Rab','Kam','Jum','Sab'],
+                longhand:  ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'],
+            },
+            months: {
+                shorthand: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+                longhand:  ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],
+            },
+        },
+    });
+});
+
 let tambahAsetOn = false;
 
 function tambahToggleAset() {
@@ -367,7 +397,7 @@ function previewDokumen(input) {
     lbl.classList.toggle('text-gray-700', !!input.files[0]);
 }
 
-async function submitTambah() {
+async function submitTambah(force = false) {
     const form    = document.getElementById('formTambah');
     const btn     = document.getElementById('btnTambahSubmit');
     const spinner = document.getElementById('iconSpinnerTambah');
@@ -378,6 +408,8 @@ async function submitTambah() {
     spinner.classList.remove('hidden');
     errBox.classList.add('hidden');
     errList.innerHTML = '';
+
+    document.getElementById('forceSubmit').value = force ? '1' : '0';
 
     try {
         const fd  = new FormData(form);
@@ -390,6 +422,7 @@ async function submitTambah() {
             },
         });
         const data = await res.json();
+
         if (data.success) {
             closeModal('modalTambah');
             sessionStorage.setItem('alert', JSON.stringify({
@@ -397,23 +430,38 @@ async function submitTambah() {
                 message: 'Transaksi berhasil disimpan.'
             }));
             window.location.reload();
+
+        } else if (res.status === 409 && data.type === 'duplikat_warning') {
+            const d = data.detail;
+            document.getElementById('dd_tanggal').textContent  = d.tanggal;
+            document.getElementById('dd_jumlah').textContent   = 'Rp ' + d.jumlah;
+            document.getElementById('dd_jenis').textContent    = d.jenis === 'PEMASUKAN' ? 'Pemasukan' : 'Pengeluaran';
+            document.getElementById('dd_kategori').textContent = d.kategori;
+            document.getElementById('dd_dompet').textContent   = d.dompet;
+            document.getElementById('dd_deskripsi').textContent = d.deskripsi;
+            openModal('modalDuplikat');
+
         } else if (res.status === 422 && data.errors) {
             Object.values(data.errors).flat().forEach(msg => {
                 errList.insertAdjacentHTML('beforeend', `<li>${msg}</li>`);
             });
             errBox.classList.remove('hidden');
+
         } else {
-            sessionStorage.setItem('alert', JSON.stringify({
-                type: 'error',
-                message: data.message ?? 'Terjadi kesalahan.'
-            }));
-            window.location.reload();
+            errList.insertAdjacentHTML('beforeend', `<li>${data.message ?? 'Terjadi kesalahan.'}</li>`);
+            errBox.classList.remove('hidden');
         }
     } catch {
-        alert('Gagal menghubungi server.');
+        errList.insertAdjacentHTML('beforeend', `<li>Gagal menghubungi server.</li>`);
+        errBox.classList.remove('hidden');
     } finally {
         btn.disabled = false;
         spinner.classList.add('hidden');
     }
+}
+
+function konfirmasiDuplikat() {
+    closeModal('modalDuplikat');
+    submitTambah(true);
 }
 </script>
