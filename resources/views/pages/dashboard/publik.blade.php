@@ -44,19 +44,17 @@
         </div>
     </div>
 
-    {{-- ── Grafik Sumber & Penggunaan Dana ── --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-        <div class="bg-white rounded-2xl border border-gray-200 p-5">
-            <h2 class="text-base font-semibold text-gray-800 mb-4">Sumber Dana Masjid</h2>
-            <div id="donutSumber"></div>
-        </div>
-
-        <div class="bg-white rounded-2xl border border-gray-200 p-5">
-            <h2 class="text-base font-semibold text-gray-800 mb-4">Penggunaan Dana Masjid</h2>
-            <div id="barPenggunaan"></div>
-        </div>
+    {{-- ── Grafik ── --}}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden min-w-0">
+        <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">Distribusi Pengeluaran</p>
+        <div id="donutPengeluaran" class="w-full"></div>
     </div>
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden min-w-0">
+        <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">Pemasukan vs Pengeluaran</p>
+        <div id="barChart" class="w-full"></div>
+    </div>
+</div>
 
     {{-- ── Kegiatan & Perkembangan Dana ── --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -67,8 +65,9 @@
             <div class="space-y-5">
             @forelse($kegiatanBerjalan as $kegiatan)
                 @php
+                    $terkumpul = $kegiatan->terkumpul ?? 0;
                     $persen = $kegiatan->anggaran > 0
-                        ? min(100, round(($kegiatan->terkumpul / $kegiatan->anggaran) * 100))
+                        ? min(100, round(($terkumpul / $kegiatan->anggaran) * 100))
                         : 0;
                 @endphp
                 <div>
@@ -95,9 +94,11 @@
                 <h2 class="text-base font-semibold text-gray-800">Perkembangan Dana Masjid</h2>
             </div>
             <div class="flex items-baseline gap-2 mb-1">
-                <span class="text-3xl font-bold text-gray-800">{{ number_format($totalDonasi) }}</span>
+                <span class="text-3xl font-bold text-gray-800">Rp{{ number_format($totalDonasi, 0, ',', '.') }}</span>
                 <span class="text-sm text-gray-500">Infak/Donasi</span>
-                <span class="inline-flex items-center text-xs text-green-500 ml-2">↑ +12% dari periode sebelumnya</span>
+                <span class="inline-flex items-center text-xs {{ $persenPerkembangan >= 0 ? 'text-green-500' : 'text-red-400' }} ml-2">
+                    {{ $persenPerkembangan >= 0 ? '↑ +' : '↓ ' }}{{ number_format(abs($persenPerkembangan), 1, ',', '.') }}% dari periode sebelumnya
+                </span>
             </div>
             <div id="lineChart" class="mt-2"></div>
             <div class="grid grid-cols-3 gap-2 mt-4 text-center">
@@ -172,9 +173,10 @@
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function () {
     // ── Donut Sumber Dana ──────────────────────────────────────────────────
     const sumberLabels = @json($sumberDana->pluck('nama_kategori'));
-    const sumberData   = @json($sumberDana->pluck('total'));
+    const sumberData   = @json($sumberDana->pluck('total')).map(Number);
 
     new ApexCharts(document.querySelector('#donutSumber'), {
         chart: { type: 'donut', height: 280, fontFamily: 'inherit' },
@@ -189,7 +191,7 @@
 
     // ── Bar Penggunaan Dana ────────────────────────────────────────────────
     const penggunaanLabels = @json($penggunaanDana->pluck('nama_kategori'));
-    const penggunaanData   = @json($penggunaanDana->pluck('total'));
+    const penggunaanData   = @json($penggunaanDana->pluck('total')).map(Number);
 
     new ApexCharts(document.querySelector('#barPenggunaan'), {
         chart: { type: 'bar', height: 280, fontFamily: 'inherit', toolbar: { show: false } },
@@ -206,7 +208,7 @@
 
     new ApexCharts(document.querySelector('#lineChart'), {
         chart: { type: 'area', height: 160, fontFamily: 'inherit', toolbar: { show: false }, sparkline: { enabled: false } },
-        series: [{ name: 'Pemasukan', data: perkembangan.map(d => d.total) }],
+        series: [{ name: 'Pemasukan', data: perkembangan.map(d => Number(d.total)) }],
         xaxis: { categories: perkembangan.map(d => d.tanggal), labels: { show: false }, axisBorder: { show: false } },
         yaxis: { labels: { show: false } },
         grid: { show: false },
@@ -216,6 +218,7 @@
         dataLabels: { enabled: false },
         tooltip: { y: { formatter: val => 'Rp ' + val.toLocaleString('id-ID') } }
     }).render();
+});
 </script>
 
 </body>
