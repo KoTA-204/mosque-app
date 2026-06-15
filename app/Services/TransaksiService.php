@@ -14,10 +14,32 @@ use Illuminate\Support\Facades\Storage;
 
 class TransaksiService
 {
-    public function store(StoreTransaksiRequest $request): Transaksi
+    public function store(StoreTransaksiRequest $request, bool $force = false): Transaksi
     {
-        return DB::transaction(function () use ($request) {
+        return DB::transaction(function () use ($request, $force) {
 
+            if (!$force) {
+                $duplikat = Transaksi::with(['kategoriTransaksi', 'dompet'])
+                    ->where('tanggal_transaksi', $request->tanggal_transaksi)
+                    ->where('jumlah', $request->jumlah)
+                    ->where('jenis_transaksi', $request->jenis_transaksi)
+                    ->where('dompet_id', $request->dompet_id)
+                    ->first();
+
+                if ($duplikat) {
+                    throw new \RuntimeException(
+                        'DUPLIKAT_WARNING:' . json_encode([
+                            'tanggal'          => $duplikat->tanggal_transaksi->format('d M Y'),
+                            'jumlah'           => number_format($duplikat->jumlah, 0, ',', '.'),
+                            'jenis'            => $duplikat->jenis_transaksi,
+                            'deskripsi'        => $duplikat->deskripsi ?? '-',
+                            'kategori'         => $duplikat->kategoriTransaksi?->nama_kategori ?? '-',
+                            'dompet'           => $duplikat->dompet?->nama_dompet ?? '-',
+                        ])
+                    );
+                }
+            }
+        
             // 1. Simpan transaksi
             $transaksi = Transaksi::create([
                 'dompet_id'             => $request->dompet_id,
@@ -108,65 +130,82 @@ class TransaksiService
 
     public function simpanImport(array $sessionData, array $klasifikasi): array
     {
-        $rowsMap      = collect($sessionData['rows'])->keyBy('no_referensi');
-        $klasMap      = collect($klasifikasi)->keyBy('no_referensi');
-        $jenis        = $sessionData['jenis_transaksi'];
+        $rowsMap = collect($sessionData['rows'])->keyBy('no_referensi');
+        $klasMap = collect($klasifikasi)->keyBy('no_referensi');
+        $jenis   = $sessionData['jenis_transaksi'];
 
-        $tersimpan = 0;
-        $dilewati  = 0;
-        $duplikat  = 0;
+        $tersimpan    = 0;
+        $dilewati     = 0;
+        $duplikat     = 0;
+        $gagalPeriode = [];
 
-        DB::transaction(function () use (
-            $rowsMap, $klasMap, $jenis, &$tersimpan, &$dilewati, &$duplikat
-        ) {
-            foreach ($rowsMap as $ref => $row) {
-                // Skip duplikat
-                if ($row['is_duplikat']) {
-                    $duplikat++;
-                    continue;
-                }
+        foreach ($rowsMap as $ref => $row) {
+            if ($row['is_duplikat']) {
+                $duplikat++;
+                continue;
+            }
 
-                $klas = $klasMap->get($ref);
+            $klas = $klasMap->get($ref);
 
-                // Skip jika tidak ada klasifikasi atau ditandai skip
-                if (!$klas || !empty($klas['skip'])) {
-                    $dilewati++;
-                    continue;
-                }
+            if (!$klas) {
+                $dilewati++;
+                continue;
+            }
 
-                // Simpan transaksi
-                $tanggal   = substr($row['waktu_transaksi'] ?? $row['tanggal'], 0, 10);
+            $sudahAda = Transaksi::where('no_referensi', $row['no_referensi'])->exists();
+            if ($sudahAda) {
+                $duplikat++;
+                continue;
+            }
+
+            $tanggal = substr($row['waktu_transaksi'] ?? now()->toDateString(), 0, 10);
+
+            // Cek periode aktif
+            $periode = \App\Models\Periode::aktif()
+                ->where('tanggal_awal', '<=', $tanggal)
+                ->where('tanggal_akhir', '>=', $tanggal)
+                ->first();
+
+            if (!$periode) {
+                $dilewati++;
+                $gagalPeriode[$tanggal] = ($gagalPeriode[$tanggal] ?? 0) + 1;
+                continue;
+            }
+
+            DB::transaction(function () use ($row, $klas, $jenis, $tanggal, $sessionData, $periode) {
                 $transaksi = Transaksi::create([
-                    'dompet_id'             => $sessionData['dompet_id'], 
+                    'dompet_id'             => $sessionData['dompet_id'],
                     'user_id'               => Auth::id(),
                     'kategori_transaksi_id' => null,
                     'tanggal_transaksi'     => $tanggal,
                     'jenis_transaksi'       => $jenis,
                     'jumlah'                => $row['jumlah'],
                     'deskripsi'             => $row['deskripsi'],
-                    'catatan'               => $row['no_referensi'],
+                    'no_referensi'          => $row['no_referensi'],
+                    'catatan'               => null,
                     'status_approval'       => null,
                     'status_jurnal'         => 'MAPPED',
                 ]);
 
-                // Simpan jurnal umum
-                $this->upsertJurnalUmum(
+                $this->buatJurnalUmum(
                     $transaksi,
                     $klas['akun_debit_id'],
                     $klas['akun_kredit_id'],
                     $row['jumlah'],
                     $row['deskripsi'],
+                    $periode,
                 );
+            });
 
-                $tersimpan++;
-            }
-        });
+            $tersimpan++;
+        }
 
         return [
-            'tersimpan' => $tersimpan,
-            'dilewati'  => $dilewati,
-            'duplikat'  => $duplikat,
-            'total'     => $rowsMap->count(),
+            'tersimpan'    => $tersimpan,
+            'dilewati'     => $dilewati,
+            'duplikat'     => $duplikat,
+            'total'        => $rowsMap->count(),
+            'gagalPeriode' => $gagalPeriode,
         ];
     }
 
@@ -175,7 +214,8 @@ class TransaksiService
         int $akunDebitId,
         int $akunKreditId,
         float $jumlah,
-        ?string $deskripsi = null
+        ?string $deskripsi = null,
+        ?\App\Models\Periode $periode = null
     ): Jurnal {
         $periode = \App\Models\Periode::aktif()
             ->where('tanggal_awal', '<=', $transaksi->tanggal_transaksi)
@@ -223,7 +263,9 @@ class TransaksiService
     {
         foreach ($files as $file) {
             if (!$file) continue;
+            
             $path = $file->store("bukti-transaksi/{$transaksi->id}", 'public');
+            
             BuktiTransaksi::create([
                 'transaksi_id' => $transaksi->id,
                 'nama_file'    => $file->getClientOriginalName(),

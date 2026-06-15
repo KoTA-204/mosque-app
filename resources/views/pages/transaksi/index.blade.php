@@ -61,8 +61,10 @@
                 </svg>
             </div>
             <div>
-                <p class="text-2xl font-semibold text-gray-900">{{ number_format($stats['pemasukan']) }}</p>
-                <p class="text-sm text-gray-500 mt-0.5">Total pemasukan</p>
+                <p class="text-2xl font-semibold text-gray-900">{{ number_format($stats['count_pemasukan']) }}</p>
+                <p class="text-sm text-gray-500 mt-0.5">
+                    Pemasukan &middot; Rp {{ number_format($stats['jumlah_pemasukan'], 0, ',', '.') }}
+                </p>
             </div>
         </div>
 
@@ -74,8 +76,10 @@
                 </svg>
             </div>
             <div>
-                <p class="text-2xl font-semibold text-gray-900">{{ number_format($stats['pengeluaran']) }}</p>
-                <p class="text-sm text-gray-500 mt-0.5">Total pengeluaran</p>
+                <p class="text-2xl font-semibold text-gray-900">{{ number_format($stats['count_pengeluaran']) }}</p>
+                <p class="text-sm text-gray-500 mt-0.5">
+                    Pengeluaran &middot; Rp {{ number_format($stats['jumlah_pengeluaran'], 0, ',', '.') }}
+                </p>
             </div>
         </div>
     </div>
@@ -399,8 +403,6 @@
     @include('pages.transaksi.create', [
         'akuns'     => $akuns,
         'dompets'   => $dompets,
-        'kegiatans' => $kegiatans,
-        'kategoris' => $kategoris,
     ])
 </x-modal>
 
@@ -408,8 +410,6 @@
     @include('pages.transaksi.edit', [
         'akuns'     => $akuns,
         'dompets'   => $dompets,
-        'kegiatans' => $kegiatans,
-        'kategoris' => $kategoris,
     ])
 </x-modal>
 
@@ -424,6 +424,72 @@
     title="Hapus Transaksi"
     message="Yakin ingin menghapus transaksi ini? Tindakan ini tidak dapat dibatalkan."
 />
+
+<x-modal id="modalDuplikat" title="Transaksi Serupa Ditemukan">
+    <div class="max-w-sm mx-auto text-center space-y-5 py-2">
+
+        <div class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto">
+            <svg class="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+        </div>
+
+        <div class="space-y-1">
+            <p class="text-sm font-medium text-gray-800">Sudah ada transaksi dengan data serupa</p>
+            <p class="text-xs text-gray-400">Periksa detail berikut sebelum melanjutkan</p>
+        </div>
+
+        {{-- Detail duplikat --}}
+        <div id="duplikatDetail"
+            class="text-left bg-gray-50 border border-gray-200 rounded-xl divide-y divide-gray-100">
+            <div class="flex items-center justify-between px-4 py-2.5">
+                <span class="text-xs text-gray-500">Tanggal</span>
+                <span id="dd_tanggal" class="text-xs font-medium text-gray-800"></span>
+            </div>
+            <div class="flex items-center justify-between px-4 py-2.5">
+                <span class="text-xs text-gray-500">Jumlah</span>
+                <span id="dd_jumlah" class="text-xs font-medium text-gray-800"></span>
+            </div>
+            <div class="flex items-center justify-between px-4 py-2.5">
+                <span class="text-xs text-gray-500">Jenis</span>
+                <span id="dd_jenis" class="text-xs font-medium text-gray-800"></span>
+            </div>
+            <div class="flex items-center justify-between px-4 py-2.5">
+                <span class="text-xs text-gray-500">Kategori</span>
+                <span id="dd_kategori" class="text-xs font-medium text-gray-800"></span>
+            </div>
+            <div class="flex items-center justify-between px-4 py-2.5">
+                <span class="text-xs text-gray-500">Dompet</span>
+                <span id="dd_dompet" class="text-xs font-medium text-gray-800"></span>
+            </div>
+            <div class="flex items-start justify-between px-4 py-2.5 gap-4">
+                <span class="text-xs text-gray-500 shrink-0">Keterangan</span>
+                <span id="dd_deskripsi" class="text-xs font-medium text-gray-800 text-right"></span>
+            </div>
+        </div>
+
+        <p class="text-xs text-gray-400">
+            Klik <span class="font-medium">Tetap Simpan</span> jika ini memang bukan duplikat.
+        </p>
+
+        <div class="flex items-center justify-center gap-3 pt-1">
+            <button type="button" onclick="closeModal('modalDuplikat')"
+                class="h-9 px-5 text-sm border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors">
+                Batal
+            </button>
+            <button type="button" onclick="konfirmasiDuplikat()"
+                class="h-9 px-5 text-sm bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-colors">
+                Tetap Simpan
+            </button>
+        </div>
+    </div>
+</x-modal>
+
+<x-modal id="modalBukti" title="Bukti Transaksi">
+    <div id="buktiContainer" class="space-y-3">
+    </div>
+</x-modal>
 
 <script>
 function openModal(id) {
@@ -468,23 +534,50 @@ function editTransaksi(id) {
         if (!data) throw new Error('Data tidak ditemukan');
 
         const f = document.getElementById('formEdit');
+
+        f.reset();
+        document.getElementById('listBuktiEdit').innerHTML = '';
+        document.getElementById('editErrors').classList.add('hidden');
+        document.getElementById('editErrorList').innerHTML = '';
+
         f.action = `/dashboard/transaksi/${id}`;
 
-        // Helper aman — skip jika field tidak ada di form
         const setVal = (name, val) => {
-            const el = f.querySelector(`[name=${name}]`);
+            const el = f.querySelector(`[name="${name}"]`);
             if (el) el.value = val ?? '';
         };
 
-        setVal('tanggal_transaksi',     data.tanggal_transaksi?.substring(0, 10));
-        setVal('dompet_id',             data.dompet_id);
-        setVal('kategori_transaksi_id', data.kategori_transaksi_id);
-        setVal('jumlah',                parseFloat(data.jumlah) || '');
-        setVal('jenis_transaksi',       data.jenis_transaksi);
-        setVal('kegiatan_id',           data.kegiatan_id);
-        setVal('akun_debit_id',         data.akun_debit_id);
-        setVal('akun_kredit_id',        data.akun_kredit_id);
-        setVal('deskripsi',             data.deskripsi);
+        setVal('tanggal_transaksi', data.tanggal_transaksi?.substring(0, 10));
+        setVal('dompet_id',         data.dompet_id);
+        setVal('jumlah',            parseFloat(data.jumlah) || '');
+        setVal('jenis_transaksi',   data.jenis_transaksi);
+        setVal('akun_debit_id',     data.akun_debit_id);
+        setVal('akun_kredit_id',    data.akun_kredit_id);
+        setVal('deskripsi',         data.deskripsi);
+
+        const buktis = data.bukti_transaksi ?? [];
+        const list   = document.getElementById('listBuktiEdit');
+
+        if (buktis.length > 0) {
+            list.insertAdjacentHTML('beforeend', `
+                <p class="text-xs text-gray-500 font-medium mt-1 mb-1">Bukti sebelumnya:</p>
+            `);
+            buktis.forEach(b => {
+                list.insertAdjacentHTML('beforeend', `
+                    <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700" id="bukti-${b.id}">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0120 9.414V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="flex-1 truncate">${b.nama_file}</span>
+                        <button type="button" onclick="hapusBukti(${b.id})"
+                            class="text-xs text-red-500 hover:text-red-700 flex-shrink-0 ml-auto">
+                            Hapus
+                        </button>
+                    </div>
+                `);
+            });
+        }
 
         openModal('modalEdit');
     })
@@ -497,13 +590,113 @@ function editTransaksi(id) {
     });
 }
 
+async function hapusBukti(buktiId) {
+    if (!confirm('Hapus bukti ini?')) return;
+
+    try {
+        const res  = await fetch(`/dashboard/transaksi/bukti/${buktiId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                'Accept': 'application/json',
+            }
+        });
+        const json = await res.json();
+
+        if (json.success) {
+            document.getElementById(`bukti-${buktiId}`)?.remove();
+        } else {
+            alert('Gagal menghapus bukti.');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Gagal menghubungi server.');
+    }
+}
+
 function lihatBukti(id) {
     fetch(`/dashboard/transaksi/${id}`, { headers: { 'Accept': 'application/json' } })
         .then(r => r.json())
         .then(({ data }) => {
             const items = data.bukti_transaksi ?? [];
-            // Buka bukti pertama di tab baru (sederhana; bisa diganti modal preview)
-            items.forEach(b => window.open(`/storage/${b.path_file}`, '_blank'));
+            const container = document.getElementById('buktiContainer');
+
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-400 text-sm">
+                        Tidak ada bukti transaksi.
+                    </div>`;
+                openModal('modalBukti');
+                return;
+            }
+
+            container.innerHTML = items.map(b => {
+                const url  = `/storage/${b.path_file}`;
+                const nama = b.nama_file ?? b.path_file.split('/').pop();
+                const ext  = nama.split('.').pop().toLowerCase();
+                const isPdf   = ext === 'pdf';
+                const isImage = ['jpg','jpeg','png','webp','gif'].includes(ext);
+
+                if (isImage) {
+                    return `
+                        <div class="space-y-2">
+                            <p class="text-xs text-gray-500 font-medium">${nama}</p>
+                            <img src="${url}" alt="${nama}"
+                                class="w-full rounded-xl border border-gray-200 object-contain max-h-96">
+                            <a href="${url}" target="_blank"
+                                class="inline-flex items-center gap-1.5 text-xs text-green-700 hover:underline">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                </svg>
+                                Buka di tab baru
+                            </a>
+                        </div>`;
+                }
+
+                if (isPdf) {
+                    return `
+                        <div class="space-y-2">
+                            <p class="text-xs text-gray-500 font-medium">${nama}</p>
+                            <iframe src="${url}" class="w-full rounded-xl border border-gray-200"
+                                style="height:480px"></iframe>
+                            <a href="${url}" target="_blank"
+                                class="inline-flex items-center gap-1.5 text-xs text-green-700 hover:underline">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                </svg>
+                                Buka di tab baru
+                            </a>
+                        </div>`;
+                }
+
+                return `
+                    <a href="${url}" target="_blank"
+                        class="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                        <svg class="w-8 h-8 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0120 9.414V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">${nama}</p>
+                            <p class="text-xs text-gray-400">Klik untuk membuka</p>
+                        </div>
+                        <svg class="w-4 h-4 text-gray-400 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                    </a>`;
+            }).join('');
+
+            openModal('modalBukti');
+        })
+        .catch(() => {
+            document.getElementById('buktiContainer').innerHTML = `
+                <div class="text-center py-8 text-red-400 text-sm">
+                    Gagal memuat bukti transaksi.
+                </div>`;
+            openModal('modalBukti');
         });
 }
 
@@ -577,8 +770,7 @@ document.addEventListener('DOMContentLoaded', function () {
     fp = flatpickr('#flatpickrInput', {
         mode: 'range',
         dateFormat: 'Y-m-d',
-        locale: 'id',
-        inline: true, // tampil langsung di dalam dropdown
+        inline: true, 
         defaultDate: selectedDari && selectedSampai
             ? [selectedDari, selectedSampai]
             : (selectedDari ? [selectedDari] : []),
@@ -692,14 +884,12 @@ function applyFilter() {
     const perPage  = document.getElementById('filterPerPage').value;
     const dari     = document.getElementById('filterTanggalDari').value;
     const sampai   = document.getElementById('filterTanggalSampai').value;
-    const kategori = document.getElementById('filterKategori').value;
     const akun     = document.getElementById('filterAkun').value;
     const search   = document.getElementById('filterSearch').value;
 
     if (perPage && perPage !== '10') p.set('per_page', perPage);
     if (dari)     p.set('dari', dari);
     if (sampai)   p.set('sampai', sampai);
-    if (kategori) p.set('kategori_id', kategori);
     if (akun)     p.set('akun_id', akun);
     if (search)   p.set('search', search);
 

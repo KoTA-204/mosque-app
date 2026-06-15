@@ -6,6 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class ImportTransaksiRequest extends FormRequest
 {
+    protected $errorBag = 'importTransaksi';
+
     /**
      * Determine if the user is authorized to make this request.
      */
