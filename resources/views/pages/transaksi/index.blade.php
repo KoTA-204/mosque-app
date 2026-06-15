@@ -403,8 +403,6 @@
     @include('pages.transaksi.create', [
         'akuns'     => $akuns,
         'dompets'   => $dompets,
-        'kegiatans' => $kegiatans,
-        'kategoris' => $kategoris,
     ])
 </x-modal>
 
@@ -412,8 +410,6 @@
     @include('pages.transaksi.edit', [
         'akuns'     => $akuns,
         'dompets'   => $dompets,
-        'kegiatans' => $kegiatans,
-        'kategoris' => $kategoris,
     ])
 </x-modal>
 
@@ -548,10 +544,8 @@ function editTransaksi(id) {
 
         setVal('tanggal_transaksi',     data.tanggal_transaksi?.substring(0, 10));
         setVal('dompet_id',             data.dompet_id);
-        setVal('kategori_transaksi_id', data.kategori_transaksi_id);
         setVal('jumlah',                parseFloat(data.jumlah) || '');
         setVal('jenis_transaksi',       data.jenis_transaksi);
-        setVal('kegiatan_id',           data.kegiatan_id);
         setVal('akun_debit_id',         data.akun_debit_id);
         setVal('akun_kredit_id',        data.akun_kredit_id);
         setVal('deskripsi',             data.deskripsi);
