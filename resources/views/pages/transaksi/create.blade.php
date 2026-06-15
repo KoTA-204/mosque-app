@@ -451,8 +451,14 @@ async function submitTambah(force = false) {
             errList.insertAdjacentHTML('beforeend', `<li>${data.message ?? 'Terjadi kesalahan.'}</li>`);
             errBox.classList.remove('hidden');
         }
-    } catch {
-        errList.insertAdjacentHTML('beforeend', `<li>Gagal menghubungi server.</li>`);
+    }catch (error) {
+        console.error(error);
+
+        errList.insertAdjacentHTML(
+            'beforeend',
+            `<li>${error.message}</li>`
+        );
+
         errBox.classList.remove('hidden');
     } finally {
         btn.disabled = false;

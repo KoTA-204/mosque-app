@@ -214,7 +214,8 @@ class TransaksiService
         int $akunDebitId,
         int $akunKreditId,
         float $jumlah,
-        ?string $deskripsi = null
+        ?string $deskripsi = null,
+        ?\App\Models\Periode $periode = null
     ): Jurnal {
         $periode = \App\Models\Periode::aktif()
             ->where('tanggal_awal', '<=', $transaksi->tanggal_transaksi)

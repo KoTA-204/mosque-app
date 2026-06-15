@@ -22,7 +22,7 @@ class UpdateTransaksiRequest extends FormRequest
         return [
             'dompet_id'             => 'required|exists:dompet,id',
             'tanggal_transaksi'     => 'required|date',
-            'jenis_transaksi'       => 'required|in: PEMASUKAN, PENGELUARAN',
+            'jenis_transaksi'       => 'required|in:PEMASUKAN,PENGELUARAN',
             'jumlah'                => 'required|numeric|min:1',
             'akun_debit_id'         => 'required|exists:akun,id',
             'akun_kredit_id'        => 'required|exists:akun,id',

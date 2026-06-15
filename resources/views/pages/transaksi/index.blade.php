@@ -534,21 +534,50 @@ function editTransaksi(id) {
         if (!data) throw new Error('Data tidak ditemukan');
 
         const f = document.getElementById('formEdit');
+
+        f.reset();
+        document.getElementById('listBuktiEdit').innerHTML = '';
+        document.getElementById('editErrors').classList.add('hidden');
+        document.getElementById('editErrorList').innerHTML = '';
+
         f.action = `/dashboard/transaksi/${id}`;
 
-        // Helper aman — skip jika field tidak ada di form
         const setVal = (name, val) => {
-            const el = f.querySelector(`[name=${name}]`);
+            const el = f.querySelector(`[name="${name}"]`);
             if (el) el.value = val ?? '';
         };
 
-        setVal('tanggal_transaksi',     data.tanggal_transaksi?.substring(0, 10));
-        setVal('dompet_id',             data.dompet_id);
-        setVal('jumlah',                parseFloat(data.jumlah) || '');
-        setVal('jenis_transaksi',       data.jenis_transaksi);
-        setVal('akun_debit_id',         data.akun_debit_id);
-        setVal('akun_kredit_id',        data.akun_kredit_id);
-        setVal('deskripsi',             data.deskripsi);
+        setVal('tanggal_transaksi', data.tanggal_transaksi?.substring(0, 10));
+        setVal('dompet_id',         data.dompet_id);
+        setVal('jumlah',            parseFloat(data.jumlah) || '');
+        setVal('jenis_transaksi',   data.jenis_transaksi);
+        setVal('akun_debit_id',     data.akun_debit_id);
+        setVal('akun_kredit_id',    data.akun_kredit_id);
+        setVal('deskripsi',         data.deskripsi);
+
+        const buktis = data.bukti_transaksi ?? [];
+        const list   = document.getElementById('listBuktiEdit');
+
+        if (buktis.length > 0) {
+            list.insertAdjacentHTML('beforeend', `
+                <p class="text-xs text-gray-500 font-medium mt-1 mb-1">Bukti sebelumnya:</p>
+            `);
+            buktis.forEach(b => {
+                list.insertAdjacentHTML('beforeend', `
+                    <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700" id="bukti-${b.id}">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0120 9.414V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="flex-1 truncate">${b.nama_file}</span>
+                        <button type="button" onclick="hapusBukti(${b.id})"
+                            class="text-xs text-red-500 hover:text-red-700 flex-shrink-0 ml-auto">
+                            Hapus
+                        </button>
+                    </div>
+                `);
+            });
+        }
 
         openModal('modalEdit');
     })
@@ -559,6 +588,30 @@ function editTransaksi(id) {
     .finally(() => {
         if (btn) btn.classList.remove('opacity-50', 'pointer-events-none');
     });
+}
+
+async function hapusBukti(buktiId) {
+    if (!confirm('Hapus bukti ini?')) return;
+
+    try {
+        const res  = await fetch(`/dashboard/transaksi/bukti/${buktiId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                'Accept': 'application/json',
+            }
+        });
+        const json = await res.json();
+
+        if (json.success) {
+            document.getElementById(`bukti-${buktiId}`)?.remove();
+        } else {
+            alert('Gagal menghapus bukti.');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Gagal menghubungi server.');
+    }
 }
 
 function lihatBukti(id) {

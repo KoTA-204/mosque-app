@@ -39,6 +39,9 @@ class Transaksi extends Model
 
     const STATUS_EDITABLE = [self::STATUS_DRAFT, self::STATUS_PENDING, self::STATUS_REVISION];
 
+    const JENIS_TRANSAKSI_PEMASUKAN = 'PEMASUKAN';
+    const JENIS_TRANSAKSI_PENGELUARAN = 'PENGELUARAN';
+
     public function bisaDiedit(): bool
     {
         return in_array($this->status_approval, self::STATUS_EDITABLE, true);

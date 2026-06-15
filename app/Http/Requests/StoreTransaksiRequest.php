@@ -22,7 +22,7 @@ class StoreTransaksiRequest extends FormRequest
             $rules = [
             'jenis_transaksi'       => 'required|in:PEMASUKAN,PENGELUARAN',
             'tanggal_transaksi'     => 'required|date',
-            'kategori_transaksi'    => 'nullable|exists:kategori_transaksi_id',
+            'kategori_transaksi_id' => 'nullable|exists:kategori_transaksi,id',
             'jumlah'                => 'required|numeric|min:1',
             'dompet_id'             => 'required|exists:dompet,id',
             'akun_debit_id'         => 'required|exists:akun,id',
@@ -52,6 +52,7 @@ class StoreTransaksiRequest extends FormRequest
 
         return $rules;
     }
+    
     public function messages(): array
     {
         return [
@@ -62,7 +63,6 @@ class StoreTransaksiRequest extends FormRequest
             'akun_debit_id.required'         => 'Akun debit wajib dipilih.',
             'akun_kredit_id.required'        => 'Akun kredit wajib dipilih.',
             'dompet_id.required'             => 'Dompet wajib dipilih',
-            'kategori_transaksi_id.required' => 'Kategori wajib dipilih',
             'bukti_transaksi.*.mimes'        => 'File harus berformat JPG, PNG, atau PDF',
             'bukti_transaksi.*.max'          => 'Ukuran file maksimal 5MB',
             'catatan.max'                    => 'Catatan tidak boleh lebih dari 500 karakter',
