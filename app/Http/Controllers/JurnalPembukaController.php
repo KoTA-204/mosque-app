@@ -43,20 +43,20 @@ class JurnalPembukaController extends Controller
 
     public function create()
     {
-        $periodes = Periode::orderByDesc('tanggal_awal')->get();
+        $periodes     = Periode::orderByDesc('tanggal_awal')->get();
         $periodeAktif = Periode::aktif()->latest('tanggal_awal')->first();
+        
         $akuns = Akun::with('kategoriAkun')
-                ->whereNotNull('parent_id')
-                ->orderBy('kode_akun')
-                ->get()
-                ->map(function ($a) {
-                    return [
-                        'id'            => $a->id,
-                        'kode'          => $a->kode_akun,
-                        'nama'          => $a->nama_akun,
-                        'saldo_normal'  => $a->saldo_normal,
-                    ];
-                });
+            ->whereNotNull('parent_id')
+            ->whereHas('kategoriAkun', fn($q) => $q->whereIn('kode_kategori', ['1', '2', '3']))
+            ->orderBy('kode_akun')
+            ->get()
+            ->map(fn($a) => [
+                'id'           => $a->id,
+                'kode'         => $a->kode_akun,
+                'nama'         => $a->nama_akun,
+                'saldo_normal' => $a->saldo_normal,
+            ]);
 
         return view('pages.jurnal-pembuka.create', compact('periodes', 'periodeAktif', 'akuns'));
     }
@@ -64,14 +64,23 @@ class JurnalPembukaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'tanggal_mulai'      => 'required|date',
-            'tanggal_akhir'      => 'required|date|after_or_equal:tanggal_mulai',
-            'keterangan'         => 'nullable|string|max:500',
-            'submit_type'        => 'required|in:draft,posting',
-            'detail'             => 'required|array|min:2',
-            'detail.*.akun_id'   => 'required|exists:akun,id',
-            'detail.*.tipe'      => 'required|in:DEBIT,KREDIT',
-            'detail.*.nominal'   => 'required',
+            'tanggal_mulai'    => 'required|date',
+            'tanggal_akhir'    => 'required|date|after_or_equal:tanggal_mulai',
+            'keterangan'       => 'nullable|string|max:500',
+            'submit_type'      => 'required|in:draft,posting',
+            'detail'           => 'required|array|min:2',
+            'detail.*.akun_id' => [
+                'required',
+                'exists:akun,id',
+                function ($attribute, $value, $fail) {
+                    $akun = Akun::with('kategoriAkun')->find($value);
+                    if (!in_array($akun?->kategoriAkun?->kode_kategori, ['1', '2', '3'])) {
+                        $fail('Akun "' . $akun?->nama_akun . '" bukan akun neraca. Jurnal pembuka hanya boleh menggunakan akun Aset, Liabilitas, atau Ekuitas.');
+                    }
+                },
+            ],
+            'detail.*.tipe'    => 'required|in:DEBIT,KREDIT',
+            'detail.*.nominal' => 'required',
         ]);
 
         // Validasi keseimbangan debit = kredit
@@ -87,6 +96,32 @@ class JurnalPembukaController extends Controller
                 ->withErrors(['balance' => 'Total Debit dan Kredit harus seimbang.']);
         }
 
+        // Cegah duplikat jurnal pembuka per periode
+        $sudahAda = Jurnal::where('jenis_jurnal', 'PEMBUKA')
+            ->whereHas('periode', fn($q) => $q
+                ->where('tanggal_awal',  '<=', $request->tanggal_akhir)
+                ->where('tanggal_akhir', '>=', $request->tanggal_mulai)
+            )
+            ->exists();
+
+        if ($sudahAda) {
+            return back()->withInput()
+                ->withErrors(['periode' => 'Sudah ada jurnal pembuka untuk periode ini. Setiap periode hanya boleh memiliki satu jurnal pembuka.']);
+        }
+
+        // Cegah pembuatan jika sudah ada transaksi di periode tersebut
+        $sudahAdaTransaksi = Jurnal::whereIn('jenis_jurnal', ['UMUM', 'PENYESUAIAN'])
+            ->whereHas('periode', fn($q) => $q
+                ->where('tanggal_awal',  '<=', $request->tanggal_akhir)
+                ->where('tanggal_akhir', '>=', $request->tanggal_mulai)
+            )
+            ->exists();
+
+        if ($sudahAdaTransaksi) {
+            return back()->withInput()
+                ->withErrors(['periode' => 'Tidak dapat membuat jurnal pembuka karena sudah terdapat transaksi pada periode ini.']);
+        }
+
         DB::transaction(function () use ($request) {
             $mulai = $request->tanggal_mulai;
             $akhir = $request->tanggal_akhir;
@@ -97,9 +132,10 @@ class JurnalPembukaController extends Controller
                     'tanggal_akhir' => $akhir,
                 ],
                 [
-                    'nama_periode' => \Carbon\Carbon::parse($mulai)->translatedFormat('F Y'),
-                    'tipe'         => 'bulanan',
-                    'status'       => true,
+                    'nama_periode' => $request->nama_periode 
+                        ?: \Carbon\Carbon::parse($mulai)->translatedFormat('F Y'),
+                    'tipe'   => 'bulanan',
+                    'status' => true,
                 ]
             );
 
@@ -163,10 +199,12 @@ class JurnalPembukaController extends Controller
         }
 
         $jurnalPembuka->load(['periode', 'detailJurnal.akun']);
-
         $periodes = Periode::orderByDesc('tanggal_awal')->get();
-        $akuns    = Akun::with('kategoriAkun')
+
+        // Hanya akun neraca
+        $akuns = Akun::with('kategoriAkun')
             ->whereNotNull('parent_id')
+            ->whereHas('kategoriAkun', fn($q) => $q->whereIn('kode_kategori', ['1', '2', '3']))
             ->orderBy('kode_akun')
             ->get();
 
@@ -180,15 +218,24 @@ class JurnalPembukaController extends Controller
         }
 
         $request->validate([
-            'periode_id'         => 'required|exists:periode,id',
-            'tanggal_mulai'      => 'required|date',
-            'tanggal_akhir'      => 'required|date|after_or_equal:tanggal_mulai',
-            'keterangan'         => 'nullable|string|max:500',
-            'submit_type'        => 'required|in:draft,posting',
-            'detail'             => 'required|array|min:2',
-            'detail.*.akun_id'   => 'required|exists:akun,id',
-            'detail.*.tipe'      => 'required|in:DEBIT,KREDIT',
-            'detail.*.nominal'   => 'required',
+            'periode_id'       => 'required|exists:periode,id',
+            'tanggal_mulai'    => 'required|date',
+            'tanggal_akhir'    => 'required|date|after_or_equal:tanggal_mulai',
+            'keterangan'       => 'nullable|string|max:500',
+            'submit_type'      => 'required|in:draft,posting',
+            'detail'           => 'required|array|min:2',
+            'detail.*.akun_id' => [
+                'required',
+                'exists:akun,id',
+                function ($attribute, $value, $fail) {
+                    $akun = Akun::with('kategoriAkun')->find($value);
+                    if (!in_array($akun?->kategoriAkun?->kode_kategori, ['1', '2', '3'])) {
+                        $fail('Akun "' . $akun?->nama_akun . '" bukan akun neraca. Jurnal pembuka hanya boleh menggunakan akun Aset, Liabilitas, atau Ekuitas.');
+                    }
+                },
+            ],
+            'detail.*.tipe'    => 'required|in:DEBIT,KREDIT',
+            'detail.*.nominal' => 'required',
         ]);
 
         // Validasi keseimbangan
@@ -200,9 +247,22 @@ class JurnalPembukaController extends Controller
         }
 
         if ($request->submit_type === 'posting' && round($totalDebit, 2) !== round($totalKredit, 2)) {
-            return back()
-                ->withInput()
+            return back()->withInput()
                 ->withErrors(['balance' => 'Total Debit dan Kredit harus seimbang sebelum dapat diposting.']);
+        }
+
+        // Cek duplikat, kecuali jurnal ini sendiri
+        $sudahAda = Jurnal::where('jenis_jurnal', 'PEMBUKA')
+            ->where('id', '!=', $jurnalPembuka->id)
+            ->whereHas('periode', fn($q) => $q
+                ->where('tanggal_awal',  '<=', $request->tanggal_akhir)
+                ->where('tanggal_akhir', '>=', $request->tanggal_mulai)
+            )
+            ->exists();
+
+        if ($sudahAda) {
+            return back()->withInput()
+                ->withErrors(['periode' => 'Sudah ada jurnal pembuka lain untuk periode ini.']);
         }
 
         DB::transaction(function () use ($request, $jurnalPembuka) {

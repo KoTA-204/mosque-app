@@ -376,20 +376,6 @@ function konfirmasiPosting(id) {
 
 // ── Hapus jurnal ──────────────────────────────────────────────────────────────
 function hapusJurnal(id) {
-    if (!confirm('Yakin ingin menghapus jurnal pembuka ini?')) return;
-
-    fetch(`/dashboard/jurnal-pembuka/${id}`, {
-        method: 'DELETE',
-        headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
-    })
-    .then(r => r.json())
-    .then(d => {
-        if (d.success) window.location.reload();
-        else alert(d.message);
-    });
-}
-
-function hapusJurnal(id) {
     const form = document.getElementById('deleteJurnalModalForm');
     form.action = `/dashboard/jurnal-pembuka/${id}`;
 

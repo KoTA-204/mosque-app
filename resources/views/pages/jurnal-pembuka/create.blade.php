@@ -21,6 +21,15 @@
           action="{{ route('dashboard.jurnal-pembuka.store') }}"
           method="POST">
         @csrf
+        @if($errors->any())
+            <div class="p-4 bg-red-50 border border-red-200 rounded-xl">
+                <ul class="text-sm text-red-600 list-disc list-inside">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
         {{-- Validasi balance dari server --}}
         @error('balance')
@@ -258,12 +267,49 @@ let barisCount = 0;
 let stepSaat   = 1;
 
 document.addEventListener('DOMContentLoaded', () => {
-    tambahBaris();
-    tambahBaris();
-    updateBalanceBar();
+    @if(old('detail'))
+        const oldDetail = @json(old('detail'));
+        Object.entries(oldDetail).forEach(([idx, row]) => {
+            tambahBaris();
+            const lastIdx = barisCount;
+
+            const akunSel = document.querySelector(`[name="detail[${lastIdx}][akun_id]"]`);
+            const tipeSel = document.querySelector(`[name="detail[${lastIdx}][tipe]"]`);
+
+            if (akunSel) akunSel.value = row.akun_id ?? '';
+            if (tipeSel) {
+                tipeSel.value = row.tipe ?? 'DEBIT';
+                onTipeChange(lastIdx);
+            }
+
+            const nominal = parseFloat(row.nominal) || 0;
+            if (row.tipe === 'DEBIT') {
+                const dInput = document.getElementById('debit-' + lastIdx);
+                if (dInput) dInput.value = nominal;
+            } else {
+                const kInput = document.getElementById('kredit-' + lastIdx);
+                if (kInput) kInput.value = nominal;
+            }
+
+            document.getElementById('nominal-' + lastIdx).value = nominal;
+        });
+        updateBalanceBar();
+    @else
+        tambahBaris();
+        tambahBaris();
+        updateBalanceBar();
+    @endif
 
     @if($errors->any())
-        goToStep(2);
+        @if($errors->has('periode') || $errors->has('tanggal_mulai') || $errors->has('tanggal_akhir') || $errors->has('nama_periode'))
+            document.querySelectorAll('[id^=step]').forEach(el => el.classList.add('hidden'));
+            document.getElementById('step1')?.classList.remove('hidden');
+            stepSaat = 1;
+        @else
+            document.querySelectorAll('[id^=step]').forEach(el => el.classList.add('hidden'));
+            document.getElementById('step2')?.classList.remove('hidden');
+            stepSaat = 2;
+        @endif
     @endif
 });
 
@@ -388,8 +434,8 @@ function tambahBaris() {
                            L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                 </svg>
             </button>
+            <input type="hidden" name="detail[${idx}][nominal]" id="nominal-${idx}" value="0">
         </td>
-        <input type="hidden" name="detail[${idx}][nominal]" id="nominal-${idx}" value="0">
     `;
 
     document.getElementById('bodyEntri').appendChild(tr);
