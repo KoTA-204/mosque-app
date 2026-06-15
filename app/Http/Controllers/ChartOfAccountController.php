@@ -34,13 +34,14 @@ class ChartOfAccountController extends Controller
 
         $kategoriQuery = KategoriAkun::with([
             'akunKeuangan' => function ($q) use ($request) {
-
                 $q->whereNull('parent_id')
                 ->when($request->sub_kategori, function ($query) use ($request) {
                     $query->where('id', $request->sub_kategori);
                 })
-                ->with('children');
-
+                ->orderBy('kode_akun')
+                ->with(['children' => function ($q) {
+                    $q->orderBy('kode_akun');
+                }]);
             }
         ])->orderBy('kode_kategori');
 

@@ -81,45 +81,11 @@
         </div>
     </div>
 
-    {{-- Kategori & Kegiatan --}}
-    <div class="grid grid-cols-2 gap-4 mb-4">
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-                Kategori <span class="text-red-500">*</span>
-            </label>
-            <select name="kategori_transaksi_id" required
-                class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
-                <option value="">Pilih kategori</option>
-                @foreach ($kategoris as $k)
-                    <option value="{{ $k->id }}">{{ $k->nama_kategori }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Kegiatan</label>
-            <select name="kegiatan_id"
-                class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
-                <option value="">Pilih kegiatan (opsional)</option>
-                @foreach ($kegiatans as $k)
-                    <option value="{{ $k->id }}">{{ $k->nama_kegiatan }}</option>
-                @endforeach
-            </select>
-        </div>
-    </div>
-
     {{-- Keterangan --}}
     <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan</label>
         <textarea name="deskripsi" rows="2"
             placeholder="Masukan keterangan transaksi"
-            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"></textarea>
-    </div>
-
-    {{-- Catatan --}}
-    <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
-        <textarea name="catatan" rows="2"
-            placeholder="Catatan tambahan"
             class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"></textarea>
     </div>
 
@@ -155,7 +121,7 @@
             class="h-9 px-4 text-sm border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors">
             Batal
         </button>
-        <button type="submit" id="btnEditSubmit"
+        <button type="button" id="btnEditSubmit" onclick="submitEdit()"
             class="h-9 px-5 text-sm bg-green-700 text-white rounded-xl font-medium hover:bg-green-800 transition-colors flex items-center gap-2">
             <svg id="iconSpinnerEdit" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -184,9 +150,8 @@ function previewBuktiEdit(files) {
     });
 }
 
-document.getElementById('formEdit').addEventListener('submit', async function (e) {
-    e.preventDefault();
-
+async function submitEdit() {
+    const form    = document.getElementById('formEdit');
     const btn     = document.getElementById('btnEditSubmit');
     const spinner = document.getElementById('iconSpinnerEdit');
     const errBox  = document.getElementById('editErrors');
@@ -198,11 +163,8 @@ document.getElementById('formEdit').addEventListener('submit', async function (e
     errList.innerHTML = '';
 
     try {
-        const fd = new FormData(this);
-        // Laravel PUT via _method
-        fd.set('_method', 'PUT');
-
-        const res  = await fetch(this.action, {
+        const fd  = new FormData(form);
+        const res = await fetch(form.action, {
             method: 'POST',
             body: fd,
             headers: {
@@ -211,9 +173,12 @@ document.getElementById('formEdit').addEventListener('submit', async function (e
             },
         });
         const data = await res.json();
-
         if (data.success) {
             closeModal('modalEdit');
+            sessionStorage.setItem('alert', JSON.stringify({
+                type: 'success',
+                message: 'Transaksi berhasil diperbarui.'
+            }));
             window.location.reload();
         } else if (res.status === 422 && data.errors) {
             Object.values(data.errors).flat().forEach(msg => {
@@ -221,7 +186,11 @@ document.getElementById('formEdit').addEventListener('submit', async function (e
             });
             errBox.classList.remove('hidden');
         } else {
-            alert(data.message ?? 'Terjadi kesalahan.');
+            sessionStorage.setItem('alert', JSON.stringify({
+                type: 'error',
+                message: data.message ?? 'Terjadi kesalahan.'
+            }));
+            window.location.reload();
         }
     } catch {
         alert('Gagal menghubungi server.');
@@ -229,5 +198,5 @@ document.getElementById('formEdit').addEventListener('submit', async function (e
         btn.disabled = false;
         spinner.classList.add('hidden');
     }
-});
+}
 </script>

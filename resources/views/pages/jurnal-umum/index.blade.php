@@ -4,12 +4,8 @@
 <div class="p-6 space-y-6">
 
     {{-- Header --}}
-    <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
         <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Jurnal Umum</h1>
-        <a href="{{ route('dashboard.jurnal-umum.create') }}"
-            class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-            + Tambah Jurnal
-        </a>
     </div>
 
     @if(session('success'))
@@ -27,29 +23,26 @@
 
     <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
 
+        {{-- Bulk Action Bar --}}
+        <x-jurnal.bulk-action-bar
+            label="jurnal dipilih"
+            post-label="Post Terpilih"
+            on-post="bulkPost()"
+            on-cancel="clearSelection()"
+        />
+
         {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-wrap">
-            <div class="flex items-center gap-3">
-                {{-- Per page --}}
-                <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                    Tampil
-                    <select id="perPage" onchange="applyFilters()"
-                        class="border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 text-sm">
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                    </select>
-                    data
-                </div>
-                {{-- Bulk Post Button (muncul saat ada yang dicentang) --}}
-                <button id="bulkPostBtn" onclick="bulkPost()"
-                    class="hidden items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    Posting Terpilih (<span id="selectedCount">0</span>)
-                </button>
+            <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                Tampil
+                <select id="perPage" onchange="applyFilters()"
+                    class="border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 text-sm">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                data
             </div>
 
             <div class="flex items-center gap-2 flex-wrap">
@@ -83,9 +76,9 @@
 </div>
 
 <script>
-const filterUrl  = "{{ route('dashboard.jurnal-umum.index') }}";
+const filterUrl   = "{{ route('dashboard.jurnal-umum.index') }}";
 const bulkPostUrl = "{{ route('dashboard.jurnal-umum.bulk-post') }}";
-const csrfToken  = "{{ csrf_token() }}";
+const csrfToken   = "{{ csrf_token() }}";
 let filterDebounce;
 
 function applyFilters() {
@@ -105,7 +98,7 @@ function applyFilters() {
     .then(r => r.json())
     .then(data => {
         document.getElementById('tableWrapper').innerHTML = data.html;
-        updateBulkBtn();
+        updateBulkBar();
     });
 }
 
@@ -114,22 +107,25 @@ document.getElementById('filterSearch').addEventListener('input', () => {
     filterDebounce = setTimeout(applyFilters, 400);
 });
 
-function updateBulkBtn() {
+// ── Bulk Selection ────────────────────────────────────────────
+function updateBulkBar() {
     const checked = document.querySelectorAll('.jurnal-checkbox:checked').length;
-    const btn = document.getElementById('bulkPostBtn');
-    document.getElementById('selectedCount').textContent = checked;
-    if (checked > 0) {
-        btn.classList.remove('hidden');
-        btn.classList.add('inline-flex');
-    } else {
-        btn.classList.add('hidden');
-        btn.classList.remove('inline-flex');
-    }
+    const bar     = document.getElementById('bulkActionBar');
+    const badge   = document.getElementById('bulkCountBadge');
+    if (badge) badge.textContent = checked;
+    if (bar)   bar.style.display = checked > 0 ? 'flex' : 'none';
 }
 
 function toggleSelectAll(checkbox) {
     document.querySelectorAll('.jurnal-checkbox').forEach(cb => cb.checked = checkbox.checked);
-    updateBulkBtn();
+    updateBulkBar();
+}
+
+function clearSelection() {
+    document.querySelectorAll('.jurnal-checkbox').forEach(cb => cb.checked = false);
+    const master = document.querySelector('thead input[type="checkbox"]');
+    if (master) master.checked = false;
+    updateBulkBar();
 }
 
 function bulkPost() {
@@ -141,19 +137,17 @@ function bulkPost() {
     fetch(bulkPostUrl, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken,
+            'Content-Type':     'application/json',
+            'X-CSRF-TOKEN':     csrfToken,
             'X-Requested-With': 'XMLHttpRequest',
         },
         body: JSON.stringify({ ids }),
     })
     .then(r => r.json())
     .then(data => {
-        // Refresh tabel
         applyFilters();
-        // Tampilkan notif
         const notif = document.createElement('div');
-        notif.className = `fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium shadow-lg transition-all
+        notif.className = `fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium shadow-lg
             ${data.success ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`;
         notif.textContent = data.message;
         document.body.appendChild(notif);

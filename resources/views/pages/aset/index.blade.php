@@ -1,5 +1,12 @@
-{{-- resources/views/pages/aset/index.blade.php --}}
 @extends('layouts.app')
+
+@push('styles')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+<style>
+    .flatpickr-day.selected, .flatpickr-day.selected:hover { background: #16a34a !important; border-color: #16a34a !important; }
+    .flatpickr-day:hover { background: #f0fdf4; }
+</style>
+@endpush
 
 @section('content')
 <div class="p-6 space-y-6">
@@ -9,11 +16,10 @@
         <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Manajemen Aset</h1>
         <button onclick="openCreateModal()"
            class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-            + Tambah Aset
+            Tambah Aset
         </button>
     </div>
 
-    {{-- Flash --}}
     @if(session('success'))
     <div class="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-sm text-green-700 dark:text-green-400">
         <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
@@ -23,25 +29,49 @@
 
     {{-- Stats --}}
     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4">
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Aset</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['total'] }}</p>
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center gap-4">
+            <div class="shrink-0 w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+            </div>
+            <div>
+                <p id="stat-total" class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['total'] }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total Aset</p>
+            </div>
         </div>
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4">
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Aset Aktif</p>
-            <p class="text-2xl font-bold text-green-600">{{ $stats['aktif'] }}</p>
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center gap-4">
+            <div class="shrink-0 w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div>
+                <p id="stat-aktif" class="text-2xl font-bold text-green-600">{{ $stats['aktif'] }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Aset Aktif</p>
+            </div>
         </div>
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4">
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Aset Non-Aktif</p>
-            <p class="text-2xl font-bold text-red-500">{{ $stats['tidak_aktif'] }}</p>
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center gap-4">
+            <div class="shrink-0 w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <svg class="w-6 h-6 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                </svg>
+            </div>
+            <div>
+                <p id="stat-tidak-aktif" class="text-2xl font-bold text-red-500">{{ $stats['tidak_aktif'] }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Aset Non-Aktif</p>
+            </div>
         </div>
     </div>
 
-    {{-- Table Card --}}
-    <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+    {{-- Alert area --}}
+    <div id="alertArea"></div>
 
-        {{-- Toolbar --}}
+    {{-- Table Card --}}
+    <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl">
         <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-wrap">
+
+            {{-- Kiri: Show entries --}}
             <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 Show
                 <select id="perPage" onchange="applyFilters()"
@@ -54,116 +84,471 @@
                 entries
             </div>
 
-            <div class="flex items-center gap-2 flex-wrap">
-                <select id="filterSumber" onchange="applyFilters()"
-                    class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
-                    <option value="">Semua Sumber</option>
-                    <option value="Wakaf">Wakaf</option>
-                    <option value="Hibah/Donasi">Hibah/Donasi</option>
-                    <option value="Pembelian">Pembelian</option>
-                    <option value="Infak Jamaah">Infak Jamaah</option>
-                    <option value="Lainnya">Lainnya</option>
-                </select>
+            {{-- Kanan: Search + Filter --}}
+            <div class="flex items-center gap-2">
 
-                <select id="filterStatus" onchange="applyFilters()"
-                    class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
-                    <option value="">Semua Status</option>
-                    <option value="aktif">Aktif</option>
-                    <option value="tidak aktif">Tidak Aktif</option>
-                </select>
-
+                {{-- Search --}}
                 <div class="relative">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
-                    <input type="text" id="filterSearch" placeholder="Search..."
-                        autocomplete="off"
+                    <input type="text" id="filterSearch" placeholder="Search..." autocomplete="off"
                         class="pl-9 pr-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 w-48 placeholder-gray-400">
                 </div>
+
+                {{-- Filter button --}}
+                <div id="filterWrapper">
+                    <button id="filterBtn" onclick="toggleFilterPanel()"
+                        class="flex items-center gap-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-green-400 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/>
+                        </svg>
+                        Filter
+                        <span id="filterBadge"
+                            class="hidden items-center justify-center w-4 h-4 text-xs font-bold text-white bg-green-600 rounded-full">
+                        </span>
+                    </button>
+                </div>
+
             </div>
         </div>
 
-        <div id="tableWrapper">
+        <div id="tableWrapper" class="overflow-x-auto">
             @include('pages.aset.table')
         </div>
     </div>
 
 </div>
 
-{{-- ── MODAL BACKDROP ─────────────────────────────────────────────────────── --}}
-<div id="modalBackdrop"
-     class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-start justify-center p-6 overflow-y-auto"
-     onclick="handleBackdropClick(event)">
-    <div id="modalContainer" class="my-6 w-full max-w-3xl">
-        {{-- konten diisi dinamis lewat JS --}}
+{{-- Filter Panel — fixed, di luar semua container --}}
+<div id="filterPanel"
+    class="hidden z-[9998] w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl">
+    
+    {{-- Header tetap di atas --}}
+    <div class="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+        <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Filter</p>
+        <button onclick="resetFilters()" class="text-xs text-green-600 hover:underline">Reset</button>
+    </div>
+
+    {{-- Konten scrollable --}}
+    <div id="filterPanelBody" class="p-4 space-y-4 overflow-y-auto">
+
+        {{-- Tahun --}}
+        <div>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Tahun Perolehan</label>
+            <select id="filterTahun" onchange="applyFilters()"
+                class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                <option value="">Semua Tahun</option>
+                @foreach(range(date('Y'), 2000, -1) as $tahun)
+                    <option value="{{ $tahun }}">{{ $tahun }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        {{-- Lokasi --}}
+        <div>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Lokasi</label>
+            <select id="filterLokasi" onchange="applyFilters()"
+                class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                <option value="">Semua Lokasi</option>
+                @foreach(['Ruang Utama Masjid','Ruang Wanita Masjid','Menara Masjid','Ruang Utilitas','Garasi Masjid','Gudang','Lainnya'] as $lok)
+                    <option value="{{ $lok }}">{{ $lok }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        {{-- Sumber --}}
+        <div>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Sumber Perolehan</label>
+            <select id="filterSumber" onchange="applyFilters()"
+                class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                <option value="">Semua Sumber</option>
+                <option value="Wakaf">Wakaf</option>
+                <option value="Hibah/Donasi">Hibah/Donasi</option>
+                <option value="Pembelian">Pembelian</option>
+                <option value="Infak Jamaah">Infak Jamaah</option>
+                <option value="Lainnya">Lainnya</option>
+            </select>
+        </div>
+
+        {{-- Status --}}
+        <div>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Status</label>
+            <select id="filterStatus" onchange="applyFilters()"
+                class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                <option value="">Semua Status</option>
+                <option value="aktif">Aktif</option>
+                <option value="tidak aktif">Tidak Aktif</option>
+            </select>
+        </div>
+
+        {{-- Kondisi --}}
+        <div>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Kondisi</label>
+            <select id="filterKondisi" onchange="applyFilters()"
+                class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                <option value="">Semua Kondisi</option>
+                <option value="BAIK">Baik</option>
+                <option value="RUSAK RINGAN">Rusak Ringan</option>
+                <option value="RUSAK BERAT">Rusak Berat</option>
+            </select>
+        </div>
+
     </div>
 </div>
 
-{{-- ── TOAST ──────────────────────────────────────────────────────────────── --}}
-<div id="toast"
-     class="hidden fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium">
-</div>
+{{-- Modal Container --}}
+<div id="modalContainer"></div>
 
+
+@push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/id.js"></script>
 <script>
-const backdrop       = document.getElementById('modalBackdrop');
 const modalContainer = document.getElementById('modalContainer');
 const csrfToken      = document.querySelector('meta[name="csrf-token"]').content;
 const baseUrl        = "{{ url('dashboard/aset') }}";
+const filterUrl      = "{{ route('dashboard.aset.index') }}";
+let filterDebounce;
 
-function handleBackdropClick(e) {
-    if (e.target === backdrop) closeModal();
+// ── Stats realtime ────────────────────────────────────────────
+function updateStats(delta) {
+    const aktifEl      = document.getElementById('stat-aktif');
+    const tidakAktifEl = document.getElementById('stat-tidak-aktif');
+    aktifEl.textContent      = (parseInt(aktifEl.textContent) || 0) + delta;
+    tidakAktifEl.textContent = (parseInt(tidakAktifEl.textContent) || 0) - delta;
 }
-function closeModal() {
-    backdrop.classList.add('hidden');
-    modalContainer.innerHTML = '';
-}
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
+function fetchStats() {
+    fetch(`${filterUrl}?stats_only=1`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.stats) {
+            document.getElementById('stat-total').textContent       = data.stats.total;
+            document.getElementById('stat-aktif').textContent       = data.stats.aktif;
+            document.getElementById('stat-tidak-aktif').textContent = data.stats.tidak_aktif;
+        }
+    });
+}
+
+// ── Filter panel (fixed positioning) ─────────────────────────
+function toggleFilterPanel() {
+    const panel = document.getElementById('filterPanel');
+    const body  = document.getElementById('filterPanelBody');
+    const btn   = document.getElementById('filterBtn');
+    const rect  = btn.getBoundingClientRect();
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+
+    if (panel.classList.contains('hidden')) {
+        const top  = rect.bottom + scrollY + 8;
+        const left = Math.max(8, rect.right - 288);
+
+        panel.style.position   = 'absolute';
+        panel.style.top        = top + 'px';
+        panel.style.left       = left + 'px';
+        body.style.maxHeight   = Math.min(400, window.innerHeight - rect.bottom - 24) + 'px';
+        panel.classList.remove('hidden');
+    } else {
+        panel.classList.add('hidden');
+    }
+}
+
+document.addEventListener('click', function(e) {
+    const panel   = document.getElementById('filterPanel');
+    const wrapper = document.getElementById('filterWrapper');
+    if (!panel.classList.contains('hidden') &&
+        !panel.contains(e.target) &&
+        !wrapper.contains(e.target)) {
+        panel.classList.add('hidden');
+    }
+});
+
+function resetFilters() {
+    ['filterTahun','filterLokasi','filterSumber','filterStatus','filterKondisi'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    document.getElementById('filterSearch').value = '';
+    countActiveFilters();
+    applyFilters();
+}
+
+function countActiveFilters() {
+    const ids = ['filterTahun','filterLokasi','filterSumber','filterStatus','filterKondisi'];
+    let count = ids.filter(id => {
+        const el = document.getElementById(id);
+        return el && el.value !== '';
+    }).length;
+    if (document.getElementById('filterSearch').value) count++;
+    const badge = document.getElementById('filterBadge');
+    if (count > 0) {
+        badge.textContent = count;
+        badge.classList.remove('hidden');
+        badge.classList.add('flex');
+    } else {
+        badge.classList.add('hidden');
+        badge.classList.remove('flex');
+    }
+}
+
+// ── Open & close modal ────────────────────────────────────────
+function openModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'flex';
+}
+
+function closeModal(id) {
+    if (id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.display = 'none';
+            if (modalContainer.contains(el)) modalContainer.innerHTML = '';
+        }
+    } else {
+        modalContainer.querySelectorAll('[id$="Modal"]').forEach(el => {
+            el.style.display = 'none';
+        });
+        modalContainer.innerHTML = '';
+    }
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        // Tutup filter panel jika terbuka
+        document.getElementById('filterPanel').classList.add('hidden');
+        // Tutup modal jika terbuka
+        modalContainer.querySelectorAll('[id$="Modal"]').forEach(el => {
+            if (el.style.display === 'flex') closeModal(el.id);
+        });
+    }
+});
+
+// ── Load modal via AJAX ───────────────────────────────────────
 function loadModal(url) {
-    modalContainer.innerHTML = `
+    modalContainer.innerHTML = '';
+
+    const loader = document.createElement('div');
+    loader.id = 'modalLoader';
+    loader.style.cssText = 'display:flex;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);';
+    loader.innerHTML = `
         <div class="bg-white dark:bg-gray-900 rounded-2xl p-10 flex items-center justify-center">
             <svg class="animate-spin w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
             </svg>
         </div>`;
-    backdrop.classList.remove('hidden');
+    document.body.appendChild(loader);
+
     fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(r => r.json())
-        .then(data => { modalContainer.innerHTML = data.html; })
-        .catch(() => { closeModal(); showToast('Gagal memuat data.', 'error'); });
+        .then(data => {
+            loader.remove();
+            modalContainer.innerHTML = data.html;
+            modalContainer.querySelectorAll('script').forEach(oldScript => {
+                const newScript = document.createElement('script');
+                if (oldScript.src) {
+                    newScript.src = oldScript.src;
+                } else {
+                    newScript.textContent = oldScript.textContent;
+                }
+                document.head.appendChild(newScript);
+                oldScript.remove();
+            });
+            const modal = modalContainer.querySelector('[id$="Modal"]');
+            if (modal) modal.style.display = 'flex';
+            initModalFeatures();
+        })
+        .catch(() => {
+            loader.remove();
+            showAlert('Gagal memuat data.', 'error');
+        });
 }
 
 function openCreateModal() { loadModal(`${baseUrl}/create`); }
 function openShowModal(id)  { loadModal(`${baseUrl}/${id}`); }
 function openEditModal(id)  { loadModal(`${baseUrl}/${id}/edit`); }
 
-function showToast(msg, type = 'success') {
-    const toast = document.getElementById('toast');
-    toast.className = `fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium ${
-        type === 'success'
-            ? 'bg-green-50 border border-green-200 text-green-700 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400'
-            : 'bg-red-50 border border-red-200 text-red-700 dark:bg-red-900/30 dark:border-red-800 dark:text-red-400'
-    }`;
-    toast.innerHTML = msg;
-    toast.classList.remove('hidden');
-    setTimeout(() => toast.classList.add('hidden'), 3500);
+// ── Init modal features ───────────────────────────────────────
+function initModalFeatures() {
+    function formatRibuan(num) {
+        if (!num && num !== 0) return '';
+        return Math.floor(num).toLocaleString('id-ID');
+    }
+    function parseRibuan(str) {
+        return parseInt((str || '').replace(/\./g, '').replace(/[^0-9]/g, ''), 10) || 0;
+    }
+    function buatFlatpickr(displayId, hiddenId) {
+        const displayEl = document.getElementById(displayId);
+        const hiddenEl  = document.getElementById(hiddenId);
+        if (!displayEl) return;
+        flatpickr(displayEl, {
+            locale:     'id',
+            dateFormat: 'd F Y',
+            maxDate:    'today',
+            onChange: function(selectedDates) {
+                if (selectedDates[0]) {
+                    const d   = selectedDates[0];
+                    const ymd = d.getFullYear() + '-' +
+                        String(d.getMonth()+1).padStart(2,'0') + '-' +
+                        String(d.getDate()).padStart(2,'0');
+                    if (hiddenEl) hiddenEl.value = ymd;
+                    updatePreview();
+                }
+            }
+        });
+    }
+    function buatFormatNilai(displayId, hiddenId) {
+        const displayEl = document.getElementById(displayId);
+        const hiddenEl  = document.getElementById(hiddenId);
+        if (!displayEl) return;
+        displayEl.addEventListener('input', function() {
+            const raw     = this.value.replace(/\./g, '').replace(/[^0-9]/g, '');
+            const num     = parseInt(raw, 10) || 0;
+            const prevLen = this.value.length;
+            const pos     = this.selectionStart;
+            this.value    = num > 0 ? formatRibuan(num) : '';
+            if (hiddenEl) hiddenEl.value = num > 0 ? num : '';
+            const diff = this.value.length - prevLen;
+            try { this.setSelectionRange(pos + diff, pos + diff); } catch(e) {}
+            updatePreview();
+        });
+    }
+
+    const isCreate = !!document.getElementById('createAsetForm');
+    const isEdit   = !!document.getElementById('editAsetForm');
+    if (!isCreate && !isEdit) return;
+
+    const prefix = isCreate ? 'create' : 'edit';
+
+    buatFlatpickr(`${prefix}-fp-tanggal_perolehan`, `${prefix}-tanggal_perolehan`);
+    buatFlatpickr(`${prefix}-fp-tanggal_mulai`,     `${prefix}-tanggal_mulai_penyusutan`);
+    buatFormatNilai(`${prefix}-display-nilai`,       `${prefix}-nilai_tercatat`);
+
+    const labelNilaiMap = {
+        'Wakaf':        'Nilai Wajar Aset (IDR)',
+        'Hibah/Donasi': 'Nilai Wajar Aset (IDR)',
+        'Infak Jamaah': 'Nilai Wajar Aset (IDR)',
+        'Pembelian':    'Nilai Perolehan / Harga Beli (IDR)',
+        'Lainnya':      'Nilai Perolehan (IDR)',
+        '':             'Nilai Perolehan (IDR)',
+    };
+    const labelPemberiMap = {
+        'Wakaf':        'Nama Wakif (Pemberi Wakaf)',
+        'Hibah/Donasi': 'Nama Donatur / Pemberi Hibah',
+        'Infak Jamaah': 'Nama Pemberi Infak',
+    };
+    const showPemberi = ['Wakaf','Hibah/Donasi','Infak Jamaah'];
+
+    const sumberEl = document.getElementById(`${prefix}-sumberPerolehan`);
+    if (sumberEl) {
+        sumberEl.addEventListener('change', function() {
+            const val     = this.value;
+            const labelEl = document.getElementById(`${prefix}-labelNilai`);
+            if (labelEl) labelEl.innerHTML = `${labelNilaiMap[val] ?? 'Nilai Perolehan (IDR)'} <span class="text-red-500">*</span>`;
+            const fp = document.getElementById(`${prefix}-fieldNamaPemberi`);
+            if (fp) {
+                fp.classList.toggle('hidden', !showPemberi.includes(val));
+                const labelPemberiEl = document.getElementById(`${prefix}-labelNamaPemberi`);
+                if (labelPemberiEl && showPemberi.includes(val)) {
+                    labelPemberiEl.textContent = labelPemberiMap[val] ?? 'Nama Pemberi';
+                }
+            }
+        });
+    }
+
+    const cb      = document.getElementById(`${prefix}-cbDisusutkan`);
+    const section = document.getElementById(`${prefix}-sectionPenyusutan`);
+    if (cb && section) {
+        cb.addEventListener('change', function() {
+            if (this.checked) {
+                section.classList.remove('hidden');
+            } else {
+                section.classList.add('hidden');
+                const fpDisplay = document.getElementById(`${prefix}-fp-tanggal_mulai`);
+                const fpHidden  = document.getElementById(`${prefix}-tanggal_mulai_penyusutan`);
+                const umurEl    = document.getElementById(`${prefix}-umurManfaat`);
+                const prevEl    = document.getElementById(`${prefix}-previewPenyusutan`);
+                if (fpDisplay) fpDisplay.value = '';
+                if (fpHidden)  fpHidden.value  = '';
+                if (umurEl)    umurEl.value     = '';
+                if (prevEl)    prevEl.classList.add('hidden');
+            }
+        });
+    }
+
+    const umurEl = document.getElementById(`${prefix}-umurManfaat`);
+    if (umurEl) umurEl.addEventListener('input', updatePreview);
+
+    function updatePreview() {
+        const displayNilai = document.getElementById(`${prefix}-display-nilai`);
+        const umur         = parseInt(document.getElementById(`${prefix}-umurManfaat`)?.value) || 0;
+        const tgl          = document.getElementById(`${prefix}-tanggal_mulai_penyusutan`)?.value;
+        const prev         = document.getElementById(`${prefix}-previewPenyusutan`);
+        if (!prev) return;
+        const nilai = parseRibuan(displayNilai?.value || '');
+        if (nilai > 0 && umur > 0) {
+            prev.classList.remove('hidden');
+            const tahunan   = nilai / umur;
+            const bulanan   = tahunan / 12;
+            const tahunanEl = document.getElementById(`${prefix}-prev-tahunan`);
+            const bulananEl = document.getElementById(`${prefix}-prev-bulanan`);
+            const selesaiEl = document.getElementById(`${prefix}-prev-selesai`);
+            if (tahunanEl) tahunanEl.textContent = 'Rp ' + formatRibuan(tahunan);
+            if (bulananEl) bulananEl.textContent = 'Rp ' + formatRibuan(bulanan);
+            if (selesaiEl) selesaiEl.textContent = tgl
+                ? (new Date(tgl).getFullYear() + umur - 1).toString()
+                : '–';
+        } else {
+            prev.classList.add('hidden');
+        }
+    }
+
+    if (isEdit) updatePreview();
+}
+
+function showAlert(msg, type = 'success') {
+    const area   = document.getElementById('alertArea');
+    const colors = {
+        success: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400',
+        error:   'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400',
+    };
+    const icons = {
+        success: '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>',
+        error:   '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>',
+    };
+    area.innerHTML = `
+        <div class="flex items-center gap-3 ${colors[type] ?? colors.success} border rounded-xl px-4 py-3 text-sm">
+            <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                ${icons[type] ?? icons.success}
+            </svg>
+            ${msg}
+        </div>`;
+    setTimeout(() => { area.innerHTML = ''; }, 4000);
 }
 
 // ── AJAX Filter ───────────────────────────────────────────────
-const filterUrl = "{{ route('dashboard.aset.index') }}";
-let filterDebounce;
-
 function applyFilters() {
     const search  = document.getElementById('filterSearch').value;
+    const tahun   = document.getElementById('filterTahun').value;
+    const lokasi  = document.getElementById('filterLokasi').value;
     const sumber  = document.getElementById('filterSumber').value;
     const status  = document.getElementById('filterStatus').value;
+    const kondisi = document.getElementById('filterKondisi').value;
     const perPage = document.getElementById('perPage').value;
-    const params  = new URLSearchParams();
-    if (search)  params.set('search', search);
-    if (sumber)  params.set('sumber', sumber);
-    if (status)  params.set('status', status);
+
+    const params = new URLSearchParams();
+    if (search)  params.set('search',  search);
+    if (tahun)   params.set('tahun',   tahun);
+    if (lokasi)  params.set('lokasi',  lokasi);
+    if (sumber)  params.set('sumber',  sumber);
+    if (status)  params.set('status',  status);
+    if (kondisi) params.set('kondisi', kondisi);
     params.set('per_page', perPage);
+
+    countActiveFilters();
+
     fetch(`${filterUrl}?${params.toString()}`, {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
@@ -173,13 +558,12 @@ function applyFilters() {
 
 document.getElementById('filterSearch').addEventListener('input', () => {
     clearTimeout(filterDebounce);
-    filterDebounce = setTimeout(applyFilters, 200);
+    filterDebounce = setTimeout(() => { countActiveFilters(); applyFilters(); }, 300);
 });
 
-// ── Form Submit (dari dalam modal) ─────────────────────────────
+// ── Submit form ───────────────────────────────────────────────
 function submitAsetForm(formId, method, url) {
     const form = document.getElementById(formId);
-    // Clear previous errors
     form.querySelectorAll('[id^="err-"]').forEach(el => el.textContent = '');
     form.querySelectorAll('input,select,textarea').forEach(el => el.classList.remove('border-red-400'));
 
@@ -197,9 +581,11 @@ function submitAsetForm(formId, method, url) {
     .then(r => r.json())
     .then(res => {
         if (res.success) {
-            closeModal();
-            showToast(res.message, 'success');
+            const activeModal = modalContainer.querySelector('[id$="Modal"]');
+            if (activeModal) closeModal(activeModal.id);
+            showAlert(res.message, 'success');
             applyFilters();
+            fetchStats();
         } else if (res.errors) {
             Object.entries(res.errors).forEach(([field, messages]) => {
                 const el    = form.querySelector(`[name="${field}"]`);
@@ -209,7 +595,8 @@ function submitAsetForm(formId, method, url) {
             });
         }
     })
-    .catch(() => showToast('Terjadi kesalahan.', 'error'));
+    .catch(() => showAlert('Terjadi kesalahan.', 'error'));
 }
 </script>
+@endpush
 @endsection

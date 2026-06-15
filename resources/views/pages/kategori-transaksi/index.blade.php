@@ -48,12 +48,11 @@
         {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-wrap">
 
-            {{-- Show entries --}}
             <div class="flex items-center gap-2">
                 <span class="text-sm text-gray-500 dark:text-gray-400">Show</span>
                 <form method="GET" id="per-page-form">
                     <input type="hidden" name="search" value="{{ request('search') }}">
-                    <input type="hidden" name="jenis"  value="{{ request('jenis') }}">
+                    <input type="hidden" name="status" value="{{ request('status') }}">
                     <select name="per_page" onchange="document.getElementById('per-page-form').submit()"
                         class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
                         @foreach([10, 25, 50] as $n)
@@ -64,16 +63,43 @@
                 <span class="text-sm text-gray-500 dark:text-gray-400">entries</span>
             </div>
 
-            {{-- Search --}}
-            <form method="GET" class="flex items-center gap-2">
+            {{-- Search & Filter --}}
+            <form method="GET" id="search-form" class="flex items-center gap-2">
                 <input type="hidden" name="per_page" value="{{ $perPage }}">
+
+                {{-- Filter Status --}}
                 <div class="relative">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    <select name="status" onchange="document.getElementById('search-form').submit()"
+                        class="text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 pr-8 appearance-none bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                        <option value="">Semua Status</option>
+                        <option value="aktif"       {{ request('status') === 'aktif'       ? 'selected' : '' }}>Aktif</option>
+                        <option value="tidak_aktif" {{ request('status') === 'tidak_aktif' ? 'selected' : '' }}>Tidak Aktif</option>
+                    </select>
+                    <svg class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
-                    <input type="text" name="search" value="{{ request('search') }}"
+                </div>
+
+                {{-- Search --}}
+                <div class="relative">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" name="search" id="search-input"
+                        value="{{ request('search') }}"
                         placeholder="Search..."
-                        class="pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 w-56 placeholder-gray-400">
+                        class="pl-9 pr-8 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 w-56 placeholder-gray-400">
+                    {{-- Clear Button --}}
+                    <button type="button" id="clear-search"
+                        onclick="clearSearch()"
+                        class="{{ request('search') ? '' : 'hidden' }} absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
                 </div>
             </form>
         </div>
@@ -89,9 +115,6 @@
                         <th class="text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-3">
                             <div class="flex items-center justify-center gap-1">
                                 Status
-                                <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/>
-                                </svg>
                             </div>
                         </th>
                         <th class="text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-5 py-3">Action</th>
@@ -150,7 +173,7 @@
                 <tr>
                     <td colspan="6" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-600">
                         Belum ada data kategori transaksi.
-                        <a href="{{ route('dashboard.kategori-transaksi.create') }}" class="text-green-600 hover:underline ml-1">Tambah sekarang</a>
+                        <a href="#" onclick="openModal('createKategoriModal')" class="text-green-600 hover:underline ml-1">Tambah sekarang</a>
                     </td>
                 </tr>
                 @endforelse
@@ -225,6 +248,18 @@
         const form = document.getElementById('deleteModalForm');
         form.action = actionUrl;
         openModal('deleteModal');
+    }
+
+    document.getElementById('search-input').addEventListener('input', function () {
+        const btn = document.getElementById('clear-search');
+        btn.classList.toggle('hidden', this.value === '');
+    });
+
+    function clearSearch() {
+        const input = document.getElementById('search-input');
+        input.value = '';
+        document.getElementById('clear-search').classList.add('hidden');
+        document.getElementById('search-form').submit();
     }
 
     setTimeout(() => {

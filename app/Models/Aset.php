@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes; // ← tambah
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Aset extends Model
 {
-    use SoftDeletes; 
+    use SoftDeletes;
 
     protected $table = 'aset';
 
@@ -58,6 +58,11 @@ class Aset extends Model
 
     public function getAkumulasiRealTimeAttribute(): float
     {
+        // Jika tidak aktif, pakai snapshot dari DB
+        if ($this->status_aset === 'TIDAK AKTIF') {
+            return (float) $this->akumulasi_penyusutan;
+        }
+
         if (!$this->tanggal_mulai_penyusutan || !$this->umur_manfaat) return 0;
         $bulan = (int) $this->tanggal_mulai_penyusutan->diffInMonths(now());
         return min($this->penyusutan_per_bulan * $bulan, (float) $this->nilai_tercatat);
@@ -65,6 +70,11 @@ class Aset extends Model
 
     public function getNilaiBukuRealTimeAttribute(): float
     {
+        // Jika tidak aktif, pakai snapshot dari DB
+        if ($this->status_aset === 'TIDAK AKTIF') {
+            return (float) $this->nilai_buku;
+        }
+
         return max((float) $this->nilai_tercatat - $this->akumulasi_real_time, 0);
     }
 
@@ -80,15 +90,19 @@ class Aset extends Model
         return (float) $this->nilai_tercatat / $this->umur_manfaat;
     }
 
-    public static function generateKode(): string
+    /**
+     * Format: ASET-{YYYY}-{NNN} — nomor urut per tahun perolehan.
+     * Tahun diambil dari tanggal_perolehan yang dikirim, bukan now().
+     */
+    public static function generateKode(string $tanggalPerolehan): string
     {
-        $tahun  = now()->year;
-        $prefix = "ACC-ASS-{$tahun}-";
+        $tahun  = date('Y', strtotime($tanggalPerolehan));
+        $prefix = "ASET-{$tahun}-";
         $last   = self::where('kode_aset', 'like', "{$prefix}%")
                       ->orderByDesc('kode_aset')
                       ->value('kode_aset');
-        $no = $last ? ((int) substr($last, -5)) + 1 : 1;
-        return $prefix . str_pad($no, 5, '0', STR_PAD_LEFT);
+        $no = $last ? ((int) substr($last, -3)) + 1 : 1;
+        return $prefix . str_pad($no, 3, '0', STR_PAD_LEFT);
     }
 
     public function getLabelPemberiAttribute(): string
@@ -110,6 +124,13 @@ class Aset extends Model
             'Infak Jamaah' => 'Nilai Perolehan',
             default        => 'Nilai Perolehan',
         };
+    }
+
+    public function jurnalPenyesuaian()
+    {
+        return $this->belongsToMany(Jurnal::class, 'jurnal_aset', 'aset_id', 'jurnal_id')
+            ->withPivot('nominal')
+            ->orderBy('tanggal', 'desc');
     }
 
     public function getPemilikAsetAttribute(): string

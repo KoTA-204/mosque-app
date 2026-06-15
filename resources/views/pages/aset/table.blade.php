@@ -194,15 +194,18 @@ function toggleStatus(id, currentStatus) {
 
         const btn  = document.getElementById(`toggle-${id}`);
         const knob = document.getElementById(`toggle-knob-${id}`);
-        btn.classList.toggle('bg-green-500',        isAktif);
-        btn.classList.toggle('bg-gray-300',          !isAktif);
-        btn.classList.toggle('dark:bg-gray-600',     !isAktif);
-        knob.classList.toggle('translate-x-4',       isAktif);
-        knob.classList.toggle('translate-x-0',       !isAktif);
+        btn.classList.toggle('bg-green-500',    isAktif);
+        btn.classList.toggle('bg-gray-300',     !isAktif);
+        btn.classList.toggle('dark:bg-gray-600',!isAktif);
+        knob.classList.toggle('translate-x-4',  isAktif);
+        knob.classList.toggle('translate-x-0',  !isAktif);
         btn.title = isAktif ? 'Nonaktifkan' : 'Aktifkan';
 
         const cell = document.getElementById(`status-cell-${id}`);
         cell.innerHTML = `<span class="text-sm font-medium ${isAktif ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}">${isAktif ? 'Aktif' : 'Tidak Aktif'}</span>`;
+
+        // Update stats realtime
+        updateStats(isAktif ? 1 : -1);
 
         showToast(data.message, 'success');
     })

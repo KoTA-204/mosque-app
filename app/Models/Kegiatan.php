@@ -18,7 +18,7 @@ class Kegiatan extends Model
         'tanggal_selesai',
         'anggaran',
         'status',
-        'panitia_id'
+        'panitia_id',
     ];
 
     protected $casts = [
@@ -50,7 +50,6 @@ class Kegiatan extends Model
     }
 
     // ── Scopes ─────────────────────────────────────────────────
-
     public function scopeAktif($query)
     {
         return $query->where('status', self::STATUS_AKTIF);
@@ -62,7 +61,6 @@ class Kegiatan extends Model
     }
 
     // ── Helpers ────────────────────────────────────────────────
-
     public function hasTransaksi(): bool
     {
         return $this->transaksi()->exists();
@@ -80,10 +78,13 @@ class Kegiatan extends Model
 
     public function bisaInputTransaksi(): bool
     {
-        return $this->status === self::STATUS_AKTIF;
+        if ($this->status !== self::STATUS_AKTIF) return false;
+
+        // Kalau tanggal sudah lewat, panitia tidak bisa catat transaksi baru
+        return ! $this->tanggalSudahSelesai();
     }
 
-    public function totalRealisasi(): float
+        public function totalRealisasi(): float
     {
         return (float) $this->transaksi()
             ->where('status_approval', 'APPROVED')
@@ -91,8 +92,25 @@ class Kegiatan extends Model
     }
 
     /**
-     * Tutup kegiatan otomatis jika semua transaksi sudah APPROVED.
-     * Dipanggil setiap kali bendahara approve sebuah transaksi.
+     * Cek apakah tanggal kegiatan sudah selesai (lewat hari ini).
+     * Jika tidak ada tanggal_selesai, gunakan tanggal_mulai sebagai acuan.
+     */
+    public function tanggalSudahSelesai(): bool
+    {
+        $acuan = $this->tanggal_selesai ?? $this->tanggal_mulai;
+
+        return $acuan !== null && $acuan->isPast();
+    }
+
+    // ── Status otomatis ────────────────────────────────────────
+
+    /**
+     * Tutup kegiatan otomatis jika:
+     *  1. Semua transaksi sudah APPROVED, DAN
+     *  2. Tanggal kegiatan sudah selesai (lewat hari ini).
+     *
+     * Dipanggil setiap kali bendahara approve sebuah transaksi,
+     * dan juga oleh scheduled command harian.
      */
     public function tutupJikaSelesai(): void
     {
@@ -101,13 +119,56 @@ class Kegiatan extends Model
         // Harus ada minimal 1 transaksi
         if (! $this->transaksi()->exists()) return;
 
-        // Cek tidak ada transaksi yang belum APPROVED
+        // Syarat 1: tidak ada transaksi yang belum APPROVED
         $adaBelumApproved = $this->transaksi()
-            ->where('status_approval', '!=', 'APPROVED')
+            ->whereNotNull('status_approval')        
+            ->whereNotIn('status_approval', ['APPROVED'])
             ->exists();
 
-        if (! $adaBelumApproved) {
-            $this->update(['status' => self::STATUS_DITUTUP]);
-        }
+        if ($adaBelumApproved) return;
+
+        // Syarat 2: tanggal kegiatan sudah selesai / lewat hari ini
+        if (! $this->tanggalSudahSelesai()) return;
+
+        $this->update(['status' => self::STATUS_DITUTUP]);
+    }
+
+    /**
+     * Buka kembali kegiatan jika ada transaksi yang di-reject atau revision.
+     * Dipanggil setiap kali bendahara reject/revision sebuah transaksi.
+     */
+    public function bukaKembali(): void
+    {
+        if ($this->status === self::STATUS_AKTIF) return;
+
+        $this->update(['status' => self::STATUS_AKTIF]);
+    }
+
+    public function totalPengeluaranBerjalan(?int $kecualiId = null): float
+    {
+        return (float) $this->transaksi()
+            ->where('jenis_transaksi', 'PENGELUARAN')
+            ->whereIn('status_approval', ['PENDING', 'REVISION', 'APPROVED'])
+            ->when($kecualiId, fn ($q) => $q->where('id', '!=', $kecualiId))
+            ->sum('jumlah');
+    }
+
+    public function sisaAnggaran(?int $kecualiId = null): float
+    {
+        return (float) $this->anggaran - $this->totalPengeluaranBerjalan($kecualiId);
+    }
+
+    public function persenPengeluaran(): int
+    {
+        if ($this->anggaran <= 0) return 0; // anggaran 0 = dianggap tanpa batas
+        return (int) round($this->totalPengeluaranBerjalan() / $this->anggaran * 100);
+    }
+
+    // Berapa rupiah kelebihannya (0 kalau masih dalam anggaran).
+    public function selisihLebihAnggaran(float $jumlahBaru = 0, ?int $kecualiId = null): float
+    {
+        if ($this->anggaran <= 0) return 0;
+        $total = $this->totalPengeluaranBerjalan($kecualiId) + $jumlahBaru;
+        return max(0, $total - (float) $this->anggaran);
     }
 }

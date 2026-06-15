@@ -96,3 +96,9 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+    localStorage.setItem('reset_link_opened', Date.now());
+</script>
+@endpush

@@ -1,54 +1,22 @@
-{{-- resources/views/pages/aset/create.blade.php --}}
-<div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden">
-
-    {{-- Header --}}
-    <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
-        <div>
-            <h2 class="text-base font-semibold text-gray-900 dark:text-white">Tambah Aset</h2>
-            <p class="text-xs text-gray-400 mt-0.5">Isi informasi aset yang akan dicatat</p>
-        </div>
-        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </button>
-    </div>
-
-    {{-- Tabs --}}
-    <div class="flex gap-6 border-b border-gray-200 dark:border-gray-800 px-6">
-        <button type="button" onclick="switchCreateTab('details')" id="create-tab-details"
-            class="pb-3 pt-1 text-sm font-medium border-b-2 border-gray-900 dark:border-white text-gray-900 dark:text-white -mb-px transition-colors">
-            Details
-        </button>
-        <button type="button" onclick="switchCreateTab('moreinfo')" id="create-tab-moreinfo"
-            class="pb-3 pt-1 text-sm font-medium border-b-2 border-transparent text-gray-400 dark:text-gray-500 -mb-px transition-colors">
-            More Info
-        </button>
-    </div>
+<x-modal id="createAsetModal" title="Tambah Aset">
 
     <form id="createAsetForm" enctype="multipart/form-data">
         @csrf
 
-        <div class="px-6 py-5 max-h-[68vh] overflow-y-auto">
+        <div class="px-6 py-5 max-h-[70vh] overflow-y-auto space-y-6">
 
-            {{-- ── Panel Details ──────────────────────────────── --}}
-            <div id="create-panel-details">
-
-                {{-- Identitas Aset --}}
+            {{-- Identitas Aset --}}
+            <div>
                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">Identitas Aset</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                            Nama Aset <span class="text-red-500">*</span>
-                        </label>
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Nama Aset <span class="text-red-500">*</span></label>
                         <input type="text" name="nama_aset" placeholder="Masukkan Nama Aset"
                             class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
                         <p id="err-nama_aset" class="text-xs text-red-500 mt-1"></p>
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                            Lokasi <span class="text-red-500">*</span>
-                        </label>
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Lokasi <span class="text-red-500">*</span></label>
                         <div class="relative">
                             <select name="lokasi_aset"
                                 class="w-full appearance-none border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
@@ -62,9 +30,7 @@
                         <p id="err-lokasi_aset" class="text-xs text-red-500 mt-1"></p>
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                            Kondisi Aset <span class="text-red-500">*</span>
-                        </label>
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Kondisi Aset <span class="text-red-500">*</span></label>
                         <div class="relative">
                             <select name="kondisi_aset"
                                 class="w-full appearance-none border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
@@ -78,16 +44,16 @@
                         <p id="err-kondisi_aset" class="text-xs text-red-500 mt-1"></p>
                     </div>
                 </div>
+            </div>
 
-                {{-- Perolehan Aset --}}
+            {{-- Perolehan Aset --}}
+            <div>
                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">Perolehan Aset</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                            Sumber Perolehan <span class="text-red-500">*</span>
-                        </label>
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Sumber Perolehan <span class="text-red-500">*</span></label>
                         <div class="relative">
-                            <select name="sumber_perolehan" id="create-sumberPerolehan" onchange="onCreateSumberChange()"
+                            <select name="sumber_perolehan" id="create-sumberPerolehan"
                                 class="w-full appearance-none border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
                                 <option value="">Pilih sumber</option>
                                 <option value="Wakaf">Wakaf</option>
@@ -101,39 +67,27 @@
                         <p id="err-sumber_perolehan" class="text-xs text-red-500 mt-1"></p>
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                            Tanggal Perolehan <span class="text-red-500">*</span>
-                        </label>
-                        <input type="date" name="tanggal_perolehan"
-                            class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Tanggal Perolehan <span class="text-red-500">*</span></label>
+                        <input type="hidden" name="tanggal_perolehan" id="create-tanggal_perolehan">
+                        <input type="text" id="create-fp-tanggal_perolehan" placeholder="Pilih tanggal" readonly
+                            class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors cursor-pointer">
                         <p id="err-tanggal_perolehan" class="text-xs text-red-500 mt-1"></p>
                     </div>
 
-                    {{-- Field nilai — label berubah sesuai sumber --}}
                     <div>
                         <label id="create-labelNilai" class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
                             Nilai Perolehan (IDR) <span class="text-red-500">*</span>
                         </label>
-                        <input type="number" name="nilai_tercatat" placeholder="0" min="0"
+                        <input type="hidden" name="nilai_tercatat" id="create-nilai_tercatat">
+                        <input type="text" id="create-display-nilai" placeholder="0"
+                            inputmode="numeric"
                             class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
                         <p id="err-nilai_tercatat" class="text-xs text-red-500 mt-1"></p>
                     </div>
 
-                    {{-- Nama Pemberi — tampil kondisional --}}
                     <div id="create-fieldNamaPemberi" class="hidden">
-                        <label id="create-labelNamaPemberi" class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                            Nama Pemberi
-                        </label>
+                        <label id="create-labelNamaPemberi" class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Nama Pemberi</label>
                         <input type="text" name="nama_pemberi" placeholder="Masukkan nama"
-                            class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
-                    </div>
-
-                    {{-- Nomor Kuitansi — tampil hanya saat Pembelian --}}
-                    <div id="create-fieldNoKuitansi" class="hidden">
-                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                            Nomor Kuitansi / Faktur
-                        </label>
-                        <input type="text" name="nomor_kuitansi" placeholder="Masukkan nomor dokumen"
                             class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
                     </div>
 
@@ -150,55 +104,71 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                             </svg>
                             <span id="create-dokumenNama" class="text-xs font-medium text-green-600 dark:text-green-400">Pilih File</span>
-                            <span class="text-xs text-gray-400">atau tarik file untuk diunggah (.PNG, .JPG, .PDF)</span>
+                            <span class="text-xs text-gray-400">PNG, JPG, PDF maks 5MB</span>
                             <input type="file" name="dokumen_pendukung" class="hidden" accept=".png,.jpg,.jpeg,.pdf"
                                 onchange="document.getElementById('create-dokumenNama').textContent = this.files[0]?.name ?? 'Pilih File'">
                         </label>
                     </div>
-                </div>
 
-                {{-- Penyusutan --}}
-                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">Penyusutan
-                    <span class="ml-2 text-xs text-gray-400 normal-case font-normal">(Opsional — kosongkan jika tidak disusutkan)</span>
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Keterangan / Catatan</label>
+                        <textarea name="keterangan" rows="3" placeholder="Masukkan catatan tambahan..."
+                            class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors resize-none"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Checkbox Penyusutan --}}
+            <div class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                <input type="checkbox" id="create-cbDisusutkan"
+                    class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer">
+                <div>
+                    <label for="create-cbDisusutkan" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                        Aset ini disusutkan
+                    </label>
+                    <p class="text-xs text-gray-400 mt-0.5">Centang jika aset memiliki umur manfaat dan perlu dihitung penyusutannya</p>
+                </div>
+            </div>
+
+            {{-- Section Penyusutan --}}
+            <div id="create-sectionPenyusutan" class="hidden space-y-4">
+                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Penyusutan</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Tanggal Mulai Penyusutan</label>
-                        <input type="date" name="tanggal_mulai_penyusutan"
-                            class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Tanggal Mulai Penyusutan <span class="text-red-500">*</span></label>
+                        <input type="hidden" name="tanggal_mulai_penyusutan" id="create-tanggal_mulai_penyusutan">
+                        <input type="text" id="create-fp-tanggal_mulai" placeholder="Pilih tanggal" readonly
+                            class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors cursor-pointer">
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Umur Manfaat (Tahun)</label>
-                        <input type="number" name="umur_manfaat" placeholder="Contoh: 20" min="1"
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Umur Manfaat (Tahun) <span class="text-red-500">*</span></label>
+                        <input type="number" name="umur_manfaat" id="create-umurManfaat"
+                            placeholder="Contoh: 20" min="1"
                             class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
                     </div>
                 </div>
-                <div>
-                    <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Keterangan / Catatan</label>
-                    <textarea name="keterangan" rows="3"
-                        placeholder="Masukkan catatan tambahan yang perlu diungkapkan dalam laporan keuangan"
-                        class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors resize-none"></textarea>
+
+                <div id="create-previewPenyusutan" class="hidden grid grid-cols-3 gap-3">
+                    <div class="p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900">
+                        <p class="text-xs text-gray-400 mb-1">Penyusutan / Tahun</p>
+                        <p id="create-prev-tahunan" class="text-sm font-semibold text-gray-800 dark:text-white">–</p>
+                    </div>
+                    <div class="p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900">
+                        <p class="text-xs text-gray-400 mb-1">Penyusutan / Bulan</p>
+                        <p id="create-prev-bulanan" class="text-sm font-semibold text-gray-800 dark:text-white">–</p>
+                    </div>
+                    <div class="p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900">
+                        <p class="text-xs text-gray-400 mb-1">Selesai Tahun</p>
+                        <p id="create-prev-selesai" class="text-sm font-semibold text-gray-800 dark:text-white">–</p>
+                    </div>
                 </div>
             </div>
 
-            {{-- ── Panel More Info ────────────────────────────── --}}
-            <div id="create-panel-moreinfo" class="hidden">
-                <div class="mb-5">
-                    <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Pemilik Aset</label>
-                    <input type="text" value="Masjid Lukmanul Hakim" disabled
-                        class="w-full border border-gray-100 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-500 cursor-not-allowed">
-                </div>
-                <div class="p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900 rounded-xl">
-                    <p class="text-xs text-blue-700 dark:text-blue-400">
-                        Akun COA dan kategori aset akan terisi otomatis saat aset dihubungkan dengan transaksi atau jurnal pembuka.
-                    </p>
-                </div>
-            </div>
         </div>
 
         {{-- Footer --}}
         <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-            <button type="button" onclick="closeModal()"
+            <button type="button" onclick="closeModal('createAsetModal')"
                 class="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 Batal
             </button>
@@ -209,55 +179,5 @@
             </button>
         </div>
     </form>
-</div>
 
-<script>
-function switchCreateTab(tab) {
-    ['details','moreinfo'].forEach(t => {
-        document.getElementById(`create-panel-${t}`).classList.add('hidden');
-        const btn = document.getElementById(`create-tab-${t}`);
-        btn.className = 'pb-3 pt-1 text-sm font-medium border-b-2 border-transparent text-gray-400 dark:text-gray-500 -mb-px transition-colors';
-    });
-    document.getElementById(`create-panel-${tab}`).classList.remove('hidden');
-    document.getElementById(`create-tab-${tab}`).className =
-        'pb-3 pt-1 text-sm font-medium border-b-2 border-gray-900 dark:border-white text-gray-900 dark:text-white -mb-px transition-colors';
-}
-
-const createLabelNilaiMap = {
-    'Wakaf':        'Nilai Wajar Aset (IDR)',
-    'Hibah/Donasi': 'Nilai Wajar Aset (IDR)',
-    'Infak Jamaah': 'Nilai Wajar Aset (IDR)',
-    'Pembelian':    'Nilai Perolehan / Harga Beli (IDR)',
-    'Lainnya':      'Nilai Perolehan (IDR)',
-    '':             'Nilai Perolehan (IDR)',
-};
-const createLabelPemberiMap = {
-    'Wakaf':        'Nama Wakif (Pemberi Wakaf)',
-    'Hibah/Donasi': 'Nama Donatur / Pemberi Hibah',
-    'Infak Jamaah': 'Nama Pemberi Infak',
-};
-const createShowPemberi  = ['Wakaf','Hibah/Donasi','Infak Jamaah'];
-const createShowKuitansi = ['Pembelian'];
-
-function onCreateSumberChange() {
-    const val = document.getElementById('create-sumberPerolehan').value;
-
-    // Label nilai
-    document.getElementById('create-labelNilai').innerHTML =
-        `${createLabelNilaiMap[val] ?? 'Nilai Perolehan (IDR)'} <span class="text-red-500">*</span>`;
-
-    // Field nama pemberi
-    const fp = document.getElementById('create-fieldNamaPemberi');
-    if (createShowPemberi.includes(val)) {
-        fp.classList.remove('hidden');
-        document.getElementById('create-labelNamaPemberi').textContent =
-            createLabelPemberiMap[val] ?? 'Nama Pemberi';
-    } else {
-        fp.classList.add('hidden');
-    }
-
-    // Field nomor kuitansi (hanya Pembelian)
-    const fk = document.getElementById('create-fieldNoKuitansi');
-    createShowKuitansi.includes(val) ? fk.classList.remove('hidden') : fk.classList.add('hidden');
-}
-</script>
+</x-modal>

@@ -10,14 +10,32 @@ class AsetController extends Controller
 {
     public function index(Request $request)
     {
+        if ($request->get('stats_only')) {
+            return response()->json([
+                'stats' => [
+                    'total'       => Aset::count(),
+                    'aktif'       => Aset::where('status_aset', 'AKTIF')->count(),
+                    'tidak_aktif' => Aset::where('status_aset', 'TIDAK AKTIF')->count(),
+                ]
+            ]);
+        }
+
         $query = Aset::query();
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('nama_aset',    'like', "%{$search}%")
-                  ->orWhere('kode_aset',  'like', "%{$search}%")
-                  ->orWhere('lokasi_aset','like', "%{$search}%");
+                ->orWhere('kode_aset',  'like', "%{$search}%")
+                ->orWhere('lokasi_aset','like', "%{$search}%");
             });
+        }
+
+        if ($tahun = $request->get('tahun')) {
+            $query->where('kode_aset', 'like', "ASET-{$tahun}-%");
+        }
+
+        if ($lokasi = $request->get('lokasi')) {
+            $query->where('lokasi_aset', $lokasi);
         }
 
         if ($sumber = $request->get('sumber')) {
@@ -26,6 +44,10 @@ class AsetController extends Controller
 
         if ($status = $request->get('status')) {
             $query->where('status_aset', strtoupper($status));
+        }
+
+        if ($kondisi = $request->get('kondisi')) {
+            $query->where('kondisi_aset', $kondisi);
         }
 
         $perPage = (int) $request->get('per_page', 10);
@@ -50,7 +72,7 @@ class AsetController extends Controller
     {
         if (request()->ajax()) {
             return response()->json([
-                'html' => view('pages.aset.create')->render(), // ← bukan modal-create
+                'html' => view('pages.aset.create')->render(),
             ]);
         }
         return redirect()->route('dashboard.aset.index');
@@ -80,7 +102,7 @@ class AsetController extends Controller
         }
 
         Aset::create([
-            'kode_aset'                => Aset::generateKode(),
+            'kode_aset'                => Aset::generateKode($request->tanggal_perolehan),
             'nama_aset'                => $request->nama_aset,
             'sumber_perolehan'         => $request->sumber_perolehan,
             'tanggal_perolehan'        => $request->tanggal_perolehan,
@@ -108,9 +130,11 @@ class AsetController extends Controller
 
     public function show(Aset $aset)
     {
+        $aset->load('jurnalPenyesuaian.periode');
+
         if (request()->ajax()) {
             return response()->json([
-                'html' => view('pages.aset.show', compact('aset'))->render(), // ← bukan modal-show
+                'html' => view('pages.aset.show', compact('aset'))->render(),
             ]);
         }
         return redirect()->route('dashboard.aset.index');
@@ -120,7 +144,7 @@ class AsetController extends Controller
     {
         if (request()->ajax()) {
             return response()->json([
-                'html' => view('pages.aset.edit', compact('aset'))->render(), // ← bukan modal-edit
+                'html' => view('pages.aset.edit', compact('aset'))->render(),
             ]);
         }
         return redirect()->route('dashboard.aset.index');
@@ -151,6 +175,9 @@ class AsetController extends Controller
                 ->store('aset/dokumen', 'public');
         }
 
+        // Jika checkbox penyusutan tidak dicentang, kosongkan field terkait
+        $disusutkan = $request->boolean('disusutkan');
+
         $aset->update([
             'nama_aset'                => $request->nama_aset,
             'sumber_perolehan'         => $request->sumber_perolehan,
@@ -161,12 +188,12 @@ class AsetController extends Controller
             'nama_pemberi'             => $request->nama_pemberi,
             'jumlah_unit'              => $request->jumlah_unit ?? 1,
             'dokumen_pendukung'        => $dokumenPath,
-            'tanggal_mulai_penyusutan' => $request->tanggal_mulai_penyusutan,
-            'umur_manfaat'             => $request->umur_manfaat,
+            'tanggal_mulai_penyusutan' => $disusutkan ? $request->tanggal_mulai_penyusutan : null,
+            'umur_manfaat'             => $disusutkan ? $request->umur_manfaat : null,
             'keterangan'               => $request->keterangan,
             'status_aset'              => $request->status_aset,
-            'nilai_buku'               => $aset->nilai_buku_real_time,
-            'akumulasi_penyusutan'     => $aset->akumulasi_real_time,
+            'nilai_buku'               => $disusutkan ? $aset->nilai_buku_real_time : (float) $request->nilai_tercatat,
+            'akumulasi_penyusutan'     => $disusutkan ? $aset->akumulasi_real_time : 0,
         ]);
 
         if ($request->ajax()) {
@@ -177,20 +204,32 @@ class AsetController extends Controller
             ->with('success', 'Aset berhasil diperbarui.');
     }
 
-    /**
-     * Toggle status AKTIF ↔ TIDAK AKTIF (soft-delete pengganti destroy).
-     * DRAFT → AKTIF jika di-toggle.
-     */
     public function toggleStatus(Aset $aset)
     {
         $newStatus = $aset->status_aset === 'AKTIF' ? 'TIDAK AKTIF' : 'AKTIF';
-        $aset->update(['status_aset' => $newStatus]);
+
+        $updateData = ['status_aset' => $newStatus];
+
+        // Saat dinonaktifkan, snapshot nilai penyusutan saat ini
+        if ($newStatus === 'TIDAK AKTIF' && $aset->umur_manfaat) {
+            $updateData['akumulasi_penyusutan'] = $aset->akumulasi_real_time;
+            $updateData['nilai_buku']           = $aset->nilai_buku_real_time;
+        }
+
+        // Saat diaktifkan kembali, reset ke hitungan real-time
+        // (biarkan accessor yang hitung ulang, kosongkan snapshot)
+        if ($newStatus === 'AKTIF' && $aset->umur_manfaat) {
+            $updateData['akumulasi_penyusutan'] = 0;
+            $updateData['nilai_buku']           = $aset->nilai_buku_real_time;
+        }
+
+        $aset->update($updateData);
 
         if (request()->ajax()) {
             return response()->json([
-                'success'    => true,
-                'status'     => $newStatus,
-                'message'    => "Aset berhasil diubah ke {$newStatus}.",
+                'success' => true,
+                'status'  => $newStatus,
+                'message' => "Aset berhasil diubah ke {$newStatus}.",
             ]);
         }
 
@@ -200,7 +239,6 @@ class AsetController extends Controller
 
     public function destroy(Aset $aset)
     {
-        // Soft delete — data tidak benar-benar terhapus
         if ($aset->dokumen_pendukung) {
             Storage::disk('public')->delete($aset->dokumen_pendukung);
         }

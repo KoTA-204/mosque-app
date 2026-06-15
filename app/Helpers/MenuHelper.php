@@ -86,13 +86,13 @@ class MenuHelper
 
     public static function getMenuGroups(): array
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return [];
         }
 
         $user = auth()->user();
 
-        // Ambil semua permission_code yang dimiliki user
+        // Semua permission_code milik user (role <-> permission TETAP many-to-many)
         $permissionCodes = $user->roles()
             ->with('permissions')
             ->get()
@@ -102,9 +102,8 @@ class MenuHelper
             ->unique()
             ->toArray();
 
-        // dd($permissionCodes);
-
-        // Ambil parent menu yang sesuai permission user
+        // Parent menu sesuai permission user.
+        // ONE-TO-MANY: child menu punya satu permission -> pakai relasi 'permission' (singular)
         $parentMenus = Menu::with(['children' => function ($query) use ($permissionCodes) {
                 $query->whereHas('permissions', function ($q) use ($permissionCodes) {
                         $q->whereIn('permission_code', $permissionCodes);
@@ -116,11 +115,7 @@ class MenuHelper
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->get()
-            ->filter(function ($menu) {
-                return $menu->children->count() > 0;
-            });
-
-        // dd($parentMenus);
+            ->filter(fn($menu) => $menu->children->count() > 0);
 
         $items = $parentMenus->map(function ($menu) {
             $item = [
@@ -141,10 +136,19 @@ class MenuHelper
         })->toArray();
 
         return [
-            [
-                'title' => 'Menu',
-                'items' => $items,
-            ]
+            ['title' => 'Menu', 'items' => $items],
+        ];
+    }
+
+    public static function getAvailableIcons(): array
+    {
+        return [
+            'dashboard', 'ai-assistant', 'ecommerce', 'calendar', 'user-profile',
+            'task', 'forms', 'tables', 'pages', 'charts', 'ui-elements',
+            'authentication', 'chat', 'support-ticket', 'email', 'home',
+            'users-group', 'user', 'shield', 'lock', 'notebook',
+            'arrow-down-circle', 'arrow-up-circle', 'pig-money', 'calendar-event',
+            'clipboard-list', 'receipt', 'checks', 'database', 'book-2', 'tag',
         ];
     }
 

@@ -1,5 +1,4 @@
 <?php
-// database/seeders/AsetSeeder.php
 
 namespace Database\Seeders;
 
@@ -19,9 +18,15 @@ class AsetSeeder extends Seeder
         $trxGenerator    = Transaksi::where('deskripsi', 'Pembelian Generator Listrik 5000 Watt')->first();
         $trxJamSholat    = Transaksi::where('deskripsi', 'Pembelian Jam Digital Jadwal Sholat')->first();
 
-        $data = [
+        // Tracker nomor urut per tahun untuk generate kode
+        $noPerTahun = [];
+        $kodeFor = function (string $tanggal) use (&$noPerTahun): string {
+            $tahun = date('Y', strtotime($tanggal));
+            $noPerTahun[$tahun] = ($noPerTahun[$tahun] ?? 0) + 1;
+            return 'ASET-' . $tahun . '-' . str_pad($noPerTahun[$tahun], 3, '0', STR_PAD_LEFT);
+        };
 
-            // ── Tanah (tidak disusutkan) ───────────────────────────
+        $data = [
             [
                 'transaksi_id'             => null,
                 'nama_aset'                => 'Tanah Wakaf Masjid',
@@ -40,8 +45,6 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 800000000,
                 'akumulasi_penyusutan'     => null,
             ],
-
-            // ── Bangunan Masjid Utama ──────────────────────────────
             [
                 'transaksi_id'             => null,
                 'nama_aset'                => 'Bangunan Masjid Utama',
@@ -60,8 +63,6 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 696000000,
                 'akumulasi_penyusutan'     => 504000000,
             ],
-
-            // ── Gedung Madrasah / TPA ──────────────────────────────
             [
                 'transaksi_id'             => null,
                 'nama_aset'                => 'Gedung Madrasah / TPA',
@@ -80,8 +81,6 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 210000000,
                 'akumulasi_penyusutan'     => 140000000,
             ],
-
-            // ── Rumah Imam / Marbot ────────────────────────────────
             [
                 'transaksi_id'             => null,
                 'nama_aset'                => 'Rumah Imam / Marbot',
@@ -100,8 +99,6 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 136000000,
                 'akumulasi_penyusutan'     => 64000000,
             ],
-
-            // ── Toilet & Tempat Wudhu ──────────────────────────────
             [
                 'transaksi_id'             => null,
                 'nama_aset'                => 'Toilet & Tempat Wudhu',
@@ -120,8 +117,6 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 44000000,
                 'akumulasi_penyusutan'     => 36000000,
             ],
-
-            // ── Mimbar (tidak disusutkan) ──────────────────────────
             [
                 'transaksi_id'             => null,
                 'nama_aset'                => 'Mimbar Khotbah Kayu Jati',
@@ -140,8 +135,6 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 15000000,
                 'akumulasi_penyusutan'     => null,
             ],
-
-            // ── Karpet Sajadah ─────────────────────────────────────
             [
                 'transaksi_id'             => null,
                 'nama_aset'                => 'Karpet Sajadah Masjid',
@@ -160,8 +153,6 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 5000000,
                 'akumulasi_penyusutan'     => 20000000,
             ],
-
-            // ── Al-Quran (tidak disusutkan) ────────────────────────
             [
                 'transaksi_id'             => null,
                 'nama_aset'                => 'Al-Quran (50 Eksemplar)',
@@ -180,8 +171,6 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 5000000,
                 'akumulasi_penyusutan'     => null,
             ],
-
-            // ── Mukena ─────────────────────────────────────────────
             [
                 'transaksi_id'             => null,
                 'nama_aset'                => 'Mukena (20 Set)',
@@ -200,8 +189,6 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 1000000,
                 'akumulasi_penyusutan'     => 2000000,
             ],
-
-            // ── Sound System ───────────────────────────────────────
             [
                 'transaksi_id'             => $trxSoundSystem?->id,
                 'nama_aset'                => 'Sound System & Amplifier TOA',
@@ -220,8 +207,6 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 7000000,
                 'akumulasi_penyusutan'     => 10000000,
             ],
-
-            // ── Menara Speaker (tidak disusutkan) ──────────────────
             [
                 'transaksi_id'             => null,
                 'nama_aset'                => 'Menara Speaker Adzan (4 Unit)',
@@ -240,8 +225,6 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 12000000,
                 'akumulasi_penyusutan'     => null,
             ],
-
-            // ── Jam Digital ────────────────────────────────────────
             [
                 'transaksi_id'             => $trxJamSholat?->id,
                 'nama_aset'                => 'Jam Digital Jadwal Sholat',
@@ -260,8 +243,6 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 1750000,
                 'akumulasi_penyusutan'     => 1750000,
             ],
-
-            // ── AC Split ───────────────────────────────────────────
             [
                 'transaksi_id'             => $trxAC?->id,
                 'nama_aset'                => 'AC Split 2 PK (4 Unit)',
@@ -280,8 +261,6 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 14875000,
                 'akumulasi_penyusutan'     => 13125000,
             ],
-
-            // ── Kipas Angin ────────────────────────────────────────
             [
                 'transaksi_id'             => $trxKipas?->id,
                 'nama_aset'                => 'Kipas Angin Gantung (6 Unit)',
@@ -300,8 +279,6 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 0,
                 'akumulasi_penyusutan'     => 4800000,
             ],
-
-            // ── Mobil Jenazah ──────────────────────────────────────
             [
                 'transaksi_id'             => $trxMobilJenazah?->id,
                 'nama_aset'                => 'Mobil Jenazah Toyota HiAce',
@@ -320,8 +297,6 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 126000000,
                 'akumulasi_penyusutan'     => 154000000,
             ],
-
-            // ── Pompa Air ──────────────────────────────────────────
             [
                 'transaksi_id'             => $trxPompaAir?->id,
                 'nama_aset'                => 'Mesin Pompa Air',
@@ -340,8 +315,6 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 2406250,
                 'akumulasi_penyusutan'     => 3093750,
             ],
-
-            // ── Generator ──────────────────────────────────────────
             [
                 'transaksi_id'             => $trxGenerator?->id,
                 'nama_aset'                => 'Generator Listrik 5000 Watt',
@@ -360,15 +333,13 @@ class AsetSeeder extends Seeder
                 'nilai_buku'               => 6000000,
                 'akumulasi_penyusutan'     => 5000000,
             ],
-
-            // ── CCTV (Draft) ───────────────────────────────────────
             [
                 'transaksi_id'             => null,
                 'nama_aset'                => 'CCTV System (8 Kamera)',
                 'sumber_perolehan'         => 'Infak Jamaah',
                 'tanggal_perolehan'        => '2024-12-01',
                 'nilai_tercatat'           => 8500000,
-                'umur_manfaat'             => 5,
+                'umur_manfaat'             => null,
                 'tanggal_mulai_penyusutan' => null,
                 'kondisi_aset'             => 'BAIK',
                 'lokasi_aset'              => 'Belum dipasang',
@@ -383,6 +354,7 @@ class AsetSeeder extends Seeder
         ];
 
         foreach ($data as $item) {
+            $item['kode_aset'] = $kodeFor($item['tanggal_perolehan']);
             Aset::create($item);
         }
     }

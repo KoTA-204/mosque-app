@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaksi;
 use App\Services\ApprovalService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class ApprovalController extends Controller
@@ -12,8 +13,7 @@ class ApprovalController extends Controller
         protected ApprovalService $approvalService
     ) {}
 
-    // ── Approval (Bendahara) ───────────────────────────────────
-
+    // ── Index & Show ──────────────────────────────────────────────────────
     public function approvalIndex(Request $request)
     {
         $search  = $request->get('search', '') ?? '';
@@ -23,12 +23,18 @@ class ApprovalController extends Controller
         $urut    = $request->get('urut', 'asc') ?? 'asc';
         $perPage = (int) ($request->get('per_page', 10) ?? 10);
 
-        $transaksi = $this->approvalService->getTransaksiPending(
-            $search, $sumber, $dari, $sampai, $urut, $perPage
+        $tab     = strtoupper($request->get('tab', 'PENDING') ?? 'PENDING');
+        if (! in_array($tab, ['PENDING', 'APPROVED', 'REJECTED', 'REVISION'], true)) {
+            $tab = 'PENDING';
+        }
+
+        $stats     = $this->approvalService->getStats();
+        $transaksi = $this->approvalService->getTransaksiByStatus(
+            $tab, $search, $sumber, $dari, $sampai, $urut, $perPage
         );
 
         return view('pages.approval.index', compact(
-            'transaksi', 'search', 'sumber', 'dari', 'sampai', 'urut', 'perPage'
+            'transaksi', 'stats', 'tab', 'search', 'sumber', 'dari', 'sampai', 'urut', 'perPage'
         ));
     }
 
@@ -36,72 +42,78 @@ class ApprovalController extends Controller
     {
         $transaksi = $this->approvalService->getTransaksiById($transaksi);
 
-        if ($transaksi->kencleng !== null) {
-            return view('pages.approval.show-kencleng', compact('transaksi'));
-        }
-
-        return view('pages.approval.show', compact('transaksi'));
+        return $transaksi->kencleng !== null
+            ? view('pages.approval.show-kencleng', compact('transaksi'))
+            : view('pages.approval.show', compact('transaksi'));
     }
 
-    public function approve(Transaksi $transaksi)
+    // ── Single Actions ────────────────────────────────────────────────────
+    public function approve(Transaksi $transaksi): RedirectResponse
     {
         $result = $this->approvalService->approve($transaksi);
 
-        if ($result !== true) {
-            return redirect()->back()->with('error', $result);
-        }
-
-        return redirect()->route('dashboard.approval.index')
-            ->with('success', 'Transaksi berhasil disetujui');
+        return $result !== true
+            ? redirect()->back()->with('error', $result)
+            : redirect()->route('dashboard.approval.index')->with('success', 'Transaksi berhasil disetujui');
     }
 
-    public function reject(Request $request, Transaksi $transaksi)
+    public function reject(Request $request, Transaksi $transaksi): RedirectResponse
     {
-        $request->validate([
-            'catatan' => 'nullable|string|max:500',
-        ]);
+        $request->validate(['catatan' => 'nullable|string|max:500']);
 
         $result = $this->approvalService->reject($transaksi, $request->catatan ?? '');
 
-        if ($result !== true) {
-            return redirect()->back()->with('error', $result);
-        }
-
-        return redirect()->route('dashboard.approval.index')
-            ->with('success', 'Transaksi berhasil ditolak');
+        return $result !== true
+            ? redirect()->back()->with('error', $result)
+            : redirect()->route('dashboard.approval.index')->with('success', 'Transaksi berhasil ditolak');
     }
 
-    public function revision(Request $request, Transaksi $transaksi)
+    public function revision(Request $request, Transaksi $transaksi): RedirectResponse
     {
-        $request->validate([
-            'catatan' => 'required|string|max:500',
-        ]);
+        $request->validate(['catatan' => 'required|string|max:500']);
 
         $result = $this->approvalService->revision($transaksi, $request->catatan);
 
-        if ($result !== true) {
-            return redirect()->back()->with('error', $result);
-        }
-
-        return redirect()->route('dashboard.approval.index')
-            ->with('success', 'Transaksi dikembalikan untuk revisi');
+        return $result !== true
+            ? redirect()->back()->with('error', $result)
+            : redirect()->route('dashboard.approval.index')->with('success', 'Transaksi dikembalikan untuk revisi');
     }
 
-    // ── Bulk Approval (Bendahara) ──────────────────────────────
-
-    public function bulkApprove(Request $request)
+    // ── Bulk Actions ──────────────────────────────────────────────────────
+    private function handleBulk(Request $request, string $action): RedirectResponse
     {
-        $request->validate(['ids' => 'required|string']);
+        $labels = [
+            'approve' => 'disetujui',
+            'reject'  => 'ditolak',
+            'revisi'  => 'direvisi',
+        ];
 
-        $ids = array_filter(array_map('intval', explode(',', $request->ids)));
+        if ($action === 'approve') {
+            $request->validate(['ids' => 'required|string']);
+            $ids = array_filter(array_map('intval', explode(',', $request->ids)));
 
-        if (empty($ids)) {
-            return redirect()->back()->with('error', 'Tidak ada transaksi yang dipilih');
+            if (empty($ids)) {
+                return redirect()->back()->with('error', 'Tidak ada transaksi yang dipilih');
+            }
+
+            $result = $this->approvalService->bulkApprove($ids);
+        } else {
+            $request->validate([
+                'ids'       => 'required|array|min:1',
+                'ids.*'     => 'integer|exists:transaksi,id',
+                'catatan.*' => 'nullable|string|max:500',
+            ]);
+
+            $catatanMap = collect($request->ids)
+                ->mapWithKeys(fn($id) => [(int) $id => $request->catatan[$id] ?? null])
+                ->all();
+
+            $result = $action === 'reject'
+                ? $this->approvalService->bulkReject($catatanMap)
+                : $this->approvalService->bulkRevisi($catatanMap);
         }
 
-        $result = $this->approvalService->bulkApprove($ids);
-
-        $msg = "{$result['approved']} transaksi berhasil disetujui";
+        $msg = "{$result['done']} transaksi berhasil {$labels[$action]}";
         if ($result['skipped'] > 0) {
             $msg .= ", {$result['skipped']} dilewati (bukan PENDING)";
         }
@@ -109,27 +121,18 @@ class ApprovalController extends Controller
         return redirect()->route('dashboard.approval.index')->with('success', $msg);
     }
 
-    public function bulkReject(Request $request)
+    public function bulkApprove(Request $request): RedirectResponse
     {
-        $request->validate([
-            'ids'       => 'required|array|min:1',
-            'ids.*'     => 'integer|exists:transaksi,id',
-            'catatan'   => 'nullable|array',
-            'catatan.*' => 'nullable|string|max:500',
-        ]);
+        return $this->handleBulk($request, 'approve');
+    }
 
-        $catatanMap = [];
-        foreach ($request->ids as $id) {
-            $catatanMap[(int) $id] = $request->catatan[$id] ?? null;
-        }
+    public function bulkReject(Request $request): RedirectResponse
+    {
+        return $this->handleBulk($request, 'reject');
+    }
 
-        $result = $this->approvalService->bulkReject($catatanMap);
-
-        $msg = "{$result['rejected']} transaksi berhasil ditolak";
-        if ($result['skipped'] > 0) {
-            $msg .= ", {$result['skipped']} dilewati (bukan PENDING)";
-        }
-
-        return redirect()->route('dashboard.approval.index')->with('success', $msg);
+    public function bulkRevisi(Request $request): RedirectResponse
+    {
+        return $this->handleBulk($request, 'revisi');
     }
 }
