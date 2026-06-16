@@ -3,9 +3,13 @@
 @section('title', 'Laporan Penghasilan Komprehensif')
 
 @php
-    function fmt($val) { return number_format(abs($val), 0, ',', '.'); }
-    function signed($val) {
-        return $val < 0 ? '(' . fmt($val) . ')' : fmt($val);
+    if (!function_exists('fmt')) {
+        function fmt($val) { return number_format(abs($val), 0, ',', '.'); }
+    }
+    if (!function_exists('signed')) {
+        function signed($val) {
+            return $val < 0 ? '(' . fmt($val) . ')' : fmt($val);
+        }
     }
 @endphp
 

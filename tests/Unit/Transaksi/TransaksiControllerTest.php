@@ -51,6 +51,9 @@ class TransaksiControllerTest extends Inc2TestCase
         $payload = $this->payload($f);
 
         $this->postJson(route('dashboard.transaksi.store'), $payload)->assertOk();
+        // ← TAMBAH INI:
+        $this->assertEquals(1, \App\Models\Transaksi::count(), 'Transaksi pertama tidak tersimpan!');
+        $res = $this->postJson(route('dashboard.transaksi.store'), $payload);
 
         $res = $this->postJson(route('dashboard.transaksi.store'), $payload);
         $res->assertStatus(409)->assertJson(['type' => 'duplikat_warning']);
@@ -119,7 +122,7 @@ class TransaksiControllerTest extends Inc2TestCase
             'is_aset'                 => true,
             'nama_aset'               => 'Laptop Sekretariat',
             'tanggal_perolehan'       => '2026-06-15',
-            'kondisi_aset'            => 'BARU',
+            'kondisi_aset'            => 'BAIK',
             'sumber_perolehan'        => 'PEMBELIAN',
             'lokasi_aset'             => 'Kantor DKM',
             'jumlah_unit'             => 1,
@@ -127,6 +130,11 @@ class TransaksiControllerTest extends Inc2TestCase
             'umur_manfaat'            => 48,
         ]));
 
+       // GANTI:
+        // $res->assertOk()->assertJson(['success' => true]);
+
+        // MENJADI (sementara):
+        $this->assertNotEquals(500, $res->status(), json_encode($res->json()));
         $res->assertOk()->assertJson(['success' => true]);
         $this->assertDatabaseHas('aset', ['nama_aset' => 'Laptop Sekretariat']);
     }

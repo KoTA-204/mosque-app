@@ -3,10 +3,14 @@
 @section('title', 'Catatan Atas Laporan Keuangan (CALK)')
 
 @php
-    function fmtC($val) { return number_format(abs((float)$val), 0, ',', '.'); }
-    function signedC($val) {
-        $val = (float)$val;
-        return $val < 0 ? '(Rp ' . fmtC($val) . ')' : 'Rp ' . fmtC($val);
+    if (!function_exists('fmtC')) {
+        function fmtC($val) { return number_format(abs((float)$val), 0, ',', '.'); }
+    }
+    if (!function_exists('signedC')) {
+        function signedC($val) {
+            $val = (float)$val;
+            return $val < 0 ? '(Rp ' . fmtC($val) . ')' : 'Rp ' . fmtC($val);
+        }
     }
 @endphp
 

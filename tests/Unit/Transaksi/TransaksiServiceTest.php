@@ -1,5 +1,4 @@
 <?php
-
 namespace Tests\Unit\Transaksi;
 
 use App\Services\TransaksiService;
@@ -9,7 +8,7 @@ class TransaksiServiceTest extends Inc2TestCase
 {
     private function service(): TransaksiService
     {
-        return app(TransaksiService::class); // hormati binding singleton + dependency parser
+        return app(TransaksiService::class);
     }
 
     private function konteks(): array
@@ -41,12 +40,13 @@ class TransaksiServiceTest extends Inc2TestCase
         $hasil = $this->service()->simpanImport([
             'dompet_id'       => $k['dompet']->id,
             'jenis_transaksi' => 'PEMASUKAN',
-            'akun_debit_id'   => $k['debit']->id,
-            'akun_kredit_id'  => $k['kredit']->id,
             'rows'            => [$this->baris(), $this->baris(['no_referensi' => 'REF-002'])],
+        ], [
+            ['no_referensi' => 'REF-001', 'akun_debit_id' => $k['debit']->id, 'akun_kredit_id' => $k['kredit']->id],
+            ['no_referensi' => 'REF-002', 'akun_debit_id' => $k['debit']->id, 'akun_kredit_id' => $k['kredit']->id],
         ]);
 
-        $this->assertFalse($hasil['gagalPeriode'] ?? false);
+        $this->assertEmpty($hasil['gagalPeriode'] ?? []);
         $this->assertEquals(2, $hasil['tersimpan']);
         $this->assertEquals(2, \App\Models\Transaksi::count());
     }
@@ -60,12 +60,13 @@ class TransaksiServiceTest extends Inc2TestCase
         $hasil = $this->service()->simpanImport([
             'dompet_id'       => $k['dompet']->id,
             'jenis_transaksi' => 'PEMASUKAN',
-            'akun_debit_id'   => $k['debit']->id,
-            'akun_kredit_id'  => $k['kredit']->id,
             'rows'            => [
                 $this->baris(['is_duplikat' => true]),
                 $this->baris(['no_referensi' => 'REF-002']),
             ],
+        ], [
+            ['no_referensi' => 'REF-001', 'akun_debit_id' => $k['debit']->id, 'akun_kredit_id' => $k['kredit']->id],
+            ['no_referensi' => 'REF-002', 'akun_debit_id' => $k['debit']->id, 'akun_kredit_id' => $k['kredit']->id],
         ]);
 
         $this->assertGreaterThanOrEqual(1, ($hasil['dilewati'] ?? 0) + ($hasil['duplikat'] ?? 0));
@@ -80,12 +81,12 @@ class TransaksiServiceTest extends Inc2TestCase
         $hasil = $this->service()->simpanImport([
             'dompet_id'       => $k['dompet']->id,
             'jenis_transaksi' => 'PEMASUKAN',
-            'akun_debit_id'   => $k['debit']->id,
-            'akun_kredit_id'  => $k['kredit']->id,
             'rows'            => [$this->baris()],
+        ], [
+            ['no_referensi' => 'REF-001', 'akun_debit_id' => $k['debit']->id, 'akun_kredit_id' => $k['kredit']->id],
         ]);
 
-        $this->assertTrue($hasil['gagalPeriode']);
+        $this->assertTrue(!empty($hasil['gagalPeriode']));
         $this->assertEquals(0, \App\Models\Transaksi::count());
     }
 }

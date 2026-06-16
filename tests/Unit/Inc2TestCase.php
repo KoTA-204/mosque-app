@@ -40,20 +40,20 @@ abstract class Inc2TestCase extends TestCase
     }
 
     /** Akun butuh kategori_akun_id (FK wajib) */
-    protected function buatAkun(string $kode, string $nama, string $saldoNormal = 'DEBIT'): Akun
+    public function buatAkun(string $kode, string $nama, string $saldoNormal = 'DEBIT'): \App\Models\Akun
     {
-        $prefix   = substr($kode, 0, 1);
-        $kategori = KategoriAkun::firstOrCreate(
+        $prefix = substr($kode, 0, 1);
+        $kat = \App\Models\KategoriAkun::firstOrCreate(
             ['kode_kategori' => $prefix],
-            ['nama_kategori' => 'Kategori ' . $prefix, 'status' => true]
+            ['nama_kategori' => 'Kategori ' . $prefix, 'status' => true]  // KategoriAkun.status = boolean ✓
         );
 
-        return Akun::create([
-            'kategori_akun_id' => $kategori->id,
+        return \App\Models\Akun::create([
+            'kategori_akun_id' => $kat->id,
             'kode_akun'        => $kode,
             'nama_akun'        => $nama,
             'saldo_normal'     => $saldoNormal,
-            'status'           => true,
+            'status'           => 'aktif',   // ← ganti dari true ke 'aktif'
         ]);
     }
 

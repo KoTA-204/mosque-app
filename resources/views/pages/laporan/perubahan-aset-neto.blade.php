@@ -3,14 +3,20 @@
 @section('title', 'Laporan Perubahan Aset Neto')
 
 @php
-    function fmtPan($val) { return number_format(abs($val), 0, ',', '.'); }
-    function signedPan($val) {
-        return $val < 0 ? '(' . fmtPan($val) . ')' : fmtPan($val);
+    if (!function_exists('fmtPan')) {
+        function fmtPan($val) { return number_format(abs($val), 0, ',', '.'); }
     }
-    function prevCell($dataPrev, string $key): string {
-        if (!$dataPrev) return '—';
-        $val = $dataPrev[$key] ?? 0;
-        return $val == 0 ? '—' : signedPan($val);
+    if (!function_exists('signedPan')) {
+        function signedPan($val) {
+            return $val < 0 ? '(' . fmtPan($val) . ')' : fmtPan($val);
+        }
+    }
+    if (!function_exists('prevCell')) {
+        function prevCell($dataPrev, string $key): string {
+            if (!$dataPrev) return '—';
+            $val = $dataPrev[$key] ?? 0;
+            return $val == 0 ? '—' : signedPan($val);
+        }
     }
 @endphp
 
