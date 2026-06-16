@@ -25,10 +25,8 @@
 
         {{-- Bulk Action Bar --}}
         <x-jurnal.bulk-action-bar
-            label="jurnal dipilih"
             post-label="Post Terpilih"
-            on-post="bulkPost()"
-            on-cancel="clearSelection()"
+            on-post="submitBulkPost()"
         />
 
         {{-- Toolbar --}}
@@ -107,7 +105,7 @@ document.getElementById('filterSearch').addEventListener('input', () => {
     filterDebounce = setTimeout(applyFilters, 400);
 });
 
-// ── Bulk Selection ────────────────────────────────────────────
+// ── Bulk Selection ─────────────────────────────────────────────────────────
 function updateBulkBar() {
     const checked = document.querySelectorAll('.jurnal-checkbox:checked').length;
     const bar     = document.getElementById('bulkActionBar');
@@ -128,7 +126,7 @@ function clearSelection() {
     updateBulkBar();
 }
 
-function bulkPost() {
+function submitBulkPost() {
     const ids = [...document.querySelectorAll('.jurnal-checkbox:checked')].map(cb => cb.value);
     if (!ids.length) return;
 
