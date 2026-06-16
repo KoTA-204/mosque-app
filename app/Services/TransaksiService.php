@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\Transaksi;
@@ -16,31 +15,30 @@ class TransaksiService
 {
     public function store(StoreTransaksiRequest $request, bool $force = false): Transaksi
     {
-        return DB::transaction(function () use ($request, $force) {
+        // Cek duplikat SEBELUM transaction agar read tidak terpengaruh nested savepoint
+        if (!$force) {
+            $duplikat = Transaksi::with(['kategoriTransaksi', 'dompet'])
+                ->whereDate('tanggal_transaksi', $request->tanggal_transaksi)
+                ->where('jumlah', number_format((float)$request->jumlah, 2, '.', ''))
+                ->where('jenis_transaksi', $request->jenis_transaksi)
+                ->where('dompet_id', $request->dompet_id)
+                ->first();
 
-            if (!$force) {
-                $duplikat = Transaksi::with(['kategoriTransaksi', 'dompet'])
-                    ->where('tanggal_transaksi', $request->tanggal_transaksi)
-                    ->where('jumlah', $request->jumlah)
-                    ->where('jenis_transaksi', $request->jenis_transaksi)
-                    ->where('dompet_id', $request->dompet_id)
-                    ->first();
-
-                if ($duplikat) {
-                    throw new \RuntimeException(
-                        'DUPLIKAT_WARNING:' . json_encode([
-                            'tanggal'          => $duplikat->tanggal_transaksi->format('d M Y'),
-                            'jumlah'           => number_format($duplikat->jumlah, 0, ',', '.'),
-                            'jenis'            => $duplikat->jenis_transaksi,
-                            'deskripsi'        => $duplikat->deskripsi ?? '-',
-                            'kategori'         => $duplikat->kategoriTransaksi?->nama_kategori ?? '-',
-                            'dompet'           => $duplikat->dompet?->nama_dompet ?? '-',
-                        ])
-                    );
-                }
+            if ($duplikat) {
+                throw new \RuntimeException(
+                    'DUPLIKAT_WARNING:' . json_encode([
+                        'tanggal'  => $duplikat->tanggal_transaksi->format('d M Y'),
+                        'jumlah'   => number_format($duplikat->jumlah, 0, ',', '.'),
+                        'jenis'    => $duplikat->jenis_transaksi,
+                        'deskripsi'=> $duplikat->deskripsi ?? '-',
+                        'kategori' => $duplikat->kategoriTransaksi?->nama_kategori ?? '-',
+                        'dompet'   => $duplikat->dompet?->nama_dompet ?? '-',
+                    ])
+                );
             }
-        
-            // 1. Simpan transaksi
+        }
+
+        return DB::transaction(function () use ($request) {
             $transaksi = Transaksi::create([
                 'dompet_id'             => $request->dompet_id,
                 'kegiatan_id'           => null,
@@ -51,11 +49,10 @@ class TransaksiService
                 'jumlah'                => $request->jumlah,
                 'deskripsi'             => $request->deskripsi,
                 'catatan'               => $request->catatan,
-                'status_approval'       => null, 
+                'status_approval'       => null,
                 'status_jurnal'         => 'MAPPED',
             ]);
 
-            // 2. Jurnal entri debit & kredit
             $this->buatJurnalUmum(
                 $transaksi,
                 $request->akun_debit_id,
@@ -64,10 +61,8 @@ class TransaksiService
                 $request->deskripsi,
             );
 
-            // 3. Upload bukti (bisa multi-file)
             $this->uploadBukti($transaksi, $request->file('bukti_transaksi') ?? []);
 
-            // 4. Simpan data aset jika toggle aktif
             if ($request->boolean('is_aset')) {
                 $this->simpanAset($transaksi, $request->all());
             }
@@ -79,17 +74,15 @@ class TransaksiService
     public function update(UpdateTransaksiRequest $request, Transaksi $transaksi): Transaksi
     {
         return DB::transaction(function () use ($request, $transaksi) {
-
             $transaksi->update([
-                'dompet_id'             => $request->dompet_id,
-                'tanggal_transaksi'     => $request->tanggal_transaksi,
-                'jenis_transaksi'       => $request->jenis_transaksi,
-                'jumlah'                => $request->jumlah,
-                'deskripsi'             => $request->deskripsi,
-                'catatan'               => $request->catatan,
+                'dompet_id'         => $request->dompet_id,
+                'tanggal_transaksi' => $request->tanggal_transaksi,
+                'jenis_transaksi'   => $request->jenis_transaksi,
+                'jumlah'            => $request->jumlah,
+                'deskripsi'         => $request->deskripsi,
+                'catatan'           => $request->catatan,
             ]);
 
-            // Update akun jurnal entri
             $jurnalLama = $transaksi->jurnal()->where('jenis_jurnal', 'UMUM')->first();
             if ($jurnalLama) {
                 $jurnalLama->detailJurnal()->delete();
@@ -104,7 +97,6 @@ class TransaksiService
                 $request->deskripsi,
             );
 
-            // Upload bukti baru (jika ada)
             $this->uploadBukti($transaksi, $request->file('bukti_transaksi') ?? []);
 
             return $transaksi->fresh(['buktiTransaksi', 'jurnal.detailJurnal.akun']);
@@ -114,16 +106,13 @@ class TransaksiService
     public function destroy(Transaksi $transaksi): void
     {
         DB::transaction(function () use ($transaksi) {
-            // Hapus file dari storage
             foreach ($transaksi->buktiTransaksi as $bukti) {
                 Storage::disk('public')->delete($bukti->path_file);
             }
-
             foreach ($transaksi->jurnal as $jurnal) {
                 $jurnal->detailJurnal()->delete();
                 $jurnal->delete();
             }
-
             $transaksi->delete();
         });
     }
@@ -146,7 +135,6 @@ class TransaksiService
             }
 
             $klas = $klasMap->get($ref);
-
             if (!$klas) {
                 $dilewati++;
                 continue;
@@ -160,7 +148,6 @@ class TransaksiService
 
             $tanggal = substr($row['waktu_transaksi'] ?? now()->toDateString(), 0, 10);
 
-            // Cek periode aktif
             $periode = \App\Models\Periode::aktif()
                 ->where('tanggal_awal', '<=', $tanggal)
                 ->where('tanggal_akhir', '>=', $tanggal)
@@ -239,17 +226,17 @@ class TransaksiService
 
         DetailJurnal::insert([
             [
-                'jurnal_id' => $jurnal->id,
-                'akun_id'   => $akunDebitId,
-                'tipe'    => 'DEBIT',
-                'nominal'   => $jumlah,
+                'jurnal_id'  => $jurnal->id,
+                'akun_id'    => $akunDebitId,
+                'tipe'       => 'DEBIT',
+                'nominal'    => $jumlah,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'jurnal_id' => $jurnal->id,
-                'akun_id'   => $akunKreditId,
-                'tipe'    => 'KREDIT',
+                'jurnal_id'  => $jurnal->id,
+                'akun_id'    => $akunKreditId,
+                'tipe'       => 'KREDIT',
                 'nominal'    => $jumlah,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -263,9 +250,9 @@ class TransaksiService
     {
         foreach ($files as $file) {
             if (!$file) continue;
-            
+
             $path = $file->store("bukti-transaksi/{$transaksi->id}", 'public');
-            
+
             BuktiTransaksi::create([
                 'transaksi_id' => $transaksi->id,
                 'nama_file'    => $file->getClientOriginalName(),
@@ -277,20 +264,27 @@ class TransaksiService
     private function simpanAset(Transaksi $transaksi, array $data): void
     {
         $aset = $transaksi->aset()->create([
+            'kode_aset'                => \App\Models\Aset::generateKode($data['tanggal_perolehan']),
             'nama_aset'                => $data['nama_aset'],
             'lokasi_aset'              => $data['lokasi_aset'],
-            'kondisi_aset'             => $data['kondisi_aset'],
+            'kondisi_aset'             => match($data['kondisi_aset']) {
+                'BAIK'         => 'BAIK',
+                'RUSAK_RINGAN' => 'RUSAK RINGAN',
+                'RUSAK_BERAT'  => 'RUSAK BERAT',
+                default        => $data['kondisi_aset'],
+            },
             'sumber_perolehan'         => $data['sumber_perolehan'],
             'tanggal_perolehan'        => $data['tanggal_perolehan'],
             'jumlah_unit'              => $data['jumlah_unit'] ?? 1,
-            'harga_perolehan'          => $data['jumlah'],
+            'nilai_tercatat'           => $data['jumlah'],
             'tanggal_mulai_penyusutan' => $data['tanggal_mulai_penyusutan'] ?? null,
             'umur_manfaat'             => $data['umur_manfaat'] ?? null,
-            'keterangan_penyusutan'    => $data['keterangan_penyusutan'] ?? null,
-            'user_id'                  => Auth::id(),
+            'keterangan'               => $data['keterangan_penyusutan'] ?? null,
+            'status_aset'              => 'AKTIF',
+            'nilai_buku'               => $data['jumlah'],
+            'akumulasi_penyusutan'     => 0,
         ]);
 
-        // Upload dokumen aset
         if (!empty($data['dokumen_aset']) && $data['dokumen_aset'] instanceof \Illuminate\Http\UploadedFile) {
             $path = $data['dokumen_aset']->store("aset-dokumen/{$aset->id}", 'public');
             $aset->update([

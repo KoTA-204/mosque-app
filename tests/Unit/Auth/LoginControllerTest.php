@@ -83,6 +83,11 @@ class LoginControllerTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_UT_F07_01_session_lifetime_120_menit(): void
+    {
+        $this->assertEquals(120, config('session.lifetime'));
+    }
+
     /**
      * UT-F85-01
      * Deskripsi : User yang login melakukan logout
