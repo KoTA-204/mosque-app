@@ -88,21 +88,34 @@
         </div>
     </div>
 
-    {{-- ── Grafik ── --}}
+    {{-- ── Grafik Donut ── --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+
+        {{-- Donut Pemasukan --}}
         <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden">
-            <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">Distribusi Pengeluaran</p>
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Sumber Pemasukan</p>
+            <p class="text-xs text-gray-400 mb-4">{{ $periodeAktif->nama_periode }}</p>
+            <div id="donutPemasukan" class="w-full"></div>
+        </div>
+
+        {{-- Donut Pengeluaran --}}
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Distribusi Pengeluaran</p>
+            <p class="text-xs text-gray-400 mb-4">{{ $periodeAktif->nama_periode }}</p>
             <div id="donutPengeluaran" class="w-full"></div>
         </div>
-        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden">
-            <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">Pemasukan vs Pengeluaran</p>
-            <div id="barChart" class="w-full"></div>
-        </div>
+
+    </div>
+
+    {{-- ── Bar Chart ── --}}
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden">
+        <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Pemasukan vs Pengeluaran</p>
+        <p class="text-xs text-gray-400 mb-4">8 periode terakhir</p>
+        <div id="barChart" class="w-full"></div>
     </div>
 
     {{-- ── Laporan Ringkasan ── --}}
     <div>
-        <p class="text-xs font-medium text-gray-400 uppercase tracking-widest mb-3">Laporan</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
 
             {{-- Posisi Keuangan --}}
@@ -123,7 +136,7 @@
                         <span class="font-semibold text-gray-900 dark:text-white">Rp{{ number_format($totalAsetNeto, 0, ',', '.') }}</span>
                     </div>
                 </div>
-                <a href="dashboard.laporan.posisi-keuangan" class="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors pt-3 border-t border-gray-100 dark:border-gray-800">
+                <a href="{{ route('dashboard.laporan.posisi-keuangan') }}" class="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors pt-3 border-t border-gray-100 dark:border-gray-800">
                     Lihat detail <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
             </div>
@@ -146,7 +159,7 @@
                         <span class="font-semibold {{ $surplus >= 0 ? 'text-emerald-600' : 'text-red-500' }}">Rp{{ number_format($surplus, 0, ',', '.') }}</span>
                     </div>
                 </div>
-                <a href="dashboard.laporan.penghasilan-komprehensif" class="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors pt-3 border-t border-gray-100 dark:border-gray-800">
+                <a href="{{ route('dashboard.laporan.penghasilan-komprehensif') }}" class="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors pt-3 border-t border-gray-100 dark:border-gray-800">
                     Lihat detail <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
             </div>
@@ -169,7 +182,7 @@
                         <span class="font-medium text-gray-800 dark:text-gray-200">Rp0</span>
                     </div>
                 </div>
-                <a href="dashboard.laporan.perubahan-aset-neto" class="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors pt-3 border-t border-gray-100 dark:border-gray-800">
+                <a href="{{ route('dashboard.laporan.perubahan-aset-neto') }}" class="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors pt-3 border-t border-gray-100 dark:border-gray-800">
                     Lihat detail <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
             </div>
@@ -196,7 +209,7 @@
                         <span class="font-semibold text-xs {{ $kenaikanNetoKas >= 0 ? 'text-emerald-600' : 'text-red-500' }}">Rp{{ number_format($kenaikanNetoKas, 0, ',', '.') }}</span>
                     </div>
                 </div>
-                <a href="dashboard.laporan.arus-kas" class="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors pt-3 border-t border-gray-100 dark:border-gray-800">
+                <a href="{{ route('dashboard.laporan.arus-kas') }}" class="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors pt-3 border-t border-gray-100 dark:border-gray-800">
                     Lihat detail <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
             </div>
@@ -215,14 +228,13 @@
                     Lihat semua <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
             </div>
-            <div class="overflow-x-auto">
+            <div>
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-y border-gray-50 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/30">
                             <th class="text-left text-xs font-medium text-gray-400 px-5 py-2.5">Tanggal</th>
                             <th class="text-left text-xs font-medium text-gray-400 px-4 py-2.5">Jenis</th>
                             <th class="text-left text-xs font-medium text-gray-400 px-4 py-2.5">Keterangan</th>
-                            <th class="text-left text-xs font-medium text-gray-400 px-4 py-2.5">Kategori</th>
                             <th class="text-right text-xs font-medium text-gray-400 px-5 py-2.5">Jumlah</th>
                         </tr>
                     </thead>
@@ -241,7 +253,6 @@
                             </span>
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-[120px] truncate">{{ Str::limit($t->deskripsi ?? '—', 30) }}</td>
-                        <td class="px-4 py-3 text-xs text-gray-400">{{ $t->kategoriTransaksi?->nama_kategori ?? '—' }}</td>
                         <td class="px-5 py-3 text-right text-sm font-semibold {{ $t->jenis_transaksi === 'PEMASUKAN' ? 'text-emerald-600' : 'text-red-500' }}">
                             {{ $t->jenis_transaksi === 'PEMASUKAN' ? '+' : '-' }}Rp{{ number_format($t->jumlah, 0, ',', '.') }}
                         </td>
@@ -254,40 +265,47 @@
             </div>
         </div>
 
-        {{-- Kegiatan Aktif --}}
-        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
-            <div class="flex items-center justify-between mb-5">
-                <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Kegiatan Aktif</p>
-                <a href="{{ route('dashboard.kegiatan.index') }}" class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex items-center gap-1">
-                    Lihat semua <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-            </div>
-            <div class="space-y-5">
-            @forelse($kegiatanAktif as $kegiatan)
+        {{-- Kegiatan Berjalan --}}
+        <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-5">Kegiatan Berjalan</p>
+            <div class="space-y-3">
+            @forelse($kegiatanBerjalan as $kegiatan)
                 @php
-                    $terkumpul = $kegiatan->total_terkumpul ?? 0;
+                    $terkumpul = $kegiatan->terkumpul ?? 0;
                     $persen = $kegiatan->anggaran > 0
                         ? min(100, round(($terkumpul / $kegiatan->anggaran) * 100))
                         : 0;
+
+                    // Warna & ikon berdasarkan progres
+                    if ($persen >= 75) {
+                        $iconBg = 'bg-green-50'; $iconColor = 'text-green-600'; $barColor = 'bg-green-500'; $pctColor = 'text-green-600';
+                    } elseif ($persen >= 30) {
+                        $iconBg = 'bg-blue-50'; $iconColor = 'text-blue-600'; $barColor = 'bg-blue-500'; $pctColor = 'text-blue-600';
+                    } else {
+                        $iconBg = 'bg-amber-50'; $iconColor = 'text-amber-600'; $barColor = 'bg-amber-500'; $pctColor = 'text-amber-600';
+                    }
                 @endphp
-                <div>
-                    <div class="flex items-start justify-between mb-2">
-                        <div>
-                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $kegiatan->nama_kegiatan }}</p>
-                            <p class="text-xs text-gray-400 mt-0.5">
-                                Rp{{ number_format($terkumpul, 0, ',', '.') }}
-                                <span class="text-gray-300 dark:text-gray-600 mx-1">/</span>
-                                Rp{{ number_format($kegiatan->anggaran, 0, ',', '.') }}
-                            </p>
-                        </div>
-                        <span class="text-xs font-semibold tabular-nums {{ $persen >= 100 ? 'text-emerald-500' : 'text-gray-500 dark:text-gray-400' }}">{{ $persen }}%</span>
+                <div class="flex gap-3 items-start p-3.5 rounded-xl bg-gray-50">
+                    <div class="w-9 h-9 rounded-lg {{ $iconBg }} flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 {{ $iconColor }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2M5 21H3m4-14h6m-6 4h6m-6 4h6"/>
+                        </svg>
                     </div>
-                    <div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
-                        <div class="h-1.5 rounded-full transition-all {{ $persen >= 100 ? 'bg-emerald-500' : 'bg-blue-500' }}" style="width: {{ $persen }}%"></div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-baseline gap-2 mb-1.5">
+                            <p class="text-sm font-medium text-gray-800 truncate">{{ $kegiatan->nama_kegiatan }}</p>
+                            <span class="text-xs font-semibold {{ $pctColor }} shrink-0">{{ $persen }}%</span>
+                        </div>
+                        <div class="w-full h-1.5 rounded-full bg-gray-200 overflow-hidden mb-1.5">
+                            <div class="h-full rounded-full {{ $barColor }}" style="width: {{ $persen }}%"></div>
+                        </div>
+                        <p class="text-xs text-gray-400">
+                            Rp{{ number_format($terkumpul, 0, ',', '.') }} dari Rp{{ number_format($kegiatan->anggaran, 0, ',', '.') }}
+                        </p>
                     </div>
                 </div>
             @empty
-                <p class="text-sm text-gray-400 text-center py-8">Belum ada kegiatan aktif.</p>
+                <p class="text-sm text-gray-400 text-center py-8">Belum ada kegiatan berjalan.</p>
             @endforelse
             </div>
         </div>
@@ -299,36 +317,66 @@
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const isDark = document.documentElement.classList.contains('dark');
+    const isDark     = document.documentElement.classList.contains('dark');
     const labelColor = isDark ? '#6B7280' : '#9CA3AF';
 
-    const distribusiLabels = @json($distribusiPengeluaran->pluck('nama_kategori'));
-    const distribusiData   = @json($distribusiPengeluaran->pluck('total')).map(Number);
+    // ── Donut Pemasukan ───────────────────────────────────────────────────
+    const pemasukanLabels = @json($distribusiPemasukan->pluck('nama_akun'));
+    const pemasukanData   = @json($distribusiPemasukan->pluck('total')).map(Number);
 
-    const donutChart = new ApexCharts(document.querySelector('#donutPengeluaran'), {
-        chart: { type: 'donut', height: 260, width: '100%', fontFamily: 'inherit', background: 'transparent' },
-        series: distribusiData.length ? distribusiData : [1],
-        labels: distribusiLabels.length ? distribusiLabels : ['Belum ada data'],
+    new ApexCharts(document.querySelector('#donutPemasukan'), {
+        chart: {
+            type: 'donut',
+            height: 260,
+            width: '100%',
+            fontFamily: 'inherit',
+            background: 'transparent',
+        },
+        series: pemasukanData.length ? pemasukanData : [1],
+        labels: pemasukanLabels.length ? pemasukanLabels : ['Belum ada data'],
         colors: ['#3B82F6', '#6366F1', '#8B5CF6', '#A78BFA', '#C4B5FD'],
         legend: { position: 'bottom', fontSize: '11px', labels: { colors: labelColor } },
         dataLabels: { enabled: false },
         plotOptions: { pie: { donut: { size: '70%' } } },
         stroke: { width: 0 },
         tooltip: { y: { formatter: val => 'Rp ' + val.toLocaleString('id-ID') } },
-        theme: { mode: isDark ? 'dark' : 'light' }
-    });
-    donutChart.render();
+        theme: { mode: isDark ? 'dark' : 'light' },
+    }).render();
 
+    // ── Donut Pengeluaran ─────────────────────────────────────────────────
+    const pengeluaranLabels = @json($distribusiPengeluaran->pluck('nama_akun'));
+    const pengeluaranData   = @json($distribusiPengeluaran->pluck('total')).map(Number);
+
+    new ApexCharts(document.querySelector('#donutPengeluaran'), {
+        chart: {
+            type: 'donut',
+            height: 260,
+            width: '100%',
+            fontFamily: 'inherit',
+            background: 'transparent',
+        },
+        series: pengeluaranData.length ? pengeluaranData : [1],
+        labels: pengeluaranLabels.length ? pengeluaranLabels : ['Belum ada data'],
+        colors: ['#EF4444', '#F97316', '#F59E0B', '#84CC16', '#10B981'],
+        legend: { position: 'bottom', fontSize: '11px', labels: { colors: labelColor } },
+        dataLabels: { enabled: false },
+        plotOptions: { pie: { donut: { size: '70%' } } },
+        stroke: { width: 0 },
+        tooltip: { y: { formatter: val => 'Rp ' + val.toLocaleString('id-ID') } },
+        theme: { mode: isDark ? 'dark' : 'light' },
+    }).render();
+
+    // ── Bar Chart Pemasukan vs Pengeluaran ───────────────────────────────
     const grafikData = @json($grafikData);
 
-    const barChart = new ApexCharts(document.querySelector('#barChart'), {
+    new ApexCharts(document.querySelector('#barChart'), {
         chart: {
             type: 'bar',
             height: 260,
             width: '100%',
             fontFamily: 'inherit',
             toolbar: { show: false },
-            background: 'transparent'
+            background: 'transparent',
         },
         series: [
             { name: 'Pemasukan',   data: grafikData.map(d => Number(d.pemasukan)) },
@@ -336,27 +384,33 @@ document.addEventListener('DOMContentLoaded', function () {
         ],
         xaxis: {
             categories: grafikData.map(d => d.label),
-            labels: { style: { colors: labelColor, fontSize: '11px' } },
+            labels: { style: { colors: labelColor, fontSize: '10px' } },
             axisBorder: { show: false },
-            axisTicks: { show: false }
+            axisTicks: { show: false },
         },
         yaxis: {
             labels: {
-                style: { colors: labelColor, fontSize: '11px' },
-                formatter: v => 'Rp' + (v / 1000).toFixed(0) + 'k'
-            }
+                style: { colors: labelColor, fontSize: '10px' },
+                formatter: v => 'Rp' + (v / 1000).toFixed(0) + 'k',
+            },
         },
-        colors: ['#3B82F6', '#BFDBFE'],
-        legend: { position: 'top', horizontalAlign: 'right', fontSize: '11px', labels: { colors: labelColor } },
+        colors: ['#3B82F6', '#FCA5A5'],
+        legend: {
+            position: 'top',
+            horizontalAlign: 'right',
+            fontSize: '11px',
+            labels: { colors: labelColor },
+        },
         dataLabels: { enabled: false },
-        plotOptions: { bar: { columnWidth: '50%', borderRadius: 3 } },
-        grid: { borderColor: isDark ? '#1F2937' : '#F3F4F6', strokeDashArray: 4 },
+        plotOptions: { bar: { columnWidth: '55%', borderRadius: 3 } },
+        grid: {
+            borderColor: isDark ? '#1F2937' : '#F3F4F6',
+            strokeDashArray: 4,
+        },
         tooltip: { y: { formatter: val => 'Rp ' + val.toLocaleString('id-ID') } },
-        theme: { mode: isDark ? 'dark' : 'light' }
-    });
-    barChart.render();
+        theme: { mode: isDark ? 'dark' : 'light' },
+    }).render();
 
-    // Recalculasi lebar setelah layout grid selesai (mengatasi overflow saat render awal)
     setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
 });
 </script>

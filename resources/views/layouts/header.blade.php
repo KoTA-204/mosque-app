@@ -19,7 +19,7 @@
                 <nav class="hidden md:flex items-center gap-8">
                     <a href="{{ url('/') }}" class="text-sm font-semibold text-green-700 border-b-2 border-green-600 pb-0.5 transition-colors">Utama</a>
                     <a href="{{ url('/donasi') }}" class="text-sm font-medium text-gray-600 hover:text-green-700 transition-colors">Donasi</a>
-                    <a href="{{ url('/organisasi') }}" class="text-sm font-medium text-gray-600 hover:text-green-700 transition-colors">Organisasi</a>
+                    <a href="{{ route('laporan-keuangan.index') }}" class="text-sm font-medium text-gray-600 hover:text-green-700 transition-colors">Laporan Keuangan</a>
                     <a href="{{ url('/tentang-kami') }}" class="text-sm font-medium text-gray-600 hover:text-green-700 transition-colors">Tentang Kami</a>
                 </nav>
 

@@ -30,9 +30,103 @@ class DashboardService
             ->pluck('id')->toArray();
     }
 
-    public function saldoByPrefix(string $prefix, int $periodeId, string $saldoNormal = 'KREDIT'): float
+    public function totalAsetLancar(array $periodeIds): float
     {
-        $ids = Akun::where('kode_akun', 'like', $prefix . '%')->pluck('id');
+        $ids = Akun::where('kode_akun', 'like', '1-1%')
+            ->whereNotNull('parent_id')
+            ->pluck('id');
+
+        if ($ids->isEmpty()) return 0;
+
+        return $this->hitungSaldo(
+            DetailJurnal::whereIn('akun_id', $ids)
+                ->whereHas('jurnal', fn($q) => $q
+                    ->whereIn('periode_id', $periodeIds)
+                    ->where('status', 'POSTED')),
+            'DEBIT'
+        );
+    }
+
+    public function totalAsetTetap(array $periodeIds): float
+    {
+        $ids = Akun::where('kode_akun', 'like', '1-2%')
+            ->whereNotNull('parent_id')
+            ->pluck('id');
+
+        if ($ids->isEmpty()) return 0;
+
+        // Untuk aset tetap, ambil per akun karena ada yang saldo normal KREDIT (akumulasi)
+        return Akun::where('kode_akun', 'like', '1-2%')
+            ->whereNotNull('parent_id')
+            ->get()
+            ->sum(function (Akun $akun) use ($periodeIds) {
+                $saldo = $this->hitungSaldo(
+                    DetailJurnal::where('akun_id', $akun->id)
+                        ->whereHas('jurnal', fn($q) => $q
+                            ->whereIn('periode_id', $periodeIds)
+                            ->where('status', 'POSTED')),
+                    $akun->saldo_normal
+                );
+                // Akumulasi penyusutan (KREDIT) adalah pengurang
+                return $akun->saldo_normal === 'KREDIT' ? -$saldo : $saldo;
+            });
+    }
+
+    // ── Saldo Awal: Σ akun aset neto (3-xxxx) dari jurnal PEMBUKA periode aktif ──
+    // Jika ada periode sebelumnya, ambil dari saldo aset neto kumulatif sampai periode lalu
+    public function saldoAwalAsetNeto(int $periodeAktifId, ?int $periodeSebelumnyaId): float
+    {
+        if ($periodeSebelumnyaId) {
+            // Saldo akhir periode sebelumnya = saldo awal periode aktif
+            $pidsPrev = $this->getPeriodeIdsUpTo($periodeSebelumnyaId);
+            return $this->totalAsetNeto($pidsPrev);
+        }
+
+        // Periode pertama: ambil dari jurnal PEMBUKA akun 3-xxxx
+        $ids = Akun::where('kode_akun', 'like', '3-%')
+            ->whereNotNull('parent_id')
+            ->pluck('id');
+
+        if ($ids->isEmpty()) return 0;
+
+        return $this->hitungSaldo(
+            DetailJurnal::whereIn('akun_id', $ids)
+                ->whereHas('jurnal', fn($q) => $q
+                    ->where('periode_id', $periodeAktifId)
+                    ->where('status', 'POSTED')
+                    ->where('jenis_jurnal', 'PEMBUKA')),
+            'KREDIT' // akun ekuitas/aset neto bersaldo normal KREDIT
+        );
+    }
+
+    // ── Total Aset Neto kumulatif (akun 3-xxxx) ──────────────────────────────
+    public function totalAsetNeto(array $periodeIds): float
+    {
+        $ids = Akun::where('kode_akun', 'like', '3-%')
+            ->whereNotNull('parent_id')
+            ->pluck('id');
+
+        if ($ids->isEmpty()) return 0;
+
+        return $this->hitungSaldo(
+            DetailJurnal::whereIn('akun_id', $ids)
+                ->whereHas('jurnal', fn($q) => $q
+                    ->whereIn('periode_id', $periodeIds)
+                    ->where('status', 'POSTED')),
+            'KREDIT'
+        );
+    }
+
+    // ── Pemasukan: Σ akun pendapatan (4-1xxx, 4-2xxx) periode aktif ──────────
+    public function totalPendapatan(int $periodeId): float
+    {
+        $ids = Akun::where(function ($q) {
+                $q->where('kode_akun', 'like', '4-1%')
+                  ->orWhere('kode_akun', 'like', '4-2%');
+            })
+            ->whereNotNull('parent_id')
+            ->pluck('id');
+
         if ($ids->isEmpty()) return 0;
 
         return $this->hitungSaldo(
@@ -41,8 +135,63 @@ class DashboardService
                     ->where('periode_id', $periodeId)
                     ->where('status', 'POSTED')
                     ->whereNull('tipe_penutupan')),
-            $saldoNormal
+            'KREDIT'
         );
+    }
+
+    // ── Pengeluaran: Σ akun beban (5-xxxx) periode aktif ─────────────────────
+    public function totalBeban(int $periodeId): float
+    {
+        $ids = Akun::where('kode_akun', 'like', '5-%')
+            ->whereNotNull('parent_id')
+            ->pluck('id');
+
+        if ($ids->isEmpty()) return 0;
+
+        return $this->hitungSaldo(
+            DetailJurnal::whereIn('akun_id', $ids)
+                ->whereHas('jurnal', fn($q) => $q
+                    ->where('periode_id', $periodeId)
+                    ->where('status', 'POSTED')
+                    ->whereNull('tipe_penutupan')),
+            'DEBIT'
+        );
+    }
+
+    // ── Saldo Kas per dompet (untuk kartu dompet, tetap dari transaksi) ──────
+    public function totalKasSetaraKas(array $periodeIds): float
+    {
+        $ids = Akun::where('kode_akun', 'like', '1-1%')
+            ->whereNotNull('parent_id')
+            ->get()
+            ->filter(fn($a) => stripos($a->nama_akun, 'piutang') === false)
+            ->pluck('id');
+
+        if ($ids->isEmpty()) return 0;
+
+        return $this->hitungSaldo(
+            DetailJurnal::whereIn('akun_id', $ids)
+                ->whereHas('jurnal', fn($q) => $q
+                    ->whereIn('periode_id', $periodeIds)
+                    ->where('status', 'POSTED')),
+            'DEBIT'
+        );
+    }
+
+    public function resolvePeriodeAktif(): array
+    {
+        $periode = Periode::where('status', true)->first()
+            ?? Periode::orderByDesc('tanggal_akhir')->first();
+
+        $periodePrev = null;
+        if ($periode) {
+            $periodePrev = Periode::where('tipe', $periode->tipe)
+                ->where('tanggal_akhir', '<', $periode->tanggal_awal)
+                ->orderByDesc('tanggal_akhir')
+                ->first();
+        }
+
+        return [$periode, $periodePrev];
     }
 
     public function getRincianAkunKumulatif(string $prefix, array $periodeIds, string $saldoNormal): Collection
@@ -68,34 +217,10 @@ class DashboardService
         })->values();
     }
 
-    public function saldoPosisiByPrefix(string $prefix, int $periodeId, string $saldoNormal = 'DEBIT'): float
+    public function totalPendapatanTanpaPembatasan(int $periodeId): float
     {
-        $ids = Akun::where('kode_akun', 'like', $prefix . '%')->pluck('id');
-        if ($ids->isEmpty()) return 0;
-
-        return $this->hitungSaldo(
-            DetailJurnal::whereIn('akun_id', $ids)
-                ->whereHas('jurnal', fn($q) => $q
-                    ->where('periode_id', $periodeId)
-                    ->where('status', 'POSTED')
-                    ->where('jenis_jurnal', 'PEMBUKA')),
-            $saldoNormal
-        );
-    }
-
-    public function totalKasSetaraKas(array $periodeIds): float
-    {
-        return $this->getRincianAkunKumulatif('1-1', $periodeIds, 'DEBIT')
-            ->filter(fn($r) => stripos($r->nama_akun, 'piutang') === false)
-            ->sum('saldo');
-    }
-
-    public function totalKasSetaraKasPembuka(int $periodeId): float
-    {
-        $ids = Akun::where('kode_akun', 'like', '1-1%')
+        $ids = Akun::where('kode_akun', 'like', '4-1%')
             ->whereNotNull('parent_id')
-            ->get()
-            ->filter(fn($a) => stripos($a->nama_akun, 'piutang') === false)
             ->pluck('id');
 
         if ($ids->isEmpty()) return 0;
@@ -105,46 +230,26 @@ class DashboardService
                 ->whereHas('jurnal', fn($q) => $q
                     ->where('periode_id', $periodeId)
                     ->where('status', 'POSTED')
-                    ->where('jenis_jurnal', 'PEMBUKA')),
-            'DEBIT'
+                    ->whereNull('tipe_penutupan')),
+            'KREDIT'
         );
     }
 
-    public function totalPendapatan(int $periodeId): float
+    public function totalPendapatanDenganPembatasan(int $periodeId): float
     {
-        return $this->saldoByPrefix('4-1', $periodeId, 'KREDIT')
-             + $this->saldoByPrefix('4-2', $periodeId, 'KREDIT');
-    }
+        $ids = Akun::where('kode_akun', 'like', '4-2%')
+            ->whereNotNull('parent_id')
+            ->pluck('id');
 
-    public function totalBeban(int $periodeId): float
-    {
-        $total = 0;
-        $headerBeban = Akun::where('kode_akun', 'like', '5-%')
-            ->whereNull('parent_id')
-            ->get();
+        if ($ids->isEmpty()) return 0;
 
-        foreach ($headerBeban as $header) {
-            $kode = rtrim($header->kode_akun, '0');
-            $total += $this->getRincianAkunKumulatif($kode, [$periodeId], 'DEBIT')
-                ->sum('saldo');
-        }
-
-        return $total;
-    }
-
-    public function resolvePeriodeAktif(): array
-    {
-        $periode = Periode::where('status', true)->first()
-            ?? Periode::orderByDesc('tanggal_akhir')->first();
-
-        $periodePrev = null;
-        if ($periode) {
-            $periodePrev = Periode::where('tipe', $periode->tipe)
-                ->where('tanggal_akhir', '<', $periode->tanggal_awal)
-                ->orderByDesc('tanggal_akhir')
-                ->first();
-        }
-
-        return [$periode, $periodePrev];
+        return $this->hitungSaldo(
+            DetailJurnal::whereIn('akun_id', $ids)
+                ->whereHas('jurnal', fn($q) => $q
+                    ->where('periode_id', $periodeId)
+                    ->where('status', 'POSTED')
+                    ->whereNull('tipe_penutupan')),
+            'KREDIT'
+        );
     }
 }
