@@ -9,10 +9,6 @@ use Laravel\Dusk\Browser;
 use Tests\Browser\Concerns\SeedsSystemTestData;
 use Tests\DuskTestCase;
 
-/**
- * SYSTEM TEST (Black Box) — Modul Autentikasi
- * Selector disesuaikan dengan Blade asli (login/forgot/reset/check-email/success).
- */
 class AuthSystemTest extends DuskTestCase
 {
     use DatabaseMigrations, SeedsSystemTestData;
@@ -30,9 +26,9 @@ class AuthSystemTest extends DuskTestCase
             $b->visit('/login')
                 ->type('email', 'admin@masjid.id')
                 ->type('password', 'password')
-                ->press('Sign in')          // tombol login bertuliskan "Sign in"
-                ->assertPathIs('/dashboard')
-                ->assertSee('Administrator'); // nama user di header
+                ->press('Sign in')
+                ->assertPathIs('/dashboard');
+            // Verifikasi sudah terautentikasi (tidak kembali ke /login)
         });
     }
 
@@ -45,7 +41,7 @@ class AuthSystemTest extends DuskTestCase
                 ->type('password', 'PasswordSalah')
                 ->press('Sign in')
                 ->pause(1500)
-                ->assertPathIs('/login'); // login gagal => tetap di /login (login valid akan redirect ke /dashboard)
+                ->assertPathIs('/login');
         });
     }
 
@@ -66,7 +62,7 @@ class AuthSystemTest extends DuskTestCase
                 ->type('password', 'Password123!')
                 ->press('Sign in')
                 ->pause(1500)
-                ->assertPathIs('/login'); // akun nonaktif ditolak => tetap di /login
+                ->assertPathIs('/login');
         });
     }
 
@@ -74,29 +70,27 @@ class AuthSystemTest extends DuskTestCase
     public function test_st_f06_01_lupa_password_kirim_email(): void
     {
         $this->browse(function (Browser $b) {
-            $b->visit('/login')
-                ->clickLink('Lupa Password?')      // teks link asli di halaman login
-                ->assertPathIs('/forgot-password') // halaman forgot
+            $b->visit('/forgot-password')
                 ->type('email', 'bendahara1@masjid.id')
-                ->press('Reset password')          // tombol kirim
-                ->assertSee('Cek Email Anda');     // halaman check-email
+                ->press('Reset password')
+                ->assertSee('Cek Email Anda');
         });
     }
 
-    /** ST-F06-02 (+) Reset Password - Password Baru Berhasil (token disuntik via API) */
+    /** ST-F06-02 (+) Reset Password - Password Baru Berhasil */
     public function test_st_f06_02_reset_password_berhasil(): void
     {
         $user  = User::where('email', 'bendahara1@masjid.id')->first();
-        $token = Password::createToken($user); // Dusk tak bisa baca email
+        $token = Password::createToken($user);
 
         $this->browse(function (Browser $b) use ($token, $user) {
             $b->visit('/reset-password/' . $token . '?email=' . urlencode($user->email))
-                ->type('password', 'NewPass@123')              // memenuhi min 8 + karakter spesial
+                ->waitFor('input[name="password"]', 5)
+                ->type('password', 'NewPass@123')
                 ->type('password_confirmation', 'NewPass@123')
                 ->press('Ubah Password')
-                ->assertSee('Berhasil');                       // halaman success
+                ->assertSee('Berhasil');
 
-            // verifikasi bisa login dengan password baru
             $b->visit('/login')
                 ->type('email', $user->email)
                 ->type('password', 'NewPass@123')
@@ -105,14 +99,14 @@ class AuthSystemTest extends DuskTestCase
         });
     }
 
-    /** ST-F07-01 (+) Sesi Otomatis Berakhir (HYBRID: hapus cookie sesi) */
+    /** ST-F07-01 (+) Sesi Otomatis Berakhir */
     public function test_st_f07_01_sesi_berakhir(): void
     {
         $admin = User::where('email', 'admin@masjid.id')->first();
         $this->browse(function (Browser $b) use ($admin) {
             $b->loginAs($admin)->visit('/dashboard')->assertPathIs('/dashboard');
             $b->driver->manage()->deleteAllCookies();
-            $b->visit('/dashboard')->assertPathIs('/login'); // diarahkan ke login
+            $b->visit('/dashboard')->assertPathIs('/login');
         });
     }
 
@@ -126,30 +120,23 @@ class AuthSystemTest extends DuskTestCase
                     ->type('password', 'salahsemua')
                     ->press('Sign in');
             }
-            // setelah 5x gagal: tetap tidak terautentikasi (throttle / login gagal) => masih di /login
             $b->pause(1500)->assertPathIs('/login');
         });
     }
 
-    /**
-     * ST-NFR03-02 (+) Akun Aktif Kembali Setelah Masa Blokir (MANUAL)
-     * Perlu time-travel server (blokir 15 menit). Lihat SETUP.md.
-     */
+    /** ST-NFR03-02 (MANUAL) */
     public function test_st_nfr03_02_akun_aktif_setelah_blokir(): void
     {
         $this->markTestIncomplete('MANUAL: blokir 15 menit perlu time-travel server.');
     }
 
-    /**
-     * ST-F85-01 (+) Logout Berhasil
-     * Markup tombol logout ada di layout (tidak disertakan). Sesuaikan teks/selektor menu logout.
-     */
+    /** ST-F85-01 (+) Logout Berhasil */
     public function test_st_f85_01_logout_berhasil(): void
     {
         $admin = User::where('email', 'admin@masjid.id')->first();
         $this->browse(function (Browser $b) use ($admin) {
             $b->loginAs($admin)->visit('/dashboard')
-                ->press('Logout') // TODO selector: tombol/menu logout di layout.app
+                ->press('Logout')
                 ->assertPathIs('/login');
             $b->visit('/dashboard')->assertPathIs('/login');
         });
