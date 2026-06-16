@@ -11,6 +11,8 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
+
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.store('theme', {

@@ -20,6 +20,7 @@ class Transaksi extends Model
         'jenis_transaksi',
         'jumlah',
         'deskripsi',
+        'no_referensi',
         'status_approval',
         'catatan',
         'status_jurnal',
@@ -37,6 +38,9 @@ class Transaksi extends Model
     const STATUS_REVISION = 'REVISION';
 
     const STATUS_EDITABLE = [self::STATUS_DRAFT, self::STATUS_PENDING, self::STATUS_REVISION];
+
+    const JENIS_TRANSAKSI_PEMASUKAN = 'PEMASUKAN';
+    const JENIS_TRANSAKSI_PENGELUARAN = 'PENGELUARAN';
 
     public function bisaDiedit(): bool
     {

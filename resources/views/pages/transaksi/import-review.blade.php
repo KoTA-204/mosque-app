@@ -23,13 +23,30 @@
         </a>
     </div>
 
+    {{-- Alert — letakkan di sini --}}
+    <div id="success-alert"
+        class="hidden items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
+        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span id="success-alert-msg"></span>
+    </div>
+
+    <div id="error-alert"
+        class="hidden items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <span id="error-alert-msg"></span>
+    </div>
+
     <div class="grid grid-cols-3 gap-4">
         <div class="bg-white rounded-2xl border border-gray-200 p-4 text-center">
-            <p class="text-3xl font-semibold text-gray-900">{{ $stats['total'] }}</p>
+            <p id="statTotalBaris" class="text-3xl font-semibold text-gray-900">{{ $stats['total'] }}</p>
             <p class="text-sm text-gray-500 mt-1">Total baris</p>
         </div>
         <div class="bg-white rounded-2xl border border-gray-200 p-4 text-center">
-            <p class="text-3xl font-semibold text-green-700">{{ $stats['bersih'] }}</p>
+            <p id="statPerluKlasifikasi" class="text-3xl font-semibold text-green-700">{{ $stats['bersih'] }}</p>
             <p class="text-sm text-gray-500 mt-1">Perlu diklasifikasi</p>
         </div>
         <div class="bg-white rounded-2xl border border-gray-200 p-4 text-center">
@@ -56,14 +73,41 @@
     @endif
 
     <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-                </svg>
-                <span class="text-sm font-medium text-gray-800">Impor Mutasi Bank</span>
-                <span class="text-xs text-gray-400">Klasifikasi akun debit dan kredit</span>
+        {{-- Bulk Action Bar --}}
+        <div id="bulkActionBar"
+            class="hidden px-5 py-3 bg-green-50 border-b border-green-100 items-center gap-3 flex-wrap">
+            <span id="bulkCount" class="text-sm font-medium text-green-800">0 baris dipilih</span>
+            <div class="flex items-center gap-2 flex-wrap ml-auto">
+                {{-- Bulk Akun Debit --}}
+                <select id="bulkDebit"
+                    class="h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500">
+                    <option value="">Akun debit...</option>
+                    @foreach($akuns as $a)
+                        <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
+                    @endforeach
+                </select>
+                {{-- Bulk Akun Kredit --}}
+                <select id="bulkKredit"
+                    class="h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500">
+                    <option value="">Akun kredit...</option>
+                    @foreach($akuns as $a)
+                        <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
+                    @endforeach
+                </select>
+                <button type="button" onclick="applyBulk()"
+                    class="h-8 px-3 bg-green-700 text-white text-xs font-medium rounded-lg hover:bg-green-800 transition-colors">
+                    Terapkan
+                </button>
+                <div class="w-px h-5 bg-gray-300"></div>
+                {{-- Bulk Hapus --}}
+                <button type="button" onclick="bulkHapus()"
+                    class="h-8 px-3 bg-red-50 text-red-600 border border-red-200 text-xs font-medium rounded-lg hover:bg-red-100 transition-colors flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Hapus
+                </button>
             </div>
         </div>
 
@@ -97,7 +141,7 @@
                         ])>
                             <td class="px-4 py-3">
                                 @if(!$row['is_duplikat'])
-                                    <input type="checkbox" name="klasifikasi[{{ $i }}][skip]" value="0"
+                                    <input type="checkbox"
                                         class="rowCheck rounded border-gray-300"
                                         data-idx="{{ $i }}">
                                     <input type="hidden" name="klasifikasi[{{ $i }}][no_referensi]"
@@ -132,7 +176,8 @@
                             <td class="px-3 py-3">
                                 @if(!$row['is_duplikat'])
                                     <select name="klasifikasi[{{ $i }}][akun_debit_id]" required
-                                        class="w-full h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500">
+                                        class="debitSelect w-full h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                                        data-idx="{{ $i }}">   {{-- ← tambah ini --}}
                                         <option value="">Pilih akun</option>
                                         @foreach($akuns as $a)
                                             <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
@@ -146,7 +191,8 @@
                             <td class="px-3 py-3">
                                 @if(!$row['is_duplikat'])
                                     <select name="klasifikasi[{{ $i }}][akun_kredit_id]" required
-                                        class="w-full h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500">
+                                        class="kreditSelect w-full h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                                        data-idx="{{ $i }}">   {{-- ← tambah ini --}}
                                         <option value="">Pilih akun</option>
                                         @foreach($akuns as $a)
                                             <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
@@ -156,15 +202,16 @@
                                     <span class="text-xs text-gray-400">-</span>
                                 @endif
                             </td>
-                            {{-- Skip --}}
+                            {{-- Hapus --}}
                             <td class="px-3 py-3 text-center">
                                 @if(!$row['is_duplikat'])
                                     <button type="button"
-                                        onclick="skipRow({{ $i }}, this)"
-                                        class="text-xs text-gray-400 hover:text-red-500 transition-colors"
-                                        title="Lewati baris ini">
+                                        onclick="hapusRow(this)"
+                                        class="text-gray-400 hover:text-red-500 transition-colors"
+                                        title="Hapus baris ini">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                         </svg>
                                     </button>
                                 @endif
@@ -183,7 +230,7 @@
     </div>
 
     <div class="bg-white rounded-2xl border border-gray-200 px-6 py-4 flex items-center justify-between">
-        <span class="text-sm text-gray-500">
+        <span class="text-sm text-gray-500" data-entry-count>
             Showing 1 to {{ $stats['total'] }} of {{ $stats['total'] }} entries
         </span>
         <button type="button" onclick="simpanKlasifikasi()"
@@ -206,40 +253,123 @@
 ])
 
 <script>
+// ── Modal ──────────────────────────────────────────────────────
+function openModal(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+}
+
+// ── Checkbox & Bulk Action ──────────────────────────────────────
+
 function toggleCheckAll(master) {
     document.querySelectorAll('.rowCheck').forEach(cb => cb.checked = master.checked);
+    updateBulkBar();
 }
 
-function skipRow(idx, btn) {
-    const row = btn.closest('tr');
-    row.classList.toggle('opacity-40');
+function updateBulkBar() {
+    const checked = document.querySelectorAll('.rowCheck:checked').length;
+    const bar     = document.getElementById('bulkActionBar');
+    const count   = document.getElementById('bulkCount');
 
-    const skipInput = document.querySelector(`[name="klasifikasi[${idx}][skip]"]`);
-    if (skipInput) {
-        skipInput.value = skipInput.value === '1' ? '0' : '1';
-        // Toggle required pada select di baris ini
-        row.querySelectorAll('select').forEach(sel => {
-            if (skipInput.value === '1') sel.removeAttribute('required');
-            else sel.setAttribute('required', '');
-        });
+    if (checked > 0) {
+        bar.classList.remove('hidden');
+        bar.classList.add('flex');
+        count.textContent = checked + ' baris dipilih';
+    } else {
+        bar.classList.add('hidden');
+        bar.classList.remove('flex');
     }
-    btn.classList.toggle('text-gray-400');
-    btn.classList.toggle('text-red-500');
+
+    const total = document.querySelectorAll('.rowCheck').length;
+    document.getElementById('checkAll').checked = total > 0 && total === checked;
 }
+
+document.querySelectorAll('.rowCheck').forEach(cb => {
+    cb.addEventListener('change', () => updateBulkBar());
+});
+
+function applyBulk() {
+    const debitVal  = document.getElementById('bulkDebit').value;
+    const kreditVal = document.getElementById('bulkKredit').value;
+
+    if (!debitVal && !kreditVal) {
+        alert('Pilih minimal akun debit atau akun kredit untuk diterapkan.');
+        return;
+    }
+
+    document.querySelectorAll('.rowCheck:checked').forEach(cb => {
+        const idx = cb.dataset.idx;
+        if (debitVal) {
+            const sel = document.querySelector(`.debitSelect[data-idx="${idx}"]`);
+            if (sel) sel.value = debitVal;
+        }
+        if (kreditVal) {
+            const sel = document.querySelector(`.kreditSelect[data-idx="${idx}"]`);
+            if (sel) sel.value = kreditVal;
+        }
+    });
+
+    document.querySelectorAll('.rowCheck').forEach(cb => cb.checked = false);
+    document.getElementById('checkAll').checked = false;
+
+    document.getElementById('bulkDebit').value  = '';
+    document.getElementById('bulkKredit').value = '';
+
+    updateBulkBar();
+}
+
+function bulkHapus() {
+    const checked = document.querySelectorAll('.rowCheck:checked');
+    if (checked.length === 0) return;
+    if (!confirm(`Hapus ${checked.length} baris yang dipilih?`)) return;
+
+    checked.forEach(cb => cb.closest('tr').remove());
+    updateBulkBar();
+    updateEntryCount();
+}
+
+function hapusRow(btn) {
+    btn.closest('tr').remove();
+    updateBulkBar();
+    updateEntryCount();
+}
+
+function updateEntryCount() {
+    const totalRows  = document.querySelectorAll('tbody tr').length;
+    const aktifRows  = document.querySelectorAll('tbody tr:not(.bg-amber-50\\/60)').length;
+
+    const countEl = document.querySelector('[data-entry-count]');
+    if (countEl) countEl.textContent = `Showing 1 to ${totalRows} of ${totalRows} entries`;
+
+    const totalEl = document.getElementById('statTotalBaris');
+    if (totalEl) totalEl.textContent = totalRows;
+
+    const perluEl = document.getElementById('statPerluKlasifikasi');
+    if (perluEl) perluEl.textContent = aktifRows;
+}
+
+// ── Simpan ──────────────────────────────────────────────────────
 
 async function simpanKlasifikasi() {
     const btn     = document.getElementById('btnSimpanKlasifikasi');
     const spinner = document.getElementById('spinnerKlasifikasi');
-    const errBox  = document.getElementById('reviewErrorBox');
-    const errList = document.getElementById('reviewErrorList');
 
-    // Validasi: setiap baris non-skip & non-duplikat harus punya akun
+    if (btn.disabled) return;
+    hideAlert('success');
+    hideAlert('error');
+
     let valid = true;
-    errList.innerHTML = '';
-
-    document.querySelectorAll('tbody tr:not(.opacity-60)').forEach((row, i) => {
-        const selects = row.querySelectorAll('select');
-        selects.forEach(sel => {
+    document.querySelectorAll('tbody tr').forEach(row => {
+        row.querySelectorAll('select').forEach(sel => {
             if (sel.hasAttribute('required') && !sel.value) {
                 valid = false;
                 sel.classList.add('border-red-400');
@@ -250,13 +380,10 @@ async function simpanKlasifikasi() {
     });
 
     if (!valid) {
-        errList.insertAdjacentHTML('beforeend', '<li>Pilih akun debit dan kredit untuk setiap baris yang aktif.</li>');
-        errBox.classList.remove('hidden');
-        errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        showAlert('error', 'Pilih akun debit dan kredit untuk setiap baris yang aktif.');
         return;
     }
 
-    errBox.classList.add('hidden');
     btn.disabled = true;
     spinner.classList.remove('hidden');
 
@@ -269,34 +396,67 @@ async function simpanKlasifikasi() {
                 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
                 'Accept': 'application/json',
             },
+            credentials: 'same-origin',
         });
+
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await res.text();
+            console.error('Non-JSON response:', text);
+            showAlert('error', 'Server mengembalikan response tidak valid. Cek console untuk detail.');
+            btn.disabled = false;
+            return;
+        }
+
         const data = await res.json();
 
         if (data.success && data.type === 'import_success') {
-            // Isi modal sukses
-            document.getElementById('hasilTersimpan').textContent = data.tersimpan;
-            document.getElementById('hasilDuplikat').textContent  = data.duplikat;
-            document.getElementById('hasilTotal').textContent     = data.total;
-            document.getElementById('hasilPeriode').textContent   = data.periode;
-            document.getElementById('hasilState').setAttribute('data-state', 'sukses');
+            const setEl = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = val ?? '';
+            };
+            setEl('hasilTersimpan',    data.tersimpan);
+            setEl('hasilTersimpanBox', data.tersimpan);
+            setEl('hasilDuplikat',     data.duplikat);
+            setEl('hasilTotal',        data.total);
+            setEl('hasilPeriode',      (data.periode ?? '') + ' ' + (data.pesan_tambahan ?? ''));
             openModal('modalHasilImport');
         } else {
+            let pesan = data.message ?? 'Terjadi kesalahan.';
             if (res.status === 422 && data.errors) {
-                Object.values(data.errors).flat().forEach(msg => {
-                    errList.insertAdjacentHTML('beforeend', `<li>${msg}</li>`);
-                });
-            } else {
-                errList.insertAdjacentHTML('beforeend', `<li>${data.message ?? 'Terjadi kesalahan.'}</li>`);
+                pesan = Object.values(data.errors).flat().join(' ');
             }
-            errBox.classList.remove('hidden');
+            showAlert('error', pesan);
+            btn.disabled = false;
         }
-    } catch {
-        errList.insertAdjacentHTML('beforeend', '<li>Gagal menghubungi server. Coba lagi.</li>');
-        errBox.classList.remove('hidden');
-    } finally {
+    } catch (e) {
+        console.error('Fetch error:', e);
+        showAlert('error', 'Gagal menghubungi server. Coba lagi.');
         btn.disabled = false;
+    } finally {
         spinner.classList.add('hidden');
     }
+}
+
+function showAlert(type, message) {
+    const el  = document.getElementById(type + '-alert');
+    const msg = document.getElementById(type + '-alert-msg');
+    if (!el || !msg) return;
+    msg.textContent = message;
+    el.classList.remove('hidden');
+    el.classList.add('flex');
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(() => {
+        el.classList.add('hidden');
+        el.classList.remove('flex');
+    }, 4000);
+}
+
+function hideAlert(type) {
+    const el = document.getElementById(type + '-alert');
+    if (!el) return;
+    el.classList.add('hidden');
+    el.classList.remove('flex');
 }
 </script>
 @endsection
