@@ -32,9 +32,11 @@ class KegiatanController extends Controller
         if ($request->filled('search')) {
             $query->where('nama_kegiatan', 'ilike', '%' . $request->search . '%');
         }
+
         if ($request->filled('jenis')) {
             $query->where('jenis_kegiatan', $request->jenis);
         }
+
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -46,7 +48,7 @@ class KegiatanController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'html'  => view('pages.kegiatan.table', compact('kegiatan', 'panitias'))->render(),
-                'stats' => $stats, // ← ini yang hilang sebelumnya
+                'stats' => $stats,
             ]);
         }
 
@@ -78,6 +80,7 @@ class KegiatanController extends Controller
         ]);
 
         $validated['status'] = Kegiatan::STATUS_AKTIF;
+
         Kegiatan::create($validated);
 
         if ($request->ajax()) {
@@ -94,6 +97,11 @@ class KegiatanController extends Controller
     public function show(Request $request, Kegiatan $kegiatan)
     {
         $kegiatan->load('panitia');
+
+        // Cek & tutup otomatis saat halaman detail dibuka
+        $kegiatan->tutupJikaSelesai();
+        $kegiatan->refresh();
+
         $kegiatan->transaksi_count = $kegiatan->transaksi()->count();
 
         if ($request->ajax()) {
@@ -131,6 +139,9 @@ class KegiatanController extends Controller
 
         $kegiatan->update($validated);
 
+        // Cek ulang setelah update (misal tanggal diubah jadi sudah lewat)
+        $kegiatan->tutupJikaSelesai();
+
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
@@ -160,7 +171,6 @@ class KegiatanController extends Controller
 
     public function destroy(Request $request, Kegiatan $kegiatan)
     {
-        // Guard — double check di server side
         if ($kegiatan->transaksi()->count() > 0) {
             $msg = 'Kegiatan tidak dapat dihapus karena memiliki transaksi.';
 

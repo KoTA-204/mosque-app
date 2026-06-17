@@ -13,7 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'permission' => \App\Http\Middleware\CheckPermission::class,
+            'active'     => \App\Http\Middleware\EnsureUserIsActive::class,
         ]);
+
         $middleware->redirectGuestsTo(function () {
             session()->flash('auth_redirect', true);
             return route('auth.login');
