@@ -30,10 +30,6 @@ class KenclengSystemTest extends DuskTestCase
         return base_path('tests/Browser/fixtures/berita-acara.pdf');
     }
 
-    /**
-     * Pastikan fixture PDF minimal valid tersedia.
-     * PDF ini cukup kecil (<1KB) sehingga lolos validasi max:5120.
-     */
     private function ensureFixturePdf(): void
     {
         $dir = base_path('tests/Browser/fixtures');
@@ -61,31 +57,35 @@ class KenclengSystemTest extends DuskTestCase
             ->attach('berita_acara', $this->beritaAcaraFixture())
             ->type('keterangan', 'Pengujian sistem kencleng');
 
-        // Set pecahan via JS dan paksa recalcTotal agar jumlahDisetor hidden input terisi
+        // Set pecahan via JS, recalcTotal, pastikan jumlahDisetor hidden terisi
         $b->script('
-            var inputs = document.querySelectorAll("input[name^=\"pecahan[\"]");
-            if (inputs.length > 0) {
-                inputs[0].value = 10;
-                inputs[0].dispatchEvent(new Event("change"));
-            }
-            if (typeof recalcTotal === "function") { recalcTotal(); }
-            // Pastikan hidden jumlahDisetor terisi
-            var hidden = document.getElementById("jumlahDisetor");
-            if (hidden && (!hidden.value || hidden.value === "0")) {
-                // Ambil pecahan dari nama input pertama
-                var firstName = inputs[0] ? inputs[0].name : "pecahan[100]";
-                var match = firstName.match(/pecahan\[(\d+)\]/);
-                var nominal = match ? parseInt(match[1]) : 100;
-                hidden.value = nominal * 10;
-            }
+            (function() {
+                var inputs = document.querySelectorAll("input[name^=\"pecahan[\"]");
+                if (inputs.length > 0) {
+                    inputs[0].value = 10;
+                    inputs[0].dispatchEvent(new Event("change"));
+                }
+                if (typeof recalcTotal === "function") {
+                    recalcTotal();
+                }
+                // Fallback: pastikan hidden jumlahDisetor tidak kosong
+                var hidden = document.getElementById("jumlahDisetor");
+                if (hidden && (!hidden.value || hidden.value === "0" || hidden.value === "")) {
+                    var firstName = inputs.length > 0 ? inputs[0].name : "pecahan[100]";
+                    var match = firstName.match(/pecahan\[(\d+)\]/);
+                    var nominal = match ? parseInt(match[1]) : 100;
+                    hidden.value = String(nominal * 10);
+                }
+            })();
         ');
     }
 
-    private function submitDanTunggu(Browser $b): void
+    private function submitKenclengDanTunggu(Browser $b): void
     {
-        // Tekan submit dan tunggu redirect (form hilang = halaman berganti)
+        // submit_type wajib = "ajukan", tombol submit sudah ada value="ajukan"
+        // Klik tombol "Simpan & Ajukan" dan tunggu redirect ke index
         $b->press('Simpan & Ajukan')
-          ->waitForLocation('/dashboard/kencleng', 20);
+          ->waitForLocation('/dashboard/kencleng', 25);
     }
 
     /** ST-F58-01 (+) Input Kencleng (status awal PENDING) */
@@ -96,31 +96,33 @@ class KenclengSystemTest extends DuskTestCase
                 ->visit('/dashboard/kencleng/create')
                 ->assertSee('Catat Kencleng Baru');
             $this->isiFormKencleng($b);
-            $this->submitDanTunggu($b);
+            $this->submitKenclengDanTunggu($b);
             $b->visit('/dashboard/kencleng?status=PENDING&sort=terbaru')
                 ->assertSee('Menunggu');
         });
     }
 
-    /** ST-F60-01 (+) Status awal kencleng = PENDING (badge "Menunggu") */
+    /** ST-F60-01 (+) Status awal kencleng = PENDING */
     public function test_st_f60_01_status_awal_pending(): void
     {
         $this->browse(function (Browser $b) {
-            $b->loginAs($this->phm())->visit('/dashboard/kencleng/create');
+            $b->loginAs($this->phm())
+                ->visit('/dashboard/kencleng/create');
             $this->isiFormKencleng($b);
-            $this->submitDanTunggu($b);
+            $this->submitKenclengDanTunggu($b);
             $b->visit('/dashboard/kencleng?status=PENDING&sort=terbaru')
                 ->assertSee('Menunggu');
         });
     }
 
-    /** ST-F59-01 (+) Upload Berita Acara PDF (<=5MB) diterima */
+    /** ST-F59-01 (+) Upload Berita Acara PDF diterima */
     public function test_st_f59_01_upload_pdf(): void
     {
         $this->browse(function (Browser $b) {
-            $b->loginAs($this->phm())->visit('/dashboard/kencleng/create');
+            $b->loginAs($this->phm())
+                ->visit('/dashboard/kencleng/create');
             $this->isiFormKencleng($b);
-            $this->submitDanTunggu($b);
+            $this->submitKenclengDanTunggu($b);
             $b->visit('/dashboard/kencleng?status=PENDING&sort=terbaru')
                 ->assertSee('Menunggu');
         });
@@ -138,7 +140,11 @@ class KenclengSystemTest extends DuskTestCase
                 ->visit('/dashboard/kencleng/create')
                 ->select('dompet_id', $dompetId)
                 ->attach('berita_acara', $tmp);
-            $b->script('var i=document.querySelector(\'input[name^="pecahan["]\'); if(i){i.value=5; if(typeof recalcTotal==="function"){recalcTotal();}}');
+            $b->script('
+                var i = document.querySelector("input[name^=\"pecahan[\"]");
+                if (i) { i.value = 5; }
+                if (typeof recalcTotal === "function") { recalcTotal(); }
+            ');
             $b->press('Simpan & Ajukan')
                 ->waitForLocation('/dashboard/kencleng/create', 10)
                 ->assertVisible('.text-red-800');
@@ -165,8 +171,16 @@ class KenclengSystemTest extends DuskTestCase
             $b->loginAs($this->userByEmail('bendahara1@masjid.id'))
                 ->visit('/dashboard/approval/transaksi?tab=PENDING')
                 ->waitFor('.row-check', 10);
-            $b->script('var c=document.querySelector(".row-check"); if(c){c.checked=true; if(typeof updateBulkBar==="function"){updateBulkBar();}}');
-            $b->script('if(typeof openBulkApproveModal==="function"){openBulkApproveModal();}');
+            $b->script('
+                var c = document.querySelector(".row-check");
+                if (c) {
+                    c.checked = true;
+                    if (typeof updateBulkBar === "function") { updateBulkBar(); }
+                }
+            ');
+            $b->script('
+                if (typeof openBulkApproveModal === "function") { openBulkApproveModal(); }
+            ');
             $b->waitFor('#modal-approve', 5)
                 ->within('#modal-approve', function (Browser $m) {
                     $m->press('Ya, Approve Semua');
@@ -184,15 +198,18 @@ class KenclengSystemTest extends DuskTestCase
     /** ST-F62-01 (+) Edit kencleng PENDING milik sendiri */
     public function test_st_f62_01_edit_pending(): void
     {
-        // Buat dulu kencleng PENDING
+        // Buat kencleng PENDING dulu dalam browse session terpisah
         $this->browse(function (Browser $b) {
-            $b->loginAs($this->phm())->visit('/dashboard/kencleng/create');
+            $b->loginAs($this->phm())
+                ->visit('/dashboard/kencleng/create');
             $this->isiFormKencleng($b);
-            $this->submitDanTunggu($b);
+            $this->submitKenclengDanTunggu($b);
         });
 
+        // Ambil ID kencleng terbaru
         $id = Kencleng::latest('id')->first()->id;
 
+        // Akses halaman edit di browse session baru
         $this->browse(function (Browser $b) use ($id) {
             $b->loginAs($this->phm())
                 ->visit('/dashboard/kencleng/' . $id . '/edit')

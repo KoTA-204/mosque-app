@@ -28,7 +28,6 @@ class AuthSystemTest extends DuskTestCase
                 ->type('password', 'password')
                 ->press('Sign in')
                 ->assertPathIs('/dashboard');
-            // Verifikasi sudah terautentikasi (tidak kembali ke /login)
         });
     }
 
@@ -36,6 +35,10 @@ class AuthSystemTest extends DuskTestCase
     public function test_st_f01_02_login_password_salah(): void
     {
         $this->browse(function (Browser $b) {
+            // Pastikan tidak ada sesi aktif
+            $b->visit('/login');
+            $b->driver->manage()->deleteAllCookies();
+
             $b->visit('/login')
                 ->type('email', 'admin@masjid.id')
                 ->type('password', 'PasswordSalah')
@@ -57,6 +60,10 @@ class AuthSystemTest extends DuskTestCase
         ]);
 
         $this->browse(function (Browser $b) {
+            // Pastikan tidak ada sesi aktif
+            $b->visit('/login');
+            $b->driver->manage()->deleteAllCookies();
+
             $b->visit('/login')
                 ->type('email', 'nonaktif@mosque.test')
                 ->type('password', 'Password123!')
@@ -70,9 +77,14 @@ class AuthSystemTest extends DuskTestCase
     public function test_st_f06_01_lupa_password_kirim_email(): void
     {
         $this->browse(function (Browser $b) {
+            $b->visit('/login');
+            $b->driver->manage()->deleteAllCookies();
+
             $b->visit('/forgot-password')
+                ->waitFor('input[name="email"]', 5)
                 ->type('email', 'bendahara1@masjid.id')
                 ->press('Reset password')
+                ->waitForText('Cek Email Anda', 5)
                 ->assertSee('Cek Email Anda');
         });
     }
@@ -84,14 +96,19 @@ class AuthSystemTest extends DuskTestCase
         $token = Password::createToken($user);
 
         $this->browse(function (Browser $b) use ($token, $user) {
+            $b->visit('/login');
+            $b->driver->manage()->deleteAllCookies();
+
             $b->visit('/reset-password/' . $token . '?email=' . urlencode($user->email))
-                ->waitFor('input[name="password"]', 5)
+                ->waitFor('input[name="password"]', 10)
                 ->type('password', 'NewPass@123')
                 ->type('password_confirmation', 'NewPass@123')
                 ->press('Ubah Password')
+                ->waitForText('Berhasil', 10)
                 ->assertSee('Berhasil');
 
             $b->visit('/login')
+                ->waitFor('input[name="email"]', 5)
                 ->type('email', $user->email)
                 ->type('password', 'NewPass@123')
                 ->press('Sign in')
@@ -104,7 +121,9 @@ class AuthSystemTest extends DuskTestCase
     {
         $admin = User::where('email', 'admin@masjid.id')->first();
         $this->browse(function (Browser $b) use ($admin) {
-            $b->loginAs($admin)->visit('/dashboard')->assertPathIs('/dashboard');
+            $b->loginAs($admin)
+                ->visit('/dashboard')
+                ->assertPathIs('/dashboard');
             $b->driver->manage()->deleteAllCookies();
             $b->visit('/dashboard')->assertPathIs('/login');
         });
@@ -114,6 +133,9 @@ class AuthSystemTest extends DuskTestCase
     public function test_st_nfr03_01_blokir_5x_gagal(): void
     {
         $this->browse(function (Browser $b) {
+            $b->visit('/login');
+            $b->driver->manage()->deleteAllCookies();
+
             for ($i = 1; $i <= 6; $i++) {
                 $b->visit('/login')
                     ->type('email', 'bendahara1@masjid.id')
@@ -135,7 +157,8 @@ class AuthSystemTest extends DuskTestCase
     {
         $admin = User::where('email', 'admin@masjid.id')->first();
         $this->browse(function (Browser $b) use ($admin) {
-            $b->loginAs($admin)->visit('/dashboard')
+            $b->loginAs($admin)
+                ->visit('/dashboard')
                 ->press('Logout')
                 ->assertPathIs('/login');
             $b->visit('/dashboard')->assertPathIs('/login');

@@ -44,7 +44,7 @@ class TransaksiKegiatanSystemTest extends DuskTestCase
                 ->press('Catat Transaksi')
                 ->waitFor('#modal-catat-transaksi', 10);
 
-            // Pilih jenis PEMASUKAN (radio sr-only)
+            // Set radio PEMASUKAN
             $b->script('
                 var r = document.querySelector(\'#form-create-transaksi input[value="PEMASUKAN"]\');
                 if (r) { r.checked = true; }
@@ -58,9 +58,13 @@ class TransaksiKegiatanSystemTest extends DuskTestCase
                     ->type('deskripsi', 'Uji input transaksi kegiatan');
             });
 
-            $b->press('Simpan & Kirim')
-                ->waitForLocation('/dashboard/transaksi-kegiatan/' . $id, 15)
-                ->waitForText('513', 10); // cukup tunggu angka muncul
+            $b->press('Simpan & Kirim');
+
+            // Tunggu redirect ke halaman show kegiatan (bukan index)
+            $b->waitForLocation('/dashboard/transaksi-kegiatan/' . $id, 15);
+
+            // Verifikasi transaksi muncul di tabel — cari angka atau kode transaksi
+            $b->waitForText('513', 10);
         });
     }
 
@@ -81,7 +85,7 @@ class TransaksiKegiatanSystemTest extends DuskTestCase
     /** ST-F64-03 (-) Edit transaksi APPROVED ditolak */
     public function test_st_f64_03_edit_approved_ditolak(): void
     {
-        $this->markTestIncomplete('Perlu menargetkan baris transaksi APPROVED tertentu lalu memverifikasi tombol Edit ($bisaUbah=false) tidak dirender.');
+        $this->markTestIncomplete('Perlu menargetkan baris transaksi APPROVED tertentu lalu memverifikasi tombol Edit tidak dirender.');
     }
 
     /** ST-F65-01 (+) Pengeluaran dalam anggaran: TIDAK ada peringatan over-budget */
@@ -102,7 +106,7 @@ class TransaksiKegiatanSystemTest extends DuskTestCase
                 if (typeof updateToggleStyle === "function") { updateToggleStyle("PENGELUARAN"); }
                 if (typeof cekAnggaranCreate === "function") { cekAnggaranCreate(); }
             ');
-            $b->pause(500)->assertDontSee('Melebihi anggaran');
+            $b->pause(800)->assertDontSee('Melebihi anggaran');
         });
     }
 

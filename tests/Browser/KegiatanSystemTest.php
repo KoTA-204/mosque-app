@@ -38,9 +38,9 @@ class KegiatanSystemTest extends DuskTestCase
                         ->select('jenis_kegiatan', 'SOSIAL')
                         ->select('panitia_id', $panitiaId);
                 });
-            $b->script('document.getElementById("create-anggaran-hidden").value=5000000;');
-            $b->script('document.getElementById("create-tanggal_mulai").value="' . now()->format('Y-m-d') . '";');
-            $b->script('document.getElementById("create-tanggal_selesai").value="' . now()->addDays(3)->format('Y-m-d') . '";');
+            $b->script('document.getElementById("create-anggaran-hidden").value = 5000000;');
+            $b->script('document.getElementById("create-tanggal_mulai").value = "' . now()->format('Y-m-d') . '";');
+            $b->script('document.getElementById("create-tanggal_selesai").value = "' . now()->addDays(3)->format('Y-m-d') . '";');
             $b->press('Simpan')
                 ->waitForText('Bakti Sosial Uji Sistem', 10)
                 ->assertSee('Bakti Sosial Uji Sistem');
@@ -61,39 +61,38 @@ class KegiatanSystemTest extends DuskTestCase
     /** ST-F63-03 (+) Edit Kegiatan (modal AJAX) */
     public function test_st_f63_03_edit_kegiatan(): void
     {
-        $id = (int) Kegiatan::where('nama_kegiatan', 'Renovasi Serambi Masjid')->value('id');
+        $id  = (int) Kegiatan::where('nama_kegiatan', 'Renovasi Serambi Masjid')->value('id');
+        $url = route('dashboard.kegiatan.update', $id);
 
-        $this->browse(function (Browser $b) use ($id) {
+        $this->browse(function (Browser $b) use ($id, $url) {
             $b->loginAs($this->admin())->visit('/dashboard/kegiatan');
 
-            // Buka modal edit via JS
+            // Buka modal edit
             $b->script('openEditModal(' . $id . ');');
             $b->waitFor('#editKegiatanForm', 10);
 
-            // Isi nama kegiatan
+            // Set nama via JS (bypass Alpine/flatpickr reactivity issue)
             $b->script('
-                var input = document.querySelector("#editKegiatanForm input[name=\'nama_kegiatan\']");
+                var input = document.querySelector("#editKegiatanForm input[name=\"nama_kegiatan\"]");
                 if (input) {
-                    input.value = "";
-                    input.dispatchEvent(new Event("input"));
-                }
-            ');
-            $b->script('
-                var input = document.querySelector("#editKegiatanForm input[name=\'nama_kegiatan\']");
-                if (input) {
-                    input.value = "Renovasi Serambi (Diedit)";
-                    input.dispatchEvent(new Event("input"));
+                    var nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                        window.HTMLInputElement.prototype, "value"
+                    ).set;
+                    nativeInputValueSetter.call(input, "Renovasi Serambi (Diedit)");
+                    input.dispatchEvent(new Event("input", { bubbles: true }));
                 }
             ');
 
-            // Submit via fungsi JS submitKegiatanForm langsung
-            $b->script('submitKegiatanForm("editKegiatanForm", "PUT", "' . route('dashboard.kegiatan.update', $id) . '");');
+            // Panggil fungsi submit JS langsung
+            $b->script('submitKegiatanForm("editKegiatanForm", "PUT", "' . $url . '");');
 
-            // Tunggu modal tertutup (alert sukses muncul) lalu reload halaman
-            $b->pause(3000)
-              ->visit('/dashboard/kegiatan')
-              ->waitForText('Renovasi Serambi (Diedit)', 10)
-              ->assertSee('Renovasi Serambi (Diedit)');
+            // Tunggu alert sukses muncul di #alertArea (AJAX sukses)
+            $b->waitForText('berhasil', 8);
+
+            // Reload halaman untuk verifikasi data tersimpan
+            $b->visit('/dashboard/kegiatan')
+                ->waitForText('Renovasi Serambi (Diedit)', 10)
+                ->assertSee('Renovasi Serambi (Diedit)');
         });
     }
 
