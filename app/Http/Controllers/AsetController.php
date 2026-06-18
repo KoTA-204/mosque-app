@@ -152,6 +152,8 @@ class AsetController extends Controller
 
     public function update(Request $request, Aset $aset)
     {
+        // status_aset TIDAK divalidasi/diubah di sini — itu domain toggleStatus().
+        // Modal edit memang nggak punya field untuk itu.
         $request->validate([
             'nama_aset'                => 'required|string|max:255',
             'kondisi_aset'             => 'required|in:BAIK,RUSAK RINGAN,RUSAK BERAT',
@@ -165,7 +167,6 @@ class AsetController extends Controller
             'tanggal_mulai_penyusutan' => 'nullable|date',
             'umur_manfaat'             => 'nullable|integer|min:1',
             'keterangan'               => 'nullable|string',
-            'status_aset'              => 'required|in:AKTIF,TIDAK AKTIF',
         ]);
 
         $dokumenPath = $aset->dokumen_pendukung;
@@ -191,13 +192,22 @@ class AsetController extends Controller
             'tanggal_mulai_penyusutan' => $disusutkan ? $request->tanggal_mulai_penyusutan : null,
             'umur_manfaat'             => $disusutkan ? $request->umur_manfaat : null,
             'keterangan'               => $request->keterangan,
-            'status_aset'              => $request->status_aset,
+            // status_aset TIDAK disentuh sama sekali — tetap nilai lama di DB.
             'nilai_buku'               => $disusutkan ? $aset->nilai_buku_real_time : (float) $request->nilai_tercatat,
             'akumulasi_penyusutan'     => $disusutkan ? $aset->akumulasi_real_time : 0,
         ]);
 
         if ($request->ajax()) {
-            return response()->json(['success' => true, 'message' => 'Aset berhasil diperbarui.']);
+            $message = 'Aset berhasil diperbarui.';
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'alert'   => (string) view('components.jurnal.alert', [
+                    'type'    => 'success',
+                    'message' => $message,
+                ]),
+            ]);
         }
 
         return redirect()->route('dashboard.aset.index')

@@ -12,6 +12,7 @@ use App\Models\Akun;
 use App\Models\Dompet;
 use App\Models\Kegiatan;
 use App\Models\KategoriTransaksi;
+use App\Models\Periode;
 use App\Services\TransaksiService;
 use App\Services\MutasiBankParserService;
 use Illuminate\Http\Request;
@@ -28,6 +29,8 @@ class TransaksiController extends Controller
 
     public function index(Request $request)
     {
+        $periodeAktif = Periode::aktif()->first();
+
         $query = Transaksi::with([
                 'kategoriTransaksi',
                 'dompet',
@@ -41,8 +44,10 @@ class TransaksiController extends Controller
                 ->orWhere('status_approval', 'APPROVED');
             });
 
-        // Filter
-        if ($request->filled('dari') && $request->filled('sampai')) {
+        // Filter periode aktif (prioritas di atas filter tanggal manual)
+        if ($request->boolean('periode_aktif')) {
+            $query->periodeAktif();
+        } elseif ($request->filled('dari') && $request->filled('sampai')) {
             $query->whereBetween('tanggal_transaksi', [
                 $request->dari,
                 $request->sampai,
@@ -50,6 +55,7 @@ class TransaksiController extends Controller
         } elseif ($request->filled('dari')) {
             $query->whereDate('tanggal_transaksi', $request->dari);
         }
+
         if ($request->filled('kategori_id')) {
             $query->where('kategori_transaksi_id', $request->kategori_id);
         }
@@ -86,7 +92,7 @@ class TransaksiController extends Controller
         $kegiatans = Kegiatan::orderBy('nama_kegiatan')->get();
 
         return view('pages.transaksi.index', compact(
-            'transaksis', 'stats', 'kategoris', 'akuns', 'dompets', 'kegiatans'
+            'transaksis', 'stats', 'kategoris', 'akuns', 'dompets', 'kegiatans', 'periodeAktif'
         ));
     }
 
@@ -131,20 +137,22 @@ class TransaksiController extends Controller
             'aset',
         ]);
 
-        $detailJurnals = $transaksi->jurnal
-            ->firstWhere('jenis_jurnal', 'UMUM')
-            ?->detailJurnal;
+        $jurnalUmum = $transaksi->jurnal->firstWhere('jenis_jurnal', 'UMUM');
 
-        $debit  = $detailJurnals?->firstWhere('tipe', 'DEBIT');   // ← fix: tipe bukan posisi
-        $kredit = $detailJurnals?->firstWhere('tipe', 'KREDIT');  // ← fix: tipe bukan posisi
+        $entries = $jurnalUmum?->detailJurnal
+            ->map(fn($d) => [
+                'akun_id'   => $d->akun_id,
+                'tipe'      => $d->tipe,
+                'nominal'   => (float) $d->nominal,
+                'akun_nama' => $d->akun?->nama_akun,
+            ])
+            ->values()
+            ->all() ?? [];
 
         return response()->json([
             'success' => true,
             'data'    => array_merge($transaksi->toArray(), [
-                'akun_debit_id'    => $debit?->akun_id,
-                'akun_kredit_id'   => $kredit?->akun_id,
-                'akun_debit_nama'  => $debit?->akun?->nama_akun,
-                'akun_kredit_nama' => $kredit?->akun?->nama_akun,
+                'jurnal_entries' => $entries,
             ]),
         ]);
     }
@@ -220,7 +228,6 @@ class TransaksiController extends Controller
                 bank: $request->bank,
             );
 
-            // Parsing gagal
             if (!empty($result['errors']) && empty($result['rows'])) {
                 return response()->json([
                     'success' => false,
@@ -229,7 +236,6 @@ class TransaksiController extends Controller
                 ], 422);
             }
 
-            // Simpan hasil parsing ke session
             $key = 'import_' . Auth::id() . '_' . time();
             session([$key => [
                 'bank'            => $request->bank,
@@ -294,15 +300,16 @@ class TransaksiController extends Controller
     public function importSimpan(Request $request)
     {
         $request->validate([
-            'import_key'                    => 'required|string',
-            'klasifikasi'                   => 'required|array',
-            'klasifikasi.*.no_referensi'    => 'required|string',
-            'klasifikasi.*.akun_debit_id'   => 'required|exists:akun,id',
-            'klasifikasi.*.akun_kredit_id'  => 'required|exists:akun,id',
-            'klasifikasi.*.skip'            => 'nullable|boolean',
+            'import_key'                      => 'required|string',
+            'klasifikasi'                     => 'required|array',
+            'klasifikasi.*.no_referensi'      => 'required|string',
+            'klasifikasi.*.entries'           => 'required|array|min:2',
+            'klasifikasi.*.entries.*.akun_id' => 'required|exists:akun,id',
+            'klasifikasi.*.entries.*.tipe'    => 'required|in:DEBIT,KREDIT',
+            'klasifikasi.*.entries.*.nominal' => 'required|numeric|min:1',
         ], [
-            'klasifikasi.*.akun_debit_id.required'  => 'Akun debit wajib dipilih pada setiap baris.',
-            'klasifikasi.*.akun_kredit_id.required' => 'Akun kredit wajib dipilih pada setiap baris.',
+            'klasifikasi.*.entries.required'           => 'Setiap baris wajib memiliki minimal 1 akun debit dan 1 akun kredit.',
+            'klasifikasi.*.entries.*.akun_id.required' => 'Akun wajib dipilih pada setiap baris jurnal.',
         ]);
 
         $key  = $request->import_key;
@@ -312,6 +319,26 @@ class TransaksiController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Sesi import tidak ditemukan atau sudah kedaluwarsa.',
+            ], 422);
+        }
+
+        // Validasi balance per baris sebelum diproses
+        $errorBalance = [];
+        foreach ($request->klasifikasi as $row) {
+            $entries = $row['entries'] ?? [];
+            $debit   = collect($entries)->where('tipe', 'DEBIT')->sum('nominal');
+            $kredit  = collect($entries)->where('tipe', 'KREDIT')->sum('nominal');
+
+            if (abs($debit - $kredit) > 0.5) {
+                $errorBalance[] = "Baris {$row['no_referensi']}: total debit (Rp" . number_format($debit, 0, ',', '.') .
+                    ") tidak sama dengan total kredit (Rp" . number_format($kredit, 0, ',', '.') . ").";
+            }
+        }
+
+        if (!empty($errorBalance)) {
+            return response()->json([
+                'success' => false,
+                'message' => implode(' ', $errorBalance),
             ], 422);
         }
 
@@ -327,7 +354,10 @@ class TransaksiController extends Controller
                 foreach ($result['gagalPeriode'] as $tanggal => $jumlah) {
                     $bulanList[] = \Carbon\Carbon::parse($tanggal)->translatedFormat('F Y') . " ({$jumlah} transaksi)";
                 }
-                $pesanTambahan = ' Beberapa transaksi dilewati karena periode belum aktif: ' . implode(', ', array_unique($bulanList)) . '. Aktifkan periode tersebut lalu impor ulang.';
+                $pesanTambahan .= ' Beberapa transaksi dilewati karena periode belum aktif: ' . implode(', ', array_unique($bulanList)) . '. Aktifkan periode tersebut lalu impor ulang.';
+            }
+            if (!empty($result['gagalBalance'])) {
+                $pesanTambahan .= ' ' . count($result['gagalBalance']) . ' transaksi dilewati karena jurnal tidak balance (total debit ≠ total kredit).';
             }
 
             return response()->json([

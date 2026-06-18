@@ -5,6 +5,7 @@ use App\Models\Transaksi;
 use App\Models\BuktiTransaksi;
 use App\Models\Jurnal;
 use App\Models\DetailJurnal;
+use App\Models\Periode;
 use App\Http\Requests\StoreTransaksiRequest;
 use App\Http\Requests\UpdateTransaksiRequest;
 use Illuminate\Support\Facades\Auth;
@@ -15,30 +16,34 @@ class TransaksiService
 {
     public function store(StoreTransaksiRequest $request, bool $force = false): Transaksi
     {
-        // Cek duplikat SEBELUM transaction agar read tidak terpengaruh nested savepoint
-        if (!$force) {
-            $duplikat = Transaksi::with(['kategoriTransaksi', 'dompet'])
-                ->whereDate('tanggal_transaksi', $request->tanggal_transaksi)
-                ->where('jumlah', number_format((float)$request->jumlah, 2, '.', ''))
-                ->where('jenis_transaksi', $request->jenis_transaksi)
-                ->where('dompet_id', $request->dompet_id)
-                ->first();
+        return DB::transaction(function () use ($request, $force) {
 
-            if ($duplikat) {
-                throw new \RuntimeException(
-                    'DUPLIKAT_WARNING:' . json_encode([
-                        'tanggal'  => $duplikat->tanggal_transaksi->format('d M Y'),
-                        'jumlah'   => number_format($duplikat->jumlah, 0, ',', '.'),
-                        'jenis'    => $duplikat->jenis_transaksi,
-                        'deskripsi'=> $duplikat->deskripsi ?? '-',
-                        'kategori' => $duplikat->kategoriTransaksi?->nama_kategori ?? '-',
-                        'dompet'   => $duplikat->dompet?->nama_dompet ?? '-',
-                    ])
-                );
+            $entries = $request->input('jurnal', []);
+            $jumlah  = $this->totalDebit($entries);
+
+            if (!$force) {
+                $duplikat = Transaksi::with(['kategoriTransaksi', 'dompet'])
+                    ->where('tanggal_transaksi', $request->tanggal_transaksi)
+                    ->where('jumlah', $jumlah)
+                    ->where('jenis_transaksi', $request->jenis_transaksi)
+                    ->where('dompet_id', $request->dompet_id)
+                    ->first();
+
+                if ($duplikat) {
+                    throw new \RuntimeException(
+                        'DUPLIKAT_WARNING:' . json_encode([
+                            'tanggal'   => $duplikat->tanggal_transaksi->translatedFormat('d M Y'),
+                            'jumlah'    => number_format($duplikat->jumlah, 0, ',', '.'),
+                            'jenis'     => $duplikat->jenis_transaksi,
+                            'deskripsi' => $duplikat->deskripsi ?? '-',
+                            'kategori'  => $duplikat->kategoriTransaksi?->nama_kategori ?? '-',
+                            'dompet'    => $duplikat->dompet?->nama_dompet ?? '-',
+                        ])
+                    );
+                }
             }
-        }
 
-        return DB::transaction(function () use ($request) {
+            // 1. Simpan transaksi (jumlah dihitung dari total debit jurnal)
             $transaksi = Transaksi::create([
                 'dompet_id'             => $request->dompet_id,
                 'kegiatan_id'           => null,
@@ -46,25 +51,20 @@ class TransaksiService
                 'kategori_transaksi_id' => $request->kategori_transaksi_id,
                 'tanggal_transaksi'     => $request->tanggal_transaksi,
                 'jenis_transaksi'       => $request->jenis_transaksi,
-                'jumlah'                => $request->jumlah,
+                'jumlah'                => $jumlah,
                 'deskripsi'             => $request->deskripsi,
                 'catatan'               => $request->catatan,
                 'status_approval'       => null,
                 'status_jurnal'         => 'MAPPED',
             ]);
 
-            $this->buatJurnalUmum(
-                $transaksi,
-                $request->akun_debit_id,
-                $request->akun_kredit_id,
-                $request->jumlah,
-                $request->deskripsi,
-            );
+            // 2. Jurnal entri multi debit & kredit
+            $this->buatJurnalUmum($transaksi, $entries, $request->deskripsi);
 
             $this->uploadBukti($transaksi, $request->file('bukti_transaksi') ?? []);
 
             if ($request->boolean('is_aset')) {
-                $this->simpanAset($transaksi, $request->all());
+                $this->simpanAset($transaksi, array_merge($request->all(), ['jumlah' => $jumlah]));
             }
 
             return $transaksi->load('buktiTransaksi', 'jurnal.detailJurnal.akun', 'aset');
@@ -74,28 +74,27 @@ class TransaksiService
     public function update(UpdateTransaksiRequest $request, Transaksi $transaksi): Transaksi
     {
         return DB::transaction(function () use ($request, $transaksi) {
+
+            $entries = $request->input('jurnal', []);
+            $jumlah  = $this->totalDebit($entries);
+
             $transaksi->update([
                 'dompet_id'         => $request->dompet_id,
                 'tanggal_transaksi' => $request->tanggal_transaksi,
                 'jenis_transaksi'   => $request->jenis_transaksi,
-                'jumlah'            => $request->jumlah,
+                'jumlah'            => $jumlah,
                 'deskripsi'         => $request->deskripsi,
                 'catatan'           => $request->catatan,
             ]);
 
+            // Hapus jurnal & detail lama, ganti dengan yang baru
             $jurnalLama = $transaksi->jurnal()->where('jenis_jurnal', 'UMUM')->first();
             if ($jurnalLama) {
                 $jurnalLama->detailJurnal()->delete();
                 $jurnalLama->delete();
             }
 
-            $this->buatJurnalUmum(
-                $transaksi,
-                $request->akun_debit_id,
-                $request->akun_kredit_id,
-                $request->jumlah,
-                $request->deskripsi,
-            );
+            $this->buatJurnalUmum($transaksi, $entries, $request->deskripsi);
 
             $this->uploadBukti($transaksi, $request->file('bukti_transaksi') ?? []);
 
@@ -127,6 +126,7 @@ class TransaksiService
         $dilewati     = 0;
         $duplikat     = 0;
         $gagalPeriode = [];
+        $gagalBalance = [];
 
         foreach ($rowsMap as $ref => $row) {
             if ($row['is_duplikat']) {
@@ -135,7 +135,8 @@ class TransaksiService
             }
 
             $klas = $klasMap->get($ref);
-            if (!$klas) {
+
+            if (!$klas || empty($klas['entries'])) {
                 $dilewati++;
                 continue;
             }
@@ -148,7 +149,8 @@ class TransaksiService
 
             $tanggal = substr($row['waktu_transaksi'] ?? now()->toDateString(), 0, 10);
 
-            $periode = \App\Models\Periode::aktif()
+            // Cek periode aktif untuk tanggal baris ini
+            $periode = Periode::aktif()
                 ->where('tanggal_awal', '<=', $tanggal)
                 ->where('tanggal_akhir', '>=', $tanggal)
                 ->first();
@@ -156,6 +158,20 @@ class TransaksiService
             if (!$periode) {
                 $dilewati++;
                 $gagalPeriode[$tanggal] = ($gagalPeriode[$tanggal] ?? 0) + 1;
+                continue;
+            }
+
+            // Validasi balance: total debit = total kredit = jumlah mutasi bank
+            $totalDebit  = collect($klas['entries'])
+                ->filter(fn($e) => strtoupper($e['tipe'] ?? '') === 'DEBIT')
+                ->sum(fn($e) => (float) ($e['nominal'] ?? 0));
+            $totalKredit = collect($klas['entries'])
+                ->filter(fn($e) => strtoupper($e['tipe'] ?? '') === 'KREDIT')
+                ->sum(fn($e) => (float) ($e['nominal'] ?? 0));
+
+            if (abs($totalDebit - $totalKredit) > 0.5 || abs($totalDebit - (float) $row['jumlah']) > 0.5) {
+                $dilewati++;
+                $gagalBalance[] = $ref;
                 continue;
             }
 
@@ -174,14 +190,7 @@ class TransaksiService
                     'status_jurnal'         => 'MAPPED',
                 ]);
 
-                $this->buatJurnalUmum(
-                    $transaksi,
-                    $klas['akun_debit_id'],
-                    $klas['akun_kredit_id'],
-                    $row['jumlah'],
-                    $row['deskripsi'],
-                    $periode,
-                );
+                $this->buatJurnalUmum($transaksi, $klas['entries'], $row['deskripsi'], $periode);
             });
 
             $tersimpan++;
@@ -193,18 +202,48 @@ class TransaksiService
             'duplikat'     => $duplikat,
             'total'        => $rowsMap->count(),
             'gagalPeriode' => $gagalPeriode,
+            'gagalBalance' => $gagalBalance,
         ];
     }
 
+    /**
+     * Buat jurnal umum dengan banyak baris debit/kredit (general ledger entries).
+     * $entries: [['akun_id' => int, 'tipe' => 'DEBIT'|'KREDIT', 'nominal' => float], ...]
+     */
     private function buatJurnalUmum(
         Transaksi $transaksi,
-        int $akunDebitId,
-        int $akunKreditId,
-        float $jumlah,
+        array $entries,
         ?string $deskripsi = null,
-        ?\App\Models\Periode $periode = null
+        ?Periode $periode = null
     ): Jurnal {
-        $periode = \App\Models\Periode::aktif()
+        if (count($entries) < 2) {
+            throw new \RuntimeException('Jurnal minimal harus memiliki 1 baris debit dan 1 baris kredit.');
+        }
+
+        $totalDebit  = 0;
+        $totalKredit = 0;
+
+        foreach ($entries as $e) {
+            $tipe    = strtoupper($e['tipe'] ?? '');
+            $nominal = (float) ($e['nominal'] ?? 0);
+
+            if ($tipe === 'DEBIT') {
+                $totalDebit += $nominal;
+            } elseif ($tipe === 'KREDIT') {
+                $totalKredit += $nominal;
+            } else {
+                throw new \RuntimeException("Tipe jurnal tidak valid: {$tipe}");
+            }
+        }
+
+        if (abs($totalDebit - $totalKredit) > 0.5) {
+            throw new \RuntimeException(
+                'Jurnal tidak balance: total debit Rp' . number_format($totalDebit, 0, ',', '.') .
+                ' tidak sama dengan total kredit Rp' . number_format($totalKredit, 0, ',', '.')
+            );
+        }
+
+        $periode = $periode ?? Periode::aktif()
             ->where('tanggal_awal', '<=', $transaksi->tanggal_transaksi)
             ->where('tanggal_akhir', '>=', $transaksi->tanggal_transaksi)
             ->first();
@@ -224,26 +263,28 @@ class TransaksiService
             'status'       => 'DRAFT',
         ]);
 
-        DetailJurnal::insert([
-            [
+        $rows = [];
+        foreach ($entries as $e) {
+            $rows[] = [
                 'jurnal_id'  => $jurnal->id,
-                'akun_id'    => $akunDebitId,
-                'tipe'       => 'DEBIT',
-                'nominal'    => $jumlah,
+                'akun_id'    => $e['akun_id'],
+                'tipe'       => strtoupper($e['tipe']),
+                'nominal'    => $e['nominal'],
                 'created_at' => now(),
                 'updated_at' => now(),
-            ],
-            [
-                'jurnal_id'  => $jurnal->id,
-                'akun_id'    => $akunKreditId,
-                'tipe'       => 'KREDIT',
-                'nominal'    => $jumlah,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+            ];
+        }
+
+        DetailJurnal::insert($rows);
 
         return $jurnal;
+    }
+
+    private function totalDebit(array $entries): float
+    {
+        return collect($entries)
+            ->filter(fn($e) => strtoupper($e['tipe'] ?? '') === 'DEBIT')
+            ->sum(fn($e) => (float) ($e['nominal'] ?? 0));
     }
 
     private function uploadBukti(Transaksi $transaksi, array $files): void
