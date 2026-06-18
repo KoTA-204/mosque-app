@@ -27,10 +27,11 @@ class StoreTransaksiRequest extends FormRequest
             'jenis_transaksi'       => 'required|in:PEMASUKAN,PENGELUARAN',
             'tanggal_transaksi'     => 'required|date',
             'kategori_transaksi'    => 'nullable|exists:kategori_transaksi_id',
-            'jumlah'                => 'required|numeric|min:1',
             'dompet_id'             => 'required|exists:dompet,id',
-            'akun_debit_id'         => 'required|exists:akun,id',
-            'akun_kredit_id'        => 'required|exists:akun,id',
+            'jurnal'                => 'required|array|min:2',
+            'jurnal.*.akun_id'      => 'required|exists:akun,id',
+            'jurnal.*.tipe'         => 'required|in:DEBIT,KREDIT',
+            'jurnal.*.nominal'      => 'required|numeric|min:1',
             'deskripsi'             => 'nullable|string|max:500',
             'catatan'               => 'nullable|string|max:500',
             'bukti_transaksi'       => 'nullable|array',
@@ -61,8 +62,6 @@ class StoreTransaksiRequest extends FormRequest
         return [
             'jenis_transaksi.required'       => 'Jenis transaksi wajib dipilih',
             'tanggal_transaksi.required'     => 'Tanggal wajib diisi',
-            'jumlah.required'                => 'Jumlah wajib diisi',
-            'jumlah.min'                     => 'Jumlah harus lebih dari 0',
             'akun_debit_id.required'         => 'Akun debit wajib dipilih.',
             'akun_kredit_id.required'        => 'Akun kredit wajib dipilih.',
             'dompet_id.required'             => 'Dompet wajib dipilih',
@@ -88,5 +87,31 @@ class StoreTransaksiRequest extends FormRequest
                 'is_aset' => filter_var($this->is_aset, FILTER_VALIDATE_BOOLEAN),
             ]);
         }
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $entries = $this->input('jurnal', []);
+
+            $totalDebit  = 0;
+            $totalKredit = 0;
+
+            foreach ($entries as $e) {
+                $tipe    = strtoupper($e['tipe'] ?? '');
+                $nominal = (float) ($e['nominal'] ?? 0);
+
+                if ($tipe === 'DEBIT')  $totalDebit  += $nominal;
+                if ($tipe === 'KREDIT') $totalKredit += $nominal;
+            }
+
+            if (abs($totalDebit - $totalKredit) > 0.5) {
+                $validator->errors()->add(
+                    'jurnal',
+                    'Total debit (Rp' . number_format($totalDebit, 0, ',', '.') .
+                    ') harus sama dengan total kredit (Rp' . number_format($totalKredit, 0, ',', '.') . ').'
+                );
+            }
+        });
     }
 }

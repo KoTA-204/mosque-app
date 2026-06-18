@@ -104,6 +104,13 @@
 
             <div class="ml-auto flex items-center gap-2 flex-wrap">
 
+                <label class="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-1.5 cursor-pointer hover:border-gray-300 transition-colors">
+                    <input type="checkbox" id="filterPeriodeAktif" onchange="onTogglePeriodeAktif()"
+                        {{ request()->boolean('periode_aktif') ? 'checked' : '' }}
+                        class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                    <span class="text-sm text-gray-600">Periode aktif saja</span>
+                </label>
+            
                 {{-- Tanggal --}}
                 <div class="relative">
                     <div class="bg-white border border-gray-200 rounded-xl px-3 py-1.5 flex items-center gap-2 hover:border-gray-300 transition-colors cursor-pointer"
@@ -216,31 +223,31 @@
         </div>
 
         {{-- Tabel --}}
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm" style="min-width: 1200px;">
+        <div>
+            <table class="w-full text-sm table-fixed">
                 <thead>
                     <tr class="border-b border-gray-100">
-                        <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-10">No</th>
-                        <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-24">Tanggal</th>
-                        <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-32">Jumlah</th>
-                        <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Keterangan</th>
-                        <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-32">Kategori</th>
-                        <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-28">Jenis</th>
-                        <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-24">Status</th>
-                        <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-24">Jurnal</th>
-                        <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-36">Akun</th>
-                        <th class="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-28">Debit</th>
-                        <th class="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-28">Kredit</th>
-                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-16">Bukti</th>
-                        <th class="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 w-20">Aksi</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[3%]">No</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[7%]">Tanggal</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[9%]">Jumlah</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[15%]">Keterangan</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[7%]">Kategori</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 py-3 w-[10%]">Jenis</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 py-3 w-[9%]">Status</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 py-3 w-[9%]">Jurnal</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[18%]">Detail Jurnal</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[4%]">Bukti</th>
+                        <th class="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[9%]">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
                 @forelse ($transaksis as $i => $t)
                     @php
-                        $jurnal      = $t->jurnal->firstWhere('jenis_jurnal', 'UMUM');
-                        $debitEntri  = $jurnal?->detailJurnal->firstWhere('tipe', 'DEBIT');
-                        $kreditEntri = $jurnal?->detailJurnal->firstWhere('tipe', 'KREDIT');
+                        $jurnal       = $t->jurnal->firstWhere('jenis_jurnal', 'UMUM');
+                        $detailJurnal = $jurnal?->detailJurnal ?? collect();
+
+                        $jurnalLines = $detailJurnal->where('tipe', 'DEBIT')->values()
+                            ->concat($detailJurnal->where('tipe', 'KREDIT')->values());
 
                         $dariBendahara = is_null($t->status_approval);
                         $dariApproval  = $t->status_approval === 'APPROVED';
@@ -249,65 +256,64 @@
 
                         $isUnmapped = $dariApproval && $t->status_jurnal === 'UNMAPPED';
 
-                        // Edit/hapus boleh jika: belum mapping ATAU jurnal masih DRAFT
                         $bisaEditHapus = $isUnmapped || $jurnal?->status === 'DRAFT';
                     @endphp
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-4 py-3 text-gray-400 text-xs">{{ $transaksis->firstItem() + $i }}</td>
-                        <td class="px-4 py-3 text-gray-700">{{ $t->tanggal_transaksi->format('d M Y') }}</td>
-                        <td class="px-4 py-3 font-medium text-gray-900">
+                    <tr class="hover:bg-gray-50 transition-colors align-top">
+                        <td class="px-3 py-3 text-gray-400 text-xs">{{ $transaksis->firstItem() + $i }}</td>
+                        <td class="px-3 py-3 text-gray-700 text-xs">{{ $t->tanggal_transaksi->translatedFormat('d M Y') }}</td>
+                        <td class="px-3 py-3 font-medium text-gray-900 text-xs break-words">
                             Rp {{ number_format($t->jumlah, 0, ',', '.') }}
                         </td>
-                        <td class="px-4 py-3 text-gray-600 max-w-xs">
-                            <span class="line-clamp-2">{{ $t->deskripsi ?? '-' }}</span>
+                        <td class="px-3 py-3 text-gray-600 text-xs">
+                            <span class="line-clamp-2 break-words">{{ $t->deskripsi ?? '-' }}</span>
                         </td>
-                        <td class="px-4 py-3 text-gray-600">{{ $t->kategoriTransaksi?->nama_kategori ?? '-' }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-3 py-3 text-gray-600 text-xs break-words">{{ $t->kategoriTransaksi?->nama_kategori ?? '-' }}</td>
+                        <td class="px-2 py-3 text-xs">
                             <span @class([
-                                'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+                                'inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium',
                                 'bg-green-100 text-green-800' => $t->jenis_transaksi === 'PEMASUKAN',
                                 'bg-pink-100 text-pink-800'   => $t->jenis_transaksi === 'PENGELUARAN',
                             ])>
                                 {{ $t->jenis_transaksi === 'PEMASUKAN' ? 'Pemasukan' : 'Pengeluaran' }}
                             </span>
                         </td>
-                        <td class="px-4 py-3">
+                        <td class="px-2 py-3 text-xs">
                             @if($dariApproval)
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
                                     Approved
                                 </span>
                             @else
                                 <span class="text-gray-300 text-xs">–</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3">
+                        <td class="px-2 py-3 text-xs">
                             @if($t->status_jurnal === 'UNMAPPED')
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
                                     Unmapped
                                 </span>
                             @elseif($t->status_jurnal === 'MAPPED')
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                                     Mapped
                                 </span>
                             @else
                                 <span class="text-gray-300 text-xs">–</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-xs text-gray-600">
-                            <div>{{ $debitEntri?->akun->nama_akun ?? '-' }}</div>
-                            <div class="text-gray-400">{{ $kreditEntri?->akun->nama_akun ?? '-' }}</div>
+                        <td class="px-3 py-3 text-xs text-gray-600">
+                            @forelse($jurnalLines as $line)
+                                <div class="flex items-center justify-between gap-2 mb-0.5">
+                                    <span class="break-words {{ $line->tipe === 'KREDIT' ? 'text-gray-400' : '' }}">
+                                        {{ $line->akun->nama_akun ?? '-' }}
+                                    </span>
+                                    <span class="font-medium whitespace-nowrap {{ $line->tipe === 'DEBIT' ? 'text-red-600' : 'text-green-700' }}">
+                                        Rp {{ number_format($line->nominal, 0, ',', '.') }}
+                                    </span>
+                                </div>
+                            @empty
+                                <span class="text-gray-300">-</span>
+                            @endforelse
                         </td>
-                        <td class="px-4 py-3 text-right font-medium text-red-600 text-xs">
-                            @if($debitEntri) Rp {{ number_format($t->jumlah, 0, ',', '.') }}
-                            @else <span class="text-gray-300">-</span>
-                            @endif
-                        </td>
-                        <td class="px-4 py-3 text-right font-medium text-green-700 text-xs">
-                            @if($kreditEntri) Rp {{ number_format($t->jumlah, 0, ',', '.') }}
-                            @else <span class="text-gray-300">-</span>
-                            @endif
-                        </td>
-                        <td class="px-4 py-3 text-center">
+                        <td class="px-3 py-3 text-center">
                             @if($t->buktiTransaksi->isNotEmpty())
                                 <button onclick="lihatBukti({{ $t->id }})" title="Lihat bukti"
                                     class="text-blue-500 hover:text-blue-700 transition-colors">
@@ -322,9 +328,8 @@
                                 <span class="text-gray-300 text-xs">-</span>
                             @endif
                         </td>
-                        <td class="px-5 py-3">
+                        <td class="px-3 py-3">
                             <div class="flex items-center justify-end gap-1">
-
                                 @if($bisaEditHapus)
                                     <button onclick="editTransaksi({{ $t->id }})" title="{{ $isUnmapped ? 'Petakan Akun' : 'Edit' }}"
                                         class="p-1.5 transition-colors {{ $isUnmapped ? 'text-gray-400 hover:text-amber-700' : 'text-gray-400 hover:text-gray-700' }}">
@@ -340,17 +345,15 @@
                                                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                         </svg>
                                     </button>
-
                                 @else
                                     <span class="text-gray-300 text-xs">–</span>
                                 @endif
-
                             </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="11" class="px-4 py-16 text-center text-gray-400 text-sm">
+                        <td colspan="10" class="px-4 py-16 text-center text-gray-400 text-sm">
                             Belum ada data transaksi.
                         </td>
                     </tr>
@@ -536,19 +539,38 @@ function editTransaksi(id) {
         const f = document.getElementById('formEdit');
         f.action = `/dashboard/transaksi/${id}`;
 
-        // Helper aman — skip jika field tidak ada di form
         const setVal = (name, val) => {
             const el = f.querySelector(`[name=${name}]`);
             if (el) el.value = val ?? '';
         };
 
-        setVal('tanggal_transaksi',     data.tanggal_transaksi?.substring(0, 10));
-        setVal('dompet_id',             data.dompet_id);
-        setVal('jumlah',                parseFloat(data.jumlah) || '');
-        setVal('jenis_transaksi',       data.jenis_transaksi);
-        setVal('akun_debit_id',         data.akun_debit_id);
-        setVal('akun_kredit_id',        data.akun_kredit_id);
-        setVal('deskripsi',             data.deskripsi);
+        if (typeof fpEditTanggal !== 'undefined' && fpEditTanggal) {
+            fpEditTanggal.setDate(data.tanggal_transaksi?.substring(0, 10), true);
+        }
+        setVal('dompet_id',         data.dompet_id);
+        setVal('jenis_transaksi',   data.jenis_transaksi);
+        setVal('deskripsi',         data.deskripsi);
+
+        renderExistingBukti(data.bukti_transaksi ?? []);
+        document.getElementById('listBuktiEdit').innerHTML = '';
+        document.getElementById('inputBuktiEdit').value = '';
+
+        // Isi ulang tabel jurnal dari jurnal_entries (multi akun debit/kredit)
+        const tbody = document.getElementById('jurnalEditBody');
+        tbody.innerHTML = '';
+        const entries = data.jurnal_entries ?? [];
+
+        if (entries.length > 0) {
+            entries.forEach(e =>
+                buatBarisJurnal('jurnalEditBody', 'jurnalEdit', akunListEdit, e.tipe, e.akun_id, e.nominal)
+            );
+        } else {
+            // Transaksi belum dipetakan ke akun (status UNMAPPED)
+            const jumlahAwal = data.jumlah ?? '';
+            buatBarisJurnal('jurnalEditBody', 'jurnalEdit', akunListEdit, 'DEBIT', '', jumlahAwal);
+            buatBarisJurnal('jurnalEditBody', 'jurnalEdit', akunListEdit, 'KREDIT', '', jumlahAwal);
+        }
+        hitungTotalJurnal('jurnalEditBody', 'jurnalEdit');
 
         openModal('modalEdit');
     })
@@ -717,23 +739,41 @@ document.addEventListener('DOMContentLoaded', function () {
     fp = flatpickr('#flatpickrInput', {
         mode: 'range',
         dateFormat: 'Y-m-d',
-        inline: true, 
+        inline: true,
+        locale: {
+            firstDayOfWeek: 1,
+            weekdays: {
+                shorthand: ['Min','Sen','Sel','Rab','Kam','Jum','Sab'],
+                longhand:  ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'],
+            },
+            months: {
+                shorthand: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+                longhand:  ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],
+            },
+        },
         defaultDate: selectedDari && selectedSampai
             ? [selectedDari, selectedSampai]
             : (selectedDari ? [selectedDari] : []),
+        onReady: function (selectedDates, dateStr, instance) {
+            instance.calendarContainer.classList.add('kalender-kecil');
+        },
         onChange: function (selectedDates) {
             if (selectedDates.length === 2) {
                 selectedDari   = fp.formatDate(selectedDates[0], 'Y-m-d');
                 selectedSampai = fp.formatDate(selectedDates[1], 'Y-m-d');
             } else if (selectedDates.length === 1) {
                 selectedDari   = fp.formatDate(selectedDates[0], 'Y-m-d');
-                selectedSampai = selectedDari; // satu hari
+                selectedSampai = selectedDari;
             }
         },
     });
 
     // Tampilkan label awal jika ada filter aktif
     updateDateLabel();
+
+    if (document.getElementById('filterPeriodeAktif').checked) {
+        document.getElementById('dateRangeDisplay').classList.add('opacity-50', 'pointer-events-none');
+    }
 
     // Tutup dropdown saat klik di luar
     document.addEventListener('click', function (e) {
@@ -827,20 +867,39 @@ function formatTanggal(str) {
 }
 
 function applyFilter() {
-    const p        = new URLSearchParams();
-    const perPage  = document.getElementById('filterPerPage').value;
-    const dari     = document.getElementById('filterTanggalDari').value;
-    const sampai   = document.getElementById('filterTanggalSampai').value;
-    const akun     = document.getElementById('filterAkun').value;
-    const search   = document.getElementById('filterSearch').value;
+    const p             = new URLSearchParams();
+    const perPage       = document.getElementById('filterPerPage').value;
+    const periodeAktif  = document.getElementById('filterPeriodeAktif').checked;
+    const dari          = document.getElementById('filterTanggalDari').value;
+    const sampai        = document.getElementById('filterTanggalSampai').value;
+    const akun          = document.getElementById('filterAkun').value;
+    const search        = document.getElementById('filterSearch').value;
 
     if (perPage && perPage !== '10') p.set('per_page', perPage);
-    if (dari)     p.set('dari', dari);
-    if (sampai)   p.set('sampai', sampai);
-    if (akun)     p.set('akun_id', akun);
-    if (search)   p.set('search', search);
+
+    if (periodeAktif) {
+        p.set('periode_aktif', '1');
+    } else {
+        if (dari)   p.set('dari', dari);
+        if (sampai) p.set('sampai', sampai);
+    }
+
+    if (akun)   p.set('akun_id', akun);
+    if (search) p.set('search', search);
 
     window.location.search = p.toString();
+}
+
+function onTogglePeriodeAktif() {
+    const checked = document.getElementById('filterPeriodeAktif').checked;
+    if (checked) {
+        document.getElementById('filterTanggalDari').value   = '';
+        document.getElementById('filterTanggalSampai').value = '';
+        document.getElementById('dateRangeDisplay').classList.add('opacity-50', 'pointer-events-none');
+    } else {
+        document.getElementById('dateRangeDisplay').classList.remove('opacity-50', 'pointer-events-none');
+    }
+    applyFilter();
 }
 </script>
 @endsection

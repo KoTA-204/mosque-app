@@ -24,58 +24,6 @@
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
-                Jumlah <span class="text-red-500">*</span>
-            </label>
-            <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 select-none">Rp</span>
-                <input type="number" name="jumlah" required min="1"
-                    placeholder="0"
-                    class="w-full h-10 pl-9 pr-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
-            </div>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4 mb-4">
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-                Akun Debit <span class="text-red-500">*</span>
-            </label>
-            <select name="akun_debit_id" required
-                class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
-                <option value="">Pilih akun debit</option>
-                @foreach ($akuns as $a)
-                    <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-                Akun Kredit <span class="text-red-500">*</span>
-            </label>
-            <select name="akun_kredit_id" required
-                class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
-                <option value="">Pilih akun kredit</option>
-                @foreach ($akuns as $a)
-                    <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
-                @endforeach
-            </select>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4 mb-4">
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-                Jenis Transaksi <span class="text-red-500">*</span>
-            </label>
-            <select name="jenis_transaksi" required
-                class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
-                <option value="">Pilih jenis transaksi</option>
-                <option value="PEMASUKAN">Pemasukan</option>
-                <option value="PENGELUARAN">Pengeluaran</option>
-            </select>
-        </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
                 Dompet <span class="text-red-500">*</span>
             </label>
             <select name="dompet_id" required
@@ -86,6 +34,49 @@
                 @endforeach
             </select>
         </div>
+    </div>
+
+    <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+            Jenis Transaksi <span class="text-red-500">*</span>
+        </label>
+        <select name="jenis_transaksi" required
+            class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+            <option value="">Pilih jenis transaksi</option>
+            <option value="PEMASUKAN">Pemasukan</option>
+            <option value="PENGELUARAN">Pengeluaran</option>
+        </select>
+    </div>
+
+    {{-- Detail Jurnal --}}
+    <div class="mb-1 flex items-center justify-between">
+        <label class="block text-sm font-medium text-gray-700">
+            Detail Jurnal <span class="text-red-500">*</span>
+        </label>
+       <button type="button" onclick="buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah)"
+            class="text-xs font-medium text-green-700 hover:underline">
+            + Tambah Baris
+        </button>
+    </div>
+    <div class="border border-gray-200 rounded-xl overflow-hidden mb-2">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="text-left text-xs font-medium text-gray-500 px-3 py-2">Akun</th>
+                    <th class="text-left text-xs font-medium text-gray-500 px-3 py-2 w-24">Tipe</th>
+                    <th class="text-left text-xs font-medium text-gray-500 px-3 py-2 w-32">Nominal</th>
+                    <th class="w-8"></th>
+                </tr>
+            </thead>
+            <tbody id="jurnalTambahBody" class="divide-y divide-gray-100"></tbody>
+        </table>
+    </div>
+    <div class="flex items-center justify-between text-xs px-1 mb-4">
+        <div class="flex items-center gap-4">
+            <span class="text-gray-500">Total Debit: <span id="jurnalTambahTotalDebit" class="font-semibold text-red-600">Rp 0</span></span>
+            <span class="text-gray-500">Total Kredit: <span id="jurnalTambahTotalKredit" class="font-semibold text-green-700">Rp 0</span></span>
+        </div>
+        <span id="jurnalTambahStatus" class="font-medium text-gray-400">Belum diisi</span>
     </div>
 
     <div class="mb-4">
@@ -122,7 +113,6 @@
         <div class="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 cursor-pointer select-none"
             onclick="tambahToggleAset()">
             <input type="hidden" name="is_aset" id="tambahIsAset" value="0">
-            {{-- Track --}}
             <div id="tambahTrack"
                 class="relative w-10 h-5 rounded-full bg-gray-300 flex-shrink-0 transition-colors duration-200">
                 <span id="tambahThumb"
@@ -144,7 +134,6 @@
 
     <div id="sectionAset" class="hidden space-y-4 mb-4">
 
-        {{-- Identitas Aset --}}
         <div>
             <div class="flex items-center gap-2 mb-3">
                 <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,7 +177,6 @@
             </div>
         </div>
 
-        {{-- Perolehan Aset --}}
         <div>
             <div class="flex items-center gap-2 mb-3">
                 <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -251,7 +239,6 @@
             </div>
         </div>
 
-        {{-- Penyusutan --}}
         <div>
             <div class="flex items-center gap-2 mb-3">
                 <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -289,7 +276,6 @@
 
     </div>
 
-    {{-- Error container --}}
     <div id="tambahErrors" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
         <ul id="tambahErrorList" class="text-sm text-red-600 space-y-0.5 list-disc list-inside"></ul>
     </div>
@@ -311,6 +297,9 @@
 </form>
 
 <script>
+// Daftar akun untuk dropdown jurnal (dipakai juga oleh editTransaksi() di index.blade.php)
+const akunListTambah = @json($akuns->map(fn($a) => ['id' => $a->id, 'label' => $a->kode_akun . ' – ' . $a->nama_akun]));
+
 document.addEventListener('DOMContentLoaded', function () {
     flatpickr('#inputTanggalTambah', {
         dateFormat: 'Y-m-d',
@@ -329,7 +318,97 @@ document.addEventListener('DOMContentLoaded', function () {
             },
         },
     });
+
+    // Default 1 baris debit + 1 baris kredit
+    buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah, 'DEBIT');
+    buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah, 'KREDIT');
 });
+
+// ── Jurnal dinamis (dipakai bersama oleh form Tambah & Edit) ───────────────
+
+function buatOpsiAkunHTML(akunList, selected = '') {
+    let html = '<option value="">Pilih akun</option>';
+    akunList.forEach(a => {
+        html += `<option value="${a.id}" ${String(a.id) === String(selected) ? 'selected' : ''}>${a.label}</option>`;
+    });
+    return html;
+}
+
+function buatBarisJurnal(tbodyId, prefix, akunList, tipe = 'DEBIT', akunId = '', nominal = '') {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td class="px-3 py-2">
+            <select class="jurnalAkun w-full h-9 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500">
+                ${buatOpsiAkunHTML(akunList, akunId)}
+            </select>
+        </td>
+        <td class="px-3 py-2">
+            <select class="jurnalTipe w-full h-9 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500"
+                onchange="hitungTotalJurnal('${tbodyId}', '${prefix}')">
+                <option value="DEBIT" ${tipe === 'DEBIT' ? 'selected' : ''}>Debit</option>
+                <option value="KREDIT" ${tipe === 'KREDIT' ? 'selected' : ''}>Kredit</option>
+            </select>
+        </td>
+        <td class="px-3 py-2">
+            <div class="relative">
+                <span class="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">Rp</span>
+                <input type="number" min="1" value="${nominal}"
+                    oninput="hitungTotalJurnal('${tbodyId}', '${prefix}')"
+                    class="jurnalNominal w-full h-9 pl-7 pr-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500">
+            </div>
+        </td>
+        <td class="px-2 py-2 text-center">
+            <button type="button" onclick="hapusBarisJurnal(this, '${tbodyId}', '${prefix}')" class="text-gray-400 hover:text-red-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+    hitungTotalJurnal(tbodyId, prefix);
+}
+
+function hapusBarisJurnal(btn, tbodyId, prefix) {
+    const tbody = document.getElementById(tbodyId);
+    if (tbody.querySelectorAll('tr').length <= 2) {
+        alert('Minimal harus ada 1 baris debit dan 1 baris kredit.');
+        return;
+    }
+    btn.closest('tr').remove();
+    hitungTotalJurnal(tbodyId, prefix);
+}
+
+function hitungTotalJurnal(tbodyId, prefix) {
+    const tbody = document.getElementById(tbodyId);
+    let totalDebit = 0, totalKredit = 0;
+    tbody.querySelectorAll('tr').forEach(tr => {
+        const tipe    = tr.querySelector('.jurnalTipe').value;
+        const nominal = parseFloat(tr.querySelector('.jurnalNominal').value) || 0;
+        if (tipe === 'DEBIT') totalDebit += nominal; else totalKredit += nominal;
+    });
+
+    document.getElementById(prefix + 'TotalDebit').textContent  = 'Rp ' + totalDebit.toLocaleString('id-ID');
+    document.getElementById(prefix + 'TotalKredit').textContent = 'Rp ' + totalKredit.toLocaleString('id-ID');
+
+    const statusEl = document.getElementById(prefix + 'Status');
+    if (totalDebit === 0 && totalKredit === 0) {
+        statusEl.textContent = 'Belum diisi';
+        statusEl.className = 'font-medium text-gray-400';
+    } else if (totalDebit === totalKredit) {
+        statusEl.textContent = '✓ Balance';
+        statusEl.className = 'font-medium text-green-600';
+    } else {
+        statusEl.textContent = '✗ Tidak balance';
+        statusEl.className = 'font-medium text-red-500';
+    }
+
+    return { totalDebit, totalKredit };
+}
+
+// ── Aset toggle ──────────────────────────────────────────────────────────
 
 let tambahAsetOn = false;
 
@@ -404,15 +483,32 @@ async function submitTambah(force = false) {
     const errBox  = document.getElementById('tambahErrors');
     const errList = document.getElementById('tambahErrorList');
 
-    btn.disabled = true;
-    spinner.classList.remove('hidden');
     errBox.classList.add('hidden');
     errList.innerHTML = '';
+
+    const { totalDebit, totalKredit } = hitungTotalJurnal('jurnalTambahBody', 'jurnalTambah');
+    if (totalDebit === 0 || totalDebit !== totalKredit) {
+        errList.insertAdjacentHTML('beforeend', `<li>Total debit dan kredit harus sama dan tidak boleh kosong.</li>`);
+        errBox.classList.remove('hidden');
+        return;
+    }
+
+    btn.disabled = true;
+    spinner.classList.remove('hidden');
 
     document.getElementById('forceSubmit').value = force ? '1' : '0';
 
     try {
         const fd  = new FormData(form);
+
+        let idx = 0;
+        document.querySelectorAll('#jurnalTambahBody tr').forEach(tr => {
+            fd.append(`jurnal[${idx}][akun_id]`, tr.querySelector('.jurnalAkun').value);
+            fd.append(`jurnal[${idx}][tipe]`,    tr.querySelector('.jurnalTipe').value);
+            fd.append(`jurnal[${idx}][nominal]`, tr.querySelector('.jurnalNominal').value);
+            idx++;
+        });
+
         const res = await fetch(form.action, {
             method: 'POST',
             body: fd,
