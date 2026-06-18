@@ -23,7 +23,6 @@
         </a>
     </div>
 
-    {{-- Alert — letakkan di sini --}}
     <div id="success-alert"
         class="hidden items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
         <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -73,12 +72,10 @@
     @endif
 
     <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        {{-- Bulk Action Bar --}}
         <div id="bulkActionBar"
             class="hidden px-5 py-3 bg-green-50 border-b border-green-100 items-center gap-3 flex-wrap">
             <span id="bulkCount" class="text-sm font-medium text-green-800">0 baris dipilih</span>
             <div class="flex items-center gap-2 flex-wrap ml-auto">
-                {{-- Bulk Akun Debit --}}
                 <select id="bulkDebit"
                     class="h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500">
                     <option value="">Akun debit...</option>
@@ -86,7 +83,6 @@
                         <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
                     @endforeach
                 </select>
-                {{-- Bulk Akun Kredit --}}
                 <select id="bulkKredit"
                     class="h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500">
                     <option value="">Akun kredit...</option>
@@ -98,8 +94,8 @@
                     class="h-8 px-3 bg-green-700 text-white text-xs font-medium rounded-lg hover:bg-green-800 transition-colors">
                     Terapkan
                 </button>
+                <p class="text-xs text-gray-400 w-full sm:w-auto">Bulk hanya mengisi entri debit/kredit pertama tiap baris.</p>
                 <div class="w-px h-5 bg-gray-300"></div>
-                {{-- Bulk Hapus --}}
                 <button type="button" onclick="bulkHapus()"
                     class="h-8 px-3 bg-red-50 text-red-600 border border-red-200 text-xs font-medium rounded-lg hover:bg-red-100 transition-colors flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,7 +112,7 @@
             <input type="hidden" name="import_key" value="{{ $key }}">
 
             <div class="overflow-x-auto">
-                <table class="w-full text-sm" style="min-width:900px">
+                <table class="w-full text-sm" style="min-width:1000px">
                     <thead>
                         <tr class="bg-gray-50 border-b border-gray-100 text-left">
                             <th class="px-4 py-3 text-xs font-medium text-gray-500 w-8">
@@ -127,8 +123,7 @@
                             <th class="px-3 py-3 text-xs font-medium text-gray-500">Tanggal</th>
                             <th class="px-3 py-3 text-xs font-medium text-gray-500 text-right">Jumlah</th>
                             <th class="px-3 py-3 text-xs font-medium text-gray-500">Keterangan</th>
-                            <th class="px-3 py-3 text-xs font-medium text-gray-500 w-52">Akun Debit</th>
-                            <th class="px-3 py-3 text-xs font-medium text-gray-500 w-52">Akun Kredit</th>
+                            <th class="px-3 py-3 text-xs font-medium text-gray-500 w-80">Klasifikasi Akun (Debit / Kredit)</th>
                             <th class="px-3 py-3 text-xs font-medium text-gray-500 w-8 text-center">...</th>
                         </tr>
                     </thead>
@@ -160,7 +155,7 @@
                             </td>
                             <td class="px-3 py-3 text-xs text-gray-600 whitespace-nowrap">
                                 {{ isset($row['waktu_transaksi'])
-                                    ? \Carbon\Carbon::parse($row['waktu_transaksi'])->format('d M Y')
+                                    ? \Carbon\Carbon::parse($row['waktu_transaksi'])->translatedFormat('d M Y')
                                     : '-' }}
                             </td>
                             <td class="px-3 py-3 text-xs font-medium text-right whitespace-nowrap @if($row['jenis_transaksi']==='PENGELUARAN') text-red-600 @else text-green-700 @endif">
@@ -172,37 +167,22 @@
                                     <div class="text-gray-400 mt-0.5">{{ $row['nama_pengirim'] }}</div>
                                 @endif
                             </td>
-                            {{-- Akun Debit --}}
                             <td class="px-3 py-3">
                                 @if(!$row['is_duplikat'])
-                                    <select name="klasifikasi[{{ $i }}][akun_debit_id]" required
-                                        class="debitSelect w-full h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
-                                        data-idx="{{ $i }}">   {{-- ← tambah ini --}}
-                                        <option value="">Pilih akun</option>
-                                        @foreach($akuns as $a)
-                                            <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
-                                        @endforeach
-                                    </select>
+                                    <div id="entriesRow{{ $i }}" class="space-y-1.5"></div>
+                                    <div class="flex items-center justify-between mt-1.5">
+                                        <button type="button" onclick="tambahEntriReview({{ $i }})"
+                                            class="text-xs text-green-700 hover:underline">
+                                            + Tambah Akun
+                                        </button>
+                                        <span class="text-xs text-gray-400">
+                                            Selisih: <span id="selisihRow{{ $i }}" class="font-medium text-gray-400">Rp 0</span>
+                                        </span>
+                                    </div>
                                 @else
                                     <span class="text-xs text-gray-400">-</span>
                                 @endif
                             </td>
-                            {{-- Akun Kredit --}}
-                            <td class="px-3 py-3">
-                                @if(!$row['is_duplikat'])
-                                    <select name="klasifikasi[{{ $i }}][akun_kredit_id]" required
-                                        class="kreditSelect w-full h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
-                                        data-idx="{{ $i }}">   {{-- ← tambah ini --}}
-                                        <option value="">Pilih akun</option>
-                                        @foreach($akuns as $a)
-                                            <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
-                                        @endforeach
-                                    </select>
-                                @else
-                                    <span class="text-xs text-gray-400">-</span>
-                                @endif
-                            </td>
-                            {{-- Hapus --}}
                             <td class="px-3 py-3 text-center">
                                 @if(!$row['is_duplikat'])
                                     <button type="button"
@@ -222,7 +202,6 @@
                 </table>
             </div>
 
-            {{-- Error --}}
             <div id="reviewErrorBox" class="hidden mx-5 my-3 p-3 bg-red-50 border border-red-200 rounded-xl">
                 <ul id="reviewErrorList" class="text-sm text-red-600 space-y-0.5 list-disc list-inside"></ul>
             </div>
@@ -253,6 +232,9 @@
 ])
 
 <script>
+const AKUN_LIST_REVIEW = @json($akuns->map(fn($a) => ['id' => $a->id, 'label' => $a->kode_akun . ' – ' . $a->nama_akun]));
+const ROWS_DATA = @json($rows);
+
 // ── Modal ──────────────────────────────────────────────────────
 function openModal(id) {
     const modal = document.getElementById(id);
@@ -267,6 +249,91 @@ function closeModal(id) {
     modal.classList.add('hidden');
     modal.style.display = 'none';
 }
+
+// ── Klasifikasi akun dinamis per baris ───────────────────────────
+
+function opsiAkunReview(selected = '') {
+    let html = '<option value="">Pilih akun</option>';
+    AKUN_LIST_REVIEW.forEach(a => {
+        html += `<option value="${a.id}" ${String(a.id) === String(selected) ? 'selected' : ''}>${a.label}</option>`;
+    });
+    return html;
+}
+
+function buatBarisEntriReview(rowIndex, tipe = 'DEBIT', akunId = '', nominal = '') {
+    const container = document.getElementById(`entriesRow${rowIndex}`);
+    if (!container) return;
+    const div = document.createElement('div');
+    div.className = 'flex items-center gap-1';
+    div.innerHTML = `
+        <select class="entriAkun flex-1 h-7 px-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500">
+            ${opsiAkunReview(akunId)}
+        </select>
+        <select class="entriTipe w-16 h-7 px-1 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500"
+            onchange="hitungSelisihReview(${rowIndex})">
+            <option value="DEBIT" ${tipe === 'DEBIT' ? 'selected' : ''}>Debit</option>
+            <option value="KREDIT" ${tipe === 'KREDIT' ? 'selected' : ''}>Kredit</option>
+        </select>
+        <input type="number" min="1" value="${nominal}"
+            class="entriNominal w-24 h-7 px-1 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500"
+            oninput="hitungSelisihReview(${rowIndex})">
+        <button type="button" onclick="hapusEntriReview(${rowIndex}, this)" class="text-gray-300 hover:text-red-500 flex-shrink-0">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    `;
+    container.appendChild(div);
+    hitungSelisihReview(rowIndex);
+}
+
+function tambahEntriReview(rowIndex) {
+    buatBarisEntriReview(rowIndex, 'DEBIT', '', '');
+}
+
+function hapusEntriReview(rowIndex, btn) {
+    const container = document.getElementById(`entriesRow${rowIndex}`);
+    if (container.children.length <= 2) {
+        alert('Setiap baris minimal harus memiliki 1 akun debit dan 1 akun kredit.');
+        return;
+    }
+    btn.closest('div').remove();
+    hitungSelisihReview(rowIndex);
+}
+
+function hitungSelisihReview(rowIndex) {
+    const container = document.getElementById(`entriesRow${rowIndex}`);
+    if (!container) return { debit: 0, kredit: 0 };
+
+    let debit = 0, kredit = 0;
+    container.querySelectorAll(':scope > div').forEach(div => {
+        const tipe    = div.querySelector('.entriTipe').value;
+        const nominal = parseFloat(div.querySelector('.entriNominal').value) || 0;
+        if (tipe === 'DEBIT') debit += nominal; else kredit += nominal;
+    });
+
+    const el = document.getElementById(`selisihRow${rowIndex}`);
+    const selisih = debit - kredit;
+    if (el) {
+        if (selisih === 0 && debit > 0) {
+            el.textContent = 'Balance ✓';
+            el.className = 'font-medium text-green-600';
+        } else {
+            el.textContent = 'Rp ' + Math.abs(selisih).toLocaleString('id-ID') + ' tidak balance';
+            el.className = 'font-medium text-red-500';
+        }
+    }
+    return { debit, kredit };
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    ROWS_DATA.forEach((row, i) => {
+        if (row.is_duplikat) return;
+        // Default: 1 baris debit + 1 baris kredit, nominal otomatis = nominal mutasi
+        buatBarisEntriReview(i, 'DEBIT',  '', row.jumlah);
+        buatBarisEntriReview(i, 'KREDIT', '', row.jumlah);
+    });
+});
 
 // ── Checkbox & Bulk Action ──────────────────────────────────────
 
@@ -308,19 +375,23 @@ function applyBulk() {
 
     document.querySelectorAll('.rowCheck:checked').forEach(cb => {
         const idx = cb.dataset.idx;
+        const container = document.getElementById(`entriesRow${idx}`);
+        if (!container) return;
+
+        const divs = [...container.querySelectorAll(':scope > div')];
+
         if (debitVal) {
-            const sel = document.querySelector(`.debitSelect[data-idx="${idx}"]`);
-            if (sel) sel.value = debitVal;
+            const debitDiv = divs.find(d => d.querySelector('.entriTipe').value === 'DEBIT');
+            if (debitDiv) debitDiv.querySelector('.entriAkun').value = debitVal;
         }
         if (kreditVal) {
-            const sel = document.querySelector(`.kreditSelect[data-idx="${idx}"]`);
-            if (sel) sel.value = kreditVal;
+            const kreditDiv = divs.find(d => d.querySelector('.entriTipe').value === 'KREDIT');
+            if (kreditDiv) kreditDiv.querySelector('.entriAkun').value = kreditVal;
         }
     });
 
     document.querySelectorAll('.rowCheck').forEach(cb => cb.checked = false);
     document.getElementById('checkAll').checked = false;
-
     document.getElementById('bulkDebit').value  = '';
     document.getElementById('bulkKredit').value = '';
 
@@ -368,19 +439,47 @@ async function simpanKlasifikasi() {
     hideAlert('error');
 
     let valid = true;
+    const klasifikasi = [];
+
     document.querySelectorAll('tbody tr').forEach(row => {
-        row.querySelectorAll('select').forEach(sel => {
-            if (sel.hasAttribute('required') && !sel.value) {
+        const noRefInput = row.querySelector('input[name^="klasifikasi"][name$="[no_referensi]"]');
+        if (!noRefInput) return; // baris duplikat, dilewati
+
+        const idxMatch = noRefInput.name.match(/klasifikasi\[(\d+)\]/);
+        const idx = idxMatch ? idxMatch[1] : null;
+        const container = document.getElementById(`entriesRow${idx}`);
+
+        const entries = [];
+        let totalDebit = 0, totalKredit = 0;
+
+        container?.querySelectorAll(':scope > div').forEach(div => {
+            const akunSelect = div.querySelector('.entriAkun');
+            const tipe        = div.querySelector('.entriTipe').value;
+            const nominal     = parseFloat(div.querySelector('.entriNominal').value) || 0;
+
+            if (!akunSelect.value || nominal <= 0) {
                 valid = false;
-                sel.classList.add('border-red-400');
-            } else {
-                sel.classList.remove('border-red-400');
+                akunSelect.classList.add('border-red-400');
+                return;
             }
+            akunSelect.classList.remove('border-red-400');
+
+            entries.push({ akun_id: akunSelect.value, tipe, nominal });
+            if (tipe === 'DEBIT') totalDebit += nominal; else totalKredit += nominal;
+        });
+
+        if (Math.abs(totalDebit - totalKredit) > 0.5) {
+            valid = false;
+        }
+
+        klasifikasi.push({
+            no_referensi: noRefInput.value,
+            entries: entries,
         });
     });
 
     if (!valid) {
-        showAlert('error', 'Pilih akun debit dan kredit untuk setiap baris yang aktif.');
+        showAlert('error', 'Pastikan setiap baris memiliki akun yang valid dan total debit = total kredit.');
         return;
     }
 
@@ -388,7 +487,17 @@ async function simpanKlasifikasi() {
     spinner.classList.remove('hidden');
 
     try {
-        const fd  = new FormData(document.getElementById('formKlasifikasi'));
+        const fd = new FormData();
+        fd.append('import_key', '{{ $key }}');
+        klasifikasi.forEach((row, i) => {
+            fd.append(`klasifikasi[${i}][no_referensi]`, row.no_referensi);
+            row.entries.forEach((e, j) => {
+                fd.append(`klasifikasi[${i}][entries][${j}][akun_id]`, e.akun_id);
+                fd.append(`klasifikasi[${i}][entries][${j}][tipe]`, e.tipe);
+                fd.append(`klasifikasi[${i}][entries][${j}][nominal]`, e.nominal);
+            });
+        });
+
         const res = await fetch('{{ route("dashboard.transaksi.import.simpan") }}', {
             method: 'POST',
             body: fd,
@@ -405,6 +514,7 @@ async function simpanKlasifikasi() {
             console.error('Non-JSON response:', text);
             showAlert('error', 'Server mengembalikan response tidak valid. Cek console untuk detail.');
             btn.disabled = false;
+            spinner.classList.add('hidden');
             return;
         }
 

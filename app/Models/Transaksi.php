@@ -88,12 +88,20 @@ class Transaksi extends Model
     }
  
     // ─── Scope ───────────────────────────────────────────────────────────────
- 
-    public function scopePeriode($query, $bulan, $tahun)
+    
+    public function scopePeriodeAktif($query)
     {
-        return $query
-            ->whereMonth('tanggal_transaksi', $bulan)
-            ->whereYear('tanggal_transaksi', $tahun);
+        $periode = \App\Models\Periode::aktif()->first();
+
+        if (!$periode) {
+            // Tidak ada periode
+            return $query->whereRaw('1 = 0');
+        }
+        
+        return $query->whereBetween('tanggal_transaksi', [
+            $periode->tanggal_awal,
+            $periode->tanggal_akhir,
+        ]);
     }
  
     // ─── Accessor ────────────────────────────────────────────────────────────
