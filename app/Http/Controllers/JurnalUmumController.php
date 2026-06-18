@@ -200,7 +200,20 @@ class JurnalUmumController extends Controller
         $ids = $request->input('ids', []);
 
         if (empty($ids)) {
-            return back()->with('error', 'Tidak ada jurnal yang dipilih.');
+            $message = 'Tidak ada jurnal yang dipilih.';
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'alert'   => (string) view('components.jurnal.alert', [
+                        'type'    => 'error',
+                        'message' => $message,
+                    ]),
+                ]);
+            }
+
+            return back()->with('error', $message);
         }
 
         $jurnals = Jurnal::whereIn('id', $ids)
@@ -230,11 +243,20 @@ class JurnalUmumController extends Controller
             $message .= ' ' . implode(' ', $errors);
         }
 
+        $success = $posted > 0;
+
         if ($request->ajax()) {
-            return response()->json(['message' => $message, 'success' => $posted > 0]);
+            return response()->json([
+                'success' => $success,
+                'message' => $message,
+                'alert'   => (string) view('components.jurnal.alert', [
+                    'type'    => $success ? 'success' : 'error',
+                    'message' => $message,
+                ]),
+            ]);
         }
 
-        return back()->with('success', $message);
+        return back()->with($success ? 'success' : 'error', $message);
     }
 
     public function destroy(Jurnal $jurnalUmum)

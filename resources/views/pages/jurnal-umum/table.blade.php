@@ -25,9 +25,10 @@
                     {{-- Checkbox hanya di baris pertama setiap jurnal, hanya untuk DRAFT --}}
                     <td class="px-5 py-3.5">
                         @if($j === 0 && $jurnal->status === 'DRAFT')
+                        {{-- table.blade.php, baris checkbox --}}
                         <input type="checkbox" value="{{ $jurnal->id }}"
                             class="jurnal-checkbox rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500"
-                            onchange="updateBulkBtn()">
+                            onchange="updateBulkBar()">
                         @endif
                     </td>
                     <td class="px-4 py-3.5 text-gray-500 dark:text-gray-400">
@@ -170,7 +171,7 @@ function goToPage(page) {
     .then(r => r.json())
     .then(data => {
         document.getElementById('tableWrapper').innerHTML = data.html;
-        updateBulkBtn();
+        updateBulkBar(); // ← fix
     });
 }
 </script>
