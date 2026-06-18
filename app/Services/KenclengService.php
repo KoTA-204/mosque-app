@@ -52,7 +52,6 @@ class KenclengService
     public function getKategoriKencleng(): ?KategoriTransaksi
     {
         return KategoriTransaksi::where('nama_kategori', 'ilike', '%kencleng%')
-            ->where('jenis_transaksi', 'PEMASUKAN')
             ->first();
     }
 
@@ -93,6 +92,7 @@ class KenclengService
                     'user_id'               => auth()->id(),
                     'kategori_transaksi_id' => $kategori?->id,
                     'tanggal_transaksi'     => $data['tanggal_hitung'],
+                    'jenis_transaksi'       => 'PEMASUKAN',
                     'jumlah'                => $totalFisik,
                     'deskripsi'             => $data['keterangan'] ?? null,
                     'status_approval'       => 'PENDING',

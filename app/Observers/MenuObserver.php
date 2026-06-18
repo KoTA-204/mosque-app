@@ -16,8 +16,15 @@ class MenuObserver
 
     private function attachViewPermission(Menu $menu): void
     {
-        $parts  = explode('.', $menu->route_name);
-        $module = $parts[1] ?? $parts[0];
+        $parts = explode('.', $menu->route_name);
+
+        if (($parts[0] ?? null) === 'dashboard') {
+            $module = ($parts[1] ?? null) === 'index'
+                ? 'dashboard'
+                : ($parts[1] ?? 'dashboard');
+        } else {
+            $module = $parts[0];
+        }
 
         $permission = Permission::firstOrCreate(
             [

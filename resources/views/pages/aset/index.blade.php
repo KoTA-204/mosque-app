@@ -21,10 +21,7 @@
     </div>
 
     @if(session('success'))
-    <div class="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-sm text-green-700 dark:text-green-400">
-        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-        {{ session('success') }}
-    </div>
+        <x-jurnal.alert type="success" :message="session('success')" />
     @endif
 
     {{-- Stats --}}
@@ -123,7 +120,7 @@
 {{-- Filter Panel — fixed, di luar semua container --}}
 <div id="filterPanel"
     class="hidden z-[9998] w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl">
-    
+
     {{-- Header tetap di atas --}}
     <div class="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-100 dark:border-gray-800">
         <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Filter</p>
@@ -316,9 +313,7 @@ function closeModal(id) {
 
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-        // Tutup filter panel jika terbuka
         document.getElementById('filterPanel').classList.add('hidden');
-        // Tutup modal jika terbuka
         modalContainer.querySelectorAll('[id$="Modal"]').forEach(el => {
             if (el.style.display === 'flex') closeModal(el.id);
         });
@@ -528,6 +523,12 @@ function showAlert(msg, type = 'success') {
     setTimeout(() => { area.innerHTML = ''; }, 4000);
 }
 
+function renderAlert(html) {
+    const area = document.getElementById('alertArea');
+    area.innerHTML = html;
+    setTimeout(() => { area.innerHTML = ''; }, 4000);
+}
+
 // ── AJAX Filter ───────────────────────────────────────────────
 function applyFilters() {
     const search  = document.getElementById('filterSearch').value;
@@ -583,7 +584,13 @@ function submitAsetForm(formId, method, url) {
         if (res.success) {
             const activeModal = modalContainer.querySelector('[id$="Modal"]');
             if (activeModal) closeModal(activeModal.id);
-            showAlert(res.message, 'success');
+
+            if (res.alert) {
+                renderAlert(res.alert);
+            } else {
+                showAlert(res.message, 'success');
+            }
+
             applyFilters();
             fetchStats();
         } else if (res.errors) {
