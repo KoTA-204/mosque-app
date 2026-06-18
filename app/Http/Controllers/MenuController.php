@@ -36,9 +36,7 @@ class MenuController extends Controller
                       ->orWhere('id', $parentId);
                 }
             })
-            ->orderByRaw('COALESCE(parent_id, id)')
-            ->orderBy('parent_id')
-            ->orderBy('sort_order')
+            ->orderByRaw('COALESCE(parent_id, id), CASE WHEN parent_id IS NULL THEN 0 ELSE 1 END, sort_order')
             ->paginate($perPage)
             ->withQueryString();
 
