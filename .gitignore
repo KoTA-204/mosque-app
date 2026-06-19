@@ -7,7 +7,7 @@
 
 .phpactor.json
 .phpunit.result.cache
-/Browser
+
 /.fleet
 /.idea
 /.nova
@@ -25,3 +25,5 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+/tests/Browser/
