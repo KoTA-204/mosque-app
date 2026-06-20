@@ -53,6 +53,34 @@ class KegiatanControllerTest extends TestCase
         ]);
     }
 
+    private function makePengeluaran(Kegiatan $kegiatan, int $jumlah, string $status = 'APPROVED'): Transaksi
+    {
+        $dompet = Dompet::factory()->create();
+        return Transaksi::create([
+            'dompet_id'         => $dompet->id,
+            'user_id'           => $this->panitia->id,
+            'kegiatan_id'       => $kegiatan->id,
+            'tanggal_transaksi' => now()->toDateString(),
+            'jenis_transaksi'   => 'PENGELUARAN',
+            'jumlah'            => $jumlah,
+            'status_approval'   => $status,
+            'status_jurnal'     => 'UNMAPPED',
+        ]);
+    }
+
+    private function buatKegiatan(array $override = []): Kegiatan
+    {
+        return Kegiatan::create(array_merge([
+            'nama_kegiatan'   => 'Kegiatan Uji',
+            'jenis_kegiatan'  => 'QURBAN',
+            'tanggal_mulai'   => now()->subDay()->toDateString(),
+            'tanggal_selesai' => now()->addDays(10)->toDateString(),
+            'anggaran'        => 1000000,
+            'status'          => 'AKTIF',
+            'panitia_id'      => $this->panitia->id,
+        ], $override));
+    }
+
     /** UT-F67-01 — Tambah kegiatan valid → status AKTIF */
     public function test_UT_F67_01_store_kegiatan_valid(): void
     {
@@ -186,6 +214,127 @@ class KegiatanControllerTest extends TestCase
             'id'     => $kegiatan->id,
             'status' => 'DITUTUP',
         ]);
+    }
+
+    /** UT-F67-08 — tutupJikaSelesai tidak menutup jika tanggal belum lewat */
+    public function test_UT_F67_08_tutup_tidak_menutup_jika_tanggal_belum_lewat(): void
+    {
+        $kegiatan = $this->buatKegiatan([
+            'tanggal_mulai'   => now()->addDay()->toDateString(),
+            'tanggal_selesai' => now()->addDays(10)->toDateString(),
+        ]);
+        $this->makeTransaksi($kegiatan, 'APPROVED');
+
+        $kegiatan->tutupJikaSelesai();
+
+        $this->assertDatabaseHas('kegiatan', ['id' => $kegiatan->id, 'status' => 'AKTIF']);
+    }
+
+    /** UT-F67-09 — tutupJikaSelesai tidak menutup jika tidak ada transaksi */
+    public function test_UT_F67_09_tutup_tanpa_transaksi(): void
+    {
+        $kegiatan = $this->buatKegiatan([
+            'tanggal_mulai'   => now()->subDays(10)->toDateString(),
+            'tanggal_selesai' => now()->subDays(2)->toDateString(),
+        ]);
+
+        $kegiatan->tutupJikaSelesai();
+
+        $this->assertDatabaseHas('kegiatan', ['id' => $kegiatan->id, 'status' => 'AKTIF']);
+    }
+
+    /** UT-F67-10 — bukaKembali mengubah DITUTUP → AKTIF */
+    public function test_UT_F67_10_buka_kembali(): void
+    {
+        $kegiatan = $this->buatKegiatan(['status' => 'DITUTUP']);
+
+        $kegiatan->bukaKembali();
+
+        $this->assertDatabaseHas('kegiatan', ['id' => $kegiatan->id, 'status' => 'AKTIF']);
+    }
+
+    /** UT-F64-06 — bisaInputTransaksi true saat AKTIF dan dalam rentang */
+    public function test_UT_F64_06_bisa_input_true_dalam_rentang(): void
+    {
+        $kegiatan = $this->buatKegiatan(); // AKTIF, selesai +10 hari
+        $this->assertTrue($kegiatan->bisaInputTransaksi());
+    }
+
+    /** UT-F64-07 — bisaInputTransaksi false saat DITUTUP */
+    public function test_UT_F64_07_bisa_input_false_saat_ditutup(): void
+    {
+        $kegiatan = $this->buatKegiatan(['status' => 'DITUTUP']);
+        $this->assertFalse($kegiatan->bisaInputTransaksi());
+    }
+
+    /** UT-F67-11 — totalRealisasi hanya menjumlah transaksi APPROVED */
+    public function test_UT_F67_11_total_realisasi_hanya_approved(): void
+    {
+        $kegiatan = $this->buatKegiatan();
+        $this->makeTransaksi($kegiatan, 'APPROVED'); // 100000
+        $this->makeTransaksi($kegiatan, 'PENDING');  // diabaikan
+
+        $this->assertEquals(100000, $kegiatan->totalRealisasi());
+    }
+
+    /** UT-F67-12 — totalPengeluaranBerjalan (PENDING/REVISION/APPROVED) */
+    public function test_UT_F67_12_total_pengeluaran_berjalan(): void
+    {
+        $kegiatan = $this->buatKegiatan();
+        $this->makePengeluaran($kegiatan, 300000, 'APPROVED');
+        $this->makePengeluaran($kegiatan, 200000, 'PENDING');
+        $this->makePengeluaran($kegiatan, 100000, 'REJECTED'); // diabaikan
+
+        $this->assertEquals(500000, $kegiatan->totalPengeluaranBerjalan());
+    }
+
+    /** UT-F67-13 — selisihLebihAnggaran mengembalikan kelebihan di atas anggaran */
+    public function test_UT_F67_13_selisih_lebih_anggaran(): void
+    {
+        $kegiatan = $this->buatKegiatan(['anggaran' => 500000]);
+        $this->makePengeluaran($kegiatan, 400000, 'APPROVED');
+
+        $this->assertEquals(100000, $kegiatan->selisihLebihAnggaran(200000)); // 600k - 500k
+        $this->assertEquals(0, $kegiatan->selisihLebihAnggaran());            // masih di bawah anggaran
+    }
+
+    /** UT-F67-14 — selisihLebihAnggaran 0 jika anggaran 0 (tanpa batas) */
+    public function test_UT_F67_14_selisih_nol_jika_anggaran_nol(): void
+    {
+        $kegiatan = $this->buatKegiatan(['anggaran' => 0]);
+        $this->makePengeluaran($kegiatan, 999999, 'APPROVED');
+
+        $this->assertEquals(0, $kegiatan->selisihLebihAnggaran(500000));
+    }
+
+    /** UT-F67-15 — sisaAnggaran = anggaran - pengeluaran berjalan */
+    public function test_UT_F67_15_sisa_anggaran(): void
+    {
+        $kegiatan = $this->buatKegiatan(['anggaran' => 1000000]);
+        $this->makePengeluaran($kegiatan, 300000, 'APPROVED');
+
+        $this->assertEquals(700000, $kegiatan->sisaAnggaran());
+    }
+
+    /** UT-F67-16 — Index menampilkan view daftar kegiatan */
+    public function test_UT_F67_16_index_returns_view(): void
+    {
+        $this->withoutVite();
+        $response = $this->actingAs($this->admin)->get(route('dashboard.kegiatan.index'));
+
+        $response->assertStatus(200);
+        $response->assertViewIs('pages.kegiatan.index');
+    }
+
+    /** UT-F67-17 — Index stats_only mengembalikan JSON statistik */
+    public function test_UT_F67_17_index_stats_only_json(): void
+    {
+        $this->buatKegiatan();
+        $response = $this->actingAs($this->admin)
+            ->getJson(route('dashboard.kegiatan.index', ['stats_only' => 1]));
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure(['stats' => ['total', 'aktif', 'ditutup']]);
     }
 
     /** UT-F63-08 — tutupJikaSelesai() tidak menutup jika ada transaksi PENDING */

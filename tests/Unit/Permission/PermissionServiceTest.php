@@ -2,11 +2,11 @@
 
 namespace Tests\Unit\Permission;
 
-use Tests\TestCase;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Services\PermissionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class PermissionServiceTest extends TestCase
 {
@@ -20,34 +20,21 @@ class PermissionServiceTest extends TestCase
         $this->service = new PermissionService();
     }
 
-    /**
-     * UT-F65-01
-     * Deskripsi : Buat permission baru dengan kode unik
-     * Expected  : Permission tersimpan di DB
-     */
-    public function test_UT_F65_01_create_permission_with_unique_code(): void
+    public function test_create_permission_with_unique_code(): void
     {
-        $data = [
+        $permission = $this->service->create([
             'permission_code' => 'VIEW_USERS',
             'permission_name' => 'View Users',
             'module'          => 'users',
             'action'          => 'view',
             'is_active'       => true,
-        ];
-
-        $permission = $this->service->create($data);
-
-        $this->assertDatabaseHas('permissions', [
-            'permission_code' => 'VIEW_USERS',
         ]);
+
+        $this->assertInstanceOf(Permission::class, $permission);
+        $this->assertDatabaseHas('permissions', ['permission_code' => 'VIEW_USERS']);
     }
 
-    /**
-     * UT-F65-02
-     * Deskripsi : Update permission yang sudah ada
-     * Expected  : Data terupdate di DB
-     */
-    public function test_UT_F65_02_update_permission_data(): void
+    public function test_update_permission_data(): void
     {
         $permission = Permission::create([
             'permission_code' => 'VIEW_USERS',
@@ -68,12 +55,7 @@ class PermissionServiceTest extends TestCase
         ]);
     }
 
-    /**
-     * UT-F65-03
-     * Deskripsi : Hapus permission yang tidak dipakai role
-     * Expected  : Permission terhapus, return true
-     */
-    public function test_UT_F65_03_delete_permission_not_assigned_to_role(): void
+    public function test_delete_permission_not_assigned_to_role(): void
     {
         $permission = Permission::create([
             'permission_code' => 'DELETE_USERS',
@@ -88,12 +70,7 @@ class PermissionServiceTest extends TestCase
         $this->assertDatabaseMissing('permissions', ['id' => $permission->id]);
     }
 
-    /**
-     * UT-F65-04
-     * Deskripsi : Hapus permission yang masih dipakai oleh role
-     * Expected  : Gagal, return string error
-     */
-    public function test_UT_F65_04_delete_permission_assigned_to_role_returns_error(): void
+    public function test_delete_permission_assigned_to_role_returns_error(): void
     {
         $permission = Permission::create([
             'permission_code' => 'VIEW_USERS',
@@ -109,5 +86,30 @@ class PermissionServiceTest extends TestCase
 
         $this->assertIsString($result);
         $this->assertStringContainsString('dipakai', $result);
+    }
+
+    /** getAll filter module + action. */
+    public function test_get_all_filters_by_module_and_action(): void
+    {
+        Permission::create(['permission_code' => 'VIEW_USERS', 'permission_name' => 'View Users', 'module' => 'users', 'action' => 'view']);
+        Permission::create(['permission_code' => 'CREATE_USERS', 'permission_name' => 'Create Users', 'module' => 'users', 'action' => 'create']);
+        Permission::create(['permission_code' => 'VIEW_ROLES', 'permission_name' => 'View Roles', 'module' => 'roles', 'action' => 'view']);
+
+        $result = $this->service->getAll(null, 'users', 'view');
+
+        $this->assertCount(1, $result);
+        $this->assertEquals('VIEW_USERS', $result->first()->permission_code);
+    }
+
+    /** getDistinctModules → daftar modul unik. */
+    public function test_get_distinct_modules(): void
+    {
+        Permission::create(['permission_code' => 'VIEW_USERS', 'permission_name' => 'View Users', 'module' => 'users', 'action' => 'view']);
+        Permission::create(['permission_code' => 'CREATE_USERS', 'permission_name' => 'Create Users', 'module' => 'users', 'action' => 'create']);
+        Permission::create(['permission_code' => 'VIEW_ROLES', 'permission_name' => 'View Roles', 'module' => 'roles', 'action' => 'view']);
+
+        $modules = $this->service->getDistinctModules();
+
+        $this->assertEqualsCanonicalizing(['users', 'roles'], $modules->all());
     }
 }

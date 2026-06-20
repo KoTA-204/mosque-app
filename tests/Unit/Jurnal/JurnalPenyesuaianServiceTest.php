@@ -103,6 +103,56 @@ class JurnalPenyesuaianServiceTest extends Inc2TestCase
         $res->assertRedirect();
     }
 
+    /** UT-F97-03 — hitungPenyusutan garis lurus = nilai_tercatat / (umur_manfaat*12) */
+    public function test_UT_F97_03_hitung_penyusutan_garis_lurus(): void
+    {
+        $aset = Aset::create([
+            'kode_aset' => 'ASET-2026-010', 'nama_aset' => 'Kendaraan',
+            'sumber_perolehan' => 'PEMBELIAN', 'tanggal_perolehan' => '2026-01-01',
+            'nilai_tercatat' => 14400000, 'umur_manfaat' => 10,
+            'kondisi_aset' => 'BAIK', 'lokasi_aset' => 'Garasi', 'jumlah_unit' => 1,
+            'tanggal_mulai_penyusutan' => '2026-01-01', 'status_aset' => 'AKTIF',
+        ]);
+
+        // 14.400.000 / (10*12=120) = 120.000
+        $this->assertEquals(120000, app(JurnalPenyesuaianService::class)->hitungPenyusutan($aset));
+    }
+
+    /** UT-F97-05 — onPosted memperbarui akumulasi & nilai buku aset (store DRAFT lalu post) */
+    public function test_UT_F97_05_on_posted_update_akumulasi_aset(): void
+    {
+        $aset = Aset::create([
+            'kode_aset' => 'ASET-2026-020', 'nama_aset' => 'Printer',
+            'sumber_perolehan' => 'PEMBELIAN', 'tanggal_perolehan' => '2026-01-01',
+            'nilai_tercatat' => 1200000, 'umur_manfaat' => 12,
+            'kondisi_aset' => 'BAIK', 'lokasi_aset' => 'Kantor', 'jumlah_unit' => 1,
+            'tanggal_mulai_penyusutan' => '2026-01-01', 'status_aset' => 'AKTIF',
+            'akumulasi_penyusutan' => 0, 'nilai_buku' => 1200000,
+        ]);
+        $beban = $this->buatAkun('5-2000', 'Beban Penyusutan', 'DEBIT');
+        $akum  = $this->buatAkun('1-2900', 'Akumulasi Penyusutan', 'KREDIT');
+
+        $service = app(JurnalPenyesuaianService::class);
+        $jurnal = $service->store([
+            'periode_id'       => $this->periodeAktif()->id,
+            'tanggal'          => '2026-06-30',
+            'tipe_penyesuaian' => 'PENYUSUTAN_ASET',
+            'keterangan'       => 'Penyusutan Juni',
+            'detail'           => [
+                ['akun_id' => $beban->id, 'tipe' => 'DEBIT', 'nominal' => '100000',
+                'aset_rows' => [['aset_id' => $aset->id, 'nominal' => '100000']]],
+                ['akun_id' => $akum->id, 'tipe' => 'KREDIT', 'nominal' => '100000'],
+            ],
+        ], 'DRAFT');
+
+        $this->assertEquals(0, (float) $aset->fresh()->akumulasi_penyusutan); // DRAFT belum mengubah
+        $this->assertTrue($service->post($jurnal->fresh()));                  // → onPosted
+
+        $aset->refresh();
+        $this->assertEquals(100000, (float) $aset->akumulasi_penyusutan);
+        $this->assertEquals(1100000, (float) $aset->nilai_buku);
+    }
+
     /** UT-F86-01 — Post tolak jika tidak seimbang */
     public function test_UT_F86_01_post_tolak_tidak_seimbang(): void
     {

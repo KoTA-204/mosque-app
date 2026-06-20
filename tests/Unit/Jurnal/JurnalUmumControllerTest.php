@@ -46,6 +46,65 @@ class JurnalUmumControllerTest extends Inc2TestCase
         $this->assertDatabaseHas('jurnal', ['jenis_jurnal' => 'UMUM', 'status' => 'POSTED']);
     }
 
+    /** UT-F85-03 — daftar() memfilter jurnal umum per bulan */
+    public function test_UT_F85_03_daftar_filter_bulan(): void
+    {
+        $juni = $this->buatJurnal(['jenis_jurnal' => 'UMUM', 'tanggal' => '2026-06-10', 'keterangan' => 'Juni']);
+        $juli = $this->buatJurnal(['jenis_jurnal' => 'UMUM', 'tanggal' => '2026-07-10', 'keterangan' => 'Juli']);
+
+        $hasil = app(\App\Services\JurnalUmumService::class)->daftar(['bulan' => '2026-06', 'per_page' => 10]);
+        $ids = collect($hasil->items())->pluck('id');
+
+        $this->assertTrue($ids->contains($juni->id));
+        $this->assertFalse($ids->contains($juli->id));
+    }
+
+    /** UT-F85-04 — summary() hanya menghitung jurnal POSTED */
+    public function test_UT_F85_04_summary_hanya_posted(): void
+    {
+        $kas  = $this->buatAkun('1-1000', 'Kas', 'DEBIT');
+        $pend = $this->buatAkun('4-1000', 'Pendapatan', 'KREDIT');
+
+        $posted = $this->buatJurnal(['jenis_jurnal' => 'UMUM', 'tanggal' => '2026-06-10', 'status' => 'POSTED']);
+        $this->tambahDetail($posted, $kas, 'DEBIT', 300000);
+        $this->tambahDetail($posted, $pend, 'KREDIT', 300000);
+
+        $draft = $this->buatJurnal(['jenis_jurnal' => 'UMUM', 'tanggal' => '2026-06-12', 'status' => 'DRAFT']);
+        $this->tambahDetail($draft, $kas, 'DEBIT', 999000);
+
+        $summary = app(\App\Services\JurnalUmumService::class)->summary(['bulan' => '2026-06']);
+        $this->assertEquals(300000, (float) $summary['totalDebit']);
+        $this->assertEquals(300000, (float) $summary['totalKredit']);
+    }
+
+    /** UT-F86-03 — post() menolak jurnal yang sudah POSTED */
+    public function test_UT_F86_03_post_sudah_posted_ditolak(): void
+    {
+        $jurnal = $this->buatJurnal(['jenis_jurnal' => 'UMUM', 'status' => 'POSTED']);
+        $this->assertSame('Jurnal sudah diposting', app(\App\Services\JurnalUmumService::class)->post($jurnal));
+    }
+
+    /** UT-F86-04 — post() menolak jurnal tanpa entri detail */
+    public function test_UT_F86_04_post_tanpa_entri_ditolak(): void
+    {
+        $jurnal = $this->buatJurnal(['jenis_jurnal' => 'UMUM', 'status' => 'DRAFT']);
+        $this->assertSame('Jurnal harus memiliki minimal satu entri', app(\App\Services\JurnalUmumService::class)->post($jurnal));
+    }
+
+    /** UT-F87-03 — delete() menghapus jurnal DRAFT beserta detailnya */
+    public function test_UT_F87_03_delete_draft_beserta_detail(): void
+    {
+        $jurnal = $this->buatJurnal(['jenis_jurnal' => 'UMUM', 'status' => 'DRAFT']);
+        $kas    = $this->buatAkun('1-1000', 'Kas', 'DEBIT');
+        $pend   = $this->buatAkun('4-1000', 'Pendapatan', 'KREDIT');
+        $this->tambahDetail($jurnal, $kas, 'DEBIT', 100000);
+        $this->tambahDetail($jurnal, $pend, 'KREDIT', 100000);
+
+        $this->assertTrue(app(\App\Services\JurnalUmumService::class)->delete($jurnal));
+        $this->assertDatabaseMissing('jurnal', ['id' => $jurnal->id]);
+        $this->assertDatabaseMissing('detail_jurnal', ['jurnal_id' => $jurnal->id]);
+    }
+
     /** UT-F86-02 — Post tolak jika tidak seimbang */
     public function test_UT_F86_02_post_tolak_tidak_seimbang(): void
     {

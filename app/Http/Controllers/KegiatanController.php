@@ -30,7 +30,7 @@ class KegiatanController extends Controller
         $query = Kegiatan::with('panitia');
 
         if ($request->filled('search')) {
-            $query->where('nama_kegiatan', 'ilike', '%' . $request->search . '%');
+            $query->whereRaw('LOWER(nama_kegiatan) LIKE ?', ['%'.strtolower($request->search).'%']);
         }
 
         if ($request->filled('jenis')) {

@@ -76,6 +76,83 @@ class AsetControllerTest extends TestCase
         $this->assertStringStartsWith('ASET-2026-', $aset->kode_aset);
     }
 
+    /** UT-F52-03 — store dengan dokumen → file tersimpan di storage */
+    public function test_UT_F52_03_store_dengan_dokumen(): void
+    {
+        Storage::fake('public');
+
+        $response = $this->actingAs($this->user)
+            ->post(route('dashboard.aset.store'), [
+                'nama_aset'         => 'Proyektor',
+                'kondisi_aset'      => 'BAIK',
+                'lokasi_aset'       => 'Aula',
+                'sumber_perolehan'  => 'Pembelian',
+                'tanggal_perolehan' => '2026-06-16',
+                'nilai_tercatat'    => 5_000_000,
+                'dokumen_pendukung' => UploadedFile::fake()->create('nota.pdf', 120, 'application/pdf'),
+            ]);
+
+        $response->assertRedirect(route('dashboard.aset.index'));
+
+        $aset = Aset::where('nama_aset', 'Proyektor')->first();
+        $this->assertNotNull($aset->dokumen_pendukung);
+        Storage::disk('public')->assertExists($aset->dokumen_pendukung);
+    }
+
+    /** UT-F55-03 — update disusutkan=true → akumulasi & nilai_buku real-time, umur dipertahankan */
+    public function test_UT_F55_03_update_disusutkan_true(): void
+    {
+        $aset = $this->buatAset([
+            'nilai_tercatat'           => 12_000_000,
+            'umur_manfaat'             => 8,
+            'tanggal_mulai_penyusutan' => now()->subYears(2)->toDateString(),
+            'status_aset'              => 'AKTIF',
+            'akumulasi_penyusutan'     => 0,
+            'nilai_buku'               => 12_000_000,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->put(route('dashboard.aset.update', $aset), [
+                'nama_aset'                => $aset->nama_aset,
+                'kondisi_aset'             => 'BAIK',
+                'lokasi_aset'              => 'Ruang Utama Masjid',
+                'sumber_perolehan'         => $aset->sumber_perolehan,
+                'tanggal_perolehan'        => '2024-06-16',
+                'nilai_tercatat'           => 12_000_000,
+                'umur_manfaat'             => 8,
+                'tanggal_mulai_penyusutan' => now()->subYears(2)->toDateString(),
+                'disusutkan'               => 1,
+            ]);
+
+        $response->assertRedirect(route('dashboard.aset.index'));
+
+        $aset->refresh();
+        $this->assertEquals(8, $aset->umur_manfaat);                          // dipertahankan
+        $this->assertGreaterThan(0, (float) $aset->akumulasi_penyusutan);    // snapshot real-time
+    }
+
+    /** UT-F55-05 — toggleStatus reaktivasi (TIDAK AKTIF → AKTIF) reset akumulasi=0 */
+    public function test_UT_F55_05_toggle_status_reaktivasi(): void
+    {
+        $aset = $this->buatAset([
+            'status_aset'              => 'TIDAK AKTIF',
+            'umur_manfaat'             => 8,
+            'nilai_tercatat'           => 28_000_000,
+            'tanggal_mulai_penyusutan' => now()->subYears(3)->toDateString(),
+            'akumulasi_penyusutan'     => 10_500_000,
+            'nilai_buku'               => 17_500_000,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->patch(route('dashboard.aset.toggle-status', $aset));
+
+        $response->assertRedirect(route('dashboard.aset.index'));
+
+        $aset->refresh();
+        $this->assertEquals('AKTIF', $aset->status_aset);
+        $this->assertEquals(0, (float) $aset->akumulasi_penyusutan); // direset
+    }
+
     /**
      * UT-F54-01
      * AsetController::index() - Filter (status, sumber, kondisi, lokasi)

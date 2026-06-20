@@ -31,6 +31,18 @@ class TransaksiServiceTest extends Inc2TestCase
         ], $override);
     }
 
+    /** Helper: bangun 1 klasifikasi berisi entries debit+kredit seimbang. */
+    private function klas(string $ref, array $k, int $nominal = 100000): array
+    {
+        return [
+            'no_referensi' => $ref,
+            'entries' => [
+                ['akun_id' => $k['debit']->id,  'tipe' => 'DEBIT',  'nominal' => $nominal],
+                ['akun_id' => $k['kredit']->id, 'tipe' => 'KREDIT', 'nominal' => $nominal],
+            ],
+        ];
+    }
+
     /** UT-F91-01 — simpanImport baris bersih */
     public function test_UT_F91_01_simpan_import_baris_bersih(): void
     {
@@ -42,8 +54,8 @@ class TransaksiServiceTest extends Inc2TestCase
             'jenis_transaksi' => 'PEMASUKAN',
             'rows'            => [$this->baris(), $this->baris(['no_referensi' => 'REF-002'])],
         ], [
-            ['no_referensi' => 'REF-001', 'akun_debit_id' => $k['debit']->id, 'akun_kredit_id' => $k['kredit']->id],
-            ['no_referensi' => 'REF-002', 'akun_debit_id' => $k['debit']->id, 'akun_kredit_id' => $k['kredit']->id],
+            $this->klas('REF-001', $k),
+            $this->klas('REF-002', $k),
         ]);
 
         $this->assertEmpty($hasil['gagalPeriode'] ?? []);
@@ -65,8 +77,8 @@ class TransaksiServiceTest extends Inc2TestCase
                 $this->baris(['no_referensi' => 'REF-002']),
             ],
         ], [
-            ['no_referensi' => 'REF-001', 'akun_debit_id' => $k['debit']->id, 'akun_kredit_id' => $k['kredit']->id],
-            ['no_referensi' => 'REF-002', 'akun_debit_id' => $k['debit']->id, 'akun_kredit_id' => $k['kredit']->id],
+            $this->klas('REF-001', $k),
+            $this->klas('REF-002', $k),
         ]);
 
         $this->assertGreaterThanOrEqual(1, ($hasil['dilewati'] ?? 0) + ($hasil['duplikat'] ?? 0));
@@ -83,7 +95,7 @@ class TransaksiServiceTest extends Inc2TestCase
             'jenis_transaksi' => 'PEMASUKAN',
             'rows'            => [$this->baris()],
         ], [
-            ['no_referensi' => 'REF-001', 'akun_debit_id' => $k['debit']->id, 'akun_kredit_id' => $k['kredit']->id],
+            $this->klas('REF-001', $k),
         ]);
 
         $this->assertTrue(!empty($hasil['gagalPeriode']));

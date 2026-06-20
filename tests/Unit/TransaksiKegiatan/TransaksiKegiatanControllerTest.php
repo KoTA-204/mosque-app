@@ -144,6 +144,8 @@ class TransaksiKegiatanControllerTest extends TestCase
             'kegiatan_id' => $this->kegiatan->id,
             'jumlah'      => 750000,
         ]);
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();   // ← TAMBAH sementara
     }
 
     /** UT-F68-02 — Catat transaksi pada kegiatan DITUTUP → ditolak */

@@ -5,6 +5,8 @@ namespace Tests\Unit\KategoriTransaksi;
 use App\Models\KategoriTransaksi;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\Dompet;
+use App\Models\Transaksi;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -164,5 +166,74 @@ class KategoriTransaksiControllerTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertViewIs('pages.kategori-transaksi.index');
+    }
+
+    /** UT-F63-09 — Hapus kategori yang dipakai transaksi → diblokir */
+    public function test_UT_F63_09_delete_kategori_dengan_transaksi_blocked(): void
+    {
+        $kategori = KategoriTransaksi::create(['nama_kategori' => 'Dipakai', 'status' => 'aktif']);
+
+        $dompet = Dompet::factory()->create();
+        Transaksi::create([
+            'dompet_id'             => $dompet->id,
+            'user_id'               => $this->admin->id,
+            'kategori_transaksi_id' => $kategori->id,
+            'tanggal_transaksi'     => now()->toDateString(),
+            'jenis_transaksi'       => 'PEMASUKAN',
+            'jumlah'                => 100000,
+            'status_approval'       => 'PENDING',
+            'status_jurnal'         => 'UNMAPPED',
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->delete(route('dashboard.kategori-transaksi.destroy', $kategori));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('kategori_transaksi', ['id' => $kategori->id]);
+    }
+
+    /** UT-F63-10 — Update tolak nama duplikat milik kategori lain */
+    public function test_UT_F63_10_update_tolak_nama_duplikat(): void
+    {
+        KategoriTransaksi::create(['nama_kategori' => 'Infaq', 'status' => 'aktif']);
+        $kategori = KategoriTransaksi::create(['nama_kategori' => 'Sedekah', 'status' => 'aktif']);
+
+        $response = $this->actingAs($this->admin)
+            ->put(route('dashboard.kategori-transaksi.update', $kategori), [
+                'nama_kategori' => 'Infaq', // bentrok
+                'status'        => 'aktif',
+            ]);
+
+        $response->assertSessionHasErrors('nama_kategori');
+    }
+
+    /** UT-F63-11 — Update boleh pakai nama sendiri (unique abaikan diri sendiri) */
+    public function test_UT_F63_11_update_nama_sendiri_lolos(): void
+    {
+        $kategori = KategoriTransaksi::create(['nama_kategori' => 'Wakaf', 'status' => 'aktif']);
+
+        $response = $this->actingAs($this->admin)
+            ->put(route('dashboard.kategori-transaksi.update', $kategori), [
+                'nama_kategori' => 'Wakaf',
+                'status'        => 'tidak_aktif',
+                'deskripsi'     => 'Update status',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('kategori_transaksi', ['id' => $kategori->id, 'status' => 'tidak_aktif']);
+    }
+
+    /** UT-F63-12 — Store tolak status tidak valid */
+    public function test_UT_F63_12_store_tolak_status_invalid(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->post(route('dashboard.kategori-transaksi.store'), [
+                'nama_kategori' => 'Kategori X',
+                'status'        => 'nonaktif', // di luar in:aktif,tidak_aktif
+            ]);
+
+        $response->assertSessionHasErrors('status');
     }
 }

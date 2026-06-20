@@ -88,6 +88,62 @@ class NeracaSaldoControllerTest extends TestCase
         $this->assertEquals(0, (float) $response->viewData('selisih'));
     }
 
+    /** UT-F90-02 — DRAFT tidak ikut diagregasi (hanya POSTED yang dihitung) */
+    public function test_UT_F90_02_draft_tidak_dihitung(): void
+    {
+        $posted = $this->jurnalPosted('2026-06-05');
+        $this->detail($posted, $this->kas->id,        'DEBIT',  400_000);
+        $this->detail($posted, $this->pendapatan->id, 'KREDIT', 400_000);
+
+        // DRAFT tidak boleh masuk agregasi
+        $draft = Jurnal::create([
+            'periode_id'   => $this->periode->id,
+            'jenis_jurnal' => 'UMUM',
+            'tanggal'      => '2026-06-15',
+            'keterangan'   => 'Draft tidak dihitung',
+            'status'       => 'DRAFT',
+        ]);
+        $this->detail($draft, $this->kas->id, 'DEBIT', 999_000);
+
+        $response = $this->actingAs($this->user)->get(route('dashboard.neraca-saldo.index'));
+        $response->assertOk();
+
+        $akunKas = $response->viewData('akuns')->getCollection()->firstWhere('id', $this->kas->id);
+        $this->assertEquals(400_000, (float) $akunKas->total_debit);          // 999rb DRAFT TIDAK ikut
+        $this->assertEquals(400_000, (float) $response->viewData('grandTotalDebit'));
+    }
+
+    /** UT-F90-03 — Akun saldo normal KREDIT teragregasi ke total_kredit */
+    public function test_UT_F90_03_agregasi_akun_kredit(): void
+    {
+        $j = $this->jurnalPosted('2026-06-08');
+        $this->detail($j, $this->kas->id,        'DEBIT',  750_000);
+        $this->detail($j, $this->pendapatan->id, 'KREDIT', 750_000);
+
+        $response = $this->actingAs($this->user)->get(route('dashboard.neraca-saldo.index'));
+        $response->assertOk();
+
+        $akunPend = $response->viewData('akuns')->getCollection()->firstWhere('id', $this->pendapatan->id);
+        $this->assertNotNull($akunPend);
+        $this->assertEquals(750_000, (float) $akunPend->total_kredit);
+        $this->assertEquals(0,       (float) $akunPend->total_debit);
+    }
+
+    /** UT-F90-04 — Selisih ≠ 0 saat grand total debit & kredit tidak seimbang */
+    public function test_UT_F90_04_selisih_tidak_nol(): void
+    {
+        $j = $this->jurnalPosted('2026-06-09');
+        $this->detail($j, $this->kas->id,        'DEBIT',  500_000);
+        $this->detail($j, $this->pendapatan->id, 'KREDIT', 300_000);
+
+        $response = $this->actingAs($this->user)->get(route('dashboard.neraca-saldo.index'));
+        $response->assertOk();
+
+        $this->assertEquals(500_000, (float) $response->viewData('grandTotalDebit'));
+        $this->assertEquals(300_000, (float) $response->viewData('grandTotalKredit'));
+        $this->assertEquals(200_000, abs((float) $response->viewData('selisih'))); // abs → aman thd arah selisih
+    }
+
     /**
      * UT-F79-02
      * NeracaSaldoController::index() - Agregasi saldo per akun (POSTED)

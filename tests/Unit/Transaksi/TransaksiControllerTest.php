@@ -9,15 +9,22 @@ class TransaksiControllerTest extends Inc2TestCase
 {
     private function payload(array $f, array $override = []): array
     {
-        return array_merge([
+        $base = array_merge([
             'jenis_transaksi'   => 'PEMASUKAN',
             'tanggal_transaksi' => '2026-06-15',
             'jumlah'            => 500000,
             'dompet_id'         => $f['dompet']->id,
-            'akun_debit_id'     => $f['debit']->id,
-            'akun_kredit_id'    => $f['kredit']->id,
             'deskripsi'         => 'Donasi Jumat',
         ], $override);
+
+        // Jurnal seimbang; service menghitung `jumlah` dari total debit ini.
+        $nominal = $base['jumlah'];
+        $base['jurnal'] = [
+            ['akun_id' => $f['debit']->id,  'tipe' => 'DEBIT',  'nominal' => $nominal],
+            ['akun_id' => $f['kredit']->id, 'tipe' => 'KREDIT', 'nominal' => $nominal],
+        ];
+
+        return $base;
     }
 
     private function fixtures(bool $denganPeriode = true): array

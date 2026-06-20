@@ -23,7 +23,7 @@ class TransaksiService
 
             if (!$force) {
                 $duplikat = Transaksi::with(['kategoriTransaksi', 'dompet'])
-                    ->where('tanggal_transaksi', $request->tanggal_transaksi)
+                    ->whereDate('tanggal_transaksi', $request->tanggal_transaksi)
                     ->where('jumlah', $jumlah)
                     ->where('jenis_transaksi', $request->jenis_transaksi)
                     ->where('dompet_id', $request->dompet_id)

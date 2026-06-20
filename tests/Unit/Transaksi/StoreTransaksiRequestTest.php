@@ -22,11 +22,17 @@ class StoreTransaksiRequestTest extends TestCase
         $this->assertFalse($v->errors()->has('jumlah'));
     }
 
-    /** UT-F24-01 — Tolak nominal nol */
+    /** UT-F24-01 — Tolak nominal nol (divalidasi di jurnal.*.nominal, min:1) */
     public function test_UT_F24_01_tolak_nominal_nol(): void
     {
-        $v = $this->validate(['jumlah' => 0]);
-        $this->assertTrue($v->errors()->has('jumlah'));
+        $v = $this->validate([
+            'jurnal' => [
+                ['tipe' => 'DEBIT',  'nominal' => 0],
+                ['tipe' => 'KREDIT', 'nominal' => 0],
+            ],
+        ]);
+
+        $this->assertTrue($v->errors()->has('jurnal.0.nominal'));
     }
 
     /** UT-F26-01 — Tolak bukti format / ukuran invalid */

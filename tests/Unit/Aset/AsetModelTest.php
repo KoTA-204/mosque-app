@@ -48,6 +48,65 @@ class AsetModelTest extends TestCase
         $this->assertEquals('ASET-2020-001', Aset::generateKode('2020-01-05'));
     }
 
+    /** UT-F52-04 — accessor label_pemberi & label_nilai sesuai sumber */
+    public function test_UT_F52_04_label_pemberi_dan_nilai(): void
+    {
+        $wakaf = $this->buatAset(['sumber_perolehan' => 'Wakaf']);
+        $this->assertEquals('Nama Wakif', $wakaf->label_pemberi);
+        $this->assertEquals('Nilai Wajar Aset', $wakaf->label_nilai);
+
+        $beli = $this->buatAset(['sumber_perolehan' => 'Pembelian']);
+        $this->assertEquals('Nama Pemberi', $beli->label_pemberi);
+        $this->assertEquals('Nilai Perolehan', $beli->label_nilai);
+    }
+
+    /** UT-F53-04 — accessor progress_penyusutan (0..100) */
+    public function test_UT_F53_04_progress_penyusutan(): void
+    {
+        $aset = $this->buatAset([
+            'nilai_tercatat'           => 10_000_000,
+            'umur_manfaat'             => 5,
+            'tanggal_mulai_penyusutan' => now()->subYears(2)->toDateString(),
+            'status_aset'              => 'AKTIF',
+        ]);
+
+        $expected = min(($aset->akumulasi_real_time / 10_000_000) * 100, 100);
+        $this->assertEquals(round($expected, 2), round($aset->progress_penyusutan, 2));
+        $this->assertGreaterThanOrEqual(0, $aset->progress_penyusutan);
+        $this->assertLessThanOrEqual(100, $aset->progress_penyusutan);
+    }
+
+    /** UT-F53-05 — accessor penyusutan_per_tahun (garis lurus) */
+    public function test_UT_F53_05_penyusutan_per_tahun(): void
+    {
+        $aset = $this->buatAset(['nilai_tercatat' => 12_000_000, 'umur_manfaat' => 8]);
+        $this->assertEquals(1_500_000, round($aset->penyusutan_per_tahun, 2));
+
+        $tanpaUmur = $this->buatAset(['umur_manfaat' => null]);
+        $this->assertEquals(0, $tanpaUmur->penyusutan_per_tahun);
+    }
+
+    /** UT-F54-03 — scopeFilter by tahun (prefix kode ASET-{tahun}-) */
+    public function test_UT_F54_03_filter_tahun(): void
+    {
+        $this->buatAset(['kode_aset' => 'ASET-2026-001']);
+        $this->buatAset(['kode_aset' => 'ASET-2020-001']);
+
+        $hasil = Aset::filter(['tahun' => '2026'])->get();
+
+        $this->assertCount(1, $hasil);
+        $this->assertEquals('ASET-2026-001', $hasil->first()->kode_aset);
+    }
+
+    /** UT-F54-04 — scopeAktif hanya status AKTIF */
+    public function test_UT_F54_04_scope_aktif(): void
+    {
+        $this->buatAset(['status_aset' => 'AKTIF',       'kode_aset' => 'ASET-2026-010']);
+        $this->buatAset(['status_aset' => 'TIDAK AKTIF', 'kode_aset' => 'ASET-2026-011']);
+
+        $this->assertEquals(1, Aset::aktif()->count());
+    }
+
     /**
      * UT-F53-01
      * Aset::penyusutan_per_bulan - Garis Lurus

@@ -8,6 +8,8 @@ use App\Models\Kegiatan;
 use App\Models\Transaksi;
 use App\Services\TransaksiKegiatanService;
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreTransaksiKegiatanRequest;
+use App\Http\Requests\UpdateTransaksiKegiatanRequest;
 
 class TransaksiKegiatanController extends Controller
 {
@@ -47,7 +49,7 @@ class TransaksiKegiatanController extends Controller
     }
 
     // ── Simpan Transaksi ───────────────────────────────────────
-    public function storeTransaksi(StoreTransaksiRequest $request, Kegiatan $kegiatan)
+    public function storeTransaksi(StoreTransaksiKegiatanRequest $request, Kegiatan $kegiatan)
     {
         $this->authorizeKegiatan($kegiatan);
 
@@ -86,7 +88,7 @@ class TransaksiKegiatanController extends Controller
     }
 
     // ── Update Transaksi (hanya PENDING / REVISION) ───────────
-    public function updateTransaksi(UpdateTransaksiRequest $request, Kegiatan $kegiatan, Transaksi $transaksi)
+    public function updateTransaksi(UpdateTransaksiKegiatanRequest $request, Kegiatan $kegiatan, Transaksi $transaksi)
     {
         $this->ensureMilikKegiatan($kegiatan, $transaksi);
 

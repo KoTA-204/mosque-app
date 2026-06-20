@@ -33,7 +33,6 @@ class AsetService
         ]);
     }
 
-    // perbarui aset
     public function update(Aset $aset, array $data, ?UploadedFile $dokumen, bool $disusutkan): Aset
     {
         // ganti dokumen kalau ada file baru
@@ -45,7 +44,8 @@ class AsetService
             $dokumenPath = $this->simpanDokumen($dokumen);
         }
 
-        $aset->update([
+        // 1) isi dulu semua kolom KECUALI nilai_buku & akumulasi_penyusutan
+        $aset->fill([
             'nama_aset'                => $data['nama_aset'],
             'sumber_perolehan'         => $data['sumber_perolehan'],
             'tanggal_perolehan'        => $data['tanggal_perolehan'],
@@ -58,9 +58,14 @@ class AsetService
             'tanggal_mulai_penyusutan' => $disusutkan ? ($data['tanggal_mulai_penyusutan'] ?? null) : null,
             'umur_manfaat'             => $disusutkan ? ($data['umur_manfaat'] ?? null) : null,
             'keterangan'               => $data['keterangan'] ?? null,
-            'nilai_buku'               => $disusutkan ? $aset->nilai_buku_real_time : (float) $data['nilai_tercatat'],
-            'akumulasi_penyusutan'     => $disusutkan ? $aset->akumulasi_real_time : 0,
         ]);
+
+        // 2) accessor sekarang sudah memakai parameter BARU di atas
+        $aset->nilai_buku           = $disusutkan ? $aset->nilai_buku_real_time : (float) $data['nilai_tercatat'];
+        $aset->akumulasi_penyusutan = $disusutkan ? $aset->akumulasi_real_time : 0;
+
+        // 3) simpan semua sekaligus
+        $aset->save();
 
         return $aset;
     }
