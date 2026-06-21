@@ -24,3 +24,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+/tests/Browser/
+/tests/Unit/
+/tests/Feature/
