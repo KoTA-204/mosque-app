@@ -25,10 +25,13 @@ class KenclengService
         return Kencleng::with(['transaksi.user', 'transaksi.dompet', 'detail'])
             ->whereHas('transaksi', fn($q) => $q->where('user_id', auth()->id()))
             ->when($search, fn($q) =>
-                $q->where('nomor_kwitansi', 'ilike', "%{$search}%")
-                  ->orWhereHas('transaksi', fn($q) =>
-                      $q->where('deskripsi', 'ilike', "%{$search}%")
-                  )
+                $q->where(function ($q) use ($search) {          // ← dibungkus closure
+                    $term = '%' . strtolower($search) . '%';
+                    $q->whereRaw('LOWER(nomor_kwitansi) LIKE ?', [$term])
+                    ->orWhereHas('transaksi', fn($q) =>
+                        $q->whereRaw('LOWER(deskripsi) LIKE ?', [$term])
+                    );
+                })
             )
             ->when($status, fn($q) =>
                 $q->whereHas('transaksi', fn($q) =>
@@ -38,7 +41,7 @@ class KenclengService
             ->orderBy('created_at', $order)
             ->paginate($perPage);
     }
-
+    
     public function getById(Kencleng $kencleng): Kencleng
     {
         return $kencleng->load('transaksi.user', 'transaksi.dompet', 'transaksi.kategoriTransaksi', 'detail');
@@ -51,7 +54,7 @@ class KenclengService
 
     public function getKategoriKencleng(): ?KategoriTransaksi
     {
-        return KategoriTransaksi::where('nama_kategori', 'ilike', '%kencleng%')
+        return KategoriTransaksi::whereRaw('LOWER(nama_kategori) LIKE ?', ['%kencleng%'])
             ->first();
     }
 

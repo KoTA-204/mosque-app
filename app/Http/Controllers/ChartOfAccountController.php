@@ -170,7 +170,6 @@ class ChartOfAccountController extends Controller
             ->route('dashboard.coa.index')
             ->with('success', 'Sub kategori akun berhasil ditambahkan.');
 
-        dd($request->all());
     }
 
     public function editSubKategori(Akun $subKategori)

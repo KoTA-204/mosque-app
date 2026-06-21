@@ -30,14 +30,6 @@ class StoreAkunRequest extends FormRequest
             'status'       => 'required|in:aktif,tidak_aktif',
         ];
     }
-
-    public function validated($key = null, $default = null): array
-    {
-        $data = parent::validated($key, $default);
-        $data['status'] = $this->input('status', 'tidak_aktif');
-
-        return $data;
-    }
  
     public function messages(): array
     {

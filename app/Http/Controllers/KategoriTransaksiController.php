@@ -73,7 +73,7 @@ class KategoriTransaksiController extends Controller
 
         $kategoriTransaksi->update([
             'nama_kategori'   => $request->nama_kategori,
-            'status'          => strtolower(trim($request->status)), 
+            'status'          => $request->status,
             'deskripsi'       => $request->deskripsi,
         ]);
 

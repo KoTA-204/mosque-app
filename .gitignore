@@ -4,9 +4,10 @@
 .env.backup
 .env.production
 .env.dusk.local
+
 .phpactor.json
 .phpunit.result.cache
-/Browser
+
 /.fleet
 /.idea
 /.nova
@@ -26,5 +27,5 @@ Homestead.yaml
 Thumbs.db
 
 /tests/Browser/
-/tests/Unit/
 /tests/Feature/
+/tests/Unit/

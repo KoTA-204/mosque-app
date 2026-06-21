@@ -8,6 +8,8 @@ use App\Models\Kegiatan;
 use App\Models\Transaksi;
 use App\Services\TransaksiKegiatanService;
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreTransaksiKegiatanRequest;
+use App\Http\Requests\UpdateTransaksiKegiatanRequest;
 
 class TransaksiKegiatanController extends Controller
 {
@@ -31,10 +33,6 @@ class TransaksiKegiatanController extends Controller
     {
         $this->authorizeKegiatan($kegiatan);
 
-        // Cek & tutup otomatis saat halaman dibuka (tangkap kegiatan yg tglnya baru lewat)
-        $kegiatan->tutupJikaSelesai();
-        $kegiatan->refresh();
-
         $search        = $request->get('search', '');
         $jenis         = $request->get('jenis', '');
         $status        = $request->get('status', '');
@@ -51,21 +49,27 @@ class TransaksiKegiatanController extends Controller
     }
 
     // ── Simpan Transaksi ───────────────────────────────────────
-    public function storeTransaksi(StoreTransaksiRequest $request, Kegiatan $kegiatan)
+    public function storeTransaksi(StoreTransaksiKegiatanRequest $request, Kegiatan $kegiatan)
     {
         $this->authorizeKegiatan($kegiatan);
 
-        // Gunakan bisaInputTransaksi() bukan isAktif() — cek status + tanggal
-        if (! $kegiatan->bisaInputTransaksi()) {
-            return back()->with('error', 'Kegiatan tidak dapat menerima transaksi baru');
+        //yang mengunci pencatatan adalah STATUS kegiatan, bukan tanggal.
+        if (! $kegiatan->isAktif()) {
+            return back()->with('error', 'Kegiatan sudah ditutup, transaksi tidak dapat dicatat');
         }
 
         $data = $request->validated();
-        $this->transaksiKegiatanService->storeTransaksi($kegiatan, $request->validated());
 
-       $redirect = redirect()
+        $this->transaksiKegiatanService->storeTransaksi($kegiatan, $data);
+
+        $redirect = redirect()
             ->route('dashboard.transaksi-kegiatan.show', $kegiatan)
             ->with('success', 'Transaksi berhasil dicatat');
+
+        //(warning lunak): tanggal acara sudah lewat → ingatkan, TAPI tetap simpan.
+        if ($kegiatan->tanggalSudahSelesai()) {
+            $redirect->with('info', 'Catatan: tanggal kegiatan sudah lewat. Pastikan ini pencatatan susulan yang sah.');
+        }
 
         if ($data['jenis_transaksi'] === 'PENGELUARAN') {
             $lebih = $kegiatan->selisihLebihAnggaran();
@@ -91,14 +95,13 @@ class TransaksiKegiatanController extends Controller
     }
 
     // ── Update Transaksi (hanya PENDING / REVISION) ───────────
-    public function updateTransaksi(UpdateTransaksiRequest $request, Kegiatan $kegiatan, Transaksi $transaksi)
+    public function updateTransaksi(UpdateTransaksiKegiatanRequest $request, Kegiatan $kegiatan, Transaksi $transaksi)
     {
         $this->ensureMilikKegiatan($kegiatan, $transaksi);
 
         if (! $transaksi->bisaDiedit()) {
             return back()->with('error', 'Transaksi tidak dapat diedit karena sudah diproses');
         }
-
         if ($transaksi->user_id !== auth()->id()) {
             abort(403);
         }
@@ -151,7 +154,6 @@ class TransaksiKegiatanController extends Controller
         if ($transaksi->kegiatan_id !== $kegiatan->id) {
             abort(404);
         }
-
         $this->authorizeKegiatan($kegiatan);
     }
 }

@@ -2,9 +2,13 @@
 @section('title', 'Laporan Arus Kas')
 
 @php
-    function fmtAk($val) { return number_format(abs($val), 0, ',', '.'); }
-    function signedAk($val) {
-        return $val < 0 ? '(' . fmtAk($val) . ')' : fmtAk($val);
+    if (!function_exists('fmtAk')) {
+        function fmtAk($val) { return number_format(abs($val), 0, ',', '.'); }
+    }
+    if (!function_exists('signedAk')) {
+        function signedAk($val) {
+            return $val < 0 ? '(' . fmtAk($val) . ')' : fmtAk($val);
+        }
     }
 @endphp
 

@@ -3,9 +3,13 @@
 @section('title', 'Laporan Posisi Keuangan')
 
 @php
-    function fmt2($val) { return number_format(abs($val), 0, ',', '.'); }
-    function signed2($val) {
-        return $val < 0 ? '(' . fmt2($val) . ')' : fmt2($val);
+    if (!function_exists('fmt2')) {
+        function fmt2($val) { return number_format(abs($val), 0, ',', '.'); }
+    }
+    if (!function_exists('signed2')) {
+        function signed2($val) {
+            return $val < 0 ? '(' . fmt2($val) . ')' : fmt2($val);
+        }
     }
 @endphp
 
