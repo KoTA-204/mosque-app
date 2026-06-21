@@ -98,10 +98,6 @@ class KegiatanController extends Controller
     {
         $kegiatan->load('panitia');
 
-        // Cek & tutup otomatis saat halaman detail dibuka
-        $kegiatan->tutupJikaSelesai();
-        $kegiatan->refresh();
-
         $kegiatan->transaksi_count = $kegiatan->transaksi()->count();
 
         if ($request->ajax()) {

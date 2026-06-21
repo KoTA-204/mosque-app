@@ -53,16 +53,23 @@ class TransaksiKegiatanController extends Controller
     {
         $this->authorizeKegiatan($kegiatan);
 
+        //yang mengunci pencatatan adalah STATUS kegiatan, bukan tanggal.
         if (! $kegiatan->isAktif()) {
-            return back()->with('error', 'Kegiatan tidak sedang aktif');
+            return back()->with('error', 'Kegiatan sudah ditutup, transaksi tidak dapat dicatat');
         }
 
         $data = $request->validated();
-        $this->transaksiKegiatanService->storeTransaksi($kegiatan, $request->validated());
 
-       $redirect = redirect()
+        $this->transaksiKegiatanService->storeTransaksi($kegiatan, $data);
+
+        $redirect = redirect()
             ->route('dashboard.transaksi-kegiatan.show', $kegiatan)
             ->with('success', 'Transaksi berhasil dicatat');
+
+        //(warning lunak): tanggal acara sudah lewat → ingatkan, TAPI tetap simpan.
+        if ($kegiatan->tanggalSudahSelesai()) {
+            $redirect->with('info', 'Catatan: tanggal kegiatan sudah lewat. Pastikan ini pencatatan susulan yang sah.');
+        }
 
         if ($data['jenis_transaksi'] === 'PENGELUARAN') {
             $lebih = $kegiatan->selisihLebihAnggaran();

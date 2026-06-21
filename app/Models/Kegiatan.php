@@ -78,10 +78,9 @@ class Kegiatan extends Model
 
     public function bisaInputTransaksi(): bool
     {
-        if ($this->status !== self::STATUS_AKTIF) return false;
-
-        // Kalau tanggal sudah lewat, panitia tidak bisa catat transaksi baru
-        return ! $this->tanggalSudahSelesai();
+        // Tanggal kegiatan yang lewat hanya memicu warning + auto-close (tutupJikaSelesai),
+        // BUKAN memblokir pencatatan susulan yang sah (reimburse, nota telat, settlement).
+        return $this->status === self::STATUS_AKTIF;
     }
 
         public function totalRealisasi(): float
