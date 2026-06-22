@@ -60,6 +60,12 @@ class PermissionSeeder extends Seeder
             ['permission_code' => 'EDIT_JURNAL',                'permission_name' => 'Edit Jurnal Umum',          'module' => 'jurnal',             'action' => 'update'],
             ['permission_code' => 'DELETE_JURNAL',              'permission_name' => 'Delete Jurnal Umum',        'module' => 'jurnal',             'action' => 'delete'],
 
+            // ── Akuntansi - Jurnal Pembuka ─────────────────────────
+            ['permission_code' => 'VIEW_JURNAL_PEMBUKA',   'permission_name' => 'View Jurnal Pembuka',   'module' => 'jurnal-pembuka', 'action' => 'view'],
+            ['permission_code' => 'CREATE_JURNAL_PEMBUKA', 'permission_name' => 'Create Jurnal Pembuka', 'module' => 'jurnal-pembuka', 'action' => 'create'],
+            ['permission_code' => 'EDIT_JURNAL_PEMBUKA',   'permission_name' => 'Edit Jurnal Pembuka',   'module' => 'jurnal-pembuka', 'action' => 'update'],
+            ['permission_code' => 'DELETE_JURNAL_PEMBUKA', 'permission_name' => 'Delete Jurnal Pembuka', 'module' => 'jurnal-pembuka', 'action' => 'delete'],
+
             // ── Akuntansi - Jurnal Penyesuaian ────────────────────
             ['permission_code' => 'VIEW_JURNAL_PENYESUAIAN',   'permission_name' => 'View Jurnal Penyesuaian',   'module' => 'jurnal-penyesuaian', 'action' => 'view'],
             ['permission_code' => 'CREATE_JURNAL_PENYESUAIAN', 'permission_name' => 'Create Jurnal Penyesuaian', 'module' => 'jurnal-penyesuaian', 'action' => 'create'],

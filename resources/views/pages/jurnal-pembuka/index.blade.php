@@ -116,7 +116,7 @@
                     <option value="DRAFT"  {{ $status === 'DRAFT'  ? 'selected' : '' }}>Draft</option>
                 </select>
             </x-slot>
-        </x-table-toolbar>
+        </x-jurnal.table-toolbar>
 
         {{-- Tabel --}}
         <div class="overflow-x-auto">
