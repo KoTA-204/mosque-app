@@ -30,6 +30,7 @@ use App\Http\Controllers\LaporanKeuanganController;
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::view('/organisasi', 'landing.organisasi')->name('organisasi');
 Route::view('/tentang-kami', 'landing.tentang-kami')->name('tentang-kami');
+Route::get('/calk', [CalkController::class, 'index'])->name('calk.index');
 
 // ── Authentication ─────────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
