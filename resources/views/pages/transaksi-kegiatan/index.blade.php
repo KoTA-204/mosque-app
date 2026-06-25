@@ -75,8 +75,10 @@
     <div class="flex flex-col gap-3">
         @forelse($kegiatan as $item)
         @php
+            // Konsisten dengan halaman detail: hanya PEMASUKAN APPROVED (dana
+            // terkumpul), bukan menjumlahkan pemasukan + pengeluaran sekaligus.
             $porsi = $item->anggaran > 0
-                ? min(100, round(($item->transaksi->where('status_approval', 'APPROVED')->sum('jumlah') / $item->anggaran) * 100))
+                ? min(100, round(($item->transaksi->where('status_approval', 'APPROVED')->where('jenis_transaksi', 'PEMASUKAN')->sum('jumlah') / $item->anggaran) * 100))
                 : 0;
             $statusColor = match($item->status) {
                 'AKTIF'   => 'text-green-600',

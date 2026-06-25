@@ -8,6 +8,13 @@
         class="space-y-5">
     @csrf
     @method('PUT')
+    <input type="hidden" name="_form" value="edit-akun">
+    <input type="hidden" name="_id" value="<?php echo e($akun->id); ?>">
+
+    @php
+        $isTarget = old('_form') === 'edit-akun' && (int) old('_id') === (int) $akun->id;
+        $errors = $isTarget ? $errors : new \Illuminate\Support\ViewErrorBag;
+    @endphp
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -15,7 +22,7 @@
                 Nomor Akun <span class="text-red-500">*</span>
             </label>
 
-            <input type="text" name="kode_akun" value="{{ old('kode_akun', $akun->kode_akun) }}" 
+            <input type="text" name="kode_akun" value="{{ ($isTarget ? old('kode_akun', $akun->kode_akun) : $akun->kode_akun) }}" 
                 class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
                 {{ $errors->has('kode_akun') 
                     ? 'border-red-400' 
@@ -34,7 +41,7 @@
                 Nama Akun <span class="text-red-500">*</span>
             </label>
 
-            <input type="text" name="nama_akun" value="{{ old('nama_akun', $akun->nama_akun) }}" 
+            <input type="text" name="nama_akun" value="{{ ($isTarget ? old('nama_akun', $akun->nama_akun) : $akun->nama_akun) }}" 
                 class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
                 {{ $errors->has('nama_akun') 
                     ? 'border-red-400' 
@@ -68,7 +75,7 @@
 
                     @foreach($subKategoriList as $sub)
                         <option value="{{ $sub->id }}"
-                            {{ old('parent_id', $akun->parent_id) == $sub->id ? 'selected' : '' }}>
+                            {{ ($isTarget ? old('parent_id', $akun->parent_id) : $akun->parent_id) == $sub->id ? 'selected' : '' }}>
                             {{ $sub->kode_akun }} – {{ $sub->nama_akun }}
                         </option>
                     @endforeach
@@ -99,12 +106,12 @@
                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
 
                     <option value="DEBIT"
-                        {{ old('saldo_normal', $akun->saldo_normal) == 'DEBIT' ? 'selected' : '' }}>
+                        {{ ($isTarget ? old('saldo_normal', $akun->saldo_normal) : $akun->saldo_normal) == 'DEBIT' ? 'selected' : '' }}>
                         Debit
                     </option>
 
                     <option value="KREDIT"
-                        {{ old('saldo_normal', $akun->saldo_normal) == 'KREDIT' ? 'selected' : '' }}>
+                        {{ ($isTarget ? old('saldo_normal', $akun->saldo_normal) : $akun->saldo_normal) == 'KREDIT' ? 'selected' : '' }}>
                         Kredit
                     </option>
                 </select>
@@ -129,7 +136,7 @@
 
         <textarea name="deskripsi" rows="4"
             class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 focus:border-green-400 rounded-xl outline-none resize-none transition-colors
-            bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400">{{ old('deskripsi', $akun->deskripsi) }}</textarea>
+            bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400">{{ ($isTarget ? old('deskripsi', $akun->deskripsi) : $akun->deskripsi) }}</textarea>
     </div>
 
     <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
@@ -140,7 +147,7 @@
         <label class="relative inline-flex items-center cursor-pointer">
             <input type="hidden" name="status" value="tidak_aktif">
             <input type="checkbox" name="status" value="aktif"
-                {{ old('status', $akun->status) === 'aktif' ? 'checked' : '' }}
+                {{ ($isTarget ? old('status', $akun->status) : $akun->status) === 'aktif' ? 'checked' : '' }}
                 class="sr-only peer">
             <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer
                 peer-checked:bg-green-500

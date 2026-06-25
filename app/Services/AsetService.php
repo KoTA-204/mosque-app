@@ -93,12 +93,27 @@ class AsetService
         return $newStatus;
     }
 
-    // hapus aset
+    // hapus aset (hanya jika memenuhi syarat)
     public function delete(Aset $aset): void
     {
+        // Aset tidak menyusut → tidak bisa hapus
+        if (is_null($aset->umur_manfaat)) {
+            throw new \InvalidArgumentException(
+                'Aset yang tidak menyusut tidak dapat dihapus. Gunakan toggle Tidak Aktif.'
+            );
+        }
+
+        // Nilai buku masih ada → belum bisa hapus
+        if ($aset->nilai_buku_real_time > 0) {
+            throw new \InvalidArgumentException(
+                'Aset belum dapat dihapus karena masih memiliki nilai buku. Gunakan toggle Tidak Aktif.'
+            );
+        }
+
         if ($aset->dokumen_pendukung) {
             Storage::disk('public')->delete($aset->dokumen_pendukung);
         }
+
         $aset->delete();
     }
 

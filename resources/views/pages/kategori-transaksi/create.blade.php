@@ -8,12 +8,12 @@
             <input type="text" name="nama_kategori" value="{{ old('nama_kategori') }}"
                 placeholder="Masukan nama kategori"
                 class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
-                    {{ $errors->has('nama_kategori') ?
+                    {{ $errors->createKategori->has('nama_kategori') ?
                         'border-red-400 focus:border-red-400'
                         : 'border-gray-200 dark:border-gray-700 focus:border-green-400'
                     }}
                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400">
-            @error('nama_kategori')
+            @error('nama_kategori', 'createKategori')
             <p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>
             @enderror
         </div>
@@ -24,7 +24,7 @@
             <div class="relative">
                 <select name="status"
                     class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none appearance-none transition-colors
-                        {{ $errors->has('status')
+                        {{ $errors->createKategori->has('status')
                             ? 'border-red-400'
                             : 'border-gray-200 dark:border-gray-700 focus:border-green-400'
                         }}
@@ -37,7 +37,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                 </svg>
             </div>
-            @error('status')
+            @error('status', 'createKategori')
             <p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>
             @enderror
         </div>

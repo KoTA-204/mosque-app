@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\KategoriTransaksi;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class KategoriTransaksiController extends Controller
 {
@@ -15,8 +16,10 @@ class KategoriTransaksiController extends Controller
 
         $kategori = KategoriTransaksi::withCount('transaksi')
             ->when($search, fn($q) =>
-                $q->whereRaw('LOWER(nama_kategori) LIKE ?', ['%' . strtolower($search) . '%'])
-                ->orWhereRaw('LOWER(deskripsi) LIKE ?', ['%' . strtolower($search) . '%'])
+                $q->where(fn($sub) =>
+                    $sub->whereRaw('LOWER(nama_kategori) LIKE ?', ['%' . strtolower($search) . '%'])
+                        ->orWhereRaw('LOWER(deskripsi) LIKE ?', ['%' . strtolower($search) . '%'])
+                )
             )
             ->when($request->input('status'), fn($q, $status) =>
                 $q->where('status', $status)
@@ -35,7 +38,7 @@ class KategoriTransaksiController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'nama_kategori'   => 'required|string|max:100|unique:kategori_transaksi,nama_kategori',
             'status'          => 'required|in:aktif,tidak_aktif',
             'deskripsi'       => 'nullable|string|max:500',
@@ -44,6 +47,13 @@ class KategoriTransaksiController extends Controller
             'nama_kategori.unique'     => 'Nama kategori sudah digunakan.',
             'status.required'          => 'Status wajib dipilih.',
         ]);
+
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator)
+                ->withErrors($validator, 'createKategori')
+                ->withInput();
+        }
 
         KategoriTransaksi::create($request->only(
             'nama_kategori', 'status', 'deskripsi'
@@ -61,7 +71,7 @@ class KategoriTransaksiController extends Controller
 
     public function update(Request $request, KategoriTransaksi $kategoriTransaksi)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'nama_kategori'   => 'required|string|max:100|unique:kategori_transaksi,nama_kategori,' . $kategoriTransaksi->id,
             'status'          => 'required|in:aktif,tidak_aktif',
             'deskripsi'       => 'nullable|string|max:500',
@@ -70,6 +80,14 @@ class KategoriTransaksiController extends Controller
             'nama_kategori.unique'     => 'Nama kategori sudah digunakan.',
             'status.required'          => 'Status wajib dipilih.',
         ]);
+
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator)
+                ->withErrors($validator, 'editKategori')
+                ->withInput()
+                ->with('edit_error_id', $kategoriTransaksi->id);
+        }
 
         $kategoriTransaksi->update([
             'nama_kategori'   => $request->nama_kategori,
@@ -88,7 +106,16 @@ class KategoriTransaksiController extends Controller
             return back()->with('error', 'Kategori tidak dapat dihapus karena sudah digunakan oleh transaksi.');
         }
 
-        $kategoriTransaksi->delete();
+        try {
+            $kategoriTransaksi->delete();
+        } catch (\Illuminate\Database\QueryException $e) {
+            \Log::warning('Gagal menghapus kategori transaksi karena relasi terkait', [
+                'id'    => $kategoriTransaksi->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'Kategori tidak dapat dihapus karena masih tertaut dengan data lain.');
+        }
 
         return back()->with('success', 'Kategori transaksi berhasil dihapus.');
     }

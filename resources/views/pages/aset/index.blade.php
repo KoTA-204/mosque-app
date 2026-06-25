@@ -194,6 +194,15 @@
     </div>
 </div>
 
+<x-confirm-modal
+    id="hapusAsetModal"
+    title="Hapus Aset"
+    message="Aset akan dihapus dari daftar. Data tetap tersimpan untuk keperluan historis."
+    confirmLabel="Hapus"
+    confirmClass="bg-red-600 hover:bg-red-700"
+    :onConfirm="'doHapusAset()'"
+/>
+
 {{-- Modal Container --}}
 <div id="modalContainer"></div>
 

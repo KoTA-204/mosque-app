@@ -300,6 +300,44 @@
         if (!modal) return;
         modal.classList.add('hidden');
         modal.style.display = 'none';
+        // Kosongkan form & hapus tampilan error saat modal ditutup.
+        resetModalForm(modal);
+    }
+
+    // Kosongkan field & bersihkan UI error pada form di dalam sebuah modal.
+    function resetModalForm(modal) {
+        const form = modal.querySelector('form');
+        if (!form || form.id === 'confirm-deleteForm') return;
+
+        form.querySelectorAll('input, textarea').forEach(function (el) {
+            if (['hidden', 'submit', 'button'].includes(el.type)) return;
+            if (el.type === 'checkbox' || el.type === 'radio') {
+                el.checked = el.defaultChecked;
+            } else {
+                el.value = '';
+            }
+        });
+        form.querySelectorAll('select').forEach(function (sel) {
+            sel.selectedIndex = 0;
+        });
+
+        form.querySelectorAll('p.text-red-500').forEach(function (p) { p.remove(); });
+        form.querySelectorAll('.border-red-400').forEach(function (el) {
+            el.classList.remove('border-red-400');
+            el.classList.add('border-gray-200', 'dark:border-gray-700', 'focus:border-green-400');
+        });
+        const note = form.querySelector('.conn-error-notice');
+        if (note) note.remove();
+
+        // Reset tampilan icon picker, route field, & label status (khusus form menu).
+        const scope = (modal.id === 'modal-edit-menu') ? 'edit' : 'create';
+        if (document.getElementById(scope + '-icon-input')) {
+            if (typeof setIconByName === 'function') setIconByName(scope, '');
+            if (typeof toggleRouteField === 'function') toggleRouteField(scope, false);
+            const act = document.getElementById(scope + '-is_active');
+            const lbl = document.getElementById(scope + '-is_active-label');
+            if (act && lbl) lbl.textContent = act.checked ? 'Aktif' : 'Nonaktif';
+        }
     }
 
     function openConfirmModal(opts) {
@@ -403,7 +441,37 @@
         @if($errors->any())
             openModal('modal-tambah-menu');
         @endif
+
+        // Cegah kehilangan data saat koneksi terputus (form tetap terisi).
+        document
+            .querySelectorAll('#modal-tambah-menu form, #form-edit-menu')
+            .forEach(guardOfflineSubmit);
     });
+
+    // ===== Cegah kehilangan data saat koneksi terputus =====
+    function showConnNotice(form) {
+        let note = form.querySelector('.conn-error-notice');
+        if (!note) {
+            note = document.createElement('div');
+            note.className = 'conn-error-notice flex items-center gap-2 mb-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2 text-xs text-red-600 dark:text-red-400';
+            form.prepend(note);
+        }
+        note.textContent = 'Koneksi terputus. Data tidak terkirim dan tetap tersimpan di form — silakan coba lagi setelah koneksi pulih.';
+    }
+
+    function guardOfflineSubmit(form) {
+        if (!form) return;
+        form.addEventListener('submit', function (e) {
+            if (!navigator.onLine) {
+                e.preventDefault();
+                showConnNotice(form);
+            }
+        });
+        window.addEventListener('online', function () {
+            const note = form.querySelector('.conn-error-notice');
+            if (note) note.remove();
+        });
+    }
 </script>
 @endpush
 @endsection

@@ -8,13 +8,19 @@
         class="space-y-5"
         onsubmit="handleFormSubmit(this)">
     @csrf
+    <input type="hidden" name="_form" value="kategori">
+
+    @php
+        $isTarget = old('_form') === 'kategori';
+        $errors = $isTarget ? $errors : new \Illuminate\Support\ViewErrorBag;
+    @endphp
 
     <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             Kode Kategori <span class="text-red-500">*</span>
         </label>
 
-        <input type="text" name="kode_kategori" value="{{ old('kode_kategori') }}" placeholder="Contoh: 1, 2, 3" 
+        <input type="text" name="kode_kategori" value="{{ $isTarget ? old('kode_kategori') : '' }}" placeholder="Contoh: 1, 2, 3" 
             class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
             {{ $errors->has('kode_kategori') 
                 ? 'border-red-400 focus:border-red-400'
@@ -32,8 +38,8 @@
             Nama Kategori <span class="text-red-500">*</span>
         </label>
 
-        <input type="text" name="nama_kategori" value="{{ old('nama_kategori') }}" placeholder="Masukan nama kategori akun" class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
-            {{ $errors->has('kode_kategori')
+        <input type="text" name="nama_kategori" value="{{ $isTarget ? old('nama_kategori') : '' }}" placeholder="Masukan nama kategori akun" class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
+            {{ $errors->has('nama_kategori')
                 ? 'border-red-400 focus:border-red-400'
                 : 'border-gray-200 dark:border-gray-700 focus:border-green-400'
             }}

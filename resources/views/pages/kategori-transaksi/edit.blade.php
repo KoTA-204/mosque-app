@@ -1,4 +1,7 @@
 @foreach($kategori as $item)
+@php
+    $isEditErr = $errors->editKategori->isNotEmpty() && (int) session('edit_error_id') === (int) $item->id;
+@endphp
 <x-modal id="editKategoriModal{{ $item->id }}" title="Edit Kategori">
     <form method="POST" action="{{ route('dashboard.kategori-transaksi.update', $item) }}" class="space-y-5">
         @csrf
@@ -8,13 +11,13 @@
                 Nama Kategori <span class="text-red-500">*</span>
             </label>
             <input type="text" name="nama_kategori"
-                value="{{ old('nama_kategori', $item->nama_kategori) }}"
+                value="{{ $isEditErr ? old('nama_kategori', $item->nama_kategori) : $item->nama_kategori }}"
                 class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
-                    {{ $errors->has('nama_kategori') ? 'border-red-400 focus:border-red-400' : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }}
+                    {{ $isEditErr && $errors->editKategori->has('nama_kategori') ? 'border-red-400 focus:border-red-400' : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }}
                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400">
-            @error('nama_kategori')
-            <p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>
-            @enderror
+            @if($isEditErr && $errors->editKategori->has('nama_kategori'))
+            <p class="mt-1.5 text-xs text-red-500">{{ $errors->editKategori->first('nama_kategori') }}</p>
+            @endif
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Status</label>
@@ -22,8 +25,8 @@
                 <select name="status"
                     class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 focus:border-green-400 rounded-xl outline-none appearance-none transition-colors
                         bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                    <option value="aktif" {{ old('status', $item->status) == 'aktif' ? 'selected' : '' }}>Aktif</option>
-                    <option value="tidak_aktif" {{ old('status', $item->status) == 'tidak_aktif' ? 'selected' : '' }}>Tidak Aktif</option>
+                    <option value="aktif" {{ ($isEditErr ? old('status', $item->status) : $item->status) == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                    <option value="tidak_aktif" {{ ($isEditErr ? old('status', $item->status) : $item->status) == 'tidak_aktif' ? 'selected' : '' }}>Tidak Aktif</option>
                 </select>
                 <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,7 +38,7 @@
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Deskripsi</label>
             <textarea name="deskripsi" rows="4"
                 class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 focus:border-green-400 rounded-xl outline-none resize-none transition-colors
-                    bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400">{{ old('deskripsi', $item->deskripsi) }}</textarea>
+                    bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400">{{ $isEditErr ? old('deskripsi', $item->deskripsi) : $item->deskripsi }}</textarea>
         </div>
         <div class="pt-1">
             <button type="submit"

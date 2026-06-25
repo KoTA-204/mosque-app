@@ -170,4 +170,21 @@ class Kegiatan extends Model
         $total = $this->totalPengeluaranBerjalan($kecualiId) + $jumlahBaru;
         return max(0, $total - (float) $this->anggaran);
     }
+
+    // ── Realisasi pemasukan vs anggaran (progres dana terkumpul) ──────────
+    // Hanya PEMASUKAN yang sudah APPROVED yang dihitung sebagai dana terkumpul,
+    // BUKAN gabungan pemasukan + pengeluaran.
+    public function realisasiPemasukan(): float
+    {
+        return (float) $this->transaksi()
+            ->where('jenis_transaksi', 'PEMASUKAN')
+            ->where('status_approval', 'APPROVED')
+            ->sum('jumlah');
+    }
+
+    public function persenRealisasiPemasukan(): int
+    {
+        if ($this->anggaran <= 0) return 0;
+        return min(100, (int) round($this->realisasiPemasukan() / $this->anggaran * 100));
+    }
 }

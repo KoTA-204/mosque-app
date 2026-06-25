@@ -30,7 +30,6 @@ use App\Http\Controllers\LaporanKeuanganController;
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::view('/organisasi', 'landing.organisasi')->name('organisasi');
 Route::view('/tentang-kami', 'landing.tentang-kami')->name('tentang-kami');
-Route::get('/calk', [CalkController::class, 'index'])->name('calk.index');
 
 // ── Authentication ─────────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
@@ -231,16 +230,9 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
         Route::get('/jurnal-umum', [JurnalUmumController::class, 'index'])->name('jurnal-umum.index');
 
         Route::middleware('permission:CREATE_JURNAL')->group(function () {
-            Route::get('/jurnal-umum/create', [JurnalUmumController::class, 'create'])->name('jurnal-umum.create');
-            Route::post('/jurnal-umum', [JurnalUmumController::class, 'store'])->name('jurnal-umum.store');
             // ✅ bulk-post dan post SEBELUM {jurnalUmum} agar tidak tertangkap sebagai parameter
             Route::post('/jurnal-umum/bulk-post', [JurnalUmumController::class, 'bulkPost'])->name('jurnal-umum.bulk-post');
             Route::post('/jurnal-umum/{jurnalUmum}/post', [JurnalUmumController::class, 'post'])->name('jurnal-umum.post');
-        });
-
-        Route::middleware('permission:EDIT_JURNAL')->group(function () {
-            Route::get('/jurnal-umum/{jurnalUmum}/edit', [JurnalUmumController::class, 'edit'])->name('jurnal-umum.edit');
-            Route::put('/jurnal-umum/{jurnalUmum}', [JurnalUmumController::class, 'update'])->name('jurnal-umum.update');
         });
 
         Route::middleware('permission:DELETE_JURNAL')->group(function () {

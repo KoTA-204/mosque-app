@@ -53,16 +53,9 @@ class TransaksiKegiatanService
 
     public function getPorsiAnggaran(Kegiatan $kegiatan): int
     {
-        if ($kegiatan->anggaran <= 0) {
-            return 0;
-        }
-
-        $totalPemasukan = $kegiatan->transaksi()
-            ->where('jenis_transaksi', 'PEMASUKAN')
-            ->where('status_approval', 'APPROVED')
-            ->sum('jumlah');
-
-        return min(100, (int) round(($totalPemasukan / $kegiatan->anggaran) * 100));
+        // Sumber tunggal kebenaran ada di model, agar konsisten dengan
+        // perhitungan di halaman index (hanya PEMASUKAN APPROVED).
+        return $kegiatan->persenRealisasiPemasukan();
     }
 
     // ── Transaksi ────────────────────────────────────────────
@@ -145,7 +138,7 @@ class TransaksiKegiatanService
             foreach ($data['hapus_bukti'] ?? [] as $buktiId) {
                 $bukti = BuktiTransaksi::where('transaksi_id', $transaksi->id)->find($buktiId);
                 if ($bukti) {
-                    Storage::disk('azure')->delete($bukti->path_file);
+                    Storage::disk('public')->delete($bukti->path_file);
                     $bukti->delete();
                 }
             }
@@ -167,7 +160,7 @@ class TransaksiKegiatanService
 
         DB::transaction(function () use ($transaksi) {
             foreach ($transaksi->buktiTransaksi as $bukti) {
-                Storage::disk('azure')->delete($bukti->path_file);
+                Storage::disk('public')->delete($bukti->path_file);
                 $bukti->delete();
             }
             $transaksi->delete();
@@ -180,7 +173,7 @@ class TransaksiKegiatanService
     private function simpanBukti(Transaksi $transaksi, array $files): void
     {
         foreach ($files as $file) {
-            $path = $file->store('bukti_transaksi', 'azure');
+            $path = $file->store('bukti_transaksi', 'public');
             BuktiTransaksi::create([
                 'transaksi_id' => $transaksi->id,
                 'nama_file'    => $file->getClientOriginalName(),

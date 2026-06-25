@@ -435,6 +435,21 @@
 
 @push('scripts') 
 <script>
+    @php $formSource = old('_form', ''); @endphp
+    @if($errors->any() && $formSource === 'kategori')
+        openModal('createKategoriModal');
+    @elseif($errors->any() && $formSource === 'akun')
+        openModal('createAkunModal');
+    @elseif($errors->any() && $formSource === 'subkategori')
+        openModal('createSubKategoriModal');
+    @elseif($errors->any() && $formSource === 'edit-kategori')
+        openModal('editKategoriModal<?php echo e(old('_id')); ?>');
+    @elseif($errors->any() && $formSource === 'edit-subkategori')
+        openModal('editSubKategoriModal<?php echo e(old('_id')); ?>');
+    @elseif($errors->any() && $formSource === 'edit-akun')
+        openModal('editAkunModal<?php echo e(old('_id')); ?>');
+    @endif
+
     function openModal(id) {
         const modal = document.getElementById(id);
 
