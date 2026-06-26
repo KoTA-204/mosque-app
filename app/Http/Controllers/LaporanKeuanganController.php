@@ -9,6 +9,7 @@ use App\Services\Laporan\PenghasilanKomprehensifService;
 use App\Services\Laporan\PerubahanAsetNetoService;
 use App\Services\Laporan\PosisiKeuanganService;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class LaporanKeuanganController extends Controller
 {
@@ -85,5 +86,63 @@ class LaporanKeuanganController extends Controller
         return view('pages.laporan.calk', compact(
             'periodeList', 'periode', 'periodePrev', 'data'
         ))->with('selectedPeriodeId', $selectedId);
+    }
+
+    // Unduh laporan sebagai PDF (nama file otomatis dari server)
+    public function downloadPdf(Request $request, string $jenis)
+    {
+        // Helper format angka untuk template PDF. Didefinisikan di file TANPA
+        // namespace (app/Helpers/pdf_helpers.php) agar fungsi terdaftar di
+        // namespace global, sehingga bisa dipanggil dari view Blade ter-compile
+        // yang berjalan di namespace global.
+        require_once app_path('Helpers/pdf_helpers.php');
+
+        [$periodeList, $periode, $periodePrev, $selectedId] = $this->resolvePeriode($request);
+
+        switch ($jenis) {
+            case 'posisi-keuangan':
+                $data     = $this->posisi->build($periode?->id);
+                $dataPrev = $periodePrev ? $this->posisi->build($periodePrev->id) : null;
+                $judul    = 'Laporan Posisi Keuangan';
+                break;
+            case 'penghasilan-komprehensif':
+                $data     = $this->penghasilan->build($periode?->id);
+                $dataPrev = $periodePrev ? $this->penghasilan->build($periodePrev->id) : null;
+                $judul    = 'Laporan Penghasilan Komprehensif';
+                break;
+            case 'perubahan-aset-neto':
+                $data     = $this->perubahan->build($periode, $periodePrev);
+                $dataPrev = $periodePrev ? $this->perubahan->build($periodePrev, null) : null;
+                $judul    = 'Laporan Perubahan Aset Neto';
+                break;
+            case 'arus-kas':
+                $data     = $this->arusKas->build($periode);
+                $dataPrev = $periodePrev ? $this->arusKas->build($periodePrev) : null;
+                $judul    = 'Laporan Arus Kas';
+                break;
+            case 'calk':
+                $data     = $this->calk->build($periode);
+                $dataPrev = null;
+                $judul    = 'Laporan CALK';
+                break;
+            default:
+                abort(404);
+        }
+
+        $bulan    = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        $now      = now();
+        $tgl      = $now->day . $bulan[$now->month - 1] . $now->year;
+        $namaFile = $tgl . '_' . $judul . '_MosQue.pdf';
+
+        $pdf = Pdf::loadView('pages.laporan.pdf.' . $jenis, [
+            'periode'     => $periode,
+            'periodePrev' => $periodePrev,
+            'data'        => $data,
+            'dataPrev'    => $dataPrev,
+            'judul'       => $judul,
+            'namaFile'    => $namaFile,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download($namaFile);
     }
 }

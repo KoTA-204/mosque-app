@@ -232,7 +232,7 @@ class AkunSeeder extends Seeder
 
         // ── 4. PENDAPATAN ──────────────────────────────────────────────────
         //
-        // Struktur sudah benar — dua parent sesuai klasifikasi ISAK 35:
+        // Struktur sudah benar — dua parent sesuai klasifikasi ISAK 335:
         //   4-1000 Pendapatan Tidak Terikat  → PREFIX_DENGAN_PEMBATASAN tidak cocok
         //                                      → closing ke 3-1000
         //   4-2000 Pendapatan Terikat        → prefix '4-2' cocok

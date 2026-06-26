@@ -162,7 +162,7 @@ class DashboardController extends Controller
         $pendapatanTanpaPembatasan  = $this->dashboard->totalPendapatanTanpaPembatasan($periodeAktif->id);
         $pendapatanDenganPembatasan = $this->dashboard->totalPendapatanDenganPembatasan($periodeAktif->id);
 
-        // Sesuai ISAK 35: beban hanya dibebankan ke dana tanpa pembatasan
+        // Sesuai ISAK 335: beban hanya dibebankan ke dana tanpa pembatasan
         $surplusTanpaPembatasan  = $pendapatanTanpaPembatasan - $pengeluaranBulanIni;
         $surplusDenganPembatasan = $pendapatanDenganPembatasan; // tidak dikurangi beban
 

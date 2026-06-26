@@ -17,29 +17,10 @@
 <div class="p-6 space-y-6">
 
     {{-- Page Header --}}
-    <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
-        <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Laporan Posisi Keuangan</h1>
-        <div class="flex items-center gap-2">
-            <a href="{{ route('dashboard.laporan.penghasilan-komprehensif') }}"
-               class="text-sm text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                Penghasilan Komprehensif
-            </a>
-            <a href="{{ route('dashboard.laporan.perubahan-aset-neto') }}"
-               class="text-sm text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                Perubahan Aset Neto
-            </a>
-            <button onclick="window.print()"
-                class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                </svg>
-                Cetak
-            </button>
-        </div>
-    </div>
+    @include('pages.laporan.partials.nav', ['active' => 'posisi-keuangan'])
 
     {{-- Summary Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="no-print grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-5">
             <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Aset</p>
             <p class="text-2xl font-bold text-green-600 dark:text-green-400">Rp {{ fmt2($data['jumlahAset'] ?? 0) }}</p>
@@ -55,8 +36,8 @@
     </div>
 
     {{-- Filter & Report --}}
-    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-        <div class="flex items-center gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden" id="print-area">
+        <div class="no-print flex items-center gap-4 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
             <form method="GET" class="flex items-center gap-3">
                 <label class="text-sm text-gray-500 dark:text-gray-400">Pilih Periode</label>
                 <select name="periode_id" onchange="this.form.submit()"
@@ -79,7 +60,7 @@
                     Per {{ $periode ? $periode->tanggal_akhir->translatedFormat('d F Y') : '—' }}
                 </p>
                 <span class="inline-block mt-2 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-1 rounded-full">
-                    ISAK 35 — Penyajian Laporan Keuangan Entitas Berorientasi Nonlaba
+                    ISAK 335 — Penyajian Laporan Keuangan Entitas Berorientasi Nonlaba
                 </span>
             </div>
 
@@ -273,7 +254,4 @@
     </div>
 </div>
 
-@push('styles')
-<style>@media print { nav, .no-print { display: none !important; } body { background: white; } }</style>
-@endpush
 @endsection

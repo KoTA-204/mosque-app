@@ -18,34 +18,8 @@
 <div class="p-6 space-y-6">
 
     {{-- ══ PAGE HEADER ══ --}}
-    <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4 no-print">
-        <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Laporan Catatan Atas Laporan Keuangan (CALK)</h1>
-        <div class="flex items-center gap-2">
-            <a href="{{ route('dashboard.laporan.penghasilan-komprehensif') }}"
-            class="text-sm text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                Penghasilan Komprehensif
-            </a>
-            <a href="{{ route('dashboard.laporan.posisi-keuangan') }}"
-            class="text-sm text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                Posisi Keuangan
-            </a>
-            <a href="{{ route('dashboard.laporan.perubahan-aset-neto') }}"
-            class="text-sm text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                Perubahan Aset Neto
-            </a>
-            {{-- Ganti button cetak --}}
-            <button onclick="cetakLaporan()"
-                class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                </svg>
-                Cetak
-            </button>
-        </div>
-    </div>
+    @include('pages.laporan.partials.nav', ['active' => 'calk', 'printOnclick' => 'cetakLaporan()'])
 
-    {{-- ══ CARD WRAPPER ══ --}}
     <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
         {{-- ══ FILTER BAR ══ --}}
         <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-gray-100 dark:border-gray-800 no-print">
@@ -77,7 +51,7 @@
                     {{ $periode ? $periode->tanggal_akhir->translatedFormat('d F Y') : '—' }}
                 </p>
                 <span class="inline-block mt-2 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-1 rounded-full">
-                    ISAK 35 — Penyajian Laporan Keuangan Entitas Berorientasi Nonlaba
+                    ISAK 335 — Penyajian Laporan Keuangan Entitas Berorientasi Nonlaba
                 </span>
             </div>
 
@@ -97,7 +71,7 @@
                 <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
                     Masjid ini bergerak dalam kegiatan pelayanan ibadah, dakwah, pendidikan, dan sosial kemasyarakatan.
                 </p>
-                <table class="text-sm w-full max-w-lg">
+                <table class="info-table text-sm w-full max-w-lg">
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                         @php
                             $infoUmum = [
@@ -135,7 +109,7 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
                     Rincian kas dan setara kas per {{ $periode->tanggal_akhir->translatedFormat('d F Y') }}:
                 </p>
-                <table class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <table class="fin-table w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <thead class="bg-gray-50 dark:bg-gray-800">
                         <tr>
                             <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Uraian</th>
@@ -169,7 +143,7 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
                     Rincian piutang per {{ $periode->tanggal_akhir->translatedFormat('d F Y') }}:
                 </p>
-                <table class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <table class="fin-table w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <thead class="bg-gray-50 dark:bg-gray-800">
                         <tr>
                             <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Uraian</th>
@@ -203,7 +177,7 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
                     Rincian aset tetap per {{ $periode->tanggal_akhir->translatedFormat('d F Y') }}:
                 </p>
-                <table class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <table class="fin-table w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <thead class="bg-gray-50 dark:bg-gray-800">
                         <tr>
                             <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Uraian</th>
@@ -252,7 +226,7 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
                     Rincian liabilitas per {{ $periode->tanggal_akhir->translatedFormat('d F Y') }}:
                 </p>
-                <table class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <table class="fin-table w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <thead class="bg-gray-50 dark:bg-gray-800">
                         <tr>
                             <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Uraian</th>
@@ -287,7 +261,7 @@
                     Rincian pendapatan infak dan sedekah untuk periode yang berakhir
                     {{ $periode->tanggal_akhir->translatedFormat('d F Y') }}:
                 </p>
-                <table class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <table class="fin-table w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <thead class="bg-gray-50 dark:bg-gray-800">
                         <tr>
                             <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Uraian</th>
@@ -320,7 +294,7 @@
                     Rincian beban operasional untuk periode yang berakhir
                     {{ $periode->tanggal_akhir->translatedFormat('d F Y') }}:
                 </p>
-                <table class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <table class="fin-table w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <thead class="bg-gray-50 dark:bg-gray-800">
                         <tr>
                             <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Uraian</th>
@@ -353,7 +327,7 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
                     Rincian aset neto per {{ $periode->tanggal_akhir->translatedFormat('d F Y') }}:
                 </p>
-                <table class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <table class="fin-table w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <thead class="bg-gray-50 dark:bg-gray-800">
                         <tr>
                             <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Uraian</th>
@@ -407,7 +381,7 @@
                     Informasi arus kas untuk periode yang berakhir
                     {{ $periode->tanggal_akhir->translatedFormat('d F Y') }}:
                 </p>
-                <table class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <table class="fin-table w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <thead class="bg-gray-50 dark:bg-gray-800">
                         <tr>
                             <th class="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Uraian</th>
@@ -477,6 +451,10 @@ function cetakLaporan() {
     const periodeLabel = @json($periode?->nama_periode ?? '');
     const tanggalAkhir = @json($periode?->tanggal_akhir?->translatedFormat('d F Y') ?? '');
 
+    const bulanID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    const dCetak = new Date();
+    const tglFile = dCetak.getDate() + bulanID[dCetak.getMonth()] + dCetak.getFullYear();
+    const namaFile = tglFile + '_Laporan CALK_MosQue';
     const konten = document.getElementById('calkDokumen').innerHTML;
 
     // Inject garis hijau pemisah setelah blok KOP, sebelum Catatan 1
@@ -491,7 +469,7 @@ function cetakLaporan() {
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>CALK - Masjid Luqmanul Hakim - ${periodeLabel}</title>
+    <title>${namaFile}</title>
     <style>
         /* ── Reset & Base ── */
         *, *::before, *::after {
@@ -554,7 +532,7 @@ function cetakLaporan() {
             margin: 3pt 0;
         }
 
-        /* Badge ISAK 35 — pill hijau seperti preview */
+        /* Badge ISAK 335 — pill hijau seperti preview */
         span.inline-block.text-xs {
             display: inline-block;
             margin-top: 6pt;

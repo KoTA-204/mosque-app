@@ -187,7 +187,7 @@
                     <span class="flex h-5 w-5 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold">1</span>
                     Tutup Pendapatan
                 </h3>
-                <p class="text-xs text-gray-400 mb-4">Akun pendapatan ditutup ke Aset Neto per klasifikasi dana sesuai ISAK 35.</p>
+                <p class="text-xs text-gray-400 mb-4">Akun pendapatan ditutup ke Aset Neto per klasifikasi dana sesuai ISAK 335.</p>
                 <div id="previewPendapatanRows" class="space-y-1 mb-4"></div>
                 <x-jurnal.balance-bar prefix="prev1" />
             </div>
@@ -198,7 +198,7 @@
                     <span class="flex h-5 w-5 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold">2</span>
                     Tutup Beban
                 </h3>
-                <p class="text-xs text-gray-400 mb-4">Semua beban ditutup dari Aset Neto Tanpa Pembatasan sesuai ISAK 35.</p>
+                <p class="text-xs text-gray-400 mb-4">Semua beban ditutup dari Aset Neto Tanpa Pembatasan sesuai ISAK 335.</p>
                 <div id="previewBebanRows" class="space-y-1 mb-4"></div>
                 <x-jurnal.balance-bar prefix="prev2" />
             </div>

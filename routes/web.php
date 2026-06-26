@@ -402,5 +402,8 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
         Route::get('/perubahan-aset-neto', [LaporanKeuanganController::class, 'perubahanAsetNeto'])->name('perubahan-aset-neto');
         Route::get('/arus-kas', [LaporanKeuanganController::class, 'arusKas'])->name('arus-kas');
         Route::get('/calk', [LaporanKeuanganController::class, 'calk'])->name('calk');
+        Route::get('/{jenis}/unduh-pdf', [LaporanKeuanganController::class, 'downloadPdf'])
+            ->where('jenis', 'posisi-keuangan|penghasilan-komprehensif|perubahan-aset-neto|arus-kas|calk')
+            ->name('pdf');
     });
 });

@@ -1,6 +1,6 @@
 # Aplikasi Pengelolaan Keuangan Masjid Luqmanul Hakim
 
-Aplikasi web pengelolaan keuangan untuk Masjid Luqmanul Hakim, Politeknik Negeri Bandung. dengan tambahan modul pencatatan transaksi, siklus akuntansi lengkap, dan pelaporan keuangan sesuai standar **ISAK 35** untuk entitas nirlaba.
+Aplikasi web pengelolaan keuangan untuk Masjid Luqmanul Hakim, Politeknik Negeri Bandung. dengan tambahan modul pencatatan transaksi, siklus akuntansi lengkap, dan pelaporan keuangan sesuai standar **ISAK 335** untuk entitas nirlaba.
 
 ## Tautan
 
@@ -35,7 +35,7 @@ Aplikasi web pengelolaan keuangan untuk Masjid Luqmanul Hakim, Politeknik Negeri
 - Jurnal penyesuaian
 - Jurnal penutup
 
-### Pelaporan Keuangan ISAK 35
+### Pelaporan Keuangan ISAK 335
 - Laporan posisi keuangan
 - Laporan penghasilan komperhensif
 - Laporan aset neto
@@ -171,7 +171,7 @@ Perintah ini akan menjalankan secara bersamaan:
 
 | Peran | Akses |
 |---|---|
-| Ketua DKM | Seluruh fitur termasuk laporan keuangan ISAK 35 dan manajemen pengguna |
+| Ketua DKM | Seluruh fitur termasuk laporan keuangan ISAK 335 dan manajemen pengguna |
 | Bendahara 1 | Transaksi infak, zakat, dan pengeluaran rutin |
 | Bendahara 2 | Transaksi kencleng dan pengeluaran operasional |
 | PHM | Pencatatan dana kencleng |
