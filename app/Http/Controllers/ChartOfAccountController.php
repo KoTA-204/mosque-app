@@ -10,6 +10,7 @@ use App\Http\Requests\UpdateSubKategoriRequest;
 use App\Http\Requests\StoreAkunRequest;
 use App\Http\Requests\UpdateAkunRequest;
 use App\Models\Akun;
+use App\Models\DetailJurnal;
 use App\Models\KategoriAkun;
 use Illuminate\Http\Request;
 
@@ -212,6 +213,14 @@ class ChartOfAccountController extends Controller
                 );
             }
 
+            // Tolak hapus bila sub kategori sudah dipakai pada transaksi (jurnal).
+            if (DetailJurnal::where('akun_id', $subKategori->id)->exists()) {
+                return back()->with(
+                    'error',
+                    'Sub kategori tidak dapat dihapus karena sudah digunakan pada transaksi.'
+                );
+            }
+
             $subKategori->delete();
 
             return back()->with(
@@ -289,6 +298,22 @@ class ChartOfAccountController extends Controller
     public function destroyAkun(Akun $akun)
     {
         try {
+            // Akun tidak boleh dihapus bila sudah dipakai pada transaksi (jurnal).
+            if (DetailJurnal::where('akun_id', $akun->id)->exists()) {
+                return back()->with(
+                    'error',
+                    'Akun tidak dapat dihapus karena sudah digunakan pada transaksi.'
+                );
+            }
+
+            // Akun yang masih memiliki sub akun juga tidak boleh dihapus.
+            if ($akun->children()->exists()) {
+                return back()->with(
+                    'error',
+                    'Akun tidak dapat dihapus karena masih memiliki sub akun.'
+                );
+            }
+
             $akun->delete();
 
             return back()->with('success', 'Akun berhasil dihapus.');
