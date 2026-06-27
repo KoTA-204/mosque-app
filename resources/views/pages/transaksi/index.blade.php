@@ -11,7 +11,7 @@
             </p>
         </div>
         <div class="flex items-center gap-3">
-            <button onclick="openModal('modalImpor')"
+            <button onclick="resetImpor(); openModal('modalImpor')"
                 class="h-9 px-4 rounded-xl border border-green-700 text-green-700 text-sm font-medium hover:bg-green-50 transition-colors">
                 Impor Transaksi
             </button>

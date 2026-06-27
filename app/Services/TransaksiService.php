@@ -55,7 +55,7 @@ class TransaksiService
                 'deskripsi'             => $request->deskripsi,
                 'catatan'               => $request->catatan,
                 'status_approval'       => null,
-                'status_jurnal'         => 'MAPPED',
+                // status_jurnal ditetapkan terpusat di buatJurnalUmum() (single source of truth)
             ]);
 
             // 2. Jurnal entri multi debit & kredit
@@ -187,7 +187,7 @@ class TransaksiService
                     'no_referensi'          => $row['no_referensi'],
                     'catatan'               => null,
                     'status_approval'       => null,
-                    'status_jurnal'         => 'MAPPED',
+                    // status_jurnal ditetapkan terpusat di buatJurnalUmum() (single source of truth)
                 ]);
 
                 $this->buatJurnalUmum($transaksi, $klas['entries'], $row['deskripsi'], $periode);
@@ -276,6 +276,11 @@ class TransaksiService
         }
 
         DetailJurnal::insert($rows);
+
+        // Single source of truth status pemetaan jurnal:
+        // transaksi dianggap MAPPED hanya jika jurnal umum yang valid
+        // (>= 1 baris debit & 1 baris kredit, balance) berhasil dibentuk di sini.
+        $transaksi->update(['status_jurnal' => 'MAPPED']);
 
         return $jurnal;
     }

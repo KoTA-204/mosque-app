@@ -120,7 +120,7 @@
             <p class="font-medium text-gray-900">Impor Transaksi Gagal</p>
             <p id="pesanGagal" class="text-sm text-gray-500 px-4"></p>
         </div>
-        <button type="button" onclick="imporSetState('upload')"
+        <button type="button" onclick="resetImpor()"
             class="w-full h-10 bg-green-700 text-white text-sm font-medium rounded-xl hover:bg-green-800 transition-colors">
             Coba Lagi
         </button>
@@ -129,6 +129,30 @@
 </div>
 
 <script>
+// Reset seluruh isian form impor + state tampilan ke kondisi awal.
+// Dipanggil saat modal dibuka dan saat tombol "Coba Lagi" ditekan,
+// agar data dari percobaan impor sebelumnya tidak tertinggal.
+function resetImpor() {
+    const form = document.getElementById('formImpor');
+    if (form) form.reset();
+
+    const nama = document.getElementById('namaFileImpor');
+    if (nama) { nama.textContent = ''; nama.classList.add('hidden'); }
+
+    const errBox = document.getElementById('imporErrorBox');
+    if (errBox) errBox.classList.add('hidden');
+    const errMsg = document.getElementById('imporErrorMsg');
+    if (errMsg) errMsg.textContent = '';
+
+    const fileInput = document.getElementById('inputFileImpor');
+    if (fileInput) fileInput.value = '';
+
+    const pesanGagal = document.getElementById('pesanGagal');
+    if (pesanGagal) pesanGagal.textContent = '';
+
+    imporSetState('upload');
+}
+
 function onFileImpor(input) {
     if (!input.files.length) return;
     const p = document.getElementById('namaFileImpor');
