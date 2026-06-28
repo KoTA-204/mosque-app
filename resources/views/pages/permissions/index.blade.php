@@ -200,7 +200,7 @@
 
                             {{-- Delete --}}
                             <form action="{{ route('dashboard.permissions.destroy', $permission) }}" method="POST"
-                                  onsubmit="return confirm('Yakin hapus permission ini?')">
+                                  data-confirm="Yakin hapus permission ini?" data-confirm-label="Hapus">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"

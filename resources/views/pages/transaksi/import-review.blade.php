@@ -398,10 +398,10 @@ function applyBulk() {
     updateBulkBar();
 }
 
-function bulkHapus() {
+async function bulkHapus() {
     const checked = document.querySelectorAll('.rowCheck:checked');
     if (checked.length === 0) return;
-    if (!confirm(`Hapus ${checked.length} baris yang dipilih?`)) return;
+    if (!await confirmAsync(`Hapus ${checked.length} baris yang dipilih?`, { confirmLabel: 'Hapus' })) return;
 
     checked.forEach(cb => cb.closest('tr').remove());
     updateBulkBar();

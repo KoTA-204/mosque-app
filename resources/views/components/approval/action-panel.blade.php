@@ -22,7 +22,7 @@
                 Reject
             </button>
             <form action="{{ route('dashboard.approval.approve', $transaksi) }}" method="POST"
-                  onsubmit="return confirm('{{ $confirmText }}')">
+                  data-confirm="{{ $confirmText }}" data-confirm-title="Setujui Pengajuan" data-confirm-label="Setujui" data-confirm-class="bg-green-600 hover:bg-green-700">
                 @csrf
                 <button type="submit"
                         class="inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">

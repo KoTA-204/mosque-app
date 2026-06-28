@@ -211,8 +211,7 @@ function toggleStatus(id, currentStatus) {
 function hapusAset(id, nama) {
     const modal = document.getElementById('hapusAsetModal');
     if (!modal) {
-        if (!confirm(`Hapus aset "${nama}"?`)) return;
-        doHapusAset(id);
+        confirmAction({ message: `Hapus aset "${nama}"?`, confirmLabel: 'Hapus', onConfirm: () => doHapusAset(id) });
         return;
     }
     const msgEl = document.getElementById('hapusAsetModalMessage');

@@ -142,7 +142,7 @@
                         Edit
                     </a>
                     <form action="{{ route('dashboard.roles.destroy', $role) }}" method="POST"
-                          onsubmit="return confirm('Yakin hapus role \'{{ addslashes($role->role_name) }}\'?')">
+                          data-confirm="Yakin hapus role '{{ addslashes($role->role_name) }}'?" data-confirm-label="Hapus">
                         @csrf
                         @method('DELETE')
                         <button type="submit"

@@ -156,7 +156,7 @@
                             <div class="flex items-center justify-center gap-1">
                                 @if(!$isPosted)
                                 <form action="{{ route('dashboard.jurnal-penyesuaian.destroy', $item) }}" method="POST"
-                                      onsubmit="return confirm('Yakin hapus jurnal ini?')">
+                                      data-confirm="Yakin hapus jurnal ini?" data-confirm-label="Hapus">
                                     @csrf @method('DELETE')
                                     <button type="submit"
                                             class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"

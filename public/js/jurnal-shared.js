@@ -277,10 +277,10 @@ function clearSelection() {
  * @param {string} formId      - id form (default: 'bulkForm')
  * @param {string} containerId - id container hidden inputs (default: 'bulkInputsContainer')
  */
-function submitBulkPost(formId = 'bulkForm', containerId = 'bulkInputsContainer') {
+async function submitBulkPost(formId = 'bulkForm', containerId = 'bulkInputsContainer') {
     const checked = document.querySelectorAll('.row-check:checked');
     if (checked.length === 0) return;
-    if (!confirm(`Posting ${checked.length} jurnal yang dipilih? Aksi ini tidak dapat dibatalkan.`)) return;
+    if (!await confirmAsync(`Posting ${checked.length} jurnal yang dipilih? Aksi ini tidak dapat dibatalkan.`, { title: 'Posting Jurnal', confirmLabel: 'Posting', confirmClass: 'bg-green-600 hover:bg-green-700' })) return;
 
     const container = document.getElementById(containerId);
     container.innerHTML = '';

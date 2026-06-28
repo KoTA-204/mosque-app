@@ -120,7 +120,7 @@
             @csrf
             <input type="hidden" name="periode_id" value="{{ $periodeAktif->id }}">
             <button type="submit"
-                    onclick="return confirm('Posting semua jurnal penutup draft ke buku besar?')"
+                    onclick="event.preventDefault(); confirmAction({ title: 'Posting Jurnal', message: 'Posting semua jurnal penutup draft ke buku besar?', confirmLabel: 'Posting', confirmClass: 'bg-green-600 hover:bg-green-700', onConfirm: () => this.closest('form').submit() })"
                     class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -229,7 +229,7 @@
                             <div class="flex items-center justify-center gap-1">
                                 @if(!$isPosted)
                                 <form action="{{ route('dashboard.jurnal-penutup.destroy', $item) }}" method="POST"
-                                      onsubmit="return confirm('Yakin hapus jurnal penutup ini?')">
+                                      data-confirm="Yakin hapus jurnal penutup ini?" data-confirm-label="Hapus">
                                     @csrf @method('DELETE')
                                     <button type="submit"
                                             class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"

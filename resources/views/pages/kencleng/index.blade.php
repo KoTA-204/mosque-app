@@ -198,7 +198,7 @@
                                 {{-- Delete --}}
                                 @if($isDeletable)
                                 <form action="{{ route('dashboard.kencleng.destroy', $item) }}" method="POST"
-                                      onsubmit="return confirm('Yakin hapus kencleng ini?')">
+                                      data-confirm="Yakin hapus kencleng ini?" data-confirm-label="Hapus">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit"

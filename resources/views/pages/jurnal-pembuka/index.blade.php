@@ -356,8 +356,8 @@ function infoRow(label, value) {
     `;
 }
 
-function konfirmasiPosting(id) {
-    if (!confirm('Yakin ingin memposting jurnal ini? Status tidak dapat dikembalikan ke Draft.')) return;
+async function konfirmasiPosting(id) {
+    if (!await confirmAsync('Yakin ingin memposting jurnal ini? Status tidak dapat dikembalikan ke Draft.', { title: 'Posting Jurnal', confirmLabel: 'Posting', confirmClass: 'bg-green-600 hover:bg-green-700' })) return;
 
     fetch(`/dashboard/jurnal-pembuka/${id}/posting`, {
         method: 'PATCH',
@@ -375,8 +375,8 @@ function konfirmasiPosting(id) {
 }
 
 // ── Hapus jurnal ──────────────────────────────────────────────────────────────
-function hapusJurnal(id) {
-    if (!confirm('Yakin ingin menghapus jurnal pembuka ini?')) return;
+async function hapusJurnal(id) {
+    if (!await confirmAsync('Yakin ingin menghapus jurnal pembuka ini?', { confirmLabel: 'Hapus' })) return;
 
     fetch(`/dashboard/jurnal-pembuka/${id}`, {
         method: 'DELETE',

@@ -125,6 +125,8 @@
         </div>
     </div>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    @include('layouts.confirm-global')
 </body>
 
 @stack('scripts')

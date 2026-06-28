@@ -229,7 +229,7 @@
                                         </svg>
                                     </button>
                                     <form method="POST" action="{{ route('dashboard.coa.kategori.destroy', $kat) }}"
-                                            onsubmit="return confirm('Hapus kategori {{ $kat->nama_kategori }}?')">
+                                            data-confirm="Hapus kategori {{ $kat->nama_kategori }}?" data-confirm-label="Hapus">
                                         @csrf @method('DELETE')
                                         <button
                                             type="button"
@@ -277,7 +277,7 @@
                                         </svg>
                                     </button>
                                     <form method="POST" action="{{ route('dashboard.coa.sub-kategori.destroy', $subKat) }}"
-                                            onsubmit="return confirm('Hapus sub kategori {{ $subKat->nama_akun }}?')">
+                                            data-confirm="Hapus sub kategori {{ $subKat->nama_akun }}?" data-confirm-label="Hapus">
                                         @csrf @method('DELETE')
                                         <button
                                             type="button"
@@ -342,7 +342,7 @@
                                         </svg>
                                     </button>
                                     <form method="POST" action="{{ route('dashboard.coa.akun.destroy', $akun) }}"
-                                            onsubmit="return confirm('Hapus akun {{ $akun->nama_akun }}?')">
+                                            data-confirm="Hapus akun {{ $akun->nama_akun }}?" data-confirm-label="Hapus">
                                         @csrf @method('DELETE')
                                         <button
                                             type="button"

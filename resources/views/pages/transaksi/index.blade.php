@@ -590,7 +590,7 @@ function editTransaksi(id) {
 }
 
 async function hapusBukti(buktiId) {
-    if (!confirm('Hapus bukti ini?')) return;
+    if (!await confirmAsync('Hapus bukti ini?', { confirmLabel: 'Hapus' })) return;
 
     try {
         const res  = await fetch(`/dashboard/transaksi/bukti/${buktiId}`, {

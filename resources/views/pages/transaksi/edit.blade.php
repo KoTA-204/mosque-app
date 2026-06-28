@@ -205,7 +205,7 @@ function renderExistingBukti(items) {
 }
 
 async function hapusBuktiLama(buktiId, btn) {
-    if (!confirm('Hapus bukti transaksi ini? Tindakan ini tidak dapat dibatalkan.')) return;
+    if (!await confirmAsync('Hapus bukti transaksi ini? Tindakan ini tidak dapat dibatalkan.', { confirmLabel: 'Hapus' })) return;
 
     try {
         const res = await fetch(`/dashboard/transaksi/bukti/${buktiId}`, {

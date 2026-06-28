@@ -83,7 +83,7 @@
                             @if($jurnal->status === 'DRAFT')
                             {{-- Tombol Post --}}
                             <form action="{{ route('dashboard.jurnal-umum.post', $jurnal->id) }}" method="POST"
-                                onsubmit="return confirm('Posting jurnal ini?')">
+                                data-confirm="Posting jurnal ini?" data-confirm-title="Posting Jurnal" data-confirm-label="Posting" data-confirm-class="bg-green-600 hover:bg-green-700">
                                 @csrf
                                 <button type="submit" title="Posting"
                                     class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
@@ -95,7 +95,7 @@
                             </form>
                             {{-- Tombol Hapus --}}
                             <form action="{{ route('dashboard.jurnal-umum.destroy', $jurnal->id) }}" method="POST"
-                                onsubmit="return confirm('Hapus jurnal ini?')">
+                                data-confirm="Hapus jurnal ini?" data-confirm-label="Hapus">
                                 @csrf @method('DELETE')
                                 <button type="submit" title="Hapus"
                                     class="text-gray-400 hover:text-red-500 transition-colors">
