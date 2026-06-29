@@ -73,6 +73,13 @@ class UserController extends Controller
             'email'   => 'required|email|unique:users,email',
             'role_id' => 'required|exists:roles,id',
             'status'  => 'required|in:active,inactive',
+        ], [
+            'name.required'    => 'Nama wajib diisi.',
+            'email.required'   => 'Email wajib diisi.',
+            'email.email'      => 'Format email tidak valid.',
+            'email.unique'     => 'Email sudah digunakan.',
+            'role_id.required' => 'Role wajib dipilih.',
+            'role_id.exists'   => 'Role yang dipilih tidak valid.',
         ]);
 
         $user = User::create([
@@ -128,6 +135,13 @@ class UserController extends Controller
             'email'   => 'required|email|unique:users,email,' . $user->id,
             'role_id' => 'required|exists:roles,id',
             'status'  => 'required|in:active,inactive',
+        ], [
+            'name.required'    => 'Nama wajib diisi.',
+            'email.required'   => 'Email wajib diisi.',
+            'email.email'      => 'Format email tidak valid.',
+            'email.unique'     => 'Email sudah digunakan.',
+            'role_id.required' => 'Role wajib dipilih.',
+            'role_id.exists'   => 'Role yang dipilih tidak valid.',
         ]);
 
         $user->update($validated);
