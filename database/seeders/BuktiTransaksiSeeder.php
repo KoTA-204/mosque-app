@@ -2,32 +2,37 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\BuktiTransaksi;
+use App\Models\Transaksi;
 
 class BuktiTransaksiSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Lampiran bukti untuk sebagian transaksi (dummy path).
      */
     public function run(): void
     {
-        DB::table('bukti_transaksi')->insert([
-            [
-                'transaksi_id' => 1,
-                'nama_file' => 'infaq-jumat.jpg',
-                'path_file' => 'bukti/infaq-jumat.jpg',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'transaksi_id' => 3,
-                'nama_file' => 'token-listrik.pdf',
-                'path_file' => 'bukti/token-listrik.pdf',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+        $data = [
+            ['no_referensi' => 'INF-KCL-2026-03-001', 'nama_file' => 'berita-acara-kencleng-2026-03-13.pdf', 'path_file' => 'bukti/kencleng/berita-acara-kencleng-2026-03-13.pdf'],
+            ['no_referensi' => 'OPS-2026-06-001',     'nama_file' => 'struk-pln-mei-2026.jpg',             'path_file' => 'bukti/operasional/struk-pln-mei-2026.jpg'],
+            ['no_referensi' => 'OPS-2026-04-001',     'nama_file' => 'nota-kebersihan-2026-04.jpg',         'path_file' => 'bukti/operasional/nota-kebersihan-2026-04.jpg'],
+            ['no_referensi' => 'QRB-2026-06-001',     'nama_file' => 'nota-pembelian-hewan-qurban.pdf',     'path_file' => 'bukti/qurban/nota-pembelian-hewan-qurban.pdf'],
+            ['no_referensi' => 'SOS-2026-03-001',     'nama_file' => 'dokumentasi-baksos-ramadhan.pdf',     'path_file' => 'bukti/sosial/dokumentasi-baksos-ramadhan.pdf'],
+            ['no_referensi' => 'ZKT-2026-06-001',     'nama_file' => 'bukti-transfer-zakat-maal.jpg',       'path_file' => 'bukti/zakat/bukti-transfer-zakat-maal.jpg'],
+        ];
+
+        foreach ($data as $row) {
+            $transaksi = Transaksi::where('no_referensi', $row['no_referensi'])->first();
+            if (! $transaksi) {
+                continue;
+            }
+
+            BuktiTransaksi::create([
+                'transaksi_id' => $transaksi->id,
+                'nama_file'    => $row['nama_file'],
+                'path_file'    => $row['path_file'],
+            ]);
+        }
     }
 }
