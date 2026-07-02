@@ -72,6 +72,7 @@ class KegiatanController extends Controller
     {
         $validated = $request->validate([
             'nama_kegiatan'   => 'required|string|max:255',
+            'deskripsi'       => 'nullable|string|max:2000',
             'jenis_kegiatan'  => 'required|in:QURBAN,ZAKAT,KAJIAN,SOSIAL,LAINNYA',
             'tanggal_mulai'   => 'required|date',
             'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
@@ -126,6 +127,7 @@ class KegiatanController extends Controller
     {
         $validated = $request->validate([
             'nama_kegiatan'   => 'required|string|max:255',
+            'deskripsi'       => 'nullable|string|max:2000',
             'jenis_kegiatan'  => 'required|in:QURBAN,ZAKAT,KAJIAN,SOSIAL,LAINNYA',
             'tanggal_mulai'   => 'required|date',
             'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',

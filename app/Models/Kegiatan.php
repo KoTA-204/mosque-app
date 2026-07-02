@@ -13,6 +13,7 @@ class Kegiatan extends Model
 
     protected $fillable = [
         'nama_kegiatan',
+        'deskripsi',
         'jenis_kegiatan',
         'tanggal_mulai',
         'tanggal_selesai',
@@ -169,5 +170,95 @@ class Kegiatan extends Model
         if ($this->anggaran <= 0) return 0;
         $total = $this->totalPengeluaranBerjalan($kecualiId) + $jumlahBaru;
         return max(0, $total - (float) $this->anggaran);
+    }
+
+    // ── Presentasi / Tampilan Publik ─────────────────────────────
+
+    /**
+     * Konfigurasi tampilan (label, ikon, warna) berdasarkan jenis kegiatan.
+     * Dipakai pada kartu Program Kegiatan di landing page.
+     */
+    public function jenisConfig(): array
+    {
+        return match ($this->jenis_kegiatan) {
+            'QURBAN' => [
+                'label'        => 'Qurban',
+                'icon'         => '🐑',
+                'tag_class'    => 'bg-red-100 text-red-700',
+                'bg_class'     => 'bg-gradient-to-br from-red-500 to-rose-700',
+                'accent_class' => 'bg-red-500',
+            ],
+            'ZAKAT' => [
+                'label'        => 'Zakat',
+                'icon'         => '🤲',
+                'tag_class'    => 'bg-amber-100 text-amber-700',
+                'bg_class'     => 'bg-gradient-to-br from-amber-400 to-orange-600',
+                'accent_class' => 'bg-amber-500',
+            ],
+            'KAJIAN' => [
+                'label'        => 'Kajian',
+                'icon'         => '📖',
+                'tag_class'    => 'bg-green-100 text-green-700',
+                'bg_class'     => 'bg-gradient-to-br from-green-500 to-emerald-700',
+                'accent_class' => 'bg-green-500',
+            ],
+            'SOSIAL' => [
+                'label'        => 'Sosial',
+                'icon'         => '🤝',
+                'tag_class'    => 'bg-blue-100 text-blue-700',
+                'bg_class'     => 'bg-gradient-to-br from-blue-500 to-indigo-700',
+                'accent_class' => 'bg-blue-500',
+            ],
+            default => [
+                'label'        => 'Lainnya',
+                'icon'         => '🕌',
+                'tag_class'    => 'bg-purple-100 text-purple-700',
+                'bg_class'     => 'bg-gradient-to-br from-purple-600 to-indigo-800',
+                'accent_class' => 'bg-purple-500',
+            ],
+        };
+    }
+
+    /**
+     * Konfigurasi badge status untuk tampilan publik.
+     */
+    public function statusConfig(): array
+    {
+        return $this->isAktif()
+            ? ['label' => 'Sedang Berjalan', 'class' => 'bg-green-100 text-green-700', 'dot' => 'bg-green-500']
+            : ['label' => 'Telah Selesai',   'class' => 'bg-gray-100 text-gray-600',  'dot' => 'bg-gray-400'];
+    }
+
+    private static function formatTanggalId(?\Illuminate\Support\Carbon $tgl): ?string
+    {
+        if (! $tgl) return null;
+
+        $bulan = [
+            1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+        ];
+
+        return $tgl->day . ' ' . $bulan[(int) $tgl->month] . ' ' . $tgl->year;
+    }
+
+    /**
+     * Rentang tanggal kegiatan dalam format Indonesia.
+     * Contoh: "12 Juni 2026 – 15 Juni 2026" atau "12 Juni 2026".
+     */
+    public function rentangTanggal(): string
+    {
+        $mulai   = self::formatTanggalId($this->tanggal_mulai);
+        $selesai = self::formatTanggalId($this->tanggal_selesai);
+
+        if ($mulai && $selesai && $mulai !== $selesai) {
+            return $mulai . ' – ' . $selesai;
+        }
+
+        return $mulai ?? 'Jadwal menyusul';
+    }
+
+    public function anggaranFormatted(): string
+    {
+        return 'Rp ' . number_format((float) $this->anggaran, 0, ',', '.');
     }
 }

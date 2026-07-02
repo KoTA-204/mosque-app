@@ -21,17 +21,21 @@
     <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4 no-print">
         <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Laporan Catatan Atas Laporan Keuangan (CALK)</h1>
         <div class="flex items-center gap-2">
-            <a href="{{ route('dashboard.laporan.penghasilan-komprehensif') }}"
+            <a href="{{ route('laporan.penghasilan-komprehensif') }}"
             class="text-sm text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 Penghasilan Komprehensif
             </a>
-            <a href="{{ route('dashboard.laporan.posisi-keuangan') }}"
+            <a href="{{ route('laporan.posisi-keuangan') }}"
             class="text-sm text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 Posisi Keuangan
             </a>
-            <a href="{{ route('dashboard.laporan.perubahan-aset-neto') }}"
+            <a href="{{ route('laporan.perubahan-aset-neto') }}"
             class="text-sm text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 Perubahan Aset Neto
+            </a>
+            <a href="{{ route('laporan.arus-kas') }}"
+            class="text-sm text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                Arus Kas
             </a>
             {{-- Ganti button cetak --}}
             <button onclick="cetakLaporan()"

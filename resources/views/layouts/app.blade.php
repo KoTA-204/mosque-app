@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
-
+​
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-
+​
     <title>{{ $title ?? 'Dashboard' }} | MosQue</title>
-
+​
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-
+​
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
-
+​
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.store('theme', {
@@ -40,26 +40,26 @@
                     }
                 }
             });
-
+​
            Alpine.store('sidebar', {
                 isExpanded: false,
                 isMobileOpen: false,
                 isHovered: false,
                 isMobile: false,
-
+​
                 toggleExpanded() {
                     this.isExpanded = !this.isExpanded;
                     this.isMobileOpen = false;
                 },
-
+​
                 toggleMobileOpen() {
                     this.isMobileOpen = !this.isMobileOpen;
                 },
-
+​
                 setMobileOpen(val) {
                     this.isMobileOpen = val;
                 },
-
+​
                 setHovered(val) {
                     if (!this.isMobile && !this.isExpanded) {
                         this.isHovered = val;
@@ -68,7 +68,7 @@
             });
         });
     </script>
-
+​
     <script>
         (function() {
             const savedTheme = localStorage.getItem('theme');
@@ -83,8 +83,9 @@
             }
         })();
     </script>
+    @stack('styles')
 </head>
-
+​
 <body
     x-data="{ loaded: true }"
     x-init="
@@ -106,13 +107,14 @@
             window.addEventListener('resize', checkMobile);
         });
     ">
-
+​
     <x-common.preloader/>
-
+​
+    @auth
     <div class="min-h-screen xl:flex">
         @include('layouts.backdrop')
         @include('layouts.sidebar')
-
+​
         <div class="flex-1 transition-all duration-300 ease-in-out"
             :class="{
                 'xl:ml-[280px]': $store.sidebar.isExpanded || $store.sidebar.isHovered,
@@ -124,9 +126,18 @@
             </div>
         </div>
     </div>
+    @else
+    @include('layouts.header')
+    <main class="pt-16 min-h-screen bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            @yield('content')
+        </div>
+    </main>
+    @include('layouts.footer')
+    @endauth
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </body>
-
+​
 @stack('scripts')
-
+​
 </html>

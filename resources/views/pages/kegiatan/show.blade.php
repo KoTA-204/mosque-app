@@ -1,9 +1,13 @@
 <x-modal id="showKegiatanModal" title="Detail Kegiatan">
-
+​
     <div class="px-6 py-5 space-y-4">
         <div>
             <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Nama Kegiatan</p>
             <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $kegiatan->nama_kegiatan }}</p>
+        </div>
+        <div>
+            <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Deskripsi</p>
+            <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line break-words">{{ $kegiatan->deskripsi ?: '-' }}</p>
         </div>
         <div class="grid grid-cols-2 gap-4">
             <div>
@@ -51,12 +55,12 @@
             <p class="text-sm text-gray-700 dark:text-gray-300">{{ $kegiatan->transaksi_count }} transaksi</p>
         </div>
     </div>
-
+​
     <div class="flex justify-end px-6 py-4 border-t border-gray-100 dark:border-gray-800">
         <button type="button" onclick="closeModal('showKegiatanModal')"
             class="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
             Tutup
         </button>
     </div>
-
+​
 </x-modal>

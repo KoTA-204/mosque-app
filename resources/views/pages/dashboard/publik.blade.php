@@ -1,5 +1,5 @@
 @extends('layouts.landing')
-@section('title', 'Laporan Keuangan - Masjid Luqmanul Hakim')
+@section('title', 'Transparansi Keuangan - Masjid Luqmanul Hakim')
 @section('description', 'Transparansi laporan keuangan Masjid Luqmanul Hakim, Politeknik Negeri Bandung')
 @section('content')
 
@@ -10,7 +10,7 @@
     <div class="bg-white rounded-2xl border border-gray-200 px-6 py-4 flex items-center justify-between">
         <div>
             <p class="text-xs font-medium text-gray-400 uppercase tracking-widest mb-0.5">Keuangan</p>
-            <h1 class="text-xl font-semibold text-gray-900">Laporan Keuangan</h1>
+            <h1 class="text-xl font-semibold text-gray-900">Transparansi Keuangan</h1>
         </div>
         <p class="text-sm text-gray-400">{{ $now->translatedFormat('d F Y') }}</p>
     </div>
@@ -100,21 +100,12 @@
             <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-5">Kegiatan Berjalan</p>
             <div class="space-y-3">
             @forelse($kegiatanBerjalan as $kegiatan)
-                @php
-                    $terkumpul = $kegiatan->terkumpul ?? 0;
-                    $persen = $kegiatan->anggaran > 0
-                        ? min(100, round(($terkumpul / $kegiatan->anggaran) * 100))
-                        : 0;
-
-                    // Warna & ikon berdasarkan progres
-                    if ($persen >= 75) {
-                        $iconBg = 'bg-green-50'; $iconColor = 'text-green-600'; $barColor = 'bg-green-500'; $pctColor = 'text-green-600';
-                    } elseif ($persen >= 30) {
-                        $iconBg = 'bg-blue-50'; $iconColor = 'text-blue-600'; $barColor = 'bg-blue-500'; $pctColor = 'text-blue-600';
-                    } else {
-                        $iconBg = 'bg-amber-50'; $iconColor = 'text-amber-600'; $barColor = 'bg-amber-500'; $pctColor = 'text-amber-600';
-                    }
-                @endphp
+                @php($terkumpul = $kegiatan->terkumpul ?? 0)
+                @php($persen = $kegiatan->anggaran > 0 ? min(100, round(($terkumpul / $kegiatan->anggaran) * 100)) : 0)
+                @php($iconBg = $persen >= 75 ? 'bg-green-50' : ($persen >= 30 ? 'bg-blue-50' : 'bg-amber-50'))
+                @php($iconColor = $persen >= 75 ? 'text-green-600' : ($persen >= 30 ? 'text-blue-600' : 'text-amber-600'))
+                @php($barColor = $persen >= 75 ? 'bg-green-500' : ($persen >= 30 ? 'bg-blue-500' : 'bg-amber-500'))
+                @php($pctColor = $persen >= 75 ? 'text-green-600' : ($persen >= 30 ? 'text-blue-600' : 'text-amber-600'))
                 <div class="flex gap-3 items-start p-3.5 rounded-xl bg-gray-50">
                     <div class="w-9 h-9 rounded-lg {{ $iconBg }} flex items-center justify-center shrink-0">
                         <svg class="w-4 h-4 {{ $iconColor }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,12 +141,20 @@
             <div class="flex items-center gap-2">
                 <input type="date" value="{{ $tanggalFilter }}"
                     class="text-xs border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:border-green-400">
-                <button class="flex items-center gap-1.5 text-xs text-green-600 border border-green-200 bg-green-50 px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors">
-                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                <a href="{{ route('laporan-keuangan.export-excel') }}"
+                    class="flex items-center gap-1.5 text-xs text-green-700 border border-green-200 bg-green-50 px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                    Export Excel
+                </a>
+                <a href="{{ route('laporan-keuangan.export-pdf') }}" target="_blank"
+                    class="flex items-center gap-1.5 text-xs text-red-600 border border-red-200 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                     </svg>
                     Export PDF
-                </button>
+                </a>
             </div>
         </div>
         <div class="max-h-[420px] overflow-y-auto">

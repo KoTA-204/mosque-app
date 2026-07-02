@@ -26,7 +26,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
                 <div class="max-w-xl {{ $banner['align'] === 'right' ? 'ml-auto text-right' : '' }}">
                     @if(isset($banner['badge']))
-                    <span class="inline-flex items-center gap-1.5 bg-green-600/90 text-white text-xs font-semibold px-3 py-1.5 rounded-full mb-4 backdrop-blur-sm">
+                    <span class="inline-flex items-center gap-1.5 bg-green-600/90 text-white text-sm font-semibold px-3 py-1.5 rounded-full mb-4 backdrop-blur-sm">
                         <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
                         {{ $banner['badge'] }}
                     </span>
@@ -44,7 +44,7 @@
                     <div class="flex flex-wrap gap-3 {{ $banner['align'] === 'right' ? 'justify-end' : '' }}">
                         @foreach($banner['cta'] as $cta)
                         <a href="{{ $cta['url'] }}" 
-                           class="{{ $cta['style'] === 'primary' ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-white/20 hover:bg-white/30 text-white border border-white/40 backdrop-blur-sm' }} font-semibold px-6 py-3 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg text-sm">
+                           class="{{ $cta['style'] === 'primary' ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-white/20 hover:bg-white/30 text-white border border-white/40 backdrop-blur-sm' }} font-semibold px-6 py-3 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg text-base">
                             {{ $cta['label'] }}
                         </a>
                         @endforeach
@@ -89,29 +89,22 @@
  
             <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
                 <div>
-                    <span class="block text-[10px] font-semibold tracking-widest text-gray-400 uppercase">Jadwal Shalat 5 Waktu</span>
+                    <span class="block text-xs font-semibold tracking-widest text-gray-400 uppercase">Jadwal Shalat 5 Waktu</span>
                     <span class="block text-sm font-medium text-gray-800 leading-tight" id="jadwal-tanggal">Memuat...</span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <div class="hidden sm:flex items-center gap-2">
+                    <div class="hidden sm:flex items-center gap-1.5">
                         <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
                         <span class="font-mono text-base font-semibold text-gray-800 tabular-nums" id="live-clock">--:--:--</span>
+                        <span class="text-xs font-medium text-gray-400">WIB</span>
                     </div>
                     <div class="w-px h-5 bg-gray-200"></div>
                     <div class="flex items-center gap-1.5 text-gray-500">
                         <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
                         </svg>
-                        <select id="kota-select" class="text-sm font-medium text-gray-600 bg-transparent border-none outline-none cursor-pointer">
-                            <option value="1301">Bandung</option>
-                            <option value="1101">Jakarta</option>
-                            <option value="1501">Surabaya</option>
-                            <option value="1601">Yogyakarta</option>
-                            <option value="1201">Medan</option>
-                            <option value="2001">Makassar</option>
-                            <option value="1701">Semarang</option>
-                            <option value="1401">Palembang</option>
-                            <option value="1801">Denpasar</option>
+                        <select id="kota-select" class="text-sm font-medium text-gray-600 bg-transparent border-none outline-none cursor-pointer text-right w-40 sm:w-56 truncate">
+                            <option value="">Memuat...</option>
                         </select>
                     </div>
                 </div>
@@ -139,7 +132,7 @@
                     {{-- SPOTLIGHT (kiri) --}}
                     <div class="bg-green-700 p-6 flex flex-col justify-between gap-6 border-b sm:border-b-0 sm:border-r border-green-600">
                         <div>
-                            <span class="block text-[10px] font-semibold tracking-widest text-green-300 uppercase mb-3">Berikutnya</span>
+                            <span class="block text-xs font-semibold tracking-widest text-green-300 uppercase mb-3">Berikutnya</span>
                             <p class="text-green-200 text-sm font-medium mb-1" id="spot-name">—</p>
                             <p class="font-mono text-5xl font-semibold text-white leading-none tabular-nums" id="spot-time">--:--</p>
                         </div>
@@ -204,195 +197,137 @@
     </div>
 </section>
 
-<!-- Program Infaq & Shadaqah -->
-<section class="py-16 bg-gray-50" id="program-infaq">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12" data-animate>
-            <h2 class="text-3xl font-bold text-gray-900 section-title">Program Infaq & Shadaqah</h2>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-animate>
-            @foreach($programInfaq as $program)
-            <a href="{{ $program['url'] }}" class="group block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100">
-                {{-- Image --}}
-                <div class="relative h-52 overflow-hidden bg-gray-200">
-                    <img src="{{ $program['image'] }}" alt="{{ $program['title'] }}" 
-                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                         loading="lazy">
-                    
-                    {{-- Category Badge --}}
-                    @if(isset($program['category']))
-                    <span class="absolute top-3 left-3 bg-white/95 backdrop-blur-sm text-green-700 text-xs font-bold px-2.5 py-1 rounded-lg shadow-sm">
-                        {{ $program['category'] }}
-                    </span>
-                    @endif
-                    
-                    {{-- Progress overlay --}}
-                    @if(isset($program['progress']))
-                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                        <div class="flex justify-between text-white text-xs mb-1.5">
-                            <span>Terkumpul</span>
-                            <span class="font-bold">{{ $program['progress'] }}%</span>
-                        </div>
-                        <div class="w-full bg-white/30 rounded-full h-1.5">
-                            <div class="bg-green-400 rounded-full h-1.5 transition-all duration-500" style="width: {{ $program['progress'] }}%"></div>
-                        </div>
-                    </div>
-                    @endif
-                </div>
-
-                {{-- Content --}}
-                <div class="p-5">
-                    <h3 class="font-bold text-gray-900 mb-2 group-hover:text-green-700 transition-colors">{{ $program['title'] }}</h3>
-                    <p class="text-sm text-gray-500 leading-relaxed line-clamp-2">{{ $program['description'] }}</p>
-                    
-                    @if(isset($program['target']))
-                    <div class="mt-4 flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-gray-400">Target</p>
-                            <p class="text-sm font-bold text-gray-800">{{ $program['target'] }}</p>
-                        </div>
-                        <span class="inline-flex items-center gap-1 text-green-600 text-sm font-semibold group-hover:gap-2 transition-all">
-                            Donasi
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                            </svg>
-                        </span>
-                    </div>
-                    @endif
-                </div>
-            </a>
-            @endforeach
-        </div>
-
-        <div class="text-center mt-10" data-animate>
-            <a href="{{ url('/donasi') }}" class="inline-flex items-center gap-2 border-2 border-green-600 text-green-700 hover:bg-green-600 hover:text-white font-semibold px-8 py-3 rounded-xl transition-all duration-200">
-                Lihat Program Lainnya
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                </svg>
-            </a>
-        </div>
-    </div>
-</section>
-
-
 <!-- Program Kegiatan -->
-<section class="py-16 bg-white" id="program-kegiatan">
+<section class="py-16 bg-gray-50" id="program-kegiatan">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12" data-animate>
-            <h2 class="text-3xl font-bold text-gray-900 section-title">Program Kegiatan</h2>
+        <div class="text-center mb-10 sm:mb-12" data-animate>
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 section-title">Program Kegiatan</h2>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            @foreach($programKegiatan as $kegiatan)
-            <div class="kegiatan-card group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-400 border border-gray-100 cursor-pointer">
-                <div class="flex flex-col sm:flex-row">
-                    {{-- Icon/Color Block --}}
-                    <div class="relative sm:w-52 h-44 sm:h-auto flex-shrink-0 overflow-hidden {{ $kegiatan['bg_class'] }}">
-                        {{-- Pattern --}}
-                        <div class="absolute inset-0 opacity-10">
-                            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-                                <defs>
-                                    <pattern id="pattern-{{ $loop->index }}" width="30" height="30" patternUnits="userSpaceOnUse">
-                                        <circle cx="15" cy="15" r="2" fill="white"/>
-                                        <circle cx="0" cy="0" r="2" fill="white"/>
-                                        <circle cx="30" cy="0" r="2" fill="white"/>
-                                        <circle cx="0" cy="30" r="2" fill="white"/>
-                                        <circle cx="30" cy="30" r="2" fill="white"/>
-                                    </pattern>
-                                </defs>
-                                <rect width="100%" height="100%" fill="url(#pattern-{{ $loop->index }})"/>
-                            </svg>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            @forelse($programKegiatan as $kegiatan)
+                @php($cfg = $kegiatan->jenisConfig())
+                @php($st = $kegiatan->statusConfig())
+                @php($deskripsi = $kegiatan->deskripsi ?: 'Belum ada deskripsi untuk kegiatan ini.')
+                <article class="kegiatan-card group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col overflow-hidden">
+                    {{-- Aksen warna sesuai jenis --}}
+                    <span class="absolute inset-x-0 top-0 h-1 {{ $cfg['accent_class'] }}"></span>
+
+                    <div class="p-5 flex flex-col h-full">
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-10 h-10 rounded-xl {{ $cfg['bg_class'] }} flex items-center justify-center text-lg shadow-sm shrink-0">{{ $cfg['icon'] }}</div>
+                                <span class="text-sm font-semibold {{ $cfg['tag_class'] }} px-2.5 py-1 rounded-full truncate">{{ $cfg['label'] }}</span>
+                            </div>
+                            <span class="inline-flex items-center gap-1 text-sm font-medium {{ $st['class'] }} px-2 py-0.5 rounded-full shrink-0">
+                                <span class="w-1.5 h-1.5 rounded-full {{ $st['dot'] }}"></span>
+                                {{ $st['label'] }}
+                            </span>
                         </div>
-                        
-                        {{-- Icon --}}
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <div class="text-6xl transform group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
-                                {{ $kegiatan['icon'] }}
+
+                        {{-- Judul + deskripsi (info utama) --}}
+                        <h3 class="text-base font-bold text-gray-900 group-hover:text-green-700 transition-colors line-clamp-1">{{ $kegiatan->nama_kegiatan }}</h3>
+                        <p class="mt-1.5 text-sm text-gray-500 leading-relaxed line-clamp-2 min-h-[2.5rem]">{{ $deskripsi }}</p>
+
+                        {{-- Meta --}}
+                        <div class="mt-4 pt-4 border-t border-gray-100 space-y-2">
+                            <div class="flex items-center gap-2 text-sm text-gray-600">
+                                <svg class="w-4 h-4 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                <span class="truncate">{{ $kegiatan->rentangTanggal() }}</span>
                             </div>
                         </div>
 
-                        {{-- Thumbnail images if available --}}
-                        @if(isset($kegiatan['images']) && count($kegiatan['images']) > 0)
-                        <div class="absolute bottom-3 left-3 flex -space-x-2">
-                            @foreach(array_slice($kegiatan['images'], 0, 3) as $img)
-                            <div class="w-10 h-10 rounded-lg border-2 border-white overflow-hidden shadow-md bg-white/20">
-                                <img src="{{ $img }}" class="w-full h-full object-cover" alt="" loading="lazy">
-                            </div>
-                            @endforeach
-                            @if(count($kegiatan['images']) > 3)
-                            <div class="w-10 h-10 rounded-lg border-2 border-white bg-black/30 flex items-center justify-center shadow-md">
-                                <span class="text-white text-xs font-bold">+{{ count($kegiatan['images']) - 3 }}</span>
-                            </div>
-                            @endif
-                        </div>
-                        @endif
-                    </div>
-
-                    {{-- Content --}}
-                    <div class="flex-1 p-5 flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-start justify-between gap-3 mb-3">
-                                <div>
-                                    <span class="inline-block text-xs font-semibold {{ $kegiatan['tag_class'] }} px-2.5 py-1 rounded-full mb-2">
-                                        {{ $kegiatan['tag'] }}
-                                    </span>
-                                    <h3 class="text-lg font-bold text-gray-900 group-hover:text-green-700 transition-colors">
-                                        {{ $kegiatan['title'] }}
-                                    </h3>
-                                </div>
-                            </div>
-                            <p class="text-sm text-gray-500 leading-relaxed line-clamp-2">{{ $kegiatan['description'] }}</p>
-                        </div>
-                        
-                        <div class="mt-4 flex items-center justify-between">
-                            {{-- Schedule Info --}}
-                            <div class="flex flex-col gap-1">
-                                @if(isset($kegiatan['schedule']))
-                                <div class="flex items-center gap-1.5 text-xs text-gray-500">
-                                    <svg class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                    </svg>
-                                    {{ $kegiatan['schedule'] }}
-                                </div>
-                                @endif
-                                @if(isset($kegiatan['time']))
-                                <div class="flex items-center gap-1.5 text-xs text-gray-500">
-                                    <svg class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                    </svg>
-                                    {{ $kegiatan['time'] }}
-                                </div>
-                                @endif
-                            </div>
-                            
-                            {{-- CTA --}}
-                            <a href="{{ $kegiatan['url'] ?? '#' }}" 
-                               class="inline-flex items-center gap-1.5 text-sm font-semibold text-green-600 hover:text-green-800 transition-colors group-hover:gap-2.5">
-                                Lihat Detail
+                        {{-- Aksi --}}
+                        <div class="mt-4 flex items-center justify-end">
+                            <button type="button"
+                                onclick="openKegiatanModal(this)"
+                                data-nama="{{ $kegiatan->nama_kegiatan }}"
+                                data-deskripsi="{{ $kegiatan->deskripsi }}"
+                                data-jenis="{{ $cfg['label'] }}"
+                                data-icon="{{ $cfg['icon'] }}"
+                                data-status="{{ $st['label'] }}"
+                                data-tanggal="{{ $kegiatan->rentangTanggal() }}"
+                                data-anggaran="{{ $kegiatan->anggaranFormatted() }}"
+                                data-bg="{{ $cfg['bg_class'] }}"
+                                class="inline-flex items-center gap-1.5 text-sm font-semibold text-green-600 hover:text-green-800 transition-colors">
+                                Detail
                                 <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                 </svg>
-                            </a>
+                            </button>
+                        </div>
+                    </div>
+                </article>
+            @empty
+                <div class="sm:col-span-2 lg:col-span-3 text-center py-16 px-6 bg-white rounded-2xl border border-dashed border-gray-200">
+                    <div class="text-3xl mb-3">🗓️</div>
+                    <p class="text-gray-500 font-medium">Belum ada kegiatan yang sedang berjalan saat ini.</p>
+                    <p class="text-gray-400 text-sm mt-1">Silakan cek kembali secara berkala.</p>
+                </div>
+            @endforelse
+        </div>
+    </div>
+
+    {{-- Modal Detail Kegiatan --}}
+    <div id="kegiatan-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" data-close-modal></div>
+        <div class="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto transform transition-all">
+            <div id="km-header" class="p-6 text-white relative bg-green-700">
+                <button type="button" data-close-modal aria-label="Tutup"
+                    class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center text-2xl shrink-0" id="km-icon"></div>
+                    <span id="km-status" class="inline-block text-sm font-semibold px-2.5 py-1 rounded-full bg-white/20"></span>
+                </div>
+                <h3 id="km-title" class="text-xl font-bold leading-snug pr-8"></h3>
+            </div>
+            <div class="p-6 space-y-5">
+                <p id="km-deskripsi" class="text-sm text-gray-600 leading-relaxed"></p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5a2 2 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs text-gray-400 font-medium">Jenis Kegiatan</p>
+                            <p class="text-sm font-semibold text-gray-800" id="km-jenis"></p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs text-gray-400 font-medium">Jadwal Pelaksanaan</p>
+                            <p class="text-sm font-semibold text-gray-800" id="km-tanggal"></p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 9v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs text-gray-400 font-medium">Anggaran</p>
+                            <p class="text-sm font-semibold text-gray-800" id="km-anggaran"></p>
                         </div>
                     </div>
                 </div>
-
-                {{-- Hover border accent --}}
-                <div class="absolute left-0 top-0 bottom-0 w-1 {{ $kegiatan['accent_class'] }} opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-l-2xl"></div>
             </div>
-            @endforeach
         </div>
     </div>
 </section>
-
 
 <!-- Kilas Laporan Keuangan -->
 <section class="py-16 bg-gray-50" id="laporan-keuangan">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-12" data-animate>
-            <h2 class="text-3xl font-bold text-gray-900 section-title">Kilas Laporan Keuangan</h2>
+            <h2 class="text-3xl font-bold text-gray-900 section-title">Kilas Transparansi Keuangan</h2>
         </div>
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" data-animate>
@@ -404,11 +339,11 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                         </svg>
                     </div>
-                    <span class="text-xs font-medium text-gray-500">Saldo Awal</span>
+                    <span class="text-sm font-medium text-gray-500">Saldo Awal</span>
                 </div>
-                <p class="text-xs text-gray-400 mb-2">{{ $laporan['periode_awal'] }}</p>
+                <p class="text-sm text-gray-400 mb-2">{{ $laporan['periode_awal'] }}</p>
                 <p class="text-xl font-bold text-gray-900">{{ number_format($laporan['saldo_awal'], 0, ',', '.') }}</p>
-                <p class="text-xs text-gray-400 mt-0.5">Rp</p>
+                <p class="text-sm text-gray-400 mt-0.5">Rp</p>
             </div>
 
             {{-- Pemasukan --}}
@@ -419,11 +354,11 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
                         </svg>
                     </div>
-                    <span class="text-xs font-medium text-gray-500">Pemasukan</span>
+                    <span class="text-sm font-medium text-gray-500">Pemasukan</span>
                 </div>
-                <p class="text-xs text-gray-400 mb-2">Yang masuk hingga hari ini</p>
+                <p class="text-sm text-gray-400 mb-2">Yang masuk hingga hari ini</p>
                 <p class="text-xl font-bold text-green-600">{{ number_format($laporan['pemasukan'], 0, ',', '.') }}</p>
-                <p class="text-xs text-green-400 mt-0.5">Rp</p>
+                <p class="text-sm text-green-400 mt-0.5">Rp</p>
             </div>
 
             {{-- Pengeluaran --}}
@@ -434,11 +369,11 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
                         </svg>
                     </div>
-                    <span class="text-xs font-medium text-gray-500">Pengeluaran</span>
+                    <span class="text-sm font-medium text-gray-500">Pengeluaran</span>
                 </div>
-                <p class="text-xs text-gray-400 mb-2">Yang keluar hingga hari ini</p>
+                <p class="text-sm text-gray-400 mb-2">Yang keluar hingga hari ini</p>
                 <p class="text-xl font-bold text-red-500">{{ number_format($laporan['pengeluaran'], 0, ',', '.') }}</p>
-                <p class="text-xs text-red-400 mt-0.5">Rp</p>
+                <p class="text-sm text-red-400 mt-0.5">Rp</p>
             </div>
 
             {{-- Saldo Akhir --}}
@@ -449,11 +384,11 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
-                    <span class="text-xs font-medium text-gray-500">Saldo Akhir</span>
+                    <span class="text-sm font-medium text-gray-500">Saldo Akhir</span>
                 </div>
-                <p class="text-xs text-gray-400 mb-2">{{ $laporan['periode_akhir'] }}</p>
+                <p class="text-sm text-gray-400 mb-2">{{ $laporan['periode_akhir'] }}</p>
                 <p class="text-xl font-bold text-gray-900">{{ number_format($laporan['saldo_akhir'], 0, ',', '.') }}</p>
-                <p class="text-xs text-gray-400 mt-0.5">Rp</p>
+                <p class="text-sm text-gray-400 mt-0.5">Rp</p>
             </div>
         </div>
 
@@ -462,7 +397,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
-                Lihat Detail Laporan
+                Lihat Detail
             </a>
         </div>
     </div>
@@ -472,28 +407,28 @@
 <section class="py-16" id="temukan-kami">
     <div class="max-w-7xl mx-auto px-8 sm:px-20 lg:px-20 text-center">
         <div class="flex items-center justify-center gap-5">
-            {{-- WhatsApp --}}
-            <a href="https://wa.me/6281234567890" target="_blank" class="w-20 h-20 bg-gray-100 hover:bg-green-500 hover:text-white text-gray-600 rounded-full flex items-center justify-center transition-all duration-200">
+            {{-- LINE --}}
+            <a href="https://line.me/R/ti/p/%40qxh9919x" target="_blank" class="w-20 h-20 bg-gray-100 hover:bg-green-500 hover:text-white text-gray-600 rounded-full flex items-center justify-center transition-all duration-200">
                 <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
                 </svg>
             </a>
             {{-- Instagram --}}
-            <a href="https://instagram.com/masjidluqmanulhakim" target="_blank" class="w-20 h-20 bg-gray-100 hover:bg-pink-600 hover:text-white text-gray-600 rounded-full flex items-center justify-center transition-all duration-200">
+            <a href="https://www.instagram.com/masjidlhpolban/" target="_blank" class="w-20 h-20 bg-gray-100 hover:bg-pink-600 hover:text-white text-gray-600 rounded-full flex items-center justify-center transition-all duration-200">
                 <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                 </svg>
             </a>
             {{-- YouTube --}}
-            <a href="https://youtube.com/@masjidluqmanulhakim" target="_blank" class="w-20 h-20 bg-gray-100 hover:bg-red-600 hover:text-white text-gray-600 rounded-full flex items-center justify-center transition-all duration-200">
+            <a href="https://www.youtube.com/@masjidlhpolban5893" target="_blank" class="w-20 h-20 bg-gray-100 hover:bg-red-600 hover:text-white text-gray-600 rounded-full flex items-center justify-center transition-all duration-200">
                 <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                 </svg>
             </a>
-            {{-- Telegram --}}
-            <a href="https://t.me/masjidluqmanulhakim" target="_blank" class="w-20 h-20 bg-gray-100 hover:bg-blue-500 hover:text-white text-gray-600 rounded-full flex items-center justify-center transition-all duration-200">
+            {{-- Email --}}
+            <a href="mailto:luqmanulhakimdkm@gmail.com" class="w-20 h-20 bg-gray-100 hover:bg-blue-500 hover:text-white text-gray-600 rounded-full flex items-center justify-center transition-all duration-200">
                 <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                    <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/>
                 </svg>
             </a>
         </div>
@@ -629,15 +564,40 @@
             if (bar) bar.style.width = '100%';
         }
     }
+
+    async function loadDaftarKota() {
+        try {
+            const res = await fetch('/api/jadwal-shalat/kota');
+            const json = await res.json();
+            const select = document.getElementById('kota-select');
+            select.innerHTML = '';
+
+            json.data.forEach(kota => {
+                const opt = document.createElement('option');
+                opt.value = JSON.stringify({ provinsi: kota.provinsi, kabkota: kota.kabkota });
+                opt.textContent = kota.label;
+                if (kota.kabkota === 'Kota Bandung') opt.selected = true; // default
+                select.appendChild(opt);
+            });
+
+            loadJadwalShalat();
+        } catch {
+            // biarkan fallback opsi default kalau gagal load
+        }
+    }
  
-    async function loadJadwalShalat(kotaId) {
-        const kota = kotaId || document.getElementById('kota-select')?.value || '1301';
+    async function loadJadwalShalat(kotaValue) {
+        const raw = kotaValue || document.getElementById('kota-select')?.value;
+        if (!raw) return;
+
+        const { provinsi, kabkota } = JSON.parse(raw);
+
         document.getElementById('jadwal-loading')?.classList.remove('hidden');
         document.getElementById('jadwal-content')?.classList.add('hidden');
         document.getElementById('jadwal-error')?.classList.add('hidden');
- 
+
         try {
-            const res  = await fetch(`/api/jadwal-shalat?kota=${kota}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const res = await fetch(`/api/jadwal-shalat?provinsi=${encodeURIComponent(provinsi)}&kabkota=${encodeURIComponent(kabkota)}`);
             if (!res.ok) throw 0;
             const data = await res.json();
             if (data.status !== 'ok') throw 0;
@@ -661,13 +621,55 @@
         updateActive();
     }
  
-    window.loadJadwalShalat = loadJadwalShalat;
- 
     document.getElementById('kota-select')?.addEventListener('change', function () { loadJadwalShalat(this.value); });
+    tickClock();
     setInterval(tickClock, 1000);
     setInterval(updateActive, 30000);
-    tickClock();
-    loadJadwalShalat();
+    loadDaftarKota();
+    })();
+
+// Modal Detail Kegiatan
+(function () {
+    const modal = document.getElementById('kegiatan-modal');
+    if (!modal) return;
+    const header = document.getElementById('km-header');
+
+    window.openKegiatanModal = function (btn) {
+        const d = btn.dataset;
+        document.getElementById('km-icon').textContent     = d.icon || '';
+        document.getElementById('km-title').textContent    = d.nama || '';
+        document.getElementById('km-status').textContent   = d.status || '';
+        document.getElementById('km-jenis').textContent    = d.jenis || '-';
+        document.getElementById('km-tanggal').textContent  = d.tanggal || '-';
+        document.getElementById('km-anggaran').textContent = d.anggaran || '-';
+
+        const desc = document.getElementById('km-deskripsi');
+        if (d.deskripsi && d.deskripsi.trim() !== '') {
+            desc.textContent = d.deskripsi;
+            desc.classList.remove('hidden');
+        } else {
+            desc.textContent = '';
+            desc.classList.add('hidden');
+        }
+
+        header.className = 'p-6 text-white relative ' + (d.bg || 'bg-green-700');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    };
+
+    function closeModal() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+
+    modal.querySelectorAll('[data-close-modal]').forEach(function (el) {
+        el.addEventListener('click', closeModal);
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+    });
 })();
 </script>
 @endpush

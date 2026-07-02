@@ -5,7 +5,7 @@
     <form id="editKegiatanForm">
         @csrf
 
-        <div class="px-6 py-5 max-h-[70vh] overflow-y-auto space-y-4">
+        <div class="px-6 py-5 space-y-4">
 
             <div>
                 <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Nama Kegiatan <span class="text-red-500">*</span></label>
@@ -13,6 +13,12 @@
                     placeholder="Masukkan nama kegiatan"
                     class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
                 <p id="err-nama_kegiatan" class="text-xs text-red-500 mt-1"></p>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Deskripsi</label>
+                <textarea name="deskripsi" rows="3" placeholder="Deskripsi singkat kegiatan (opsional)"
+                    class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors resize-none">{{ $kegiatan->deskripsi }}</textarea>
+                <p id="err-deskripsi" class="text-xs text-red-500 mt-1"></p>
             </div>
 
             <div>
