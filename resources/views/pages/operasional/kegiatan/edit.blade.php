@@ -5,7 +5,7 @@
     <form id="editKegiatanForm">
         @csrf
 
-        <div class="px-6 py-5 max-h-[70vh] overflow-y-auto space-y-4">
+        <div class="px-6 py-5 space-y-4">
 
             <div>
                 <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Nama Kegiatan <span class="text-red-500">*</span></label>

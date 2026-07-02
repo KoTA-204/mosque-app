@@ -70,49 +70,96 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'    => 'required|string|max:100',
-            'email'   => 'required|email|unique:users,email',
-            'role_id' => 'required|exists:roles,id',
-            'status'  => 'required|in:active,inactive',
+            'name'     => 'required|string|max:100',
+            'email'    => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+            'role_id'  => 'required|exists:roles,id',
+            'status'   => 'required|in:active,inactive',
         ], [
-            'name.required'    => 'Nama wajib diisi.',
-            'email.required'   => 'Email wajib diisi.',
-            'email.email'      => 'Format email tidak valid.',
-            'email.unique'     => 'Email sudah digunakan.',
-            'role_id.required' => 'Role wajib dipilih.',
-            'role_id.exists'   => 'Role yang dipilih tidak valid.',
+            'name.required'      => 'Nama wajib diisi.',
+            'email.required'     => 'Email wajib diisi.',
+            'email.email'        => 'Format email tidak valid.',
+            'email.unique'       => 'Email sudah digunakan.',
+            'password.required'  => 'Password awal wajib diisi.',
+            'password.min'       => 'Password minimal 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'role_id.required'   => 'Role wajib dipilih.',
+            'role_id.exists'     => 'Role yang dipilih tidak valid.',
         ]);
 
+        // password    -> hash untuk autentikasi (tidak bisa dibaca balik)
+        // initial_password -> disimpan TERENKRIPSI (cast 'encrypted') agar admin
+        //                     tetap dapat melihat password awal yang ia buat.
+        // Email TIDAK dikirim otomatis: admin memverifikasi permission dulu, lalu
+        // mengirim kredensial manual lewat ikon email di tabel.
         $user = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'password' => Hash::make(Str::random(32)),
-            'role_id'  => $validated['role_id'],
-            'status'   => $validated['status'],
+            'name'             => $validated['name'],
+            'email'            => $validated['email'],
+            'password'         => Hash::make($validated['password']),
+            'initial_password' => $validated['password'],
+            'role_id'          => $validated['role_id'],
+            'status'           => $validated['status'],
         ]);
 
-        $emailSent = false;
-        try {
-            $user->notify(new AkunDibuatNotification($user->name));
-            $emailSent = true;
-        } catch (\Throwable $e) {
-            // Email gagal tapi user tetap tersimpan
-            \Log::error('Gagal kirim email aktivasi user #' . $user->id . ': ' . $e->getMessage());
-        }
-
-        $message = $emailSent
-            ? 'User berhasil ditambahkan. Link pengaturan password telah dikirim ke ' . $user->email . '.'
-            : 'User berhasil ditambahkan, namun email gagal terkirim. Pastikan konfigurasi mail sudah benar.';
+        $message = 'User berhasil dibuat. Periksa kembali permission role-nya, '
+            . 'lalu klik ikon email pada baris user untuk mengirim kredensial.';
 
         if ($request->ajax()) {
             return response()->json([
-                'success'    => true,
-                'message'    => $message,
-                'email_sent' => $emailSent,
+                'success' => true,
+                'message' => $message,
             ]);
         }
 
         return redirect()->route('dashboard.users.index')->with('success', $message);
+    }
+
+    /**
+     * Kirim kredensial (email + password awal) ke user via email, lalu tandai
+     * waktu pengirimannya. Dipicu manual oleh admin dari ikon email di tabel,
+     * SETELAH admin memverifikasi permission role user tersebut.
+     */
+    public function sendCredentials(Request $request, User $user)
+    {
+        $plainPassword = $user->initial_password; // didekripsi otomatis oleh cast
+
+        if (empty($plainPassword)) {
+            $msg = 'Password awal user ini tidak tersedia (mis. dibuat sebelum fitur ini). '
+                . 'Buat ulang user dengan password awal terlebih dahulu.';
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+
+            return redirect()->route('dashboard.users.index')->with('error', $msg);
+        }
+
+        $sudahDikirim = $user->credentialsSent();
+
+        try {
+            $user->notify(new AkunDibuatNotification($user->name, $plainPassword));
+            $user->forceFill(['credentials_sent_at' => now()])->save();
+        } catch (\Throwable $e) {
+            \Log::error('Gagal kirim kredensial user #' . $user->id . ': ' . $e->getMessage());
+            $msg = 'Email kredensial gagal terkirim. Pastikan konfigurasi mail (.env) sudah benar.';
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $msg], 500);
+            }
+
+            return redirect()->route('dashboard.users.index')->with('error', $msg);
+        }
+
+        $msg = ($sudahDikirim ? 'Kredensial berhasil dikirim ulang ke ' : 'Kredensial berhasil dikirim ke ')
+            . $user->email . '.';
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success'          => true,
+                'message'          => $msg,
+                'credentials_sent' => true,
+            ]);
+        }
+
+        return redirect()->route('dashboard.users.index')->with('success', $msg);
     }
 
     public function edit(Request $request, User $user)

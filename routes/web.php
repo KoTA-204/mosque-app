@@ -3,8 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Authentikasi\LoginController;
-use App\Http\Controllers\Authentikasi\ForgotPasswordController;
+use App\Http\Controllers\Autentikasi\LoginController;
+use App\Http\Controllers\Autentikasi\ForgotPasswordController;
 use App\Http\Controllers\ManajemenAkses\RoleController;
 use App\Http\Controllers\ManajemenAkses\PermissionController;
 use App\Http\Controllers\ManajemenAkses\MenuController;
@@ -43,7 +43,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/reset-password', [ForgotPasswordController::class, 'resetPasswordForm'])->name('auth.reset-password');
     Route::get('/reset-password/success', [ForgotPasswordController::class, 'resetSuccess'])->name('auth.reset-success');
     Route::get('/reset-password/{token}', function (string $token) {
-        return view('pages.auth.reset-password', [
+        return view('pages.autentikasi.reset-password', [
             'token' => $token,
             'email' => request('email'),
         ]);
@@ -69,6 +69,7 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
         Route::get('/users',                        [UserController::class, 'index'])->name('users.index');
         Route::get('/users/create',                 [UserController::class, 'create'])->name('users.create');
         Route::post('/users',                       [UserController::class, 'store'])->name('users.store');
+        Route::post('/users/{user}/send-credentials', [UserController::class, 'sendCredentials'])->name('users.send-credentials');
         Route::get('/users/{user}/edit',            [UserController::class, 'edit'])->name('users.edit');
         Route::put('/users/{user}',                 [UserController::class, 'update'])->name('users.update');
         Route::get('/users/{user}/delete',          [UserController::class, 'confirmDelete'])->name('users.confirmDelete');

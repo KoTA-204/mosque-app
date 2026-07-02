@@ -194,6 +194,41 @@
     </div>
 </div>
 
+-- Modal alasan penonaktifan aset --
+<div id="nonaktifAsetModal" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-xl mx-4 p-6 shadow-xl">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Nonaktifkan Aset</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Pilih alasan penonaktifan. Ini menentukan perlakuan penyusutan dan apakah aset dapat diaktifkan kembali.</p>
+
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Alasan <span class="text-red-500">*</span></label>
+        <select id="nonaktifAlasan" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 mb-1">
+            <option value="MENGANGGUR">Menganggur sementara — tetap disusutkan, bisa diaktifkan lagi</option>
+            <option value="RUSAK_BERAT">Rusak berat — terkunci sampai kondisi diperbaiki</option>
+            <option value="AKAN_DILEPAS">Akan dilepas / dibuang — tidak bisa diaktifkan lagi</option>
+        </select>
+
+        <div id="nonaktifJenisWrap" style="display:none;">
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5 mt-3">Jenis pelepasan <span class="text-red-500">*</span></label>
+            <select id="nonaktifJenisPelepasan" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
+                <option value="">— pilih —</option>
+                <option value="DIJUAL">Dijual</option>
+                <option value="DIHIBAHKAN">Dihibahkan</option>
+                <option value="HILANG">Hilang</option>
+                <option value="DIBUANG">Rusak total / Dibuang</option>
+            </select>
+            <p class="text-[11px] text-gray-400 mt-1">Wajib dipilih. Setelah ini, bendahara dapat mencatat pelepasannya di jurnal penyesuaian.</p>
+        </div>
+
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1.5 mt-3">Catatan</label>
+        <textarea id="nonaktifCatatan" rows="3" placeholder="Opsional — mis. rencana pelepasan, uraian kerusakan" class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400"></textarea>
+
+        <div class="flex justify-end gap-2 mt-5">
+            <button type="button" onclick="closeModal('nonaktifAsetModal')" class="px-4 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">Batal</button>
+            <button type="button" id="nonaktifConfirmBtn" class="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white">Nonaktifkan</button>
+        </div>
+    </div>
+</div>
+
 <x-confirm-modal
     id="hapusAsetModal"
     title="Hapus Aset"
@@ -613,6 +648,44 @@ function submitAsetForm(formId, method, url) {
     })
     .catch(() => showAlert('Terjadi kesalahan.', 'error'));
 }
+
+// ── Modal alasan penonaktifan aset ────────────────────────
+let nonaktifPendingId = null;
+function toggleJenisPelepasanVisibility() {
+    const alasanEl = document.getElementById('nonaktifAlasan');
+    const wrap     = document.getElementById('nonaktifJenisWrap');
+    if (!alasanEl || !wrap) return;
+    wrap.style.display = alasanEl.value === 'AKAN_DILEPAS' ? 'block' : 'none';
+}
+function openNonaktifModal(id) {
+    nonaktifPendingId = id;
+    const modal    = document.getElementById('nonaktifAsetModal');
+    const alasanEl = document.getElementById('nonaktifAlasan');
+    const catatan  = document.getElementById('nonaktifCatatan');
+    const jenisEl  = document.getElementById('nonaktifJenisPelepasan');
+    if (alasanEl) alasanEl.value = 'MENGANGGUR';
+    if (catatan)  catatan.value  = '';
+    if (jenisEl)  jenisEl.value  = '';
+    toggleJenisPelepasanVisibility();
+    if (modal)    modal.style.display = 'flex';
+}
+document.getElementById('nonaktifAlasan')?.addEventListener('change', toggleJenisPelepasanVisibility);
+document.getElementById('nonaktifConfirmBtn')?.addEventListener('click', function () {
+    if (nonaktifPendingId === null) return;
+    const alasan  = document.getElementById('nonaktifAlasan').value;
+    const catatan = document.getElementById('nonaktifCatatan').value;
+    const jenis   = document.getElementById('nonaktifJenisPelepasan')?.value || '';
+    if (alasan === 'AKAN_DILEPAS' && !jenis) {
+        if (typeof showAlert === 'function') showAlert('Pilih jenis pelepasan terlebih dahulu.', 'error');
+        else alert('Pilih jenis pelepasan terlebih dahulu.');
+        return;
+    }
+    const id = nonaktifPendingId;
+    nonaktifPendingId = null;
+    if (typeof kirimToggle === 'function') {
+        kirimToggle(id, { alasan_nonaktif: alasan, catatan_nonaktif: catatan, jenis_pelepasan: jenis });
+    }
+});
 </script>
 @endpush
 @endsection

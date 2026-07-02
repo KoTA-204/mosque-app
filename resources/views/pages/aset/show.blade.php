@@ -1,6 +1,6 @@
 <x-modal id="showAsetModal" title="Detail Aset">
 
-    <div class="px-6 py-5 overflow-y-auto space-y-7" style="max-height: 65vh;">
+    <div class="px-6 py-5 space-y-7">
 
         {{-- Identitas Aset --}}
         <div>

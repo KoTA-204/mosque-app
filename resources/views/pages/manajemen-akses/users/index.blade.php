@@ -96,6 +96,14 @@
 </div>
 
 {{-- Modal Container (create & edit) --}}
+<x-confirm-modal
+    id="kirimKredensialModal"
+    title="Kirim Kredensial"
+    message="Kirim email berisi kredensial (email & password awal) ke user ini?"
+    confirmLabel="Kirim Email"
+    confirmClass="bg-green-600 hover:bg-green-700"
+    onConfirm="confirmSendCredentials()" />
+
 <div id="modalContainer"></div>
 
 <script>
@@ -164,6 +172,28 @@ function loadModal(url) {
 function openCreateModal() { loadModal(`${baseUrl}/create`); }
 function openEditModal(id)  { loadModal(`${baseUrl}/${id}/edit`); }
 function openDeleteModal(id) { loadModal(`${baseUrl}/${id}/delete`); }
+
+function sendCredentials(id) {
+    const modal = document.getElementById('kirimKredensialModal');
+    if (modal) modal._pendingId = id;
+    openModal('kirimKredensialModal');
+}
+
+function confirmSendCredentials() {
+    const modal = document.getElementById('kirimKredensialModal');
+    const id    = modal ? modal._pendingId : null;
+    if (!id) return;
+    fetch(`${baseUrl}/${id}/send-credentials`, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
+    })
+    .then(r => r.json())
+    .then(res => {
+        showAlert(res.message, res.success ? 'success' : 'error');
+        if (res.success) applyFilters();
+    })
+    .catch(() => showAlert('Gagal mengirim kredensial.', 'error'));
+}
 
 // Ganti fungsi showAlert yang lama dengan ini:
 function showAlert(msg, type = 'success') {

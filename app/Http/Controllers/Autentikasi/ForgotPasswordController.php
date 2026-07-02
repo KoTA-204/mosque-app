@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Authentikasi;
+namespace App\Http\Controllers\Autentikasi;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
@@ -15,7 +15,7 @@ class ForgotPasswordController extends Controller
 {
     public function index(): View
     {
-        return view('pages.authentikasi.forgot-password');
+        return view('pages.autentikasi.forgot-password');
     }
 
     /**
@@ -47,7 +47,7 @@ class ForgotPasswordController extends Controller
             return redirect()->route('auth.forgot-password');
         }
 
-        return view('pages.authentikasi.check-email');
+        return view('pages.autentikasi.check-email');
     }
 
     /**
@@ -87,7 +87,7 @@ class ForgotPasswordController extends Controller
                 ->with('error', 'Link reset password tidak valid atau sudah kadaluarsa.');
         }
 
-        return view('pages.authentikasi.reset-password', [
+        return view('pages.autentikasi.reset-password', [
             'token' => $token,
             'email' => $email,
         ]);
@@ -138,6 +138,6 @@ class ForgotPasswordController extends Controller
      */
     public function resetSuccess(): View
     {
-        return view('pages.authentikasi.reset-success');
+        return view('pages.autentikasi.reset-success');
     }
 }

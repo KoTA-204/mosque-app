@@ -13,6 +13,17 @@ class Aset extends Model
 
     protected $table = 'aset';
 
+    // ── Alasan penonaktifan (toggle Tidak Aktif) ───────────────────────────
+    const ALASAN_MENGANGGUR   = 'MENGANGGUR';
+    const ALASAN_RUSAK_BERAT  = 'RUSAK_BERAT';
+    const ALASAN_AKAN_DILEPAS = 'AKAN_DILEPAS';
+
+    const ALASAN_NONAKTIF_LABELS = [
+        self::ALASAN_MENGANGGUR   => 'Menganggur sementara',
+        self::ALASAN_RUSAK_BERAT  => 'Rusak berat',
+        self::ALASAN_AKAN_DILEPAS => 'Akan dilepas / dibuang',
+    ];
+
     protected $fillable = [
         'transaksi_id',
         'kode_aset',
@@ -29,6 +40,9 @@ class Aset extends Model
         'tanggal_mulai_penyusutan',
         'keterangan',
         'status_aset',
+        'alasan_nonaktif',
+        'catatan_nonaktif',
+        'tanggal_nonaktif',
         'nilai_buku',
         'akumulasi_penyusutan',
     ];
@@ -36,6 +50,7 @@ class Aset extends Model
     protected $casts = [
         'tanggal_perolehan'        => 'date',
         'tanggal_mulai_penyusutan' => 'date',
+        'tanggal_nonaktif'         => 'date',
         'nilai_tercatat'           => 'decimal:2',
         'nilai_buku'               => 'decimal:2',
         'akumulasi_penyusutan'     => 'decimal:2',
@@ -87,6 +102,41 @@ class Aset extends Model
         return $query->where('status_aset', 'AKTIF');
     }
 
+    // ── Aturan status & penyusutan ─────────────────────────────────────────
+
+    /**
+     * Apakah aset TETAP disusutkan walau berstatus TIDAK AKTIF?
+     * Sesuai PSAK 16 par. 55: aset yang menganggur sementara TETAP disusutkan
+     * sampai aset dihentikan pengakuannya (dilepas) atau habis masa manfaatnya.
+     */
+    public function tetapMenyusut(): bool
+    {
+        return $this->status_aset === 'TIDAK AKTIF'
+            && $this->alasan_nonaktif === self::ALASAN_MENGANGGUR;
+    }
+
+    /**
+     * Bisakah aset diaktifkan kembali lewat toggle?
+     * - AKAN_DILEPAS  : tidak bisa (terminal).
+     * - RUSAK_BERAT   : hanya bila kondisinya sudah diperbaiki (bukan RUSAK BERAT).
+     */
+    public function bisaDiaktifkan(): bool
+    {
+        if ($this->status_aset !== 'TIDAK AKTIF') {
+            return false;
+        }
+        if ($this->sudahDilepas()) {
+            return false;
+        }
+        if ($this->alasan_nonaktif === self::ALASAN_AKAN_DILEPAS) {
+            return false;
+        }
+        if ($this->alasan_nonaktif === self::ALASAN_RUSAK_BERAT && $this->kondisi_aset === 'RUSAK BERAT') {
+            return false;
+        }
+        return true;
+    }
+
     // penyusutan per bulan
     public function getPenyusutanPerBulanAttribute(): float
     {
@@ -97,7 +147,9 @@ class Aset extends Model
     // akumulasi penyusutan real-time
     public function getAkumulasiRealTimeAttribute(): float
     {
-        if ($this->status_aset === 'TIDAK AKTIF') {
+        // Aset TIDAK AKTIF dengan alasan terminal (rusak berat / akan dilepas)
+        // memakai snapshot beku. Aset menganggur sementara TETAP menyusut.
+        if ($this->status_aset === 'TIDAK AKTIF' && ! $this->tetapMenyusut()) {
             return (float) $this->akumulasi_penyusutan;
         }
         if (! $this->tanggal_mulai_penyusutan || ! $this->umur_manfaat) return 0;
@@ -108,7 +160,7 @@ class Aset extends Model
     // nilai buku real-time
     public function getNilaiBukuRealTimeAttribute(): float
     {
-        if ($this->status_aset === 'TIDAK AKTIF') {
+        if ($this->status_aset === 'TIDAK AKTIF' && ! $this->tetapMenyusut()) {
             return (float) $this->nilai_buku;
         }
         return max((float) $this->nilai_tercatat - $this->akumulasi_real_time, 0);
@@ -163,12 +215,39 @@ class Aset extends Model
         };
     }
 
+    // label alasan nonaktif (untuk tampilan)
+    public function getLabelAlasanNonaktifAttribute(): ?string
+    {
+        if (! $this->alasan_nonaktif) return null;
+        return self::ALASAN_NONAKTIF_LABELS[$this->alasan_nonaktif] ?? $this->alasan_nonaktif;
+    }
+
     // relasi jurnal penyesuaian
     public function jurnalPenyesuaian()
     {
         return $this->belongsToMany(Jurnal::class, 'jurnal_aset', 'aset_id', 'jurnal_id')
             ->withPivot('nominal')
             ->orderBy('tanggal', 'desc');
+    }
+
+    /**
+     * Aset dianggap SUDAH DILEPAS bila memiliki jurnal penyesuaian
+     * bertipe PELEPASAN_ASET yang sudah diposting. Tidak memakai status baru.
+     */
+    public function sudahDilepas(): bool
+    {
+        return $this->jurnalPenyesuaian()
+            ->where('tipe_penyesuaian', 'PELEPASAN_ASET')
+            ->where('status', 'POSTED')
+            ->exists();
+    }
+
+    // scope: aset yang belum pernah dilepas (untuk pilihan pelepasan)
+    public function scopeBelumDilepas($query)
+    {
+        return $query->whereDoesntHave('jurnalPenyesuaian', function ($q) {
+            $q->where('tipe_penyesuaian', 'PELEPASAN_ASET')->where('status', 'POSTED');
+        });
     }
 
     // pemilik aset

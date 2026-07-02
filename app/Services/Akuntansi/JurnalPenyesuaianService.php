@@ -17,6 +17,7 @@ class JurnalPenyesuaianService extends JurnalService
         'PENDAPATAN_BELUM_DICATAT' => 'Pendapatan Belum Dicatat',
         'BEBAN_DIBAYAR_DIMUKA'     => 'Beban Dibayar Dimuka',
         'ZAKAT_INFAQ'              => 'Penyesuaian Dana Zakat/Infaq',
+        'PELEPASAN_ASET'           => 'Pelepasan Aset',
     ];
 
     const TIPE_DESCRIPTIONS = [
@@ -25,6 +26,7 @@ class JurnalPenyesuaianService extends JurnalService
         'PENDAPATAN_BELUM_DICATAT' => 'Pendapatan yang sudah terjadi tetapi belum dicatat.',
         'BEBAN_DIBAYAR_DIMUKA'     => 'Biaya yang dibayar di muka untuk periode berikutnya.',
         'ZAKAT_INFAQ'              => 'Mencatat dana yang belum disalurkan atau dialokasikan.',
+        'PELEPASAN_ASET'           => 'Mengeluarkan aset dari pembukuan (dijual/dibuang/dihibahkan) dan mengakui laba/rugi pelepasan.',
     ];
 
     /**
@@ -100,6 +102,29 @@ class JurnalPenyesuaianService extends JurnalService
             ]);
     }
 
+    /**
+     * Daftar aset yang MASIH tercatat di pembukuan (belum pernah dilepas),
+     * baik berstatus AKTIF maupun TIDAK AKTIF. Dipakai pada tipe PELEPASAN_ASET.
+     */
+    public function getAsetUntukPelepasan()
+    {
+        return Aset::query()
+            ->where('status_aset', 'TIDAK AKTIF')
+            ->where('alasan_nonaktif', Aset::ALASAN_AKAN_DILEPAS)
+            ->belumDilepas()
+            ->orderBy('nama_aset')
+            ->get()
+            ->map(fn($aset) => [
+                'id'                   => $aset->id,
+                'kode_aset'            => $aset->kode_aset,
+                'nama_aset'            => $aset->nama_aset,
+                'status_aset'          => $aset->status_aset,
+                'nilai_tercatat'       => (float) $aset->nilai_tercatat,
+                'akumulasi_penyusutan' => (float) ($aset->akumulasi_penyusutan ?? 0),
+                'nilai_buku'           => max((float) $aset->nilai_tercatat - (float) ($aset->akumulasi_penyusutan ?? 0), 0),
+            ]);
+    }
+
     // ── Kalkulasi ──────────────────────────────────────────────────────────
 
     /**
@@ -136,6 +161,8 @@ class JurnalPenyesuaianService extends JurnalService
 
             if ($data['tipe_penyesuaian'] === 'PENYUSUTAN_ASET') {
                 $this->attachAset($jurnal, $data, $status);
+            } elseif ($data['tipe_penyesuaian'] === 'PELEPASAN_ASET') {
+                $this->attachAsetPelepasan($jurnal, $data, $status);
             }
 
             return $jurnal->load('detailJurnal.akun', 'aset');
@@ -188,12 +215,21 @@ class JurnalPenyesuaianService extends JurnalService
      */
     protected function onPosted(Jurnal $jurnal): void
     {
-        if ($jurnal->tipe_penyesuaian !== 'PENYUSUTAN_ASET') return;
-
         $jurnal->loadMissing('aset');
 
-        foreach ($jurnal->aset as $aset) {
-            $this->updateAkumulasiAset($aset->id, (float) $aset->pivot->nominal);
+        // Penyusutan: perhitungan LAMA tidak diubah.
+        if ($jurnal->tipe_penyesuaian === 'PENYUSUTAN_ASET') {
+            foreach ($jurnal->aset as $aset) {
+                $this->updateAkumulasiAset($aset->id, (float) $aset->pivot->nominal);
+            }
+            return;
+        }
+
+        // Pelepasan: hentikan pengakuan aset saat diposting.
+        if ($jurnal->tipe_penyesuaian === 'PELEPASAN_ASET') {
+            foreach ($jurnal->aset as $aset) {
+                $this->lepasAset($aset, $jurnal->tanggal);
+            }
         }
     }
 
@@ -205,5 +241,54 @@ class JurnalPenyesuaianService extends JurnalService
     protected function beforeDelete(Jurnal $jurnal): void
     {
         $jurnal->aset()->detach();
+    }
+
+    // ── Pelepasan aset ─────────────────────────────────────────
+
+    /**
+     * Lampirkan aset yang dilepas ke jurnal. Nilai buku saat pelepasan
+     * disimpan pada pivot 'nominal' untuk keperluan penelusuran/audit.
+     * Field form: aset_dilepas[] berisi id aset.
+     */
+    private function attachAsetPelepasan(Jurnal $jurnal, array $data, string $status): void
+    {
+        $asetIds = collect($data['aset_dilepas'] ?? [])
+            ->filter()
+            ->unique()
+            ->values();
+
+        foreach ($asetIds as $asetId) {
+            $aset = Aset::find($asetId);
+            if (!$aset) continue;
+
+            $nilaiBuku = max((float) $aset->nilai_tercatat - (float) ($aset->akumulasi_penyusutan ?? 0), 0);
+            $jurnal->aset()->attach($aset->id, ['nominal' => $nilaiBuku]);
+
+            if ($status === 'POSTED') {
+                $this->lepasAset($aset, $jurnal->tanggal);
+            }
+        }
+    }
+
+    /**
+     * Hentikan pengakuan (derecognition) aset saat jurnal pelepasan diposting.
+     *
+     * PERUBAHAN PERHITUNGAN — KHUSUS PELEPASAN (baru):
+     *   akumulasi_penyusutan := nilai_tercatat   (akumulasi penuh)
+     *   nilai_buku           := 0                (aset keluar dari pembukuan)
+     *   status_aset          := 'TIDAK AKTIF' dengan alasan 'AKAN_DILEPAS'
+     * Tidak ada status baru 'DILEPAS'. Penanda sudah-dilepas = adanya jurnal
+     * PELEPASAN_ASET berstatus POSTED yang terkait (Aset::sudahDilepas()).
+     */
+    private function lepasAset(Aset $aset, $tanggal = null): void
+    {
+        $aset->akumulasi_penyusutan = $aset->nilai_tercatat;
+        $aset->nilai_buku           = 0;
+        $aset->status_aset          = 'TIDAK AKTIF';
+        $aset->alasan_nonaktif      = Aset::ALASAN_AKAN_DILEPAS;
+        if (empty($aset->tanggal_nonaktif)) {
+            $aset->tanggal_nonaktif = $tanggal ?? now()->toDateString();
+        }
+        $aset->save();
     }
 }

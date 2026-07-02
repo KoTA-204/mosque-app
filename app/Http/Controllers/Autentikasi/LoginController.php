@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Authentikasi;
+namespace App\Http\Controllers\Autentikasi;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +16,7 @@ class LoginController extends Controller
             return redirect()->route('dashboard.index');
         }
 
-        return view('pages.authentikasi.login');
+        return view('pages.autentikasi.login');
     }
 
     public function store(Request $request): RedirectResponse

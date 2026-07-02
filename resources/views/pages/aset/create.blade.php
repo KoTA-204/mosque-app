@@ -3,7 +3,7 @@
     <form id="createAsetForm" enctype="multipart/form-data">
         @csrf
 
-        <div class="px-6 py-5 max-h-[70vh] overflow-y-auto space-y-6">
+        <div class="px-6 py-5 space-y-6">
 
             {{-- Identitas Aset --}}
             <div>

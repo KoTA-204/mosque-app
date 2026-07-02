@@ -3,7 +3,7 @@
     <form id="createUserForm">
         @csrf
 
-        <div class="px-6 py-5 max-h-[70vh] overflow-y-auto space-y-4">
+        <div class="px-6 py-5 space-y-4">
 
             <div>
                 <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
@@ -22,9 +22,30 @@
                     class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
                 <p id="err-email" class="text-xs text-red-500 mt-1"></p>
                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                    Link pengaturan password akan dikirim ke email ini secara otomatis.
+                    Kredensial (email &amp; password) dapat dikirim ke alamat ini lewat ikon email setelah user dibuat.
                 </p>
             </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
+                        Password Awal <span class="text-red-500">*</span>
+                    </label>
+                    <input type="password" name="password" placeholder="Minimal 8 karakter"
+                        class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
+                    <p id="err-password" class="text-xs text-red-500 mt-1"></p>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
+                        Konfirmasi Password <span class="text-red-500">*</span>
+                    </label>
+                    <input type="password" name="password_confirmation" placeholder="Ulangi password"
+                        class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
+                </div>
+            </div>
+            <p class="text-xs text-gray-400 dark:text-gray-500 -mt-2">
+                Password ini disimpan aman &amp; tetap dapat Anda lihat lagi di menu Edit. Kirim ke user lewat ikon email setelah verifikasi permission.
+            </p>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -77,7 +98,7 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                 </svg>
-                <span id="btnSimpanLabel">Simpan & Kirim Email</span>
+                <span id="btnSimpanLabel">Simpan User</span>
             </button>
         </div>
     </form>
@@ -116,14 +137,13 @@ function submitCreateUser() {
         // Reset loading state
         btn.disabled = false;
         spinner.classList.add('hidden');
-        label.textContent = 'Simpan & Kirim Email';
+        label.textContent = 'Simpan User';
 
         if (res.success) {
             closeModal('createUserModal');
 
             // Tampilkan alert berbeda tergantung status email
-            const type = res.email_sent ? 'success' : 'warning';
-            showAlert(res.message, type);
+            showAlert(res.message, 'success');
             applyFilters();
         } else if (res.errors) {
             Object.entries(res.errors).forEach(([field, messages]) => {
@@ -137,7 +157,7 @@ function submitCreateUser() {
     .catch(() => {
         btn.disabled = false;
         spinner.classList.add('hidden');
-        label.textContent = 'Simpan & Kirim Email';
+        label.textContent = 'Simpan User';
         showAlert('Terjadi kesalahan koneksi.', 'error');
     });
 }

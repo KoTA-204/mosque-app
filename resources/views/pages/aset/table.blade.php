@@ -180,32 +180,45 @@ function goToPage(page) {
 }
 
 function toggleStatus(id, currentStatus) {
+    // Nonaktifkan -> wajib pilih alasan lewat modal.
+    if (currentStatus === 'AKTIF') {
+        if (typeof openNonaktifModal === 'function') {
+            openNonaktifModal(id);
+        } else {
+            kirimToggle(id, {});
+        }
+        return;
+    }
+    // Aktifkan kembali (server bisa menolak bila terkunci: rusak berat / akan dilepas).
+    kirimToggle(id, {});
+}
+
+function kirimToggle(id, payload) {
     fetch(`/dashboard/aset/${id}/toggle-status`, {
         method: 'PATCH',
         headers: {
             'X-CSRF-TOKEN':     document.querySelector('meta[name="csrf-token"]').content,
             'X-Requested-With': 'XMLHttpRequest',
             'Content-Type':     'application/json',
+            'Accept':           'application/json',
         },
+        body: JSON.stringify(payload || {}),
     })
-    .then(r => r.json())
-    .then(data => {
-        if (!data.success) return;
-        const isAktif = data.status === 'AKTIF';
-        const btn  = document.getElementById(`toggle-${id}`);
-        const knob = document.getElementById(`toggle-knob-${id}`);
-        btn.classList.toggle('bg-green-500',     isAktif);
-        btn.classList.toggle('bg-gray-300',      !isAktif);
-        btn.classList.toggle('dark:bg-gray-600', !isAktif);
-        knob.classList.toggle('translate-x-4',   isAktif);
-        knob.classList.toggle('translate-x-0',   !isAktif);
-        btn.title = isAktif ? 'Nonaktifkan' : 'Aktifkan';
-        const cell = document.getElementById(`status-cell-${id}`);
-        cell.innerHTML = `<span class="text-sm font-medium ${isAktif ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}">${isAktif ? 'Aktif' : 'Tidak Aktif'}</span>`;
-        updateStats(isAktif ? 1 : -1);
-        showToast(data.message, 'success');
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+        if (typeof closeModal === 'function') closeModal('nonaktifAsetModal');
+        if (!ok || !data.success) {
+            showAlert(data.message || 'Gagal mengubah status.', 'error');
+            return;
+        }
+        showAlert(data.message, 'success');
+        // Render ulang tabel penuh dari server agar argumen status pada tombol
+        // (onclick="toggleStatus(id, '...')") ikut ter-update. Tanpa ini, status
+        // lama tetap 'AKTIF' sehingga klik berikutnya membuka modal nonaktif lagi.
+        if (typeof applyFilters === 'function') applyFilters();
+        if (typeof fetchStats  === 'function') fetchStats();
     })
-    .catch(() => showToast('Gagal mengubah status.', 'error'));
+    .catch(() => showAlert('Gagal mengubah status.', 'error'));
 }
 
 function hapusAset(id, nama) {

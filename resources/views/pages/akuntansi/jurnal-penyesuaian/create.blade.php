@@ -89,6 +89,7 @@
                         'PENDAPATAN_BELUM_DICATAT'  => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
                         'BEBAN_DIBAYAR_DIMUKA'      => 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z',
                         'ZAKAT_INFAQ'               => 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z',
+                        'PELEPASAN_ASET'            => 'M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-4l-2 3h-4l-2-3H4',
                     ];
                 @endphp
 
@@ -125,6 +126,19 @@
                         Detail Jurnal
                     </h3>
                     <p class="text-xs text-gray-400">Pastikan debit = kredit sebelum melanjutkan</p>
+                </div>
+
+                <div id="asetPelepasanCard" class="hidden mb-5 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/60 dark:bg-amber-900/10 p-4">
+                    <div class="flex items-start justify-between mb-3 gap-4">
+                        <h4 class="text-sm font-semibold text-amber-800 dark:text-amber-300">Aset yang Dilepas <span class="text-red-500">*</span></h4>
+                        <p class="text-xs text-amber-700/80 dark:text-amber-400/80 text-right">Pilih aset yang dikeluarkan dari pembukuan. Setelah jurnal diposting, nilai buku aset menjadi 0 dan aset ditandai 'akan dilepas'.</p>
+                    </div>
+                    <div id="asetDilepasRows" class="space-y-2"></div>
+                    <button type="button" onclick="addAsetDilepas()"
+                            class="mt-3 text-xs text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 font-medium flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Tambah Aset
+                    </button>
                 </div>
 
                 <div id="detailRows" class="space-y-3 mb-4"></div>
@@ -234,12 +248,15 @@ import { parseNominal, formatRp, formatInput, makeStepperController, makeBalance
 const akunPerTipe = @json($akunPerTipe);
 const tipeLabels  = @json($tipeLabels);
 const asetList    = @json($asetList);
+const asetPelepasanList = @json($asetPelepasanList);
 const periodeList = @json($periodeList->map(fn($p) => ['id' => $p->id, 'nama' => $p->nama_periode]));
 
 // ── State ──────────────────────────────────────────────────────────────────
 let detailRows  = [];
 let rowCounter  = 0;
 let asetCounter = 0;
+let asetDilepas = [];
+let asetDilepasCounter = 0;
 
 // ── Controllers ────────────────────────────────────────────────────────────
 const stepper = makeStepperController(2);
@@ -310,6 +327,11 @@ window.selectTipe = function(key) {
     detailRows = [];
     rowCounter = 0;
     renderDetailRows();
+
+    const pelCard = document.getElementById('asetPelepasanCard');
+    if (pelCard) pelCard.classList.toggle('hidden', key !== 'PELEPASAN_ASET');
+    if (key === 'PELEPASAN_ASET' && asetDilepas.length === 0) addAsetDilepas();
+    renderAsetDilepas();
 };
 
 // ── Detail Rows ─────────────────────────────────────────────────────────────
@@ -395,6 +417,55 @@ window.updateNominalHidden = function(rowId) {
 
 // Expose formatInput agar bisa dipakai di inline oninput HTML
 window.formatInput = formatInput;
+
+// ── Aset yang Dilepas (tipe PELEPASAN_ASET) ─────────────────────────
+function fmtRpP(n) { return 'Rp ' + (Number(n) || 0).toLocaleString('id-ID'); }
+
+window.addAsetDilepas = function() {
+    asetDilepas.push({ id: asetDilepasCounter++, aset_id: '' });
+    renderAsetDilepas();
+};
+
+window.removeAsetDilepas = function(id) {
+    asetDilepas = asetDilepas.filter(a => a.id !== id);
+    renderAsetDilepas();
+};
+
+window.updateAsetDilepas = function(id, value) {
+    const a = asetDilepas.find(x => x.id === id);
+    if (a) a.aset_id = value;
+    renderAsetDilepas();
+};
+
+function renderAsetDilepas() {
+    const c = document.getElementById('asetDilepasRows');
+    if (!c) return;
+    const used = asetDilepas.map(a => String(a.aset_id)).filter(Boolean);
+    c.innerHTML = asetDilepas.map((a, idx) => {
+        const opts = asetPelepasanList.map(x => {
+            const dis = used.includes(String(x.id)) && String(x.id) !== String(a.aset_id);
+            return `<option value="${x.id}" ${String(a.aset_id) === String(x.id) ? 'selected' : ''} ${dis ? 'disabled' : ''}>${x.kode_aset} — ${x.nama_aset}</option>`;
+        }).join('');
+        const sel = asetPelepasanList.find(x => String(x.id) === String(a.aset_id));
+        const info = sel
+            ? `<p class="text-[11px] text-amber-700/80 dark:text-amber-400/80 mt-1.5">Nilai perolehan ${fmtRpP(sel.nilai_tercatat)} · Akumulasi ${fmtRpP(sel.akumulasi_penyusutan)} · <span class="font-semibold">Nilai buku ${fmtRpP(sel.nilai_buku)}</span></p>`
+            : '';
+        return `
+        <div class="rounded-lg bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-800 px-3 py-2">
+            <div class="flex items-center gap-2">
+                <input type="hidden" name="aset_dilepas[${idx}]" value="${a.aset_id ?? ''}">
+                <select onchange="updateAsetDilepas(${a.id}, this.value)"
+                        class="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:border-amber-500">
+                    <option value="">Pilih aset</option>${opts}
+                </select>
+                <button type="button" onclick="removeAsetDilepas(${a.id})" class="text-gray-300 hover:text-red-500 transition-colors shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            ${info}
+        </div>`;
+    }).join('');
+}
 
 function renderDetailRows() {
     const container    = document.getElementById('detailRows');

@@ -41,6 +41,7 @@ class JurnalPenyesuaianController extends Controller
 
         $akunList = $this->service->getAkunList('MANUAL');
         $asetList = $this->service->getAsetAktif();
+        $asetPelepasanList = $this->service->getAsetUntukPelepasan();
 
         $akunPerTipe = [];
         foreach (array_keys($tipeLabels) as $tipe) {
@@ -49,7 +50,7 @@ class JurnalPenyesuaianController extends Controller
 
         return view('pages.akuntansi.jurnal-penyesuaian.create', compact(
             'periodeAktif', 'periodeList', 'akunList', 'akunPerTipe',
-            'asetList', 'tipeLabels', 'tipeDescs'
+            'asetList', 'asetPelepasanList', 'tipeLabels', 'tipeDescs'
         ));
     }
 
@@ -73,6 +74,19 @@ class JurnalPenyesuaianController extends Controller
             $rules['detail.0.aset_rows']           = 'required|array|min:1';
             $rules['detail.0.aset_rows.*.aset_id'] = 'required|exists:aset,id';
             $rules['detail.0.aset_rows.*.nominal']  = 'required|string';
+        }
+
+        if ($request->tipe_penyesuaian === 'PELEPASAN_ASET') {
+            $rules['aset_dilepas']   = 'required|array|min:1';
+            // GERBANG peran: hanya aset yang sudah ditandai sekretaris
+            // (TIDAK AKTIF + alasan AKAN_DILEPAS) yang boleh dilepas.
+            $rules['aset_dilepas.*'] = [
+                'required',
+                \Illuminate\Validation\Rule::exists('aset', 'id')->where(function ($q) {
+                    $q->where('status_aset', 'TIDAK AKTIF')
+                      ->where('alasan_nonaktif', \App\Models\Aset::ALASAN_AKAN_DILEPAS);
+                }),
+            ];
         }
 
         $request->validate($rules);

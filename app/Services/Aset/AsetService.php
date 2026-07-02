@@ -70,40 +70,82 @@ class AsetService
         return $aset;
     }
 
-    // aktif / nonaktifkan aset
-    public function toggleStatus(Aset $aset): string
+    /**
+     * Aktif / nonaktifkan aset.
+     *
+     * Nonaktivasi WAJIB menyertakan alasan:
+     *   - MENGANGGUR   : reversible; aset TETAP disusutkan (PSAK 16 par. 55) -> tidak dibekukan.
+     *   - RUSAK_BERAT  : dibekukan; terkunci sampai kondisi diperbaiki lewat Edit.
+     *   - AKAN_DILEPAS : dibekukan; terminal, tidak bisa diaktifkan kembali.
+     *
+     * Reaktivasi meneruskan nilai buku terakhir (tidak direset) agar tidak
+     * terjadi lonjakan / penyusutan ganda.
+     */
+    public function toggleStatus(Aset $aset, ?string $alasan = null, ?string $catatan = null): string
     {
-        $newStatus  = $aset->status_aset === 'AKTIF' ? 'TIDAK AKTIF' : 'AKTIF';
-        $updateData = ['status_aset' => $newStatus];
-
-        // bekukan nilai penyusutan saat dinonaktifkan
-        if ($newStatus === 'TIDAK AKTIF' && $aset->umur_manfaat) {
-            $updateData['akumulasi_penyusutan'] = $aset->akumulasi_real_time;
-            $updateData['nilai_buku']           = $aset->nilai_buku_real_time;
+        // DRAFT tidak boleh di-toggle.
+        if ($aset->status_aset === 'DRAFT') {
+            throw new \InvalidArgumentException(
+                'Aset berstatus draft belum dapat diaktifkan atau dinonaktifkan.'
+            );
         }
 
-        // reset ke hitungan real-time saat diaktifkan
-        if ($newStatus === 'AKTIF' && $aset->umur_manfaat) {
-            $updateData['akumulasi_penyusutan'] = 0;
+        // ── Reaktivasi: TIDAK AKTIF -> AKTIF ────────────────────────────────
+        if ($aset->status_aset === 'TIDAK AKTIF') {
+            if (! $aset->bisaDiaktifkan()) {
+                $pesan = $aset->alasan_nonaktif === Aset::ALASAN_AKAN_DILEPAS
+                    ? 'Aset yang ditandai untuk dilepas/dibuang tidak dapat diaktifkan kembali.'
+                    : 'Aset rusak berat baru dapat diaktifkan setelah kondisinya diperbaiki melalui menu Edit.';
+                throw new \InvalidArgumentException($pesan);
+            }
+
+            $aset->update([
+                'status_aset'      => 'AKTIF',
+                'alasan_nonaktif'  => null,
+                'catatan_nonaktif' => null,
+                'tanggal_nonaktif' => null,
+                // Akumulasi & nilai buku TIDAK direset (lanjut dari nilai terakhir).
+            ]);
+
+            return 'AKTIF';
+        }
+
+        // ── Nonaktivasi: AKTIF -> TIDAK AKTIF ───────────────────────────────
+        $alasan = $alasan ?: Aset::ALASAN_MENGANGGUR;
+        if (! array_key_exists($alasan, Aset::ALASAN_NONAKTIF_LABELS)) {
+            throw new \InvalidArgumentException('Alasan penonaktifan aset tidak valid.');
+        }
+
+        $updateData = [
+            'status_aset'      => 'TIDAK AKTIF',
+            'alasan_nonaktif'  => $alasan,
+            'catatan_nonaktif' => $catatan,
+            'tanggal_nonaktif' => now()->toDateString(),
+        ];
+
+        // Menganggur sementara TETAP menyusut -> jangan bekukan.
+        // Terminal (rusak berat / akan dilepas) -> bekukan nilai saat ini.
+        if ($alasan !== Aset::ALASAN_MENGANGGUR && $aset->umur_manfaat) {
+            $updateData['akumulasi_penyusutan'] = $aset->akumulasi_real_time;
             $updateData['nilai_buku']           = $aset->nilai_buku_real_time;
         }
 
         $aset->update($updateData);
 
-        return $newStatus;
+        return 'TIDAK AKTIF';
     }
 
     // hapus aset (hanya jika memenuhi syarat)
     public function delete(Aset $aset): void
     {
-        // Aset tidak menyusut → tidak bisa hapus
+        // Aset tidak menyusut -> tidak bisa hapus
         if (is_null($aset->umur_manfaat)) {
             throw new \InvalidArgumentException(
                 'Aset yang tidak menyusut tidak dapat dihapus. Gunakan toggle Tidak Aktif.'
             );
         }
 
-        // Nilai buku masih ada → belum bisa hapus
+        // Nilai buku masih ada -> belum bisa hapus
         if ($aset->nilai_buku_real_time > 0) {
             throw new \InvalidArgumentException(
                 'Aset belum dapat dihapus karena masih memiliki nilai buku. Gunakan toggle Tidak Aktif.'

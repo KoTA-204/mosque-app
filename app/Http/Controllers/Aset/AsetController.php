@@ -121,11 +121,25 @@ class AsetController extends Controller
     }
 
     // aktif / nonaktifkan aset
-    public function toggleStatus(Aset $aset)
+    public function toggleStatus(Request $request, Aset $aset)
     {
-        $newStatus = $this->asetService->toggleStatus($aset);
+        try {
+            $newStatus = $this->asetService->toggleStatus(
+                $aset,
+                $request->input('alasan_nonaktif'),
+                $request->input('catatan_nonaktif'),
+            );
+        } catch (\InvalidArgumentException $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+            return redirect()->back()->with('error', $e->getMessage());
+        }
 
-        if (request()->ajax()) {
+        if ($request->ajax()) {
             return response()->json([
                 'success' => true,
                 'status'  => $newStatus,

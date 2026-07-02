@@ -3,7 +3,7 @@
     <form id="editUserForm">
         @csrf
 
-        <div class="px-6 py-5 max-h-[70vh] overflow-y-auto space-y-4">
+        <div class="px-6 py-5 space-y-4">
 
             <div>
                 <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Nama Lengkap <span class="text-red-500">*</span></label>
@@ -24,6 +24,26 @@
                     class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
                 <p id="err-email" class="text-xs text-red-500 mt-1"></p>
             </div>
+
+            <div>
+                <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Password Awal (dibuat admin)</label>
+                <div class="relative">
+                    <input type="password" id="initialPasswordField" value="{{$user->initial_password ?? '' }}" readonly
+                        placeholder="{{$user->initial_password ? '' : 'Belum ada (user dibuat sebelum fitur ini)' }}"
+                        class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 pr-10 text-sm bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 outline-none cursor-not-allowed">
+                    <button type="button" onclick="toggleInitialPassword()"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    </button>
+                </div>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Hanya admin yang dapat melihat ini. User dapat menggantinya sendiri lewat tautan di email.</p>
+            </div>
+            <script>
+                function toggleInitialPassword() {
+                    const f = document.getElementById('initialPasswordField');
+                    f.type = f.type === 'password' ? 'text' : 'password';
+                }
+            </script>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>

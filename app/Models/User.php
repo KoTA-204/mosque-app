@@ -17,20 +17,25 @@ class User extends Authenticatable implements CanResetPasswordContract
         'name',
         'email',
         'password',
+        'initial_password',
         'status',
         'role_id',
+        'credentials_sent_at',
     ];
 
     protected $hidden = [
         'password',
+        'initial_password',
         'remember_token',
     ];
 
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
+            'email_verified_at'   => 'datetime',
+            'password'            => 'hashed',
+            'initial_password'    => 'encrypted',
+            'credentials_sent_at' => 'datetime',
         ];
     }
 
@@ -68,5 +73,11 @@ class User extends Authenticatable implements CanResetPasswordContract
     public function hasTransaksi(): bool
     {
         return \App\Models\Transaksi::where('user_id', $this->id)->exists();
+    }
+
+    // Apakah kredensial (email + password awal) sudah dikirim ke user?
+    public function credentialsSent(): bool
+    {
+        return $this->credentials_sent_at !== null;
     }
 }

@@ -7,12 +7,23 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Password;
 
+/**
+ * Satu-satunya notifikasi email akun.
+ *
+ * - Bila $plainPassword DIBERIKAN (dikirim admin lewat ikon email di tabel user,
+ *   setelah admin memverifikasi permission): email berisi kredensial lengkap
+ *   (email + password awal) plus tautan "Ganti Password Saya" yang mengarah ke
+ *   alur reset password. User tetap bisa login memakai password awal.
+ * - Bila $plainPassword NULL: email hanya berisi tautan atur password (kompatibel
+ *   dengan pemakaian lama).
+ */
 class AkunDibuatNotification extends Notification
 {
     use Queueable;
 
     public function __construct(
-        protected string $name
+        protected string $name,
+        protected ?string $plainPassword = null,
     ) {}
 
     public function via(object $notifiable): array
@@ -22,6 +33,7 @@ class AkunDibuatNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
+        // Token untuk tautan ganti password (mengarah ke alur reset password).
         $token = Password::createToken($notifiable);
 
         $resetUrl = route('password.reset', [
@@ -29,13 +41,24 @@ class AkunDibuatNotification extends Notification
             'email' => $notifiable->getEmailForPasswordReset(),
         ]);
 
-        return (new MailMessage)
-            ->subject('Akun Anda Telah Dibuat – ' . config('app.name'))
+        $mail = (new MailMessage)
+            ->subject('Kredensial Akun Anda - ' . config('app.name'))
             ->greeting('Assalamu\'alaikum, ' . $this->name . '!')
-            ->line('Akun Anda di sistem keuangan **' . config('app.name') . '** telah dibuat oleh administrator.')
-            ->line('Klik tombol di bawah untuk mengatur password Anda. Tautan ini berlaku selama **60 menit**.')
-            ->action('Atur Password Saya', $resetUrl)
-            ->line('Jika Anda tidak merasa mendaftar, abaikan email ini.')
-            ->salutation('Jazakumullahu khairan,');
+            ->line('Akun Anda pada sistem keuangan **' . config('app.name') . '** telah dibuat oleh administrator.');
+
+        if ($this->plainPassword !== null) {
+            $mail->line('Berikut kredensial untuk masuk:')
+                 ->line('**Email:** ' . $notifiable->email)
+                 ->line('**Password:** ' . $this->plainPassword)
+                 ->line('Demi keamanan, sebaiknya segera ganti password melalui tombol di bawah ini.')
+                 ->action('Ganti Password Saya', $resetUrl)
+                 ->line('Tautan ganti password berlaku selama **60 menit**. Anda tetap dapat masuk memakai password di atas kapan pun.');
+        } else {
+            $mail->line('Klik tombol di bawah untuk mengatur password Anda. Tautan ini berlaku selama **60 menit**.')
+                 ->action('Atur Password Saya', $resetUrl)
+                 ->line('Jika Anda tidak merasa mendaftar, abaikan email ini.');
+        }
+
+        return $mail->salutation('Jazakumullahu khairan,');
     }
 }
