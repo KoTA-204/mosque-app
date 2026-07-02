@@ -1,5 +1,3 @@
--- Global confirm modal + helper. Pengganti window.confirm() bawaan browser. --
-{{-- Dipakai lewat: <form data-confirm="pesan"> ATAU JS confirmAction({...}) / await confirmAsync('pesan') --}}
 <div id="globalConfirmModal" style="display: none;"
      class="fixed inset-0 z-[10000] items-center justify-center bg-black/50 px-4">
     <div class="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 p-6 shadow-xl">

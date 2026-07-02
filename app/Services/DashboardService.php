@@ -67,7 +67,6 @@ class DashboardService
                             ->where('status', 'POSTED')),
                     $akun->saldo_normal
                 );
-                // Akumulasi penyusutan (KREDIT) adalah pengurang
                 return $akun->saldo_normal === 'KREDIT' ? -$saldo : $saldo;
             });
     }

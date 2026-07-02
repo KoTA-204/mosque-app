@@ -3,28 +3,28 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\PermissionController;
-use App\Http\Controllers\MenuController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\TransaksiController;
-use App\Http\Controllers\TransaksiKegiatanController;
-use App\Http\Controllers\ApprovalController;
-use App\Http\Controllers\KegiatanController;
-use App\Http\Controllers\ChartOfAccountController;
-use App\Http\Controllers\KenclengController;
-use App\Http\Controllers\KategoriTransaksiController;
-use App\Http\Controllers\AsetController;
-use App\Http\Controllers\JurnalPembukaController;
-use App\Http\Controllers\JurnalUmumController;
-use App\Http\Controllers\JurnalPenyesuaianController;
-use App\Http\Controllers\JurnalKoreksiController;
-use App\Http\Controllers\JurnalPenutupController;
-use App\Http\Controllers\BukuBesarController;
-use App\Http\Controllers\NeracaSaldoController;
-use App\Http\Controllers\LaporanKeuanganController;
+use App\Http\Controllers\Authentikasi\LoginController;
+use App\Http\Controllers\Authentikasi\ForgotPasswordController;
+use App\Http\Controllers\ManajemenAkses\RoleController;
+use App\Http\Controllers\ManajemenAkses\PermissionController;
+use App\Http\Controllers\ManajemenAkses\MenuController;
+use App\Http\Controllers\ManajemenAkses\UserController;
+use App\Http\Controllers\Operasional\TransaksiController;
+use App\Http\Controllers\Operasional\TransaksiKegiatanController;
+use App\Http\Controllers\Operasional\ApprovalController;
+use App\Http\Controllers\Operasional\KegiatanController;
+use App\Http\Controllers\DataInduk\ChartOfAccountController;
+use App\Http\Controllers\Operasional\KenclengController;
+use App\Http\Controllers\DataInduk\KategoriTransaksiController;
+use App\Http\Controllers\Aset\AsetController;
+use App\Http\Controllers\Akuntansi\JurnalPembukaController;
+use App\Http\Controllers\Akuntansi\JurnalUmumController;
+use App\Http\Controllers\Akuntansi\JurnalPenyesuaianController;
+use App\Http\Controllers\Akuntansi\JurnalKoreksiController;
+use App\Http\Controllers\Akuntansi\JurnalPenutupController;
+use App\Http\Controllers\Akuntansi\BukuBesarController;
+use App\Http\Controllers\Akuntansi\NeracaSaldoController;
+use App\Http\Controllers\LaporanKeuangan\LaporanKeuanganController;
 
 // ── Landing Page ───────────────────────────────────────────────────────────
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -230,7 +230,6 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
         Route::get('/jurnal-umum', [JurnalUmumController::class, 'index'])->name('jurnal-umum.index');
 
         Route::middleware('permission:CREATE_JURNAL')->group(function () {
-            // ✅ bulk-post dan post SEBELUM {jurnalUmum} agar tidak tertangkap sebagai parameter
             Route::post('/jurnal-umum/bulk-post', [JurnalUmumController::class, 'bulkPost'])->name('jurnal-umum.bulk-post');
             Route::post('/jurnal-umum/{jurnalUmum}/post', [JurnalUmumController::class, 'post'])->name('jurnal-umum.post');
         });
@@ -239,7 +238,6 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
             Route::delete('/jurnal-umum/{jurnalUmum}', [JurnalUmumController::class, 'destroy'])->name('jurnal-umum.destroy');
         });
 
-        // ✅ show dengan {jurnalUmum} di paling bawah
         Route::get('/jurnal-umum/{jurnalUmum}', [JurnalUmumController::class, 'show'])
             ->whereNumber('jurnalUmum')
             ->name('jurnal-umum.show');
