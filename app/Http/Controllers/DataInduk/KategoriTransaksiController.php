@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Validator;
 
 class KategoriTransaksiController extends Controller
 {
-    public function index(Request $request)
+    public function tampilkanDaftarKategoriTransaksi(Request $request)
     {
         $perPage  = $request->input('per_page', 10);
         $search   = $request->input('search');
@@ -31,12 +31,12 @@ class KategoriTransaksiController extends Controller
         return view('pages.data-induk.kategori-transaksi.index', compact('kategori', 'perPage'));
     }
 
-    public function create()
+    public function tampilkanFormTambahKategoriTransaksi()
     {
         return view('pages.data-induk.kategori-transaksi.create');
     }
 
-    public function store(Request $request)
+    public function simpanKategoriTransaksiBaru(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'nama_kategori'   => 'required|string|max:100|unique:kategori_transaksi,nama_kategori',
@@ -64,12 +64,12 @@ class KategoriTransaksiController extends Controller
             ->with('success', 'Kategori transaksi berhasil ditambahkan.');
     }
 
-    public function edit(KategoriTransaksi $kategoriTransaksi)
+    public function tampilkanFormUbahKategoriTransaksi(KategoriTransaksi $kategoriTransaksi)
     {
         return view('pages.data-induk.kategori-transaksi.edit', compact('kategoriTransaksi'));
     }
 
-    public function update(Request $request, KategoriTransaksi $kategoriTransaksi)
+    public function perbaruiKategoriTransaksi(Request $request, KategoriTransaksi $kategoriTransaksi)
     {
         $validator = Validator::make($request->all(), [
             'nama_kategori'   => 'required|string|max:100|unique:kategori_transaksi,nama_kategori,' . $kategoriTransaksi->id,
@@ -100,7 +100,7 @@ class KategoriTransaksiController extends Controller
             ->with('success', 'Kategori transaksi berhasil diperbarui.');
     }
 
-    public function destroy(KategoriTransaksi $kategoriTransaksi)
+    public function hapusKategoriTransaksi(KategoriTransaksi $kategoriTransaksi)
     {
         if ($kategoriTransaksi->transaksi()->exists()) {
             return back()->with('error', 'Kategori tidak dapat dihapus karena sudah digunakan oleh transaksi.');

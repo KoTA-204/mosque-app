@@ -158,13 +158,13 @@
                     <div class="p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900">
                         <p class="text-xs text-gray-400 mb-1">Penyusutan / Tahun</p>
                         <p id="edit-prev-tahunan" class="text-sm font-semibold text-gray-800 dark:text-white">
-                            Rp {{ number_format($aset->penyusutan_per_tahun, 0, ',', '.') }}
+                            Rp {{ number_format($aset->hitungPenyusutanPerTahun(), 0, ',', '.') }}
                         </p>
                     </div>
                     <div class="p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900">
                         <p class="text-xs text-gray-400 mb-1">Penyusutan / Bulan</p>
                         <p id="edit-prev-bulanan" class="text-sm font-semibold text-gray-800 dark:text-white">
-                            Rp {{ number_format($aset->penyusutan_per_bulan, 0, ',', '.') }}
+                            Rp {{ number_format($aset->hitungPenyusutanPerBulan(), 0, ',', '.') }}
                         </p>
                     </div>
                     <div class="p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900">

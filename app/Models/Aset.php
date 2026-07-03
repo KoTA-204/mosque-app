@@ -57,7 +57,7 @@ class Aset extends Model
     ];
 
     // filter daftar aset
-    public function scopeFilter(Builder $query, array $filters): Builder
+    public function scopeSaring(Builder $query, array $filters): Builder
     {
         $query->when($filters['search'] ?? null, function (Builder $q, $search) {
             $q->where(function (Builder $sub) use ($search) {
@@ -138,14 +138,14 @@ class Aset extends Model
     }
 
     // penyusutan per bulan
-    public function getPenyusutanPerBulanAttribute(): float
+    public function hitungPenyusutanPerBulan(): float
     {
         if (! $this->umur_manfaat || $this->umur_manfaat <= 0) return 0;
         return (float) $this->nilai_tercatat / ($this->umur_manfaat * 12);
     }
 
     // akumulasi penyusutan real-time
-    public function getAkumulasiRealTimeAttribute(): float
+    public function hitungAkumulasiRealTime(): float
     {
         // Aset TIDAK AKTIF dengan alasan terminal (rusak berat / akan dilepas)
         // memakai snapshot beku. Aset menganggur sementara TETAP menyusut.
@@ -154,34 +154,34 @@ class Aset extends Model
         }
         if (! $this->tanggal_mulai_penyusutan || ! $this->umur_manfaat) return 0;
         $bulan = (int) $this->tanggal_mulai_penyusutan->diffInMonths(now());
-        return min($this->penyusutan_per_bulan * $bulan, (float) $this->nilai_tercatat);
+        return min($this->hitungPenyusutanPerBulan() * $bulan, (float) $this->nilai_tercatat);
     }
 
     // nilai buku real-time
-    public function getNilaiBukuRealTimeAttribute(): float
+    public function hitungNilaiBukuRealTime(): float
     {
         if ($this->status_aset === 'TIDAK AKTIF' && ! $this->tetapMenyusut()) {
             return (float) $this->nilai_buku;
         }
-        return max((float) $this->nilai_tercatat - $this->akumulasi_real_time, 0);
+        return max((float) $this->nilai_tercatat - $this->hitungAkumulasiRealTime(), 0);
     }
 
     // progress penyusutan (%)
-    public function getProgressPenyusutanAttribute(): float
+    public function hitungProgressPenyusutan(): float
     {
         if (! (float) $this->nilai_tercatat) return 0;
-        return min(($this->akumulasi_real_time / (float) $this->nilai_tercatat) * 100, 100);
+        return min(($this->hitungAkumulasiRealTime() / (float) $this->nilai_tercatat) * 100, 100);
     }
 
     // penyusutan per tahun
-    public function getPenyusutanPerTahunAttribute(): float
+    public function hitungPenyusutanPerTahun(): float
     {
         if (! $this->umur_manfaat || $this->umur_manfaat <= 0) return 0;
         return (float) $this->nilai_tercatat / $this->umur_manfaat;
     }
 
     // generate kode aset: ASET-{YYYY}-{NNN}
-    public static function generateKode(string $tanggalPerolehan): string
+    public static function buatKode(string $tanggalPerolehan): string
     {
         $tahun  = date('Y', strtotime($tanggalPerolehan));
         $prefix = "ASET-{$tahun}-";

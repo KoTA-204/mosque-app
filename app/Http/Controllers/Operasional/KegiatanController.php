@@ -9,14 +9,14 @@ use Illuminate\Http\Request;
 
 class KegiatanController extends Controller
 {
-    private function getPanitias()
+    private function ambilDaftarPanitia()
     {
         return User::whereHas('roles', fn($q) =>
             $q->where('role_name', 'Panitia Khusus')
         )->get();
     }
 
-    public function index(Request $request)
+    public function tampilkanDaftarKegiatan(Request $request)
     {
         $stats = [
             'total'   => Kegiatan::count(),
@@ -44,7 +44,7 @@ class KegiatanController extends Controller
 
         $perPage  = in_array($request->per_page, [10, 25, 50]) ? $request->per_page : 10;
         $kegiatan = $query->latest()->paginate($perPage)->withQueryString();
-        $panitias = $this->getPanitias();
+        $panitias = $this->ambilDaftarPanitia();
 
         if ($request->ajax()) {
             return response()->json([
@@ -56,9 +56,9 @@ class KegiatanController extends Controller
         return view('pages.operasional.kegiatan.index', compact('kegiatan', 'panitias', 'stats'));
     }
 
-    public function create(Request $request)
+    public function tampilkanFormTambahKegiatan(Request $request)
     {
-        $panitias = $this->getPanitias();
+        $panitias = $this->ambilDaftarPanitia();
 
         if ($request->ajax()) {
             return response()->json([
@@ -69,7 +69,7 @@ class KegiatanController extends Controller
         return view('pages.operasional.kegiatan.create', compact('panitias'));
     }
 
-    public function store(Request $request)
+    public function simpanKegiatanBaru(Request $request)
     {
         $validated = $request->validate([
             'nama_kegiatan'   => 'required|string|max:255',
@@ -95,7 +95,7 @@ class KegiatanController extends Controller
             ->with('success', 'Kegiatan berhasil ditambahkan.');
     }
 
-    public function show(Request $request, Kegiatan $kegiatan)
+    public function tampilkanDetailKegiatan(Request $request, Kegiatan $kegiatan)
     {
         $kegiatan->load('panitia');
 
@@ -110,9 +110,9 @@ class KegiatanController extends Controller
         return view('pages.operasional.kegiatan.show', compact('kegiatan'));
     }
 
-    public function edit(Request $request, Kegiatan $kegiatan)
+    public function tampilkanFormUbahKegiatan(Request $request, Kegiatan $kegiatan)
     {
-        $panitias = $this->getPanitias();
+        $panitias = $this->ambilDaftarPanitia();
 
         if ($request->ajax()) {
             return response()->json([
@@ -123,7 +123,7 @@ class KegiatanController extends Controller
         return view('pages.operasional.kegiatan.edit', compact('kegiatan', 'panitias'));
     }
 
-    public function update(Request $request, Kegiatan $kegiatan)
+    public function perbaruiKegiatan(Request $request, Kegiatan $kegiatan)
     {
         $validated = $request->validate([
             'nama_kegiatan'   => 'required|string|max:255',
@@ -150,7 +150,7 @@ class KegiatanController extends Controller
             ->with('success', 'Kegiatan berhasil diupdate.');
     }
 
-    public function confirmDelete(Request $request, Kegiatan $kegiatan)
+    public function tampilkanKonfirmasiHapusKegiatan(Request $request, Kegiatan $kegiatan)
     {
         $transaksiCount = $kegiatan->transaksi()->count();
         $hasTransaksi   = $transaksiCount > 0;
@@ -166,7 +166,7 @@ class KegiatanController extends Controller
         return redirect()->route('dashboard.kegiatan.index');
     }
 
-    public function destroy(Request $request, Kegiatan $kegiatan)
+    public function hapusKegiatan(Request $request, Kegiatan $kegiatan)
     {
         if ($kegiatan->transaksi()->count() > 0) {
             $msg = 'Kegiatan tidak dapat dihapus karena memiliki transaksi.';

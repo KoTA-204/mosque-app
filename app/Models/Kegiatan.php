@@ -61,17 +61,17 @@ class Kegiatan extends Model
     }
 
     // ── Helpers ────────────────────────────────────────────────
-    public function hasTransaksi(): bool
+    public function punyaTransaksi(): bool
     {
         return $this->transaksi()->exists();
     }
 
-    public function isAktif(): bool
+    public function sedangAktif(): bool
     {
         return $this->status === self::STATUS_AKTIF;
     }
 
-    public function isDitutup(): bool
+    public function sudahDitutup(): bool
     {
         return $this->status === self::STATUS_DITUTUP;
     }

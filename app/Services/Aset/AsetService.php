@@ -9,12 +9,12 @@ use Illuminate\Support\Facades\Storage;
 class AsetService
 {
     // buat aset baru
-    public function create(array $data, ?UploadedFile $dokumen): Aset
+    public function simpanAset(array $data, ?UploadedFile $dokumen): Aset
     {
         $dokumenPath = $this->simpanDokumen($dokumen);
 
         return Aset::create([
-            'kode_aset'                => Aset::generateKode($data['tanggal_perolehan']),
+            'kode_aset'                => Aset::buatKode($data['tanggal_perolehan']),
             'nama_aset'                => $data['nama_aset'],
             'sumber_perolehan'         => $data['sumber_perolehan'],
             'tanggal_perolehan'        => $data['tanggal_perolehan'],
@@ -33,7 +33,7 @@ class AsetService
         ]);
     }
 
-    public function update(Aset $aset, array $data, ?UploadedFile $dokumen, bool $disusutkan): Aset
+    public function perbaruiAset(Aset $aset, array $data, ?UploadedFile $dokumen, bool $disusutkan): Aset
     {
         // ganti dokumen kalau ada file baru
         $dokumenPath = $aset->dokumen_pendukung;
@@ -61,8 +61,8 @@ class AsetService
         ]);
 
         // 2) accessor sekarang sudah memakai parameter BARU di atas
-        $aset->nilai_buku           = $disusutkan ? $aset->nilai_buku_real_time : (float) $data['nilai_tercatat'];
-        $aset->akumulasi_penyusutan = $disusutkan ? $aset->akumulasi_real_time : 0;
+        $aset->nilai_buku           = $disusutkan ? $aset->hitungNilaiBukuRealTime() : (float) $data['nilai_tercatat'];
+        $aset->akumulasi_penyusutan = $disusutkan ? $aset->hitungAkumulasiRealTime() : 0;
 
         // 3) simpan semua sekaligus
         $aset->save();
@@ -81,7 +81,7 @@ class AsetService
      * Reaktivasi meneruskan nilai buku terakhir (tidak direset) agar tidak
      * terjadi lonjakan / penyusutan ganda.
      */
-    public function toggleStatus(Aset $aset, ?string $alasan = null, ?string $catatan = null): string
+    public function ubahStatusAset(Aset $aset, ?string $alasan = null, ?string $catatan = null): string
     {
         // DRAFT tidak boleh di-toggle.
         if ($aset->status_aset === 'DRAFT') {
@@ -126,8 +126,8 @@ class AsetService
         // Menganggur sementara TETAP menyusut -> jangan bekukan.
         // Terminal (rusak berat / akan dilepas) -> bekukan nilai saat ini.
         if ($alasan !== Aset::ALASAN_MENGANGGUR && $aset->umur_manfaat) {
-            $updateData['akumulasi_penyusutan'] = $aset->akumulasi_real_time;
-            $updateData['nilai_buku']           = $aset->nilai_buku_real_time;
+            $updateData['akumulasi_penyusutan'] = $aset->hitungAkumulasiRealTime();
+            $updateData['nilai_buku']           = $aset->hitungNilaiBukuRealTime();
         }
 
         $aset->update($updateData);
@@ -136,7 +136,7 @@ class AsetService
     }
 
     // hapus aset (hanya jika memenuhi syarat)
-    public function delete(Aset $aset): void
+    public function hapusAset(Aset $aset): void
     {
         // Aset tidak menyusut -> tidak bisa hapus
         if (is_null($aset->umur_manfaat)) {
@@ -146,7 +146,7 @@ class AsetService
         }
 
         // Nilai buku masih ada -> belum bisa hapus
-        if ($aset->nilai_buku_real_time > 0) {
+        if ($aset->hitungNilaiBukuRealTime() > 0) {
             throw new \InvalidArgumentException(
                 'Aset belum dapat dihapus karena masih memiliki nilai buku. Gunakan toggle Tidak Aktif.'
             );

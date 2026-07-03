@@ -308,7 +308,7 @@ class TransaksiService
     private function simpanAset(Transaksi $transaksi, array $data): void
     {
         $aset = $transaksi->aset()->create([
-            'kode_aset'                => \App\Models\Aset::generateKode($data['tanggal_perolehan']),
+            'kode_aset'                => \App\Models\Aset::buatKode($data['tanggal_perolehan']),
             'nama_aset'                => $data['nama_aset'],
             'lokasi_aset'              => $data['lokasi_aset'],
             'kondisi_aset'             => match($data['kondisi_aset']) {

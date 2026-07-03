@@ -63,14 +63,14 @@
                 <div>
                     <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Akumulasi Penyusutan</p>
                     @if($aset->umur_manfaat)
-                        <p class="text-sm font-semibold text-red-500">Rp {{ number_format($aset->akumulasi_real_time, 0, ',', '.') }}</p>
+                        <p class="text-sm font-semibold text-red-500">Rp {{ number_format($aset->hitungAkumulasiRealTime(), 0, ',', '.') }}</p>
                     @else
                         <p class="text-sm text-gray-400 italic">Tidak disusutkan</p>
                     @endif
                 </div>
                 <div>
                     <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Nilai Buku Saat Ini</p>
-                    <p class="text-sm font-semibold text-green-600">Rp {{ number_format($aset->nilai_buku_real_time, 0, ',', '.') }}</p>
+                    <p class="text-sm font-semibold text-green-600">Rp {{ number_format($aset->hitungNilaiBukuRealTime(), 0, ',', '.') }}</p>
                 </div>
             </div>
         </div>
@@ -127,7 +127,7 @@
             <div class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5 mb-5">
                 <div>
                     <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Penyusutan / Bulan</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">Rp {{ number_format($aset->penyusutan_per_bulan, 0, ',', '.') }}</p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Rp {{ number_format($aset->hitungPenyusutanPerBulan(), 0, ',', '.') }}</p>
                 </div>
                 <div>
                     <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Tanggal Mulai</p>
@@ -147,12 +147,12 @@
                         @if($aset->status_aset === 'TIDAK AKTIF')
                             <span class="text-xs text-red-400 font-medium">Dihentikan</span>
                         @endif
-                        <span>{{ number_format($aset->progress_penyusutan, 1) }}%</span>
+                        <span>{{ number_format($aset->hitungProgressPenyusutan(), 1) }}%</span>
                     </div>
                 </div>
                 <div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
                     <div class="h-2 rounded-full {{ $aset->status_aset === 'TIDAK AKTIF' ? 'bg-gray-400' : 'bg-green-500' }}"
-                        style="width: {{ min($aset->progress_penyusutan, 100) }}%"></div>
+                        style="width: {{ min($aset->hitungProgressPenyusutan(), 100) }}%"></div>
                 </div>
                 @if($aset->status_aset === 'TIDAK AKTIF')
                     <p class="text-xs text-red-400 mt-1">* Penyusutan dihentikan saat aset dinonaktifkan.</p>

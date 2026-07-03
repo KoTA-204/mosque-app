@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
 
 class ChartOfAccountController extends Controller
 {
-    public function index(Request $request)
+    public function tampilkanDaftarCoa(Request $request)
     {
         $totalKategori    = KategoriAkun::count();
         $totalSubKategori = Akun::whereNull('parent_id')->count();
@@ -98,12 +98,12 @@ class ChartOfAccountController extends Controller
 
     // Kategori
 
-    public function createKategori()
+    public function tampilkanFormTambahKategoriAkun()
     {
         return view('pages.data-induk.coa.create-kategori');
     }
 
-    public function storeKategori(StoreKategoriRequest $request)
+    public function simpanKategoriAkunBaru(StoreKategoriRequest $request)
     {
         KategoriAkun::create($request->validated());
 
@@ -112,12 +112,12 @@ class ChartOfAccountController extends Controller
             ->with('success', 'Kategori akun berhasil ditambahkan.');
     }
 
-    public function editKategori(KategoriAkun $kategori)
+    public function tampilkanFormUbahKategoriAkun(KategoriAkun $kategori)
     {
         return view('pages.data-induk.coa.edit-kategori', compact('kategori'));
     }
 
-    public function updateKategori(UpdateKategoriRequest $request, KategoriAkun $kategori)
+    public function perbaruiKategoriAkun(UpdateKategoriRequest $request, KategoriAkun $kategori)
     {
         $kategori->update($request->validated());
 
@@ -126,7 +126,7 @@ class ChartOfAccountController extends Controller
             ->with('success', 'Kategori akun berhasil diperbarui.');
     }
 
-    public function destroyKategori(KategoriAkun $kategori)
+    public function hapusKategoriAkun(KategoriAkun $kategori)
     {
         try {
 
@@ -155,12 +155,12 @@ class ChartOfAccountController extends Controller
 
     // Sub Kategori
 
-    public function createSubKategori()
+    public function tampilkanFormTambahSubKategori()
     {
         return redirect()->route('dashboard.coa.index');
     }
 
-    public function storeSubKategori(StoreSubKategoriRequest $request)
+    public function simpanSubKategoriBaru(StoreSubKategoriRequest $request)
     {
         Akun::create([
             ...$request->validated(),
@@ -173,7 +173,7 @@ class ChartOfAccountController extends Controller
 
     }
 
-    public function editSubKategori(Akun $subKategori)
+    public function tampilkanFormUbahSubKategori(Akun $subKategori)
     {
         $kategoriList = KategoriAkun::orderBy('kode_kategori')->get();
 
@@ -191,7 +191,7 @@ class ChartOfAccountController extends Controller
         ));
     }
 
-    public function updateSubKategori(UpdateSubKategoriRequest $request, Akun $subKategori)
+    public function perbaruiSubKategori(UpdateSubKategoriRequest $request, Akun $subKategori)
     {
         $subKategori->update([
             ...$request->validated(),
@@ -202,7 +202,7 @@ class ChartOfAccountController extends Controller
             ->with('success', 'Sub kategori akun berhasil diperbarui.');
     }
 
-    public function destroySubKategori(Akun $subKategori)
+    public function hapusSubKategori(Akun $subKategori)
     {
         try {
 
@@ -239,7 +239,7 @@ class ChartOfAccountController extends Controller
 
     // Akun
 
-    public function createAkun()
+    public function tampilkanFormTambahAkun()
     {
         $subKategoriList = Akun::whereNull('parent_id')
             ->with('kategoriAkun')
@@ -249,7 +249,7 @@ class ChartOfAccountController extends Controller
         return view('pages.data-induk.coa.create-akun', compact('subKategoriList'));
     }
 
-    public function storeAkun(StoreAkunRequest $request)
+    public function simpanAkunBaru(StoreAkunRequest $request)
     {
         $subKategori = Akun::findOrFail($request->parent_id);
 
@@ -263,7 +263,7 @@ class ChartOfAccountController extends Controller
             ->with('success', 'Akun berhasil ditambahkan.');
     }
 
-    public function editAkun(Akun $akun)
+    public function tampilkanFormUbahAkun(Akun $akun)
     {
         $subKategoriList = Akun::whereNull('parent_id')
             ->with('kategoriAkun')
@@ -281,7 +281,7 @@ class ChartOfAccountController extends Controller
         ));
     }
 
-    public function updateAkun(UpdateAkunRequest $request, Akun $akun)
+    public function perbaruiAkun(UpdateAkunRequest $request, Akun $akun)
     {
         $subKategori = Akun::findOrFail($request->parent_id);
 
@@ -295,7 +295,7 @@ class ChartOfAccountController extends Controller
             ->with('success', 'Akun berhasil diperbarui.');
     }
 
-    public function destroyAkun(Akun $akun)
+    public function hapusAkun(Akun $akun)
     {
         try {
             // Akun tidak boleh dihapus bila sudah dipakai pada transaksi (jurnal).

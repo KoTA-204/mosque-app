@@ -17,20 +17,20 @@ class AsetController extends Controller
     }
 
     // daftar aset + statistik + filter
-    public function index(Request $request)
+    public function tampilkanDaftarAset(Request $request)
     {
         // mode statistik saja
         if ($request->boolean('stats_only')) {
-            return response()->json(['stats' => $this->buildStats()]);
+            return response()->json(['stats' => $this->hitungStatistikAset()]);
         }
 
         $perPage = (int) $request->get('per_page', 10);
-        $asets   = Aset::filter($request->all())
+        $asets   = Aset::saring($request->all())
             ->latest()
             ->paginate($perPage)
             ->withQueryString();
 
-        $stats = $this->buildStats();
+        $stats = $this->hitungStatistikAset();
 
         // kirim potongan tabel untuk request ajax
         if ($request->ajax()) {
@@ -43,7 +43,7 @@ class AsetController extends Controller
     }
 
     // form create
-    public function create()
+    public function tampilkanFormTambahAset()
     {
         if (request()->ajax()) {
             return response()->json([
@@ -54,9 +54,9 @@ class AsetController extends Controller
     }
 
     // simpan aset baru
-    public function store(StoreAsetRequest $request)
+    public function simpanAsetBaru(StoreAsetRequest $request)
     {
-        $this->asetService->create(
+        $this->asetService->simpanAset(
             $request->validated(),
             $request->file('dokumen_pendukung'),
         );
@@ -70,7 +70,7 @@ class AsetController extends Controller
     }
 
     // detail aset
-    public function show(Aset $aset)
+    public function tampilkanDetailAset(Aset $aset)
     {
         $aset->load('jurnalPenyesuaian.periode');
 
@@ -83,7 +83,7 @@ class AsetController extends Controller
     }
 
     // form edit
-    public function edit(Aset $aset)
+    public function tampilkanFormUbahAset(Aset $aset)
     {
         if (request()->ajax()) {
             return response()->json([
@@ -94,9 +94,9 @@ class AsetController extends Controller
     }
 
     // update aset
-    public function update(UpdateAsetRequest $request, Aset $aset)
+    public function perbaruiAset(UpdateAsetRequest $request, Aset $aset)
     {
-        $this->asetService->update(
+        $this->asetService->perbaruiAset(
             $aset,
             $request->validated(),
             $request->file('dokumen_pendukung'),
@@ -121,10 +121,10 @@ class AsetController extends Controller
     }
 
     // aktif / nonaktifkan aset
-    public function toggleStatus(Request $request, Aset $aset)
+    public function ubahStatusAset(Request $request, Aset $aset)
     {
         try {
-            $newStatus = $this->asetService->toggleStatus(
+            $newStatus = $this->asetService->ubahStatusAset(
                 $aset,
                 $request->input('alasan_nonaktif'),
                 $request->input('catatan_nonaktif'),
@@ -152,10 +152,10 @@ class AsetController extends Controller
     }
 
     // hapus aset
-    public function destroy(Aset $aset)
+    public function hapusAset(Aset $aset)
     {
         try {
-            $this->asetService->delete($aset);
+            $this->asetService->hapusAset($aset);
         } catch (\InvalidArgumentException $e) {
             if (request()->ajax()) {
                 return response()->json([
@@ -175,7 +175,7 @@ class AsetController extends Controller
     }
 
     // hitung statistik kartu
-    private function buildStats(): array
+    private function hitungStatistikAset(): array
     {
         return [
             'total'       => Aset::count(),

@@ -55,7 +55,7 @@ class TransaksiKegiatanController extends Controller
         $this->authorizeKegiatan($kegiatan);
 
         //yang mengunci pencatatan adalah STATUS kegiatan, bukan tanggal.
-        if (! $kegiatan->isAktif()) {
+        if (! $kegiatan->sedangAktif()) {
             return back()->with('error', 'Kegiatan sudah ditutup, transaksi tidak dapat dicatat');
         }
 
