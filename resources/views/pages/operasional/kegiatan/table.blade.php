@@ -18,7 +18,12 @@
             <td class="px-5 py-3.5 text-center text-gray-500 dark:text-gray-400">
                 {{ $kegiatan->firstItem() + $index }}
             </td>
-            <td class="px-4 py-3.5 font-medium text-gray-800 dark:text-gray-200">{{ $item->nama_kegiatan }}</td>
+            <td class="px-4 py-3.5">
+                <div class="font-medium text-gray-800 dark:text-gray-200">{{ $item->nama_kegiatan }}</div>
+                @if($item->deskripsi)
+                <div class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate max-w-xs">{{ Str::limit($item->deskripsi, 60) }}</div>
+                @endif
+            </td>
             <td class="px-4 py-3.5">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
                     {{ $item->jenis_kegiatan }}

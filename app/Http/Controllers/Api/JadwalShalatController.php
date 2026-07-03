@@ -10,19 +10,19 @@ use Illuminate\Support\Facades\Cache;
 class JadwalShalatController extends Controller
 {
     /**
-     * Daftar kota dengan ID MyQuran API v2.
-     * Sumber: https://api.myquran.com/v2/sholat/kota/semua
+     * Daftar kota dengan ID EQuran API v2.
+     * Sumber: https://equran.id/api/v2/shalat/kabkota
      */
     protected array $kotaMap = [
-        '1101' => 'JAKARTA',
-        '1201' => 'MEDAN',
-        '1301' => 'BANDUNG',
-        '1401' => 'PALEMBANG',
-        '1501' => 'SURABAYA',
-        '1601' => 'YOGYAKARTA',
-        '1701' => 'SEMARANG',
-        '1801' => 'DENPASAR',
-        '2001' => 'MAKASSAR',
+        '1101' => ['provinsi' => 'Dki Jakarta',      'kabkota' => 'Kota Jakarta Pusat'],
+        '1201' => ['provinsi' => 'Sumatera Utara',   'kabkota' => 'Kota Medan'],
+        '1301' => ['provinsi' => 'Jawa Barat',       'kabkota' => 'Kota Bandung'],
+        '1401' => ['provinsi' => 'Sumatera Selatan', 'kabkota' => 'Kota Palembang'],
+        '1501' => ['provinsi' => 'Jawa Timur',       'kabkota' => 'Kota Surabaya'],
+        '1601' => ['provinsi' => 'D.I. Yogyakarta',  'kabkota' => 'Kota Yogyakarta'],
+        '1701' => ['provinsi' => 'Jawa Tengah',      'kabkota' => 'Kota Semarang'],
+        '1801' => ['provinsi' => 'Bali',             'kabkota' => 'Kota Denpasar'],
+        '2001' => ['provinsi' => 'Sulawesi Selatan', 'kabkota' => 'Kota Makassar'],
     ];
 
     /**
@@ -33,85 +33,71 @@ class JadwalShalatController extends Controller
      */
     public function index(Request $request)
     {
-        $kotaId  = $request->query('kota', '1301');
-        $tanggal = $request->query('tanggal', now()->format('Y-m-d'));
+        $provinsi = $request->query('provinsi', 'Jawa Barat');
+        $kabkota  = $request->query('kabkota', 'Kota Bandung');
+        $tanggal  = $request->query('tanggal', now()->format('Y-m-d'));
 
-        // Validasi kota
-        if (!array_key_exists($kotaId, $this->kotaMap)) {
-            $kotaId = '1301';
+        [$tahun, $bulan] = explode('-', $tanggal);
+
+        $cacheKey = 'jadwal_shalat_bulan_' . md5($provinsi . $kabkota) . "_{$tahun}_{$bulan}";
+
+        $jadwalBulan = Cache::get($cacheKey);
+
+        if (!$jadwalBulan) {
+            $jadwalBulan = $this->fetchBulanFromEquran($provinsi, $kabkota, (int) $tahun, (int) $bulan);
+            if ($jadwalBulan) {
+                Cache::put($cacheKey, $jadwalBulan, 86400);
+            }
         }
 
-        // Cache key
-        $cacheKey = "jadwal_shalat_{$kotaId}_{$tanggal}";
+        $data = $jadwalBulan
+            ? collect($jadwalBulan)->firstWhere('tanggal_lengkap', $tanggal)
+            : null;
 
-        $data = Cache::remember($cacheKey, 3600, function () use ($kotaId, $tanggal) {
-            return $this->fetchFromMyQuran($kotaId, $tanggal);
-        });
-
-        if (!$data) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Gagal mengambil jadwal shalat. Silakan coba lagi.',
-            ], 503);
+        if ($data) {
+            $data = [
+                'tanggal' => \Carbon\Carbon::parse($tanggal)->translatedFormat('l, d F Y'),
+                'imsak'   => $data['imsak']   ?? '--:--',
+                'subuh'   => $data['subuh']   ?? '--:--',
+                'terbit'  => $data['terbit']  ?? '--:--',
+                'dhuha'   => $data['dhuha']   ?? '--:--',
+                'dzuhur'  => $data['dzuhur']  ?? '--:--',
+                'ashar'   => $data['ashar']   ?? '--:--',
+                'maghrib' => $data['maghrib'] ?? '--:--',
+                'isya'    => $data['isya']    ?? '--:--',
+            ];
+        } else {
+            $data = $this->getFallbackData($tanggal);
         }
 
-        return response()->json([
-            'status' => 'ok',
-            'data'   => $data,
-        ]);
+        return response()->json(['status' => 'ok', 'data' => $data]);
     }
 
     /**
      * Ambil data jadwal dari API MyQuran.
-     * Endpoint: GET https://api.myquran.com/v2/sholat/jadwal/{kotaId}/{tahun}/{bulan}/{hari}
+     * Endpoint: GET https://equran.id/api/v2/shalat/kabkota
      */
-    protected function fetchFromMyQuran(string $kotaId, string $tanggal): ?array
+    protected function fetchBulanFromEquran(string $provinsi, string $kabkota, int $tahun, int $bulan): ?array
     {
-        [$tahun, $bulan, $hari] = explode('-', $tanggal);
-
         try {
-            $url = "https://api.myquran.com/v2/sholat/jadwal/{$kotaId}/{$tahun}/{$bulan}/{$hari}";
-
             $response = Http::timeout(10)
-                ->withHeaders(['Accept' => 'application/json'])
-                ->get($url);
+                ->withHeaders(['Content-Type' => 'application/json'])
+                ->post('https://equran.id/api/v2/shalat', [
+                    'provinsi' => $provinsi,
+                    'kabkota'  => $kabkota,
+                    'bulan'    => $bulan,
+                    'tahun'    => $tahun,
+                ]);
 
-            if (!$response->successful()) {
-                \Log::warning("MyQuran API error: HTTP {$response->status()} for kota={$kotaId} tanggal={$tanggal}");
-                return $this->getFallbackData($tanggal);
-            }
+            if (!$response->successful()) return null;
 
             $body = $response->json();
+            if (($body['code'] ?? null) !== 200 || empty($body['data']['jadwal'])) return null;
 
-            if (!isset($body['status']) || $body['status'] !== true) {
-                return $this->getFallbackData($tanggal);
-            }
-
-            $jadwal = $body['data']['jadwal'] ?? null;
-
-            if (!$jadwal) {
-                return $this->getFallbackData($tanggal);
-            }
-
-            $dt         = \Carbon\Carbon::parse($tanggal);
-            $namaBulan  = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-            $namaHari   = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-            $tanggalFmt = $namaHari[$dt->dayOfWeek] . ', ' . $dt->day . ' ' . $namaBulan[$dt->month] . ' ' . $dt->year;
-
-            return [
-                'tanggal' => $tanggalFmt,
-                'imsak'   => $jadwal['imsak']   ?? '--:--',
-                'subuh'   => $jadwal['subuh']   ?? '--:--',
-                'terbit'  => $jadwal['terbit']  ?? '--:--',
-                'dhuha'   => $jadwal['dhuha']   ?? '--:--',
-                'dzuhur'  => $jadwal['dzuhur']  ?? '--:--',
-                'ashar'   => $jadwal['ashar']   ?? '--:--',
-                'maghrib' => $jadwal['maghrib'] ?? '--:--',
-                'isya'    => $jadwal['isya']    ?? '--:--',
-            ];
+            return $body['data']['jadwal'];
         } catch (\Exception $e) {
-            \Log::error("JadwalShalat fetchFromMyQuran error: {$e->getMessage()}");
-            return $this->getFallbackData($tanggal);
+            \Log::error("fetchBulanFromEquran: {$e->getMessage()}");
+            return null;
         }
     }
 
@@ -145,24 +131,19 @@ class JadwalShalatController extends Controller
      */
     public function listKota()
     {
-        $kota = Cache::remember('daftar_kota_shalat', 86400, function () {
-            try {
-                $res = Http::timeout(10)->get('https://api.myquran.com/v2/sholat/kota/semua');
-                if ($res->successful() && isset($res->json()['data'])) {
-                    return collect($res->json()['data'])
-                        ->map(fn($k) => ['id' => $k['id'], 'nama' => $k['lokasi']])
-                        ->values()
-                        ->toArray();
-                }
-            } catch (\Exception $e) {}
+        $data = Cache::get('daftar_provinsi_kabkota');
 
-            // Fallback ke daftar statis
-            return collect($this->kotaMap)
-                ->map(fn($nama, $id) => ['id' => $id, 'nama' => $nama])
-                ->values()
-                ->toArray();
-        });
+        if (!$data) {
+            // fallback
+            $data = collect($this->kotaMap)
+                ->map(fn($k, $id) => [
+                    'provinsi' => $k['provinsi'],
+                    'kabkota'  => $k['kabkota'],
+                    'label'    => "{$k['kabkota']}, {$k['provinsi']}",
+                ])
+                ->values();
+        }
 
-        return response()->json(['status' => 'ok', 'data' => $kota]);
+        return response()->json(['status' => 'ok', 'data' => $data]);
     }
 }

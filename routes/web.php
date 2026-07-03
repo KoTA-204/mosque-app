@@ -60,6 +60,19 @@ Route::middleware('auth')->group(function () {
 Route::get('/laporan-keuangan', [DashboardController::class, 'laporanKeuangan'])
     ->name('laporan-keuangan.index');
 
+// ── Export Transaksi Publik ───────────────────────────────────────────────
+Route::get('/laporan-keuangan/export/excel', [DashboardController::class, 'exportTransaksiExcel'])->name('laporan-keuangan.export-excel');
+Route::get('/laporan-keuangan/export/pdf', [DashboardController::class, 'exportTransaksiPdf'])->name('laporan-keuangan.export-pdf');
+
+// ── Laporan Keuangan Publik ─────────────────────────────────────────────────────────────────
+Route::prefix('laporan')->name('laporan.')->group(function () {
+    Route::get('/posisi-keuangan', [LaporanKeuanganController::class, 'posisiKeuangan'])->name('posisi-keuangan');
+    Route::get('/penghasilan-komprehensif', [LaporanKeuanganController::class, 'penghasilanKomprehensif'])->name('penghasilan-komprehensif');
+    Route::get('/perubahan-aset-neto', [LaporanKeuanganController::class, 'perubahanAsetNeto'])->name('perubahan-aset-neto');
+    Route::get('/arus-kas', [LaporanKeuanganController::class, 'arusKas'])->name('arus-kas');
+    Route::get('/catatan-atas-laporan', [LaporanKeuanganController::class, 'calk'])->name('catatan-atas-laporan');
+});
+    
 // ── Dashboard ──────────────────────────────────────────────────────────────
 Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('index');

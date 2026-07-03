@@ -361,4 +361,86 @@ class DashboardController extends Controller
             'kegiatanBerjalan', 'transaksiTerbaru', 'tanggalFilter',
         ));
     }
+
+
+    // ── Export Transaksi Publik ────────────────────
+    private function transaksiPeriodeAktif(): array
+    {
+        [$periodeAktif] = $this->dashboard->resolvePeriodeAktif();
+
+        $transaksi = Transaksi::with('kategoriTransaksi')
+            ->where(function ($q) {
+                $q->whereNull('status_approval')
+                  ->orWhere('status_approval', 'APPROVED');
+            })
+            ->when($periodeAktif, fn($q) => $q->whereBetween('tanggal_transaksi', [
+                $periodeAktif->tanggal_awal->startOfDay(),
+                $periodeAktif->tanggal_akhir->endOfDay(),
+            ]))
+            ->orderByDesc('tanggal_transaksi')
+            ->get();
+
+        return [$transaksi, $periodeAktif];
+    }
+
+    public function exportTransaksiExcel()
+    {
+        [$transaksi, $periodeAktif] = $this->transaksiPeriodeAktif();
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Transaksi');
+
+        $sheet->setCellValue('A1', 'Masjid Luqmanul Hakim - Laporan Transaksi');
+        $sheet->mergeCells('A1:F1');
+        $sheet->setCellValue('A2', 'Periode: ' . ($periodeAktif?->nama_periode ?? '-'));
+        $sheet->mergeCells('A2:F2');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+
+        $headerRow = 4;
+        $headers = ['No', 'Tanggal', 'Jenis', 'Keterangan', 'Kategori', 'Jumlah (Rp)'];
+        $col = 'A';
+        foreach ($headers as $h) {
+            $sheet->setCellValue($col . $headerRow, $h);
+            $col++;
+        }
+        $sheet->getStyle('A' . $headerRow . ':F' . $headerRow)->getFont()->setBold(true);
+
+        $row = $headerRow + 1;
+        $no = 1;
+        foreach ($transaksi as $t) {
+            $nominal = ($t->jenis_transaksi === 'PEMASUKAN' ? 1 : -1) * (float) $t->jumlah;
+            $sheet->setCellValue('A' . $row, $no++);
+            $sheet->setCellValue('B' . $row, optional($t->tanggal_transaksi)->format('d/m/Y'));
+            $sheet->setCellValue('C' . $row, ucfirst(strtolower($t->jenis_transaksi)));
+            $sheet->setCellValue('D' . $row, $t->deskripsi ?? '-');
+            $sheet->setCellValue('E' . $row, $t->kategoriTransaksi?->nama_kategori ?? '-');
+            $sheet->setCellValue('F' . $row, $nominal);
+            $row++;
+        }
+
+        foreach (range('A', 'F') as $c) {
+            $sheet->getColumnDimension($c)->setAutoSize(true);
+        }
+
+        $namaPeriode = $periodeAktif?->nama_periode ?? now()->format('Y-m');
+        $filename = 'transaksi-' . str_replace(' ', '-', strtolower($namaPeriode)) . '.xlsx';
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
+    }
+
+    public function exportTransaksiPdf()
+    {
+        [$transaksi, $periodeAktif] = $this->transaksiPeriodeAktif();
+        $now = Carbon::now();
+
+        return view('pages.dashboard.transaksi-pdf', compact('transaksi', 'periodeAktif', 'now'));
+    }
 }

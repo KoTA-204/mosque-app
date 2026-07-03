@@ -251,4 +251,51 @@ class DashboardService
             'KREDIT'
         );
     }
+
+    public function ringkasanPublik(): array
+    {
+        [$periodeAktif, ] = $this->resolvePeriodeAktif();
+
+        $approved = fn() => \App\Models\Transaksi::where(fn($q) =>
+            $q->whereNull('status_approval')->orWhere('status_approval', 'APPROVED')
+        );
+
+        $dompetList = \App\Models\Dompet::all();
+        $dompetIds  = $dompetList->pluck('id');
+
+        $saldoAwal = $periodeAktif
+            ? $dompetList->sum(function ($d) use ($approved, $periodeAktif) {
+                $mutasiSebelum = (float) $approved()
+                    ->where('dompet_id', $d->id)
+                    ->where('tanggal_transaksi', '<', $periodeAktif->tanggal_awal->startOfDay())
+                    ->selectRaw("SUM(CASE WHEN jenis_transaksi = 'PEMASUKAN' THEN jumlah ELSE -jumlah END) as mutasi")
+                    ->value('mutasi') ?? 0;
+                return (float) $d->saldo_awal + $mutasiSebelum;
+            })
+            : (float) $dompetList->sum('saldo_awal');
+
+        $batasAwal  = $periodeAktif ? $periodeAktif->tanggal_awal->startOfDay() : \Carbon\Carbon::today()->startOfDay();
+        $batasAkhir = $periodeAktif ? min($periodeAktif->tanggal_akhir->endOfDay(), \Carbon\Carbon::now()) : \Carbon\Carbon::now();
+
+        $pemasukan = (float) $approved()
+            ->whereIn('dompet_id', $dompetIds)
+            ->where('jenis_transaksi', 'PEMASUKAN')
+            ->whereBetween('tanggal_transaksi', [$batasAwal, $batasAkhir])
+            ->sum('jumlah');
+
+        $pengeluaran = (float) $approved()
+            ->whereIn('dompet_id', $dompetIds)
+            ->where('jenis_transaksi', 'PENGELUARAN')
+            ->whereBetween('tanggal_transaksi', [$batasAwal, $batasAkhir])
+            ->sum('jumlah');
+
+        return [
+            'periode_awal'  => 'Per ' . ucfirst($batasAwal->translatedFormat('l, d F Y')),
+            'periode_akhir' => 'Saldo hari ini (' . \Carbon\Carbon::now()->translatedFormat('d F Y') . ')',
+            'saldo_awal'    => $saldoAwal,
+            'pemasukan'     => $pemasukan,
+            'pengeluaran'   => $pengeluaran,
+            'saldo_akhir'   => $saldoAwal + $pemasukan - $pengeluaran,
+        ];
+    }
 }

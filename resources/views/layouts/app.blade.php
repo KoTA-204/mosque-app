@@ -83,6 +83,7 @@
             }
         })();
     </script>
+    @stack('styles')
 </head>
 
 <body
@@ -109,6 +110,7 @@
 
     <x-common.preloader/>
 
+    @auth
     <div class="min-h-screen xl:flex">
         @include('layouts.backdrop')
         @include('layouts.sidebar')
@@ -124,6 +126,15 @@
             </div>
         </div>
     </div>
+    @else
+    @include('layouts.header')
+    <main class="pt-16 min-h-screen bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            @yield('content')
+        </div>
+    </main>
+    @include('layouts.footer')
+    @endauth
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
     @include('layouts.confirm-global')
