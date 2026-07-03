@@ -22,7 +22,7 @@ class StoreTransaksiRequest extends FormRequest
             $rules = [
             'jenis_transaksi'       => 'required|in:PEMASUKAN,PENGELUARAN',
             'tanggal_transaksi'     => 'required|date',
-            'kategori_transaksi'    => 'nullable|exists:kategori_transaksi_id',
+            'kategori_transaksi_id' => 'nullable|exists:kategori_transaksi,id',
             'dompet_id'             => 'required|exists:dompet,id',
             'jurnal'                => 'required|array|min:2',
             'jurnal.*.akun_id'      => 'required|exists:akun,id',

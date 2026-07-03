@@ -25,7 +25,7 @@ class UpdateMenuRequest extends FormRequest
         $menuId = is_object($menu) ? $menu->id : $menu;
 
         return [
-            'menu_name'     => ['required', 'string', 'max:255'],
+            'menu_name'     => ['required', 'string', 'max:255', Rule::unique('menus', 'menu_name')->ignore($menuId)],
             // Tidak boleh menjadi parent dari dirinya sendiri.
             'parent_id'     => ['nullable', 'exists:menus,id', Rule::notIn([$menuId])],
             'route_name'    => ['nullable', 'required_with:parent_id', 'string', 'max:255'],
@@ -40,6 +40,7 @@ class UpdateMenuRequest extends FormRequest
     {
         return [
             'menu_name.required'       => 'Nama menu wajib diisi.',
+            'menu_name.unique'         => 'Nama menu sudah digunakan.',
             'route_name.required_with' => 'Route wajib dipilih untuk sub-menu.',
             'parent_id.not_in'         => 'Menu tidak boleh menjadi parent dari dirinya sendiri.',
         ];

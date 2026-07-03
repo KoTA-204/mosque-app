@@ -288,8 +288,12 @@ class ChartOfAccountController extends Controller
 
     public function destroyAkun(Akun $akun)
     {
-        $akun->delete();
+        try {
+            $akun->delete();
 
-        return back()->with('success', 'Akun berhasil dihapus.');
+            return back()->with('success', 'Akun berhasil dihapus.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Akun tidak dapat dihapus karena masih digunakan.');
+        }
     }
 }

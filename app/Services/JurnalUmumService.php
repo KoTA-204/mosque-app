@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Jurnal;
 use App\Models\DetailJurnal;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 
 class JurnalUmumService extends JurnalService
 {
@@ -46,38 +45,6 @@ class JurnalUmumService extends JurnalService
             'totalDebit'  => DetailJurnal::whereIn('jurnal_id', $ids)->where('tipe', 'DEBIT')->sum('nominal'),
             'totalKredit' => DetailJurnal::whereIn('jurnal_id', $ids)->where('tipe', 'KREDIT')->sum('nominal'),
         ];
-    }
-
-    // untuk simpan jurnal umum baru
-    public function simpan(array $data): Jurnal
-    {
-        return DB::transaction(function () use ($data) {
-            $jurnal = Jurnal::create([
-                'periode_id'   => $data['periode_id'],
-                'jenis_jurnal' => self::JENIS,
-                'tanggal'      => $data['tanggal'],
-                'keterangan'   => $data['keterangan'] ?? null,
-                'status'       => ($data['action'] ?? null) === 'post' ? 'POSTED' : 'DRAFT',
-            ]);
-            $this->storeDetail($jurnal, $data['detail'] ?? []);
-            return $jurnal;
-        });
-    }
-
-    // untuk perbarui jurnal umum
-    public function perbarui(Jurnal $jurnal, array $data): Jurnal
-    {
-        return DB::transaction(function () use ($jurnal, $data) {
-            $jurnal->update([
-                'periode_id' => $data['periode_id'],
-                'tanggal'    => $data['tanggal'],
-                'keterangan' => $data['keterangan'] ?? null,
-                'status'     => ($data['action'] ?? null) === 'post' ? 'POSTED' : 'DRAFT',
-            ]);
-            $jurnal->detailJurnal()->delete();
-            $this->storeDetail($jurnal, $data['detail'] ?? []);
-            return $jurnal;
-        });
     }
 
     // untuk posting massal jurnal DRAFT

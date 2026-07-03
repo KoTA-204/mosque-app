@@ -179,7 +179,21 @@ class KegiatanController extends Controller
             return redirect()->route('dashboard.kegiatan.index')->with('error', $msg);
         }
 
-        $kegiatan->delete();
+        try {
+            $kegiatan->delete();
+        } catch (\Illuminate\Database\QueryException $e) {
+            \Log::warning('Gagal menghapus kegiatan karena relasi terkait', [
+                'id'    => $kegiatan->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            $msg = 'Kegiatan tidak dapat dihapus karena masih tertaut dengan data lain.';
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+
+            return redirect()->route('dashboard.kegiatan.index')->with('error', $msg);
+        }
 
         if ($request->ajax()) {
             return response()->json([

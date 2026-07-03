@@ -139,7 +139,17 @@ class AsetController extends Controller
     // hapus aset
     public function destroy(Aset $aset)
     {
-        $this->asetService->delete($aset);
+        try {
+            $this->asetService->delete($aset);
+        } catch (\InvalidArgumentException $e) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+            return redirect()->back()->with('error', $e->getMessage());
+        }
 
         if (request()->ajax()) {
             return response()->json(['success' => true, 'message' => 'Aset berhasil dihapus.']);

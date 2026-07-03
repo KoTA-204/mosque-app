@@ -60,7 +60,17 @@ class TransaksiKegiatanController extends Controller
 
         $data = $request->validated();
 
-        $this->transaksiKegiatanService->storeTransaksi($kegiatan, $data);
+        try {
+            $this->transaksiKegiatanService->storeTransaksi($kegiatan, $data);
+        } catch (\Throwable $e) {
+            \Log::error('Gagal menyimpan transaksi kegiatan', [
+                'kegiatan_id' => $kegiatan->id,
+                'error'       => $e->getMessage(),
+            ]);
+
+            return back()->withInput()
+                ->with('error', 'Terjadi kesalahan saat menyimpan transaksi. Silakan coba lagi.');
+        }
 
         $redirect = redirect()
             ->route('dashboard.transaksi-kegiatan.show', $kegiatan)
@@ -107,7 +117,18 @@ class TransaksiKegiatanController extends Controller
         }
 
         $data = $request->validated();
-        $this->transaksiKegiatanService->updateTransaksi($transaksi, $request->validated());
+
+        try {
+            $this->transaksiKegiatanService->updateTransaksi($transaksi, $data);
+        } catch (\Throwable $e) {
+            \Log::error('Gagal memperbarui transaksi kegiatan', [
+                'transaksi_id' => $transaksi->id,
+                'error'        => $e->getMessage(),
+            ]);
+
+            return back()->withInput()
+                ->with('error', 'Terjadi kesalahan saat memperbarui transaksi. Silakan coba lagi.');
+        }
 
         $redirect = redirect()
             ->route('dashboard.transaksi-kegiatan.show', $kegiatan)

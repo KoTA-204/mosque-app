@@ -71,7 +71,7 @@ class MenuController extends Controller
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Gagal membuat menu. Silakan coba lagi.');
+                ->with('error', 'Gagal membuat menu. Silakan coba lagi atau hubungi administrator.');
         }
     }
 
@@ -101,7 +101,7 @@ class MenuController extends Controller
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Gagal mengupdate menu. Silakan coba lagi.');
+                ->with('error', 'Gagal memperbarui menu. Silakan coba lagi atau hubungi administrator.');
         }
     }
 
@@ -127,7 +127,7 @@ class MenuController extends Controller
             ]);
 
             return redirect()->back()
-                ->with('error', 'Gagal menghapus menu. Silakan coba lagi.');
+                ->with('error', 'Gagal menghapus menu. Silakan coba lagi atau hubungi administrator.');
         }
     }
 

@@ -7,6 +7,12 @@
         class="space-y-5" 
         onsubmit="handleFormSubmit(this)">
     @csrf
+    <input type="hidden" name="_form" value="subkategori">
+
+    @php
+        $isTarget = old('_form') === 'subkategori';
+        $errors = $isTarget ? $errors : new \Illuminate\Support\ViewErrorBag;
+    @endphp
 
     <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -25,7 +31,7 @@
                 @foreach($allKategori as $kat)
                 <option
                     value="{{ $kat->id }}"
-                    {{ old('kategori_akun_id') == $kat->id ? 'selected' : '' }}>
+                    {{ ($isTarget ? old('kategori_akun_id') : '') == $kat->id ? 'selected' : '' }}>
                     ({{ $kat->kode_kategori }}) {{ $kat->nama_kategori }}
                 </option>
                 @endforeach
@@ -46,7 +52,7 @@
             Kode Sub Kategori <span class="text-red-500">*</span>
         </label>
 
-        <input type="text" name="kode_akun" value="{{ old('kode_akun') }}" placeholder="Contoh: 1.1, 1.2" class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
+        <input type="text" name="kode_akun" value="{{ ($isTarget ? old('kode_akun') : '') }}" placeholder="Contoh: 1.1, 1.2" class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
             {{ $errors->has('kode_akun')
                 ? 'border-red-400'
                 : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }}
@@ -63,7 +69,7 @@
             Nama Sub Kategori <span class="text-red-500">*</span>
         </label>
 
-        <input type="text" name="nama_akun" value="{{ old('nama_akun') }}" placeholder="Masukan nama sub kategori" class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
+        <input type="text" name="nama_akun" value="{{ ($isTarget ? old('nama_akun') : '') }}" placeholder="Masukan nama sub kategori" class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
             {{ $errors->has('nama_akun')
                 ? 'border-red-400'
                 : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }}
@@ -87,12 +93,12 @@
                 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
 
                 <option value="DEBIT"
-                    {{ old('saldo_normal','DEBIT') === 'DEBIT' ? 'selected' : '' }}>
+                    {{ ($isTarget ? old('saldo_normal','DEBIT') : 'DEBIT') === 'DEBIT' ? 'selected' : '' }}>
                     Debit
                 </option>
 
                 <option value="KREDIT"
-                    {{ old('saldo_normal') === 'KREDIT' ? 'selected' : '' }}>
+                    {{ ($isTarget ? old('saldo_normal') : '') === 'KREDIT' ? 'selected' : '' }}>
                     Kredit
                 </option>
             </select>

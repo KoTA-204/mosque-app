@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Jurnal;
-use App\Models\Akun;
 use App\Services\JurnalUmumService;
 use Illuminate\Http\Request;
 
@@ -38,73 +37,10 @@ class JurnalUmumController extends Controller
         ));
     }
 
-    public function create()
-    {
-        $akuns    = Akun::with('kategoriAkun')->whereNotNull('parent_id')->orderBy('kode_akun')->get();
-        $periodes = $this->jurnal->getPeriodeList();
-        return view('pages.jurnal-umum.create', compact('akuns', 'periodes'));
-    }
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'periode_id'         => 'required|exists:periode,id',
-            'tanggal'            => 'required|date',
-            'keterangan'         => 'nullable|string|max:500',
-            'detail'             => 'required|array|min:2',
-            'detail.*.akun_id'   => 'required|exists:akun,id',
-            'detail.*.tipe'      => 'required|in:DEBIT,KREDIT',
-            'detail.*.nominal'   => 'required',
-        ]);
-
-        $this->jurnal->simpan($request->all());
-
-        return redirect()->route('dashboard.jurnal-umum.index')
-            ->with('success', 'Jurnal umum berhasil disimpan.');
-    }
-
     public function show(Jurnal $jurnalUmum)
     {
         $jurnalUmum->load('periode', 'detailJurnal.akun');
         return view('pages.jurnal-umum.show', ['jurnal' => $jurnalUmum]);
-    }
-
-    public function edit(Jurnal $jurnalUmum)
-    {
-        if ($jurnalUmum->status === 'POSTED') {
-            return redirect()->route('dashboard.jurnal-umum.index')
-                ->with('error', 'Jurnal yang sudah diposting tidak dapat diedit.');
-        }
-        $jurnalUmum->load('detailJurnal.akun');
-        $akuns    = Akun::with('kategoriAkun')->whereNotNull('parent_id')->orderBy('kode_akun')->get();
-        $periodes = $this->jurnal->getPeriodeList();
-        return view('pages.jurnal-umum.edit', [
-            'jurnal'   => $jurnalUmum,
-            'akuns'    => $akuns,
-            'periodes' => $periodes,
-        ]);
-    }
-
-    public function update(Request $request, Jurnal $jurnalUmum)
-    {
-        if ($jurnalUmum->status === 'POSTED') {
-            return back()->with('error', 'Jurnal yang sudah diposting tidak dapat diubah.');
-        }
-
-        $request->validate([
-            'periode_id'       => 'required|exists:periode,id',
-            'tanggal'          => 'required|date',
-            'keterangan'       => 'nullable|string|max:500',
-            'detail'           => 'required|array|min:2',
-            'detail.*.akun_id' => 'required|exists:akun,id',
-            'detail.*.tipe'    => 'required|in:DEBIT,KREDIT',
-            'detail.*.nominal' => 'required',
-        ]);
-
-        $this->jurnal->perbarui($jurnalUmum, $request->all());
-
-        return redirect()->route('dashboard.jurnal-umum.index')
-            ->with('success', 'Jurnal umum berhasil diperbarui.');
     }
 
     public function post(Jurnal $jurnalUmum)

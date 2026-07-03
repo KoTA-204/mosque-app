@@ -232,6 +232,13 @@
 @include('pages.kategori-transaksi.edit')
 
 <script>
+    // -- Auto-reopen modal jika ada validation error --
+    @if($errors->createKategori->isNotEmpty())
+    openModal('createKategoriModal');
+    @elseif($errors->editKategori->isNotEmpty() && session('edit_error_id'))
+    openModal('editKategoriModal<?php echo e(session('edit_error_id')); ?>');
+    @endif
+    
     function openModal(id) {
         const modal = document.getElementById(id);
         modal.classList.remove('hidden');
@@ -240,8 +247,42 @@
 
     function closeModal(id) {
         const modal = document.getElementById(id);
+        if (!modal) return;
         modal.classList.add('hidden');
         modal.style.display = 'none';
+        // Saat modal ditutup, kosongkan kembali form input & hapus tampilan
+        // error (mis. sisa validasi duplikat) agar form tidak menyisakan data
+        // atau border merah ketika dibuka lagi.
+        resetModalForm(modal);
+    }
+
+    // Kosongkan field & bersihkan UI error pada form di dalam sebuah modal.
+    function resetModalForm(modal) {
+        const form = modal.querySelector('form');
+        if (!form || form.id === 'deleteModalForm') return;
+
+        form.querySelectorAll('input, textarea').forEach(function (el) {
+            if (['hidden', 'submit', 'button'].includes(el.type)) return;
+            if (el.type === 'checkbox' || el.type === 'radio') {
+                el.checked = el.defaultChecked;
+            } else {
+                el.value = '';
+            }
+        });
+        form.querySelectorAll('select').forEach(function (sel) {
+            sel.selectedIndex = 0;
+        });
+
+        // Hapus pesan error tanpa mengganggu tanda * pada label.
+        form.querySelectorAll('p.text-red-500').forEach(function (p) { p.remove(); });
+        // Kembalikan border merah ke kondisi normal.
+        form.querySelectorAll('.border-red-400').forEach(function (el) {
+            el.classList.remove('border-red-400', 'focus:border-red-400');
+            el.classList.add('border-gray-200', 'dark:border-gray-700', 'focus:border-green-400');
+        });
+        // Bersihkan catatan koneksi terputus jika ada.
+        const note = form.querySelector('.conn-error-notice');
+        if (note) note.remove();
     }
 
     function openDeleteModal(actionUrl) {
@@ -277,6 +318,37 @@
             setTimeout(() => errorAlert.remove(), 500);
         }
     }, 5000);
+
+    // ===== Cegah kehilangan data saat koneksi terputus =====
+    // Jika koneksi terputus, submit dibatalkan agar form tetap terisi
+    // (data tidak hilang) selama belum berhasil dikirim ke server.
+    function showConnNotice(form) {
+        let note = form.querySelector('.conn-error-notice');
+        if (!note) {
+            note = document.createElement('div');
+            note.className = 'conn-error-notice flex items-center gap-2 mb-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2 text-xs text-red-600 dark:text-red-400';
+            form.prepend(note);
+        }
+        note.textContent = 'Koneksi terputus. Data tidak terkirim dan tetap tersimpan di form — silakan coba lagi setelah koneksi pulih.';
+    }
+
+    function guardOfflineSubmit(form) {
+        if (!form) return;
+        form.addEventListener('submit', function (e) {
+            if (!navigator.onLine) {
+                e.preventDefault();
+                showConnNotice(form);
+            }
+        });
+        window.addEventListener('online', function () {
+            const note = form.querySelector('.conn-error-notice');
+            if (note) note.remove();
+        });
+    }
+
+    document
+        .querySelectorAll('#createKategoriModal form, [id^="editKategoriModal"] form')
+        .forEach(guardOfflineSubmit);
 </script>
 
 @endsection

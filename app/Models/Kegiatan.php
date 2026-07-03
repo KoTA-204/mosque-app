@@ -172,6 +172,23 @@ class Kegiatan extends Model
         return max(0, $total - (float) $this->anggaran);
     }
 
+    // ── Realisasi pemasukan vs anggaran (progres dana terkumpul) ──────────
+    // Hanya PEMASUKAN yang sudah APPROVED yang dihitung sebagai dana terkumpul,
+    // BUKAN gabungan pemasukan + pengeluaran.
+    public function realisasiPemasukan(): float
+    {
+        return (float) $this->transaksi()
+            ->where('jenis_transaksi', 'PEMASUKAN')
+            ->where('status_approval', 'APPROVED')
+            ->sum('jumlah');
+    }
+
+    public function persenRealisasiPemasukan(): int
+    {
+        if ($this->anggaran <= 0) return 0;
+        return min(100, (int) round($this->realisasiPemasukan() / $this->anggaran * 100));
+    }
+
     // ── Presentasi / Tampilan Publik ─────────────────────────────
 
     /**
@@ -241,10 +258,7 @@ class Kegiatan extends Model
         return $tgl->day . ' ' . $bulan[(int) $tgl->month] . ' ' . $tgl->year;
     }
 
-    /**
-     * Rentang tanggal kegiatan dalam format Indonesia.
-     * Contoh: "12 Juni 2026 – 15 Juni 2026" atau "12 Juni 2026".
-     */
+    
     public function rentangTanggal(): string
     {
         $mulai   = self::formatTanggalId($this->tanggal_mulai);

@@ -156,20 +156,52 @@ class UserController extends Controller
 
     public function destroy(Request $request, User $user)
     {
-        // Tolak hapus jika user sudah mencatat transaksi
-        if ($user->hasTransaksi()) {
+        // Tolak hapus jika user sudah mencatat transaksi.
+        // Sebutkan jumlahnya & sarankan nonaktifkan agar jejak audit tetap utuh.
+        $jumlahTransaksi = \App\Models\Transaksi::where('user_id', $user->id)->count();
+        if ($jumlahTransaksi > 0) {
+            $msg = 'User tidak dapat dihapus karena sudah memiliki ' . $jumlahTransaksi
+                . ' riwayat transaksi. Untuk menjaga jejak audit, nonaktifkan akun ini '
+                . '(buka Edit user lalu ubah status menjadi Nonaktif) sebagai gantinya.';
             if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User tidak dapat dihapus karena sudah memiliki riwayat transaksi.',
-                ], 422);
+                return response()->json(['success' => false, 'message' => $msg], 422);
             }
 
-            return redirect()->route('dashboard.users.index')
-                ->with('error', 'User tidak dapat dihapus karena sudah memiliki riwayat transaksi.');
+            return redirect()->route('dashboard.users.index')->with('error', $msg);
         }
 
-        $user->delete();
+        // Cegah penghapusan diam-diam: kolom kegiatan.panitia_id memakai
+        // cascadeOnDelete, sehingga menghapus user yang menjadi panitia akan
+        // ikut menghapus kegiatannya (kehilangan data). Blokir & beri pesan jelas
+        // beserta daftar kegiatan terkait agar admin tahu apa yang harus diganti.
+        $kegiatanPanitia = \App\Models\Kegiatan::where('panitia_id', $user->id)
+            ->pluck('nama_kegiatan');
+        if ($kegiatanPanitia->isNotEmpty()) {
+            $msg = 'User tidak dapat dihapus karena masih terdaftar sebagai panitia pada '
+                . $kegiatanPanitia->count() . ' kegiatan: ' . $kegiatanPanitia->implode(', ')
+                . '. Ganti panitia kegiatan tersebut terlebih dahulu, atau nonaktifkan akun ini.';
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+
+            return redirect()->route('dashboard.users.index')->with('error', $msg);
+        }
+
+        try {
+            $user->delete();
+        } catch (\Illuminate\Database\QueryException $e) {
+            \Log::warning('Gagal menghapus user karena relasi terkait', [
+                'user_id' => $user->id,
+                'error'   => $e->getMessage(),
+            ]);
+
+            $msg = 'User tidak dapat dihapus karena masih tertaut dengan data lain (mis. menjadi panitia kegiatan).';
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+
+            return redirect()->route('dashboard.users.index')->with('error', $msg);
+        }
 
         if ($request->ajax()) {
             return response()->json([
