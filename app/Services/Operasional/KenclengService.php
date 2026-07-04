@@ -13,9 +13,9 @@ use Illuminate\Support\Facades\Storage;
 
 class KenclengService
 {
-    const PECAHAN = [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000];
+    const PECAHAN = [100, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000];
 
-    public function getList(?string $search = '', int $perPage = 10, ?string $sort = 'terbaru', ?string $status = '')
+    public function getDaftarKencleng(?string $search = '', int $perPage = 10, ?string $sort = 'terbaru', ?string $status = '')
     {
         $search = $search ?? '';
         $sort   = $sort   ?? 'terbaru';
@@ -25,7 +25,7 @@ class KenclengService
         return Kencleng::with(['transaksi.user', 'transaksi.dompet', 'detail'])
             ->whereHas('transaksi', fn($q) => $q->where('user_id', auth()->id()))
             ->when($search, fn($q) =>
-                $q->where(function ($q) use ($search) {         
+                $q->where(function ($q) use ($search) {          // ← dibungkus closure
                     $term = '%' . strtolower($search) . '%';
                     $q->whereRaw('LOWER(nomor_kwitansi) LIKE ?', [$term])
                     ->orWhereHas('transaksi', fn($q) =>
@@ -42,12 +42,12 @@ class KenclengService
             ->paginate($perPage);
     }
     
-    public function getById(Kencleng $kencleng): Kencleng
+    public function getDetailKencleng(Kencleng $kencleng): Kencleng
     {
         return $kencleng->load('transaksi.user', 'transaksi.dompet', 'transaksi.kategoriTransaksi', 'detail');
     }
 
-    public function getDompetList()
+    public function getDaftarDompet()
     {
         return Dompet::orderBy('nama_dompet')->get();
     }
@@ -58,24 +58,31 @@ class KenclengService
             ->first();
     }
 
-    public function generateNomorKwitansi(): string
+    public function buatNomorKwitansi(): string
     {
         $year  = now()->year;
         $count = Kencleng::whereYear('created_at', $year)->count() + 1;
         return 'KWT-' . $year . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
     }
 
-    public function store(array $data): Kencleng
+    /**
+     * Simpan kencleng baru. Seluruh operasi dibungkus dalam satu transaksi DB
+     * sehingga jika salah satu gagal, semua perubahan di-rollback secara otomatis.
+     */
+    public function simpanKenclengBaru(array $data): Kencleng
     {
         return DB::transaction(function () use ($data) {
             $kategori = $this->getKategoriKencleng();
 
+            // Hitung total fisik = jumlah disetor
             $totalFisik = 0;
             foreach (self::PECAHAN as $pecahan) {
                 $jumlah      = (int) ($data['pecahan'][$pecahan] ?? 0);
                 $totalFisik += $pecahan * $jumlah;
             }
 
+            // Upload berita acara — dilakukan di dalam transaksi supaya
+            // jika DB gagal, file yang ter-upload bisa kita track & hapus
             $pathBA = null;
             if (!empty($data['berita_acara'])) {
                 $pathBA = $data['berita_acara']->store('berita_acara', 'public');
@@ -97,7 +104,7 @@ class KenclengService
 
                 $kencleng = Kencleng::create([
                     'transaksi_id'   => $transaksi->id,
-                    'nomor_kwitansi' => $this->generateNomorKwitansi(),
+                    'nomor_kwitansi' => $this->buatNomorKwitansi(),
                     'berita_acara'   => $pathBA,
                 ]);
 
@@ -114,20 +121,25 @@ class KenclengService
 
                 return $kencleng->load('transaksi', 'detail');
             } catch (\Throwable $e) {
+                // Hapus file yang sudah ter-upload jika DB gagal
                 if ($pathBA) {
                     Storage::disk('public')->delete($pathBA);
                 }
                 Log::error('KenclengService::store gagal', ['error' => $e->getMessage()]);
-                throw $e; 
+                throw $e; // re-throw supaya DB::transaction melakukan rollback
             }
         });
     }
 
-    public function update(Kencleng $kencleng, array $data): Kencleng
+    /**
+     * Update kencleng. Seluruh operasi dibungkus dalam satu transaksi DB.
+     */
+    public function perbaruiKencleng(Kencleng $kencleng, array $data): Kencleng
     {
         return DB::transaction(function () use ($kencleng, $data) {
             $transaksi = $kencleng->transaksi;
 
+            // Hitung ulang total fisik = jumlah disetor
             $totalFisik = 0;
             foreach (self::PECAHAN as $pecahan) {
                 $jumlah      = (int) ($data['pecahan'][$pecahan] ?? 0);
@@ -154,6 +166,7 @@ class KenclengService
 
                 $kencleng->update(['berita_acara' => $pathBA]);
 
+                // Hapus detail lama & buat ulang
                 $kencleng->detail()->delete();
                 foreach (self::PECAHAN as $pecahan) {
                     $jumlah = (int) ($data['pecahan'][$pecahan] ?? 0);
@@ -166,12 +179,14 @@ class KenclengService
                     }
                 }
 
+                // Hapus file lama hanya setelah DB berhasil
                 if ($newPathBA && $oldPathBA) {
                     Storage::disk('public')->delete($oldPathBA);
                 }
 
                 return $kencleng->fresh()->load('transaksi', 'detail');
             } catch (\Throwable $e) {
+                // Hapus file baru yang sudah ter-upload jika DB gagal
                 if ($newPathBA) {
                     Storage::disk('public')->delete($newPathBA);
                 }
@@ -181,7 +196,10 @@ class KenclengService
         });
     }
 
-    public function delete(Kencleng $kencleng): bool|string
+    /**
+     * Hapus kencleng beserta transaksi & file-nya secara atomik.
+     */
+    public function hapusKencleng(Kencleng $kencleng): bool|string
     {
         $transaksi = $kencleng->transaksi;
 
@@ -196,10 +214,12 @@ class KenclengService
         DB::transaction(function () use ($kencleng) {
             $pathBA = $kencleng->berita_acara;
 
+            // Hapus data DB dulu — jika gagal, rollback & file tetap aman
             $kencleng->detail()->delete();
             $kencleng->delete();
             $kencleng->transaksi()->delete();
 
+            // Hapus file hanya setelah DB berhasil
             if ($pathBA) {
                 Storage::disk('public')->delete($pathBA);
             }
@@ -208,7 +228,7 @@ class KenclengService
         return true;
     }
 
-    public function getTotalFisik(Kencleng $kencleng): int
+    public function hitungTotalFisik(Kencleng $kencleng): int
     {
         return $kencleng->detail->sum(fn($d) => $d->pecahan * $d->jumlah_pecahan);
     }

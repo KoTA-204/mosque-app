@@ -28,7 +28,7 @@ class TransaksiController extends Controller
         private readonly MutasiBankParserService $parserService,
     ) {}
 
-    public function index(Request $request)
+    public function tampilkanDaftarTransaksi(Request $request)
     {
         $periodeAktif = Periode::aktif()->first();
 
@@ -97,11 +97,11 @@ class TransaksiController extends Controller
         ));
     }
 
-    public function store(StoreTransaksiRequest $request)
+    public function simpanTransaksiBaru(StoreTransaksiRequest $request)
     {
         try {
             $force     = $request->boolean('force');
-            $transaksi = $this->transaksiService->store($request, $force);
+            $transaksi = $this->transaksiService->simpanTransaksiBaru($request, $force);
 
             return response()->json([
                 'success' => true,
@@ -127,7 +127,7 @@ class TransaksiController extends Controller
         }
     }
 
-    public function show(Transaksi $transaksi)
+    public function tampilkanDetailTransaksi(Transaksi $transaksi)
     {
         $transaksi->load([
             'kategoriTransaksi',
@@ -158,7 +158,7 @@ class TransaksiController extends Controller
         ]);
     }
 
-    public function update(UpdateTransaksiRequest $request, Transaksi $transaksi)
+    public function perbaruiTransaksi(UpdateTransaksiRequest $request, Transaksi $transaksi)
     {
         $jurnal = $transaksi->jurnal()->where('jenis_jurnal', 'UMUM')->first();
         $isUnmapped = $transaksi->status_approval === 'APPROVED' 
@@ -172,7 +172,7 @@ class TransaksiController extends Controller
         }
 
         try {
-            $transaksi = $this->transaksiService->update($request, $transaksi);
+            $transaksi = $this->transaksiService->perbaruiTransaksi($request, $transaksi);
             return response()->json([
                 'success' => true,
                 'message' => 'Transaksi berhasil diperbarui.',
@@ -186,7 +186,7 @@ class TransaksiController extends Controller
         }
     }
 
-    public function destroy(Transaksi $transaksi)
+    public function hapusTransaksi(Transaksi $transaksi)
     {
         $jurnal = $transaksi->jurnal()->where('jenis_jurnal', 'UMUM')->first();
         $isUnmapped = $transaksi->status_approval === 'APPROVED'
@@ -200,7 +200,7 @@ class TransaksiController extends Controller
         }
 
         try {
-            $this->transaksiService->destroy($transaksi);
+            $this->transaksiService->hapusTransaksi($transaksi);
             return response()->json([
                 'success' => true,
                 'message' => 'Transaksi berhasil dihapus.',
@@ -213,7 +213,7 @@ class TransaksiController extends Controller
         }
     }
 
-    public function destroyBukti(BuktiTransaksi $bukti)
+    public function hapusBuktiTransaksi(BuktiTransaksi $bukti)
     {
         Storage::disk('public')->delete($bukti->path_file);
         $bukti->delete();
@@ -221,10 +221,10 @@ class TransaksiController extends Controller
         return response()->json(['success' => true, 'message' => 'Bukti dihapus.']);
     }
 
-    public function import(ImportTransaksiRequest $request)
+    public function imporMutasiBank(ImportTransaksiRequest $request)
     {
         try {
-            $result = $this->parserService->parse(
+            $result = $this->parserService->uraikanFileMutasiBank(
                 file: $request->file('file'),
                 bank: $request->bank,
             );
@@ -270,7 +270,7 @@ class TransaksiController extends Controller
         }
     }
 
-    public function importReview(Request $request)
+    public function tampilkanReviewImpor(Request $request)
     {
         $key  = $request->query('key');
         $data = session($key);
@@ -298,7 +298,7 @@ class TransaksiController extends Controller
         ));
     }
 
-    public function importSimpan(Request $request)
+    public function simpanHasilImpor(Request $request)
     {
         $request->validate([
             'import_key'                      => 'required|string',
@@ -344,7 +344,7 @@ class TransaksiController extends Controller
         }
 
         try {
-            $result = $this->transaksiService->simpanImport($data, $request->klasifikasi);
+            $result = $this->transaksiService->simpanTransaksiHasilImpor($data, $request->klasifikasi);
 
             session()->forget($key);
             session()->save();

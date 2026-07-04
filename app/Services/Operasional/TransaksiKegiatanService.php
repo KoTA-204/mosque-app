@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 class TransaksiKegiatanService
 {
     // ── Kegiatan ───────────────────────────────────────────────
-    public function getKegiatanList(?string $search = null, ?string $status = null, int $perPage = 10)
+    public function getDaftarKegiatan(?string $search = null, ?string $status = null, int $perPage = 10)
     {
         return Kegiatan::with('panitia')
             ->withCount('transaksi')
@@ -23,6 +23,7 @@ class TransaksiKegiatanService
             ])
             ->when(auth()->user()->hasRole('panitia-khusus'), fn ($q) =>
                 $q->where('panitia_id', auth()->id()))
+            // 'like' agar portable. Jika pakai PostgreSQL boleh ganti 'ilike'.
             ->when($search, fn ($q) =>
                 $q->where('nama_kegiatan', 'like', "%{$search}%"))
             ->when($status, fn ($q) =>
@@ -33,7 +34,7 @@ class TransaksiKegiatanService
             ->withQueryString();
     }
 
-    public function getSummary(): array
+    public function hitungRingkasanKegiatan(): array
     {
         $query = Kegiatan::query()
             ->when(auth()->user()->hasRole('panitia-khusus'), fn ($q) =>
@@ -50,13 +51,15 @@ class TransaksiKegiatanService
         ];
     }
 
-    public function getPorsiAnggaran(Kegiatan $kegiatan): int
+    public function hitungPorsiAnggaran(Kegiatan $kegiatan): int
     {
+        // Sumber tunggal kebenaran ada di model, agar konsisten dengan
+        // perhitungan di halaman index (hanya PEMASUKAN APPROVED).
         return $kegiatan->persenRealisasiPemasukan();
     }
 
     // ── Transaksi ────────────────────────────────────────────
-    public function getTransaksiByKegiatan(Kegiatan $kegiatan, ?string $search = null, ?string $jenis = null, ?string $status = null, int $perPage = 10)
+    public function getTransaksiPerKegiatan(Kegiatan $kegiatan, ?string $search = null, ?string $jenis = null, ?string $status = null, int $perPage = 10)
     {
         return $kegiatan->transaksi()
             ->with(['dompet', 'kategoriTransaksi', 'user', 'buktiTransaksi'])
@@ -71,22 +74,22 @@ class TransaksiKegiatanService
             ->withQueryString();
     }
 
-    public function getTransaksiById(Transaksi $transaksi): Transaksi
+    public function getDetailTransaksi(Transaksi $transaksi): Transaksi
     {
         return $transaksi->load('dompet', 'kategoriTransaksi', 'user', 'kegiatan', 'buktiTransaksi');
     }
 
-    public function getDompetList()
+    public function getDaftarDompet()
     {
         return Dompet::orderBy('nama_dompet')->get();
     }
 
-    public function getKategoriList()
+    public function getDaftarKategori()
     {
         return KategoriTransaksi::orderBy('nama_kategori')->get();
     }
 
-    public function generateKodeTransaksi(): string
+    public function buatKodeTransaksi(): string
     {
         $year  = now()->year;
         $count = Transaksi::whereYear('created_at', $year)->count() + 1;
@@ -94,7 +97,7 @@ class TransaksiKegiatanService
         return 'TRX-' . $year . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
     }
 
-    public function storeTransaksi(Kegiatan $kegiatan, array $data): Transaksi
+    public function simpanTransaksiKegiatan(Kegiatan $kegiatan, array $data): Transaksi
     {
         return DB::transaction(function () use ($kegiatan, $data) {
             $transaksi = Transaksi::create([
@@ -110,13 +113,13 @@ class TransaksiKegiatanService
                 'status_jurnal'         => 'UNMAPPED',
             ]);
 
-            $this->simpanBukti($transaksi, $data['bukti_transaksi'] ?? []);
+            $this->simpanBuktiTransaksi($transaksi, $data['bukti_transaksi'] ?? []);
 
             return $transaksi->load('buktiTransaksi');
         });
     }
 
-    public function updateTransaksi(Transaksi $transaksi, array $data): Transaksi
+    public function perbaruiTransaksiKegiatan(Transaksi $transaksi, array $data): Transaksi
     {
         return DB::transaction(function () use ($transaksi, $data) {
             $transaksi->update([
@@ -126,8 +129,9 @@ class TransaksiKegiatanService
                 'jenis_transaksi'       => $data['jenis_transaksi'],
                 'jumlah'                => $data['jumlah'],
                 'deskripsi'             => $data['deskripsi'] ?? null,
+                // setelah revisi diperbaiki, kembalikan ke PENDING untuk ditinjau ulang
                 'status_approval'       => 'PENDING',
-                'catatan'               => null,
+                'catatan'               => null, // ✅ diperbaiki (sebelumnya 'catatan_revisi' yg tak ada)
             ]);
 
             // Hapus bukti lama yang dipilih
@@ -139,13 +143,13 @@ class TransaksiKegiatanService
                 }
             }
 
-            $this->simpanBukti($transaksi, $data['bukti_transaksi'] ?? []);
+            $this->simpanBuktiTransaksi($transaksi, $data['bukti_transaksi'] ?? []);
 
             return $transaksi->fresh()->load('buktiTransaksi');
         });
     }
 
-    public function deleteTransaksi(Transaksi $transaksi): bool|string
+    public function hapusTransaksiKegiatan(Transaksi $transaksi): bool|string
     {
         if (! $transaksi->bisaDiedit()) {
             return 'Transaksi yang sudah diproses tidak bisa dihapus';
@@ -165,7 +169,8 @@ class TransaksiKegiatanService
         return true;
     }
 
-    private function simpanBukti(Transaksi $transaksi, array $files): void
+    // Helper privat untuk menyimpan file bukti
+    private function simpanBuktiTransaksi(Transaksi $transaksi, array $files): void
     {
         foreach ($files as $file) {
             $path = $file->store('bukti_transaksi', 'public');

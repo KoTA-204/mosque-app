@@ -100,58 +100,58 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
 
     // ── Pencatatan - Transaksi ─────────────────────────────────────────────
     Route::middleware('permission:VIEW_TRANSAKSI')->group(function () {
-        Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');
+        Route::get('/transaksi', [TransaksiController::class, 'tampilkanDaftarTransaksi'])->name('transaksi.index');
 
-        Route::get('/transaksi/{transaksi}', [TransaksiController::class, 'show'])
+        Route::get('/transaksi/{transaksi}', [TransaksiController::class, 'tampilkanDetailTransaksi'])
             ->name('transaksi.show')
             ->whereNumber('transaksi');
 
-        Route::get('/transaksi/import/review', [TransaksiController::class, 'importReview'])
+        Route::get('/transaksi/import/review', [TransaksiController::class, 'tampilkanReviewImpor'])
             ->name('transaksi.import.review');
     });
 
     Route::middleware('permission:CREATE_TRANSAKSI')->group(function () {
-        Route::post('/transaksi', [TransaksiController::class, 'store'])->name('transaksi.store');
-        Route::post('/transaksi/import', [TransaksiController::class, 'import'])->name('transaksi.import');
-        Route::post('/transaksi/import/simpan', [TransaksiController::class, 'importSimpan'])->name('transaksi.import.simpan');
+        Route::post('/transaksi', [TransaksiController::class, 'simpanTransaksiBaru'])->name('transaksi.store');
+        Route::post('/transaksi/import', [TransaksiController::class, 'imporMutasiBank'])->name('transaksi.import');
+        Route::post('/transaksi/import/simpan', [TransaksiController::class, 'simpanHasilImpor'])->name('transaksi.import.simpan');
     });
 
     Route::middleware('permission:EDIT_TRANSAKSI')->group(function () {
-        Route::put('/transaksi/{transaksi}', [TransaksiController::class, 'update'])
+        Route::put('/transaksi/{transaksi}', [TransaksiController::class, 'perbaruiTransaksi'])
             ->name('transaksi.update')
             ->whereNumber('transaksi');
     });
 
     Route::middleware('permission:DELETE_TRANSAKSI')->group(function () {
-        Route::delete('/transaksi/{transaksi}', [TransaksiController::class, 'destroy'])
+        Route::delete('/transaksi/{transaksi}', [TransaksiController::class, 'hapusTransaksi'])
             ->name('transaksi.destroy')
             ->whereNumber('transaksi');
 
-        Route::delete('/transaksi/bukti/{bukti}', [TransaksiController::class, 'destroyBukti'])
+        Route::delete('/transaksi/bukti/{bukti}', [TransaksiController::class, 'hapusBuktiTransaksi'])
             ->name('transaksi.bukti.destroy')
             ->whereNumber('bukti');
     });
 
     // ── Pencatatan - Kencleng ──────────────────────────────────────────────
     Route::middleware('permission:VIEW_KENCLENG')->group(function () {
-        Route::get('/kencleng', [KenclengController::class, 'index'])->name('kencleng.index');
-        Route::get('/kencleng/{kencleng}', [KenclengController::class, 'show'])
+        Route::get('/kencleng', [KenclengController::class, 'tampilkanDaftarKencleng'])->name('kencleng.index');
+        Route::get('/kencleng/{kencleng}', [KenclengController::class, 'tampilkanDetailKencleng'])
             ->name('kencleng.show')
             ->whereNumber('kencleng');
     });
 
     Route::middleware('permission:CREATE_KENCLENG')->group(function () {
-        Route::get('/kencleng/create', [KenclengController::class, 'create'])->name('kencleng.create');
-        Route::post('/kencleng', [KenclengController::class, 'store'])->name('kencleng.store');
+        Route::get('/kencleng/create', [KenclengController::class, 'tampilkanFormTambahKencleng'])->name('kencleng.create');
+        Route::post('/kencleng', [KenclengController::class, 'simpanKenclengBaru'])->name('kencleng.store');
     });
 
     Route::middleware('permission:EDIT_KENCLENG')->group(function () {
-        Route::get('/kencleng/{kencleng}/edit', [KenclengController::class, 'edit'])->name('kencleng.edit');
-        Route::put('/kencleng/{kencleng}', [KenclengController::class, 'update'])->name('kencleng.update');
+        Route::get('/kencleng/{kencleng}/edit', [KenclengController::class, 'tampilkanFormEditKencleng'])->name('kencleng.edit');
+        Route::put('/kencleng/{kencleng}', [KenclengController::class, 'perbaruiKencleng'])->name('kencleng.update');
     });
 
     Route::middleware('permission:DELETE_KENCLENG')->group(function () {
-        Route::delete('/kencleng/{kencleng}', [KenclengController::class, 'destroy'])->name('kencleng.destroy');
+        Route::delete('/kencleng/{kencleng}', [KenclengController::class, 'hapusKencleng'])->name('kencleng.destroy');
     });
 
     // ── Kegiatan Khusus - Data Kegiatan ────────────────────────────────────
@@ -176,41 +176,41 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
     });
 
     // ── Kegiatan Khusus - Transaksi Kegiatan ───────────────────────────────
-    Route::get('/transaksi-kegiatan', [TransaksiKegiatanController::class, 'index'])->name('transaksi-kegiatan.index');
-    Route::get('/transaksi-kegiatan/{kegiatan}', [TransaksiKegiatanController::class, 'show'])
+    Route::get('/transaksi-kegiatan', [TransaksiKegiatanController::class, 'tampilkanDaftarKegiatan'])->name('transaksi-kegiatan.index');
+    Route::get('/transaksi-kegiatan/{kegiatan}', [TransaksiKegiatanController::class, 'tampilkanTransaksiKegiatan'])
         ->name('transaksi-kegiatan.show')
         ->whereNumber('kegiatan');
-    Route::get('/transaksi-kegiatan/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'showTransaksi'])
+    Route::get('/transaksi-kegiatan/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'tampilkanDetailTransaksiKegiatan'])
         ->whereNumber('kegiatan')
         ->whereNumber('transaksi')
         ->name('transaksi-kegiatan.transaksi.show');
 
     Route::get('/transaksi-kegiatan/{kegiatan}/transaksi/create', [TransaksiKegiatanController::class, 'createTransaksi'])
         ->name('transaksi-kegiatan.transaksi.create');
-    Route::post('/transaksi-kegiatan/{kegiatan}/transaksi', [TransaksiKegiatanController::class, 'storeTransaksi'])
+    Route::post('/transaksi-kegiatan/{kegiatan}/transaksi', [TransaksiKegiatanController::class, 'simpanTransaksiKegiatan'])
         ->name('transaksi-kegiatan.transaksi.store');
 
     Route::get('/transaksi-kegiatan/{kegiatan}/transaksi/{transaksi}/edit', [TransaksiKegiatanController::class, 'editTransaksi'])
         ->whereNumber('kegiatan')
         ->whereNumber('transaksi')
         ->name('transaksi-kegiatan.transaksi.edit');
-    Route::put('/transaksi-kegiatan/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'updateTransaksi'])
+    Route::put('/transaksi-kegiatan/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'perbaruiTransaksiKegiatan'])
         ->whereNumber('kegiatan')
         ->whereNumber('transaksi')
         ->name('transaksi-kegiatan.transaksi.update');
-    Route::delete('/transaksi-kegiatan/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'destroyTransaksi'])
+    Route::delete('/transaksi-kegiatan/{kegiatan}/transaksi/{transaksi}', [TransaksiKegiatanController::class, 'hapusTransaksiKegiatan'])
         ->name('transaksi-kegiatan.transaksi.destroy');
 
     // ── Approval ───────────────────────────────────────────────────────────
     Route::middleware('permission:VIEW_APPROVAL')->group(function () {
-        Route::get('/approval/transaksi', [ApprovalController::class, 'approvalIndex'])->name('approval.index');
-        Route::get('/approval/transaksi/{transaksi}', [ApprovalController::class, 'approvalShow'])->name('approval.show');
-        Route::post('/approval/transaksi/bulk-approve', [ApprovalController::class, 'bulkApprove'])->name('approval.bulk-approve');
-        Route::post('/approval/transaksi/bulk-reject', [ApprovalController::class, 'bulkReject'])->name('approval.bulk-reject');
-        Route::post('/approval/transaksi/bulk-revisi', [ApprovalController::class, 'bulkRevisi'])->name('approval.bulk-revisi');
-        Route::post('/approval/transaksi/{transaksi}/approve', [ApprovalController::class, 'approve'])->name('approval.approve');
-        Route::post('/approval/transaksi/{transaksi}/reject', [ApprovalController::class, 'reject'])->name('approval.reject');
-        Route::post('/approval/transaksi/{transaksi}/revision', [ApprovalController::class, 'revision'])->name('approval.revision');
+        Route::get('/approval/transaksi', [ApprovalController::class, 'tampilkanDaftarApproval'])->name('approval.index');
+        Route::get('/approval/transaksi/{transaksi}', [ApprovalController::class, 'tampilkanDetailApproval'])->name('approval.show');
+        Route::post('/approval/transaksi/bulk-approve', [ApprovalController::class, 'setujuiTransaksiMassal'])->name('approval.bulk-approve');
+        Route::post('/approval/transaksi/bulk-reject', [ApprovalController::class, 'tolakTransaksiMassal'])->name('approval.bulk-reject');
+        Route::post('/approval/transaksi/bulk-revisi', [ApprovalController::class, 'revisiTransaksiMassal'])->name('approval.bulk-revisi');
+        Route::post('/approval/transaksi/{transaksi}/approve', [ApprovalController::class, 'setujuiTransaksi'])->name('approval.approve');
+        Route::post('/approval/transaksi/{transaksi}/reject', [ApprovalController::class, 'tolakTransaksi'])->name('approval.reject');
+        Route::post('/approval/transaksi/{transaksi}/revision', [ApprovalController::class, 'revisiTransaksi'])->name('approval.revision');
     });
 
     // ── Manajemen Aset ─────────────────────────────────────────────────────

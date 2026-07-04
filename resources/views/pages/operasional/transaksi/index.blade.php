@@ -280,7 +280,7 @@
                         <td class="px-2 py-3 text-xs">
                             @if($dariApproval)
                                 <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                                    Approved
+                                    Disetujui
                                 </span>
                             @else
                                 <span class="text-gray-300 text-xs">–</span>
@@ -288,12 +288,12 @@
                         </td>
                         <td class="px-2 py-3 text-xs">
                             @if($t->status_jurnal === 'UNMAPPED')
-                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                                    Unmapped
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 text-center">
+                                    Belum Dipetakan
                                 </span>
                             @elseif($t->status_jurnal === 'MAPPED')
-                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                                    Mapped
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 text-center">
+                                    Sudah Dipetakan
                                 </span>
                             @else
                                 <span class="text-gray-300 text-xs">–</span>

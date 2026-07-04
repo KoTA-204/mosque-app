@@ -16,30 +16,30 @@ class KenclengController extends Controller
         protected KenclengService $kenclengService
     ) {}
 
-    public function index(Request $request)
+    public function tampilkanDaftarKencleng(Request $request)
     {
         $search  = $request->get('search') ?? '';
         $perPage = (int) ($request->get('per_page') ?? 10);
         $sort    = $request->get('sort') ?? 'terbaru';
         $status  = $request->get('status') ?? '';
 
-        $kencleng = $this->kenclengService->getList($search, $perPage, $sort, $status);
+        $kencleng = $this->kenclengService->getDaftarKencleng($search, $perPage, $sort, $status);
 
         return view('pages.operasional.kencleng.index', compact('kencleng', 'search', 'perPage', 'sort', 'status'));
     }
 
-    public function create()
+    public function tampilkanFormTambahKencleng()
     {
-        $dompetList = $this->kenclengService->getDompetList();
+        $dompetList = $this->kenclengService->getDaftarDompet();
         $pecahan    = KenclengService::PECAHAN;
 
         return view('pages.operasional.kencleng.create', compact('dompetList', 'pecahan'));
     }
 
-    public function store(StoreKenclengRequest $request)
+    public function simpanKenclengBaru(StoreKenclengRequest $request)
     {
         try {
-            $this->kenclengService->store($request->validated());
+            $this->kenclengService->simpanKenclengBaru($request->validated());
 
             return redirect()->route('dashboard.kencleng.index')
                 ->with('success', 'Kencleng berhasil diajukan');
@@ -52,19 +52,19 @@ class KenclengController extends Controller
         }
     }
 
-    public function show(Kencleng $kencleng)
+    public function tampilkanDetailKencleng(Kencleng $kencleng)
     {
         if ($kencleng->transaksi->user_id !== auth()->id()) {
             abort(403);
         }
 
-        $kencleng   = $this->kenclengService->getById($kencleng);
-        $totalFisik = $this->kenclengService->getTotalFisik($kencleng);
+        $kencleng   = $this->kenclengService->getDetailKencleng($kencleng);
+        $totalFisik = $this->kenclengService->hitungTotalFisik($kencleng);
 
         return view('pages.operasional.kencleng.show', compact('kencleng', 'totalFisik'));
     }
 
-    public function edit(Kencleng $kencleng)
+    public function tampilkanFormEditKencleng(Kencleng $kencleng)
     {
         if ($kencleng->transaksi->user_id !== auth()->id()) {
             abort(403);
@@ -75,15 +75,15 @@ class KenclengController extends Controller
                 ->with('error', 'Kencleng yang sudah diapprove tidak bisa diedit');
         }
 
-        $kencleng  = $this->kenclengService->getById($kencleng);
-        $dompetList = $this->kenclengService->getDompetList();
+        $kencleng  = $this->kenclengService->getDetailKencleng($kencleng);
+        $dompetList = $this->kenclengService->getDaftarDompet();
         $pecahan   = KenclengService::PECAHAN;
         $detailMap = $kencleng->detail->pluck('jumlah_pecahan', 'pecahan')->toArray();
 
         return view('pages.operasional.kencleng.edit', compact('kencleng', 'dompetList', 'pecahan', 'detailMap'));
     }
 
-    public function update(UpdateKenclengRequest $request, Kencleng $kencleng)
+    public function perbaruiKencleng(UpdateKenclengRequest $request, Kencleng $kencleng)
     {
         if ($kencleng->transaksi->user_id !== auth()->id()) {
             abort(403);
@@ -95,7 +95,7 @@ class KenclengController extends Controller
         }
 
         try {
-            $this->kenclengService->update($kencleng, $request->validated());
+            $this->kenclengService->perbaruiKencleng($kencleng, $request->validated());
 
             return redirect()->route('dashboard.kencleng.index')
                 ->with('success', 'Kencleng berhasil diperbarui dan diajukan');
@@ -108,10 +108,10 @@ class KenclengController extends Controller
         }
     }
 
-    public function destroy(Kencleng $kencleng)
+    public function hapusKencleng(Kencleng $kencleng)
     {
         try {
-            $result = $this->kenclengService->delete($kencleng);
+            $result = $this->kenclengService->hapusKencleng($kencleng);
 
             if ($result !== true) {
                 return redirect()->back()->with('error', $result);

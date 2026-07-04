@@ -14,12 +14,12 @@ use Illuminate\Support\Facades\Storage;
 
 class TransaksiService
 {
-    public function store(StoreTransaksiRequest $request, bool $force = false): Transaksi
+    public function simpanTransaksiBaru(StoreTransaksiRequest $request, bool $force = false): Transaksi
     {
         return DB::transaction(function () use ($request, $force) {
 
             $entries = $request->input('jurnal', []);
-            $jumlah  = $this->totalDebit($entries);
+            $jumlah  = $this->hitungTotalDebit($entries);
 
             if (!$force) {
                 $duplikat = Transaksi::with(['kategoriTransaksi', 'dompet'])
@@ -55,27 +55,28 @@ class TransaksiService
                 'deskripsi'             => $request->deskripsi,
                 'catatan'               => $request->catatan,
                 'status_approval'       => null,
+                'status_jurnal'         => 'MAPPED',
             ]);
 
             // 2. Jurnal entri multi debit & kredit
             $this->buatJurnalUmum($transaksi, $entries, $request->deskripsi);
 
-            $this->uploadBukti($transaksi, $request->file('bukti_transaksi') ?? []);
+            $this->unggahBuktiTransaksi($transaksi, $request->file('bukti_transaksi') ?? []);
 
             if ($request->boolean('is_aset')) {
-                $this->simpanAset($transaksi, array_merge($request->all(), ['jumlah' => $jumlah]));
+                $this->simpanAsetDariTransaksi($transaksi, array_merge($request->all(), ['jumlah' => $jumlah]));
             }
 
             return $transaksi->load('buktiTransaksi', 'jurnal.detailJurnal.akun', 'aset');
         });
     }
 
-    public function update(UpdateTransaksiRequest $request, Transaksi $transaksi): Transaksi
+    public function perbaruiTransaksi(UpdateTransaksiRequest $request, Transaksi $transaksi): Transaksi
     {
         return DB::transaction(function () use ($request, $transaksi) {
 
             $entries = $request->input('jurnal', []);
-            $jumlah  = $this->totalDebit($entries);
+            $jumlah  = $this->hitungTotalDebit($entries);
 
             $transaksi->update([
                 'dompet_id'         => $request->dompet_id,
@@ -95,13 +96,13 @@ class TransaksiService
 
             $this->buatJurnalUmum($transaksi, $entries, $request->deskripsi);
 
-            $this->uploadBukti($transaksi, $request->file('bukti_transaksi') ?? []);
+            $this->unggahBuktiTransaksi($transaksi, $request->file('bukti_transaksi') ?? []);
 
             return $transaksi->fresh(['buktiTransaksi', 'jurnal.detailJurnal.akun']);
         });
     }
 
-    public function destroy(Transaksi $transaksi): void
+    public function hapusTransaksi(Transaksi $transaksi): void
     {
         DB::transaction(function () use ($transaksi) {
             foreach ($transaksi->buktiTransaksi as $bukti) {
@@ -115,7 +116,7 @@ class TransaksiService
         });
     }
 
-    public function simpanImport(array $sessionData, array $klasifikasi): array
+    public function simpanTransaksiHasilImpor(array $sessionData, array $klasifikasi): array
     {
         $rowsMap = collect($sessionData['rows'])->keyBy('no_referensi');
         $klasMap = collect($klasifikasi)->keyBy('no_referensi');
@@ -186,6 +187,7 @@ class TransaksiService
                     'no_referensi'          => $row['no_referensi'],
                     'catatan'               => null,
                     'status_approval'       => null,
+                    'status_jurnal'         => 'MAPPED',
                 ]);
 
                 $this->buatJurnalUmum($transaksi, $klas['entries'], $row['deskripsi'], $periode);
@@ -275,22 +277,17 @@ class TransaksiService
 
         DetailJurnal::insert($rows);
 
-        // Single source of truth status pemetaan jurnal:
-        // transaksi dianggap MAPPED hanya jika jurnal umum yang valid
-        // (>= 1 baris debit & 1 baris kredit, balance) berhasil dibentuk di sini.
-        $transaksi->update(['status_jurnal' => 'MAPPED']);
-
         return $jurnal;
     }
 
-    private function totalDebit(array $entries): float
+    private function hitungTotalDebit(array $entries): float
     {
         return collect($entries)
             ->filter(fn($e) => strtoupper($e['tipe'] ?? '') === 'DEBIT')
             ->sum(fn($e) => (float) ($e['nominal'] ?? 0));
     }
 
-    private function uploadBukti(Transaksi $transaksi, array $files): void
+    private function unggahBuktiTransaksi(Transaksi $transaksi, array $files): void
     {
         foreach ($files as $file) {
             if (!$file) continue;
@@ -305,10 +302,10 @@ class TransaksiService
         }
     }
 
-    private function simpanAset(Transaksi $transaksi, array $data): void
+    private function simpanAsetDariTransaksi(Transaksi $transaksi, array $data): void
     {
         $aset = $transaksi->aset()->create([
-            'kode_aset'                => \App\Models\Aset::buatKode($data['tanggal_perolehan']),
+            'kode_aset'                => \App\Models\Aset::generateKode($data['tanggal_perolehan']),
             'nama_aset'                => $data['nama_aset'],
             'lokasi_aset'              => $data['lokasi_aset'],
             'kondisi_aset'             => match($data['kondisi_aset']) {

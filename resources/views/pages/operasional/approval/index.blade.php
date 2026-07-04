@@ -14,7 +14,7 @@
         $statCards = [
             ['label' => 'Transaksi Kencleng', 'value' => $stats['kencleng'], 'wrap' => 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400', 'icon' => 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'],
             ['label' => 'Transaksi Kegiatan', 'value' => $stats['kegiatan'], 'wrap' => 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400', 'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'],
-            ['label' => 'Belum Diapprove', 'value' => $stats['pending'], 'wrap' => 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400', 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
+            ['label' => 'Belum Disetujui', 'value' => $stats['pending'], 'wrap' => 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400', 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
             ['label' => 'Disetujui', 'value' => $stats['approved'], 'wrap' => 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
             ['label' => 'Ditolak', 'value' => $stats['rejected'], 'wrap' => 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400', 'icon' => 'M9 9l6 6m0-6l-6 6m9-3a9 9 0 11-18 0 9 9 0 0118 0z'],
             ['label' => 'Revisi', 'value' => $stats['revision'], 'wrap' => 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400', 'icon' => 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'],
@@ -59,9 +59,9 @@
     {{-- Tabs --}}
     @php
         $tabs = [
-            'PENDING'  => ['label' => 'Pending',  'count' => $stats['pending'],  'active' => 'border-yellow-500 text-yellow-600 dark:text-yellow-400'],
-            'APPROVED' => ['label' => 'Approved', 'count' => $stats['approved'], 'active' => 'border-green-500 text-green-600 dark:text-green-400'],
-            'REJECTED' => ['label' => 'Rejected', 'count' => $stats['rejected'], 'active' => 'border-red-500 text-red-600 dark:text-red-400'],
+            'PENDING'  => ['label' => 'Menunggu',  'count' => $stats['pending'],  'active' => 'border-yellow-500 text-yellow-600 dark:text-yellow-400'],
+            'APPROVED' => ['label' => 'Disetujui', 'count' => $stats['approved'], 'active' => 'border-green-500 text-green-600 dark:text-green-400'],
+            'REJECTED' => ['label' => 'Ditolak', 'count' => $stats['rejected'], 'active' => 'border-red-500 text-red-600 dark:text-red-400'],
             'REVISION' => ['label' => 'Revisi',   'count' => $stats['revision'], 'active' => 'border-blue-500 text-blue-600 dark:text-blue-400'],
         ];
     @endphp
@@ -178,7 +178,7 @@
                                     && $item->kegiatan && $item->kegiatan->selisihLebihAnggaran() > 0)
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
                                         title="Pengeluaran kegiatan ini melebihi anggaran">
-                                        Over-budget
+                                        Melebihi Anggaran
                                     </span>
                                 @endif
                             </div>
@@ -259,7 +259,7 @@
                     <input type="hidden" name="ids" id="approve-ids">
                     <button type="submit"
                             class="px-4 py-2 text-sm font-medium border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-                        Ya, Approve Semua
+                        Ya, Setujui Semua
                     </button>
                 </form>
             </div>

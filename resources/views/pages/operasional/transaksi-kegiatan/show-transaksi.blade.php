@@ -11,15 +11,25 @@
             <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Detail Transaksi</h1>
         </div>
         @php
-            $statusColor = match($transaksi->status_approval) {
-                'PENDING'  => 'bg-yellow-100 text-yellow-800',
-                'APPROVED' => 'bg-green-100 text-green-800',
-                'REJECTED' => 'bg-red-100 text-red-800',
-                'REVISION' => 'bg-blue-100 text-blue-800',
-                default    => 'bg-gray-100 text-gray-800',
+            $statusLabel = match($transaksi->status_approval) {
+                'APPROVED' => 'Disetujui',
+                'PENDING'  => 'Menunggu',
+                'REVISION' => 'Revisi',
+                'REJECTED' => 'Ditolak',
+                'DRAFT'    => 'Draf',
+                default    => $transaksi->status_approval,
+            };
+
+            $statusClass = match($transaksi->status_approval) {
+                'APPROVED' => 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
+                'PENDING'  => 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400',
+                'REVISION' => 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
+                'REJECTED' => 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400',
+                'DRAFT'    => 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
+                default    => 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
             };
         @endphp
-        <span class="rounded-full px-3 py-1 text-sm font-medium {{ $statusColor }}">{{ ucfirst(strtolower($transaksi->status_approval)) }}</span>
+        <span class="rounded-full px-3 py-1 text-sm font-medium {{ $statusClass }}">{{ $statusLabel }}</span>
     </div>
 
     {{-- Detail Card --}}

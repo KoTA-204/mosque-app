@@ -40,7 +40,7 @@ class MutasiBankParserService
      *
      * @return array{ rows: array, meta: array, errors: array }
      */
-    public function parse(UploadedFile $file, string $bank = 'BSI'): array
+    public function uraikanFileMutasiBank(UploadedFile $file, string $bank = 'BSI'): array
     {
         $bank = strtoupper($bank);
 
@@ -56,7 +56,7 @@ class MutasiBankParserService
             return ['rows' => [], 'meta' => [], 'errors' => ['File tidak dapat dibaca: ' . $e->getMessage()]];
         }
 
-        $headerRowIdx = $this->findHeaderRow($rawRows, $bank);
+        $headerRowIdx = $this->cariBarisHeader($rawRows, $bank);
 
         if ($headerRowIdx === null) {
             return [
@@ -66,10 +66,10 @@ class MutasiBankParserService
             ];
         }
 
-        $headerMap = $this->mapHeaders($rawRows[$headerRowIdx], $bank);
+        $headerMap = $this->petakanKolomHeader($rawRows[$headerRowIdx], $bank);
         \Log::debug('Header row raw:', $rawRows[$headerRowIdx]);
         \Log::debug('Header map result:', $headerMap);
-        $meta      = $this->parseMeta($rawRows, $headerRowIdx);
+        $meta      = $this->uraikanMetadata($rawRows, $headerRowIdx);
 
         $rows   = [];
         $errors = [];
@@ -81,10 +81,10 @@ class MutasiBankParserService
         for ($i = $headerRowIdx + 1; $i < count($rawRows); $i++) {
             $row = $rawRows[$i];
 
-            if ($this->isEmptyRow($row)) break;
+            if ($this->apakahBarisKosong($row)) break;
 
             try {
-                $parsed = $this->parseRow($row, $headerMap, $bank);
+                $parsed = $this->uraikanBarisTransaksi($row, $headerMap, $bank);
 
                 $parsed['is_duplikat'] = in_array($parsed['no_referensi'], $existingRefs);
 
@@ -97,7 +97,7 @@ class MutasiBankParserService
         return ['rows' => $rows, 'meta' => $meta, 'errors' => $errors];
     }
 
-    private function findHeaderRow(array $rows, string $bank): ?int
+    private function cariBarisHeader(array $rows, string $bank): ?int
     {
         $targets = match ($bank) {
             'BSI' => ['no', 'waktu transaksi'],
@@ -115,7 +115,7 @@ class MutasiBankParserService
         return null;
     }
 
-    private function mapHeaders(array $headerRow, string $bank): array
+    private function petakanKolomHeader(array $headerRow, string $bank): array
     {
         $map = [];
         $expected = self::HEADERS[$bank];
@@ -132,7 +132,7 @@ class MutasiBankParserService
         return $map;
     }
 
-    private function parseMeta(array $rows, int $headerIdx): array
+    private function uraikanMetadata(array $rows, int $headerIdx): array
     {
         $meta = [
             'periode'      => null,
@@ -151,17 +151,17 @@ class MutasiBankParserService
             }
 
             if (stripos($str, 'Total Debet') !== false) {
-                $meta['total_debet'] = $this->extractNumber($str);
+                $meta['total_debet'] = $this->ekstrakAngka($str);
             }
 
             if (stripos($str, 'Total Kredit') !== false) {
-                $meta['total_kredit'] = $this->extractNumber($str);
+                $meta['total_kredit'] = $this->ekstrakAngka($str);
             }
 
             if (stripos($str, 'Saldo riil awal') !== false) {
                 preg_match_all('/([\d.,]+)/', $str, $nums);
                 $vals = array_values(array_filter(
-                    array_map(fn($n) => $this->parseNumber($n), $nums[0]),
+                    array_map(fn($n) => $this->uraikanAngka($n), $nums[0]),
                     fn($n) => $n > 0
                 ));
                 $meta['saldo_awal']  = $vals[0] ?? 0;
@@ -172,16 +172,16 @@ class MutasiBankParserService
         return $meta;
     }
 
-    private function parseRow(array $row, array $map, string $bank): array
+    private function uraikanBarisTransaksi(array $row, array $map, string $bank): array
     {
         $get = fn(string $key) => isset($map[$key]) ? $row[$map[$key]] : null;
 
-        $debet  = $this->parseNumber((string) ($get('debet')  ?? '0'));
-        $kredit = $this->parseNumber((string) ($get('kredit') ?? '0'));
+        $debet  = $this->uraikanAngka((string) ($get('debet')  ?? '0'));
+        $kredit = $this->uraikanAngka((string) ($get('kredit') ?? '0'));
         $jumlah = max($debet, $kredit);
 
         $waktuRaw = $get('waktu_transaksi') ?? $get('tanggal');
-        $waktu    = $this->parseDateTime($waktuRaw);
+        $waktu    = $this->uraikanTanggalWaktu($waktuRaw);
 
         $noRef = trim((string) ($get('no_referensi') ?? ''));
         if (!$noRef) {
@@ -206,7 +206,7 @@ class MutasiBankParserService
             'debet'           => $debet,
             'kredit'          => $kredit,
             'jumlah'          => $jumlah,
-            'saldo_riil'      => $this->parseNumber((string) ($get('saldo_riil') ?? '0')),
+            'saldo_riil'      => $this->uraikanAngka((string) ($get('saldo_riil') ?? '0')),
             'kode'            => trim((string) ($get('kode') ?? '')),
             'jenis_transaksi' => $debet > 0 ? 'PENGELUARAN' : 'PEMASUKAN',
 
@@ -217,7 +217,7 @@ class MutasiBankParserService
         ];
     }
 
-    private function parseDateTime(mixed $value): ?string
+    private function uraikanTanggalWaktu(mixed $value): ?string
     {
         if (is_null($value)) return null;
 
@@ -234,7 +234,7 @@ class MutasiBankParserService
         return $str;
     }
 
-    private function parseNumber(string $value): float
+    private function uraikanAngka(string $value): float
     {
         $clean = trim(preg_replace('/[^0-9,.]/', '', $value));
 
@@ -288,15 +288,15 @@ class MutasiBankParserService
 
         return (float) $clean;
     }
-    private function extractNumber(string $str): float
+    private function ekstrakAngka(string $str): float
     {
         if (preg_match('/([\d.,]+)/', $str, $m)) {
-            return $this->parseNumber($m[1]);
+            return $this->uraikanAngka($m[1]);
         }
         return 0;
     }
 
-    private function isEmptyRow(array $row): bool
+    private function apakahBarisKosong(array $row): bool
     {
         return empty(array_filter($row, fn($v) => !is_null($v) && trim((string) $v) !== ''));
     }
