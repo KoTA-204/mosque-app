@@ -20,10 +20,10 @@ class RoleController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function tampilkanDaftarRole(Request $request)
     {
         $search = $request->get('search', '');
-        $roles  = $this->roleService->getAll($search);
+        $roles  = $this->roleService->getDataRole($search);
 
         return view('pages.manajemen-akses.roles.index', compact('roles', 'search'));
     }
@@ -31,9 +31,9 @@ class RoleController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function tampilkanFormTambahRole()
     {
-        $menus       = $this->getMenusWithPermissions();
+        $menus       = $this->getMenuBesertaPermission();
         $permissions = Permission::where('is_active', true)
             ->get()
             ->groupBy('module');
@@ -50,10 +50,10 @@ class RoleController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreRoleRequest $request)
+    public function simpanRoleBaru(StoreRoleRequest $request)
     {
         try {
-            $this->roleService->create($request->validated());
+            $this->roleService->buatRole($request->validated());
 
             return redirect()->route('dashboard.roles.index')
                 ->with('success', 'Role berhasil dibuat');
@@ -67,9 +67,9 @@ class RoleController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Role $role)
+    public function tampilkanDetailRole(Role $role)
     {
-        $role = $this->roleService->getById($role);
+        $role = $this->roleService->getDetailRole($role);
 
         return view('pages.manajemen-akses.roles.show', compact('role'));
     }
@@ -77,10 +77,10 @@ class RoleController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Role $role)
+    public function tampilkanFormEditRole(Role $role)
     {
-        $role        = $this->roleService->getById($role);
-        $menus       = $this->getMenusWithPermissions();
+        $role        = $this->roleService->getDetailRole($role);
+        $menus       = $this->getMenuBesertaPermission();
         $permissions = Permission::where('is_active', true)
             ->get()
             ->groupBy('module');
@@ -103,10 +103,10 @@ class RoleController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateRoleRequest $request, Role $role)
+    public function perbaruiRole(UpdateRoleRequest $request, Role $role)
     {
         try {
-            $this->roleService->update($role, $request->validated());
+            $this->roleService->perbaruiRole($role, $request->validated());
 
             return redirect()->route('dashboard.roles.index')
                 ->with('success', 'Role berhasil diperbarui');
@@ -120,10 +120,10 @@ class RoleController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Role $role)
+    public function hapusRole(Role $role)
     {
         try {
-            $result = $this->roleService->delete($role);
+            $result = $this->roleService->hapusRole($role);
 
             if ($result !== true) {
                 return redirect()->back()->with('error', $result);
@@ -137,7 +137,7 @@ class RoleController extends Controller
         }
     }
 
-    private function getMenusWithPermissions()
+    private function getMenuBesertaPermission()
     {
         return Menu::whereNull('parent_id')
             ->where('is_active', true)

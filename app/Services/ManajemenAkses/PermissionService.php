@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class PermissionService
 {
-    public function getAll(
+    public function getDataPermission(
         ?string $search  = null,
         ?string $module  = null,
         ?string $action  = null,
@@ -32,7 +32,7 @@ class PermissionService
             ->withQueryString();
     }
 
-    public function getDistinctModules(): Collection
+    public function getDaftarModul(): Collection
     {
         return Permission::query()
             ->distinct()
@@ -40,19 +40,19 @@ class PermissionService
             ->pluck('module');
     }
 
-    public function getById(Permission $permission): Permission
+    public function getDetailPermission(Permission $permission): Permission
     {
         return $permission->load('roles');
     }
 
-    public function create(array $data): Permission
+    public function buatPermission(array $data): Permission
     {
         return DB::transaction(function () use ($data) {
             return Permission::create($data);
         });
     }
 
-    public function update(Permission $permission, array $data): Permission
+    public function perbaruiPermission(Permission $permission, array $data): Permission
     {
         return DB::transaction(function () use ($permission, $data) {
             $permission->update($data);
@@ -60,7 +60,7 @@ class PermissionService
         });
     }
 
-    public function delete(Permission $permission): bool|string
+    public function hapusPermission(Permission $permission): bool|string
     {
         return DB::transaction(function () use ($permission) {
             if ($permission->roles()->exists()) {

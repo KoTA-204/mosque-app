@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 
 class MenuController extends Controller
 {
-    public function index(Request $request)
+    public function tampilkanDaftarMenu(Request $request)
     {
         $perPage  = $request->input('per_page', 10);
         $search   = $request->input('search');
@@ -42,7 +42,7 @@ class MenuController extends Controller
             ->withQueryString();
 
         $parentMenus     = Menu::whereNull('parent_id')->orderBy('menu_name')->get();
-        $availableRoutes = $this->getAvailableRoutes();
+        $availableRoutes = $this->getRouteTersedia();
         $availableIcons  = MenuHelper::getAvailableIcons();
 
         return view('pages.manajemen-akses.menus.index', compact(
@@ -54,7 +54,7 @@ class MenuController extends Controller
         ));
     }
 
-    public function store(StoreMenuRequest $request)
+    public function simpanMenuBaru(StoreMenuRequest $request)
     {
         try {
             DB::transaction(function () use ($request) {
@@ -76,14 +76,14 @@ class MenuController extends Controller
         }
     }
 
-    public function show(Menu $menu)
+    public function tampilkanDetailMenu(Menu $menu)
     {
         $menu->load(['children', 'parent', 'permissions']);
 
         return view('pages.manajemen-akses.menus.show', compact('menu'));
     }
 
-    public function update(UpdateMenuRequest $request, Menu $menu)
+    public function perbaruiMenu(UpdateMenuRequest $request, Menu $menu)
     {
         try {
             DB::transaction(function () use ($request, $menu) {
@@ -106,7 +106,7 @@ class MenuController extends Controller
         }
     }
 
-    public function destroy(Menu $menu)
+    public function hapusMenu(Menu $menu)
     {
         if ($menu->children()->exists()) {
             return redirect()->back()
@@ -135,7 +135,7 @@ class MenuController extends Controller
     /**
      * Daftar route GET dashboard yang bisa dipilih sebagai tujuan menu.
      */
-    private function getAvailableRoutes()
+    private function getRouteTersedia()
     {
         return collect(Route::getRoutes())
             ->filter(fn($route) =>

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class RoleService
 {
-    public function getAll(?string $search = null, int $perPage = 5)
+    public function getDataRole(?string $search = null, int $perPage = 5)
     {
         return Role::withCount('users')
             ->with('permissions')
@@ -21,12 +21,12 @@ class RoleService
             ->withQueryString();
     }
 
-    public function getById(Role $role): Role
+    public function getDetailRole(Role $role): Role
     {
         return $role->load('permissions');
     }
 
-    public function create(array $data): Role
+    public function buatRole(array $data): Role
     {
         return DB::transaction(function () use ($data) {
             try {
@@ -52,7 +52,7 @@ class RoleService
         });
     }
 
-    public function update(Role $role, array $data): Role
+    public function perbaruiRole(Role $role, array $data): Role
     {
         return DB::transaction(function () use ($role, $data) {
             try {
@@ -79,7 +79,7 @@ class RoleService
         });
     }
 
-    public function delete(Role $role): bool|string
+    public function hapusRole(Role $role): bool|string
     {
         if ($role->users()->exists()) {
             return 'Role masih dipakai oleh user, tidak bisa dihapus';
@@ -103,7 +103,7 @@ class RoleService
         });
     }
 
-    public function assignPermissions(Role $role, array $permissionIds): Role
+    public function tetapkanPermissionRole(Role $role, array $permissionIds): Role
     {
         return DB::transaction(function () use ($role, $permissionIds) {
             try {

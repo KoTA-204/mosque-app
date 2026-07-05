@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
-    public function index(Request $request)
+    public function tampilkanDaftarUser(Request $request)
     {
         $stats = [
             'total'       => User::count(),
@@ -54,7 +54,7 @@ class UserController extends Controller
         return view('pages.manajemen-akses.users.index', compact('users', 'roles', 'stats'));
     }
 
-    public function create(Request $request)
+    public function tampilkanFormTambahUser(Request $request)
     {
         $roles = Role::all();
 
@@ -67,7 +67,7 @@ class UserController extends Controller
         return view('pages.manajemen-akses.users.create', compact('roles'));
     }
 
-    public function store(Request $request)
+    public function simpanUserBaru(Request $request)
     {
         $validated = $request->validate([
             'name'     => 'required|string|max:100',
@@ -119,7 +119,7 @@ class UserController extends Controller
      * waktu pengirimannya. Dipicu manual oleh admin dari ikon email di tabel,
      * SETELAH admin memverifikasi permission role user tersebut.
      */
-    public function sendCredentials(Request $request, User $user)
+    public function kirimKredensialUser(Request $request, User $user)
     {
         $plainPassword = $user->initial_password; // didekripsi otomatis oleh cast
 
@@ -162,7 +162,7 @@ class UserController extends Controller
         return redirect()->route('dashboard.users.index')->with('success', $msg);
     }
 
-    public function edit(Request $request, User $user)
+    public function tampilkanFormEditUser(Request $request, User $user)
     {
         $user->load('roles');
         $roles = Role::all();
@@ -176,7 +176,7 @@ class UserController extends Controller
         return view('pages.manajemen-akses.users.edit', compact('user', 'roles'));
     }
 
-    public function update(Request $request, User $user)
+    public function perbaruiUser(Request $request, User $user)
     {
         $validated = $request->validate([
             'name'    => 'required|string|max:100',
@@ -205,7 +205,7 @@ class UserController extends Controller
             ->with('success', 'User berhasil diupdate.');
     }
 
-    public function confirmDelete(Request $request, User $user)
+    public function tampilkanKonfirmasiHapusUser(Request $request, User $user)
     {
         if ($request->ajax()) {
             return response()->json([
@@ -216,7 +216,7 @@ class UserController extends Controller
         return redirect()->route('dashboard.users.index');
     }
 
-    public function destroy(Request $request, User $user)
+    public function hapusUser(Request $request, User $user)
     {
         // Tolak hapus jika user sudah mencatat transaksi.
         // Sebutkan jumlahnya & sarankan nonaktifkan agar jejak audit tetap utuh.

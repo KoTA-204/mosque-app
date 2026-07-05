@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Password;
 
 class ForgotPasswordController extends Controller
 {
-    public function index(): View
+    public function tampilkanFormLupaPassword(): View
     {
         return view('pages.autentikasi.forgot-password');
     }
@@ -21,10 +21,13 @@ class ForgotPasswordController extends Controller
     /**
      * Step 1 — Proses kirim email reset password
      */
-    public function sendResetLink(Request $request): RedirectResponse
+    public function kirimTautanResetPassword(Request $request): RedirectResponse
     {
         $request->validate([
             'email' => ['required', 'email'],
+        ], [
+            'email.required' => 'Email wajib diisi.',
+            'email.email'    => 'Format email tidak valid. Contoh: nama@email.com',
         ]);
 
         session(['reset_email' => $request->email]);
@@ -41,7 +44,7 @@ class ForgotPasswordController extends Controller
     /**
      * Step 2 — Tampilkan halaman "Cek Email Anda".
      */
-    public function checkEmail(): View|RedirectResponse
+    public function tampilkanHalamanCekEmail(): View|RedirectResponse
     {
         if (!session('reset_email')) {
             return redirect()->route('auth.forgot-password');
@@ -53,7 +56,7 @@ class ForgotPasswordController extends Controller
     /**
      * Step 2 — Kirim ulang email reset password.
      */
-    public function resendEmail(): RedirectResponse
+    public function kirimUlangEmailReset(): RedirectResponse
     {
         $email = session('reset_email');
 
@@ -71,7 +74,7 @@ class ForgotPasswordController extends Controller
     /**
      * Step 3 — Tampilkan form buat password baru.
      */
-    public function resetPasswordForm(Request $request, string $token): View|RedirectResponse
+    public function tampilkanFormResetPassword(Request $request, string $token): View|RedirectResponse
     {
         $email = $request->query('email');
 
@@ -96,12 +99,16 @@ class ForgotPasswordController extends Controller
     /**
      * STEP 3 — Proses simpan password baru
      */
-    public function resetPassword(Request $request): RedirectResponse
+    public function prosesResetPassword(Request $request): RedirectResponse
     {
         $request->validate([
-            'token' => ['required'],
-            'email' => ['required', 'email'],
+            'token'    => ['required'],
+            'email'    => ['required', 'email'],
             'password' => ['required', 'confirmed', 'min:8'],
+        ], [
+            'password.required'  => 'Password baru wajib diisi.',
+            'password.min'       => 'Password minimal harus 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok dengan password baru.',
         ]);
 
         $status = Password::reset(
@@ -136,7 +143,7 @@ class ForgotPasswordController extends Controller
     /**
      * Step 4 — Tampilkan halaman sukses.
      */
-    public function resetSuccess(): View
+    public function tampilkanHalamanResetBerhasil(): View
     {
         return view('pages.autentikasi.reset-success');
     }
