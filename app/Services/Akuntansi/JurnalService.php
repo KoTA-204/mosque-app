@@ -2,14 +2,27 @@
 
 namespace App\Services\Akuntansi;
 
-use App\Models\DetailJurnal;
 use App\Models\Jurnal;
 use App\Models\Periode;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Kelas induk abstrak untuk seluruh service jurnal.
+ *
+ * Menampung logika bersama semua jenis jurnal:
+ * - referensi periode (getter)
+ * - penulisan baris detail (didelegasikan ke model Jurnal — GRASP Creator)
+ * - validasi keseimbangan debit/kredit (getter/pengecek)
+ * - posting & penghapusan (Template Method + hook)
+ * - posting massal (DRY)
+ *
+ * Kontrak: setiap turunan WAJIB menyediakan daftar().
+ * Cukup 1 abstract class — tidak memerlukan interface terpisah.
+ */
 abstract class JurnalService
 {
-    // ── Periode ────────────────────────────────────────────────────────────
+    // ── Referensi periode (getter — dipertahankan) ─────────────────────
 
     public function getPeriodeAktif(): ?Periode
     {
@@ -21,7 +34,8 @@ abstract class JurnalService
         return Periode::orderBy('tanggal_awal', 'desc')->get();
     }
 
-    // ── Parsing nominal ────────────────────────────────────────────────────
+    // ── Util nominal ────────────────────────────────────────
+
     protected function parseNominal(mixed $raw): float
     {
         if (is_string($raw)) {
@@ -31,8 +45,9 @@ abstract class JurnalService
         return (float) ($raw ?? 0);
     }
 
-    // ── Simpan detail jurnal ───────────────────────────────────────────────
-    protected function storeDetail(Jurnal $jurnal, array $detail): void
+    // ── Mencatat baris detail (Creator: Jurnal yang mencipta) ─────────────
+
+    protected function catatDetailJurnal(Jurnal $jurnal, array $detail): void
     {
         foreach ($detail as $row) {
             $nominal = $this->parseNominal($row['nominal'] ?? 0);
@@ -41,26 +56,42 @@ abstract class JurnalService
                 continue;
             }
 
-            DetailJurnal::create([
-                'jurnal_id' => $jurnal->id,
-                'akun_id'   => $row['akun_id'],
-                'tipe'      => $row['tipe'],
-                'nominal'   => $nominal,
-            ]);
+            // Jurnal sebagai Creator dari DetailJurnal miliknya.
+            $jurnal->tambahDetail($row['akun_id'], $row['tipe'], $nominal);
         }
     }
 
-    // ── Validasi balance debit/kredit ──────────────────────────────────────
-    protected function isBalanced(Jurnal $jurnal): bool
+    // ── Validasi keseimbangan (getter/pengecek — dipertahankan) ───────────
+
+    public function isBalanced(Jurnal $jurnal): bool
     {
         $totalDebit  = $jurnal->detailJurnal->where('tipe', 'DEBIT')->sum('nominal');
         $totalKredit = $jurnal->detailJurnal->where('tipe', 'KREDIT')->sum('nominal');
 
-        return round($totalDebit, 2) === round($totalKredit, 2);
+        return abs($totalDebit - $totalKredit) < 0.01;
     }
 
-    // ── Post ───────────────────────────────────────────────────────────────
-    public function post(Jurnal $jurnal): bool|string
+    /**
+     * Cek keseimbangan dari raw detail (sebelum jurnal dibuat).
+     * Menggantikan detailSeimbang() yang dulu terduplikasi di JurnalPembukaService
+     * dan di beberapa controller.
+     */
+    public function isDetailSeimbang(array $detail): bool
+    {
+        $totalDebit = $totalKredit = 0;
+
+        foreach ($detail as $row) {
+            $nominal = $this->parseNominal($row['nominal'] ?? 0);
+            if (($row['tipe'] ?? null) === 'DEBIT')  $totalDebit  += $nominal;
+            if (($row['tipe'] ?? null) === 'KREDIT') $totalKredit += $nominal;
+        }
+
+        return abs($totalDebit - $totalKredit) < 0.01;
+    }
+
+    // ── Posting ke buku besar (Template Method) ──────────────────────
+
+    public function postingKeBukuBesar(Jurnal $jurnal): bool|string
     {
         if ($jurnal->status === 'POSTED') {
             return 'Jurnal sudah diposting';
@@ -78,23 +109,63 @@ abstract class JurnalService
 
         DB::transaction(function () use ($jurnal) {
             $jurnal->update(['status' => 'POSTED']);
-            $this->onPosted($jurnal);
+            $this->setelahPosting($jurnal);
         });
 
         return true;
     }
 
-    protected function onPosted(Jurnal $jurnal): void {}
+    /**
+     * Posting massal beberapa jurnal DRAFT sekaligus.
+     * Terpusat di induk (DRY) dan memakai Template Method postingKeBukuBesar()
+     * sehingga hook setelahPosting() tetap dijalankan tiap jurnal.
+     */
+    public function postingMassalKeBukuBesar(array $ids): array
+    {
+        $jurnals = Jurnal::whereIn('id', $ids)
+            ->where('status', 'DRAFT')
+            ->with('detailJurnal')
+            ->get();
 
-    // ── Delete ─────────────────────────────────────────────────────────────
-    public function delete(Jurnal $jurnal): bool|string
+        $posted = 0;
+        $errors = [];
+
+        foreach ($jurnals as $jurnal) {
+            $result = $this->postingKeBukuBesar($jurnal);
+
+            if ($result === true) {
+                $posted++;
+            } else {
+                $errors[] = "Jurnal #{$jurnal->id} gagal: {$result}.";
+            }
+        }
+
+        $message = "{$posted} jurnal berhasil diposting.";
+        if (!empty($errors)) {
+            $message .= ' ' . implode(' ', $errors);
+        }
+
+        return [
+            'success' => $posted > 0,
+            'message' => $message,
+            'posted'  => $posted,
+            'failed'  => count($errors),
+        ];
+    }
+
+    /** Hook: dijalankan setelah jurnal diposting. */
+    protected function setelahPosting(Jurnal $jurnal): void {}
+
+    // ── Menghapus jurnal (Template Method) ──────────────────────────
+
+    public function hapusJurnal(Jurnal $jurnal): bool|string
     {
         if ($jurnal->status === 'POSTED') {
             return 'Jurnal yang sudah diposting tidak bisa dihapus';
         }
 
         DB::transaction(function () use ($jurnal) {
-            $this->beforeDelete($jurnal);
+            $this->sebelumPenghapusan($jurnal);
             $jurnal->detailJurnal()->delete();
             $jurnal->delete();
         });
@@ -102,5 +173,11 @@ abstract class JurnalService
         return true;
     }
 
-    protected function beforeDelete(Jurnal $jurnal): void {}
+    /** Hook: dijalankan sebelum jurnal dihapus. */
+    protected function sebelumPenghapusan(Jurnal $jurnal): void {}
+
+    // ── Kontrak (pengganti interface) ─────────────────────────────
+
+    /** Setiap jenis jurnal wajib menyediakan daftar terfilter. */
+    abstract public function daftar(array $filter): LengthAwarePaginator;
 }

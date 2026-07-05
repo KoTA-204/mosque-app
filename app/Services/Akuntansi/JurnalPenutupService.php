@@ -5,110 +5,79 @@ namespace App\Services\Akuntansi;
 use App\Models\Akun;
 use App\Models\Jurnal;
 use App\Models\Periode;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Service tutup buku.
+ *
+ * Fokus (High Cohesion): menyusun & mencatat jurnal penutup + ringkasan periode.
+ * Seluruh transisi status periode didelegasikan ke PeriodeService (Indirection).
+ */
 class JurnalPenutupService extends JurnalService
 {
-    // ─────────────────────────────────────────────────────────────
-    // Konstanta
-    // ─────────────────────────────────────────────────────────────
-
-    const KODE_ASET_NETO_TANPA_PEMBATASAN  = '3-1000';
-    const KODE_ASET_NETO_DENGAN_PEMBATASAN = '3-2000';
+    // Aset neto tanpa pembatasan — LEAF penampung surplus/defisit dana umum.
+    // (Bukan header 3-1000. Menutup ke header membuat laporan yang membaca saldo
+    //  akun LEAF tidak menemukan nilainya — inilah sumber bug penutupan sebelumnya.)
+    const KODE_DANA_UMUM = '3-1200';
 
     const KODE_KATEGORI_PENDAPATAN = '4';
     const KODE_KATEGORI_BEBAN      = '5';
 
-    const PREFIX_DENGAN_PEMBATASAN = ['4-2'];
-
-    const TIPE_LABELS = [
-        'TUTUP_PENDAPATAN' => 'Tutup Pendapatan',
-        'TUTUP_BEBAN'      => 'Tutup Beban',
+    // Peta prefix kode PENDAPATAN → kode akun dana (aset neto) tujuan penutupan.
+    // Pendapatan terikat mengalir ke dana-nya masing-masing; kode yang tidak
+    // terdaftar di sini dianggap TANPA pembatasan → KODE_DANA_UMUM.
+    const PETA_DANA_PENDAPATAN = [
+        '4-21' => '3-2300', // Zakat Fitrah → Dana Zakat
+        '4-22' => '3-2300', // Zakat Maal   → Dana Zakat
+        '4-23' => '3-2400', // Qurban       → Dana Qurban
+        '4-24' => '3-2200', // Pembangunan  → Dana Pembangunan
+        '4-25' => '3-2100', // Wakaf        → Dana Wakaf
     ];
 
-    // ─────────────────────────────────────────────────────────────
-    // Lifecycle Periode
-    // ─────────────────────────────────────────────────────────────
+    // Peta prefix kode BEBAN penyaluran dana terikat → kode akun dana sumbernya.
+    // Dipakai menyusun tahap "pelepasan aset neto dari pembatasan"
+    // (net assets released from restrictions) sesuai ISAK 35.
+    const PETA_DANA_BEBAN_TERIKAT = [
+        '5-4' => '3-2300', // Penyaluran Zakat (per asnaf) → dari Dana Zakat
+    ];
 
-    /**
-     * Periode dianggap CLOSED jika tidak aktif.
-     */
-    public function isPeriodeClosed(Periode $periode): bool
+    const TIPE_LABELS = [
+        'TUTUP_PENDAPATAN'     => 'Tutup Pendapatan',
+        'TUTUP_BEBAN'          => 'Tutup Beban',
+        'PELEPASAN_PEMBATASAN' => 'Pelepasan Aset Neto dari Pembatasan',
+    ];
+
+    public function __construct(private PeriodeService $periode) {}
+
+    // ── Query ────────────────────────────────────────
+
+    public function daftar(array $filter): LengthAwarePaginator
     {
-        return !$periode->status;
+        return Jurnal::with(['periode', 'detailJurnal.akun'])
+            ->penutup()
+            ->when($filter['periode_id'] ?? null, fn($q) => $q->where('periode_id', $filter['periode_id']))
+            ->when($filter['status'] ?? null,    fn($q) => $q->where('status', strtoupper($filter['status'])))
+            ->when($filter['search'] ?? null,    fn($q) => $q->where('keterangan', 'like', "%{$filter['search']}%"))
+            ->orderBy('tanggal', 'desc')
+            ->paginate($filter['per_page'] ?? 10)
+            ->withQueryString();
     }
 
-    /**
-     * Tutup periode saat ini.
-     */
-    public function closePeriode(Periode $periode): void
+    public function getById(Jurnal $jurnal): Jurnal
     {
-        $periode->update(['status' => false]);
+        return $jurnal->load('periode', 'detailJurnal.akun');
     }
 
-    /**
-     * Ambil periode berikutnya berdasarkan tanggal awal.
-     */
-    public function getNextPeriode(Periode $periode): ?Periode
-    {
-        return Periode::where('tanggal_awal', '>', $periode->tanggal_awal)
-            ->orderBy('tanggal_awal')
-            ->first();
-    }
+    // ── Guard kesiapan jurnal (tetap di sini — tentang jurnal, bukan periode) ──
 
     /**
-     * Aktifkan periode berikutnya.
+     * Periode siap ditutup jika:
+     * - ada minimal 1 jurnal operasional POSTED, dan
+     * - tidak ada jurnal operasional yang masih DRAFT.
      */
-    public function activateNextPeriode(Periode $periode): void
-    {
-        $next = $this->getNextPeriode($periode);
-
-        if (!$next) {
-            throw new \RuntimeException(
-                'Periode berikutnya belum tersedia.'
-            );
-        }
-
-        Periode::query()->update(['status' => false]);
-
-        $next->update(['status' => true]);
-    }
-
-    /**
-     * Finalisasi closing:
-     * - tutup periode sekarang
-     * - aktifkan periode berikutnya
-     */
-    public function finalizeClosing(Periode $periode): void
-    {
-        $this->closePeriode($periode);
-        $this->activateNextPeriode($periode);
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Guard Terpusat
-    // ─────────────────────────────────────────────────────────────
-
-    /**
-     * Guard: periode berikutnya harus sudah ada sebelum closing.
-     */
-    private function guardPeriodeBerikutnya(Periode $periode): ?string
-    {
-        if (!$this->getNextPeriode($periode)) {
-            return 'Periode berikutnya belum tersedia. '
-                 . 'Buat periode berikutnya terlebih dahulu sebelum menutup periode ini.';
-        }
-
-        return null;
-    }
-
-    /**
-     * Guard Opsi B: periode siap ditutup jika
-     * - ada minimal 1 jurnal operasional berstatus POSTED, dan
-     * - tidak ada satupun jurnal operasional yang masih DRAFT.
-     */
-    public function guardPeriodeSiapTutup(Periode $periode): ?string
+    public function validasiPeriodeSiapTutup(Periode $periode): ?string
     {
         $adaPosted = Jurnal::where('periode_id', $periode->id)
             ->whereIn('jenis_jurnal', ['UMUM', 'PENYESUAIAN', 'KOREKSI'])
@@ -133,44 +102,21 @@ class JurnalPenutupService extends JurnalService
         return null;
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Query
-    // ─────────────────────────────────────────────────────────────
+    // ── Ringkasan saldo periode ───────────────────────────
 
-    public function getList(
-        ?string $search    = '',
-        ?string $periodeId = '',
-        ?string $status    = '',
-        int     $perPage   = 10
-    ) {
-        return Jurnal::with(['periode', 'detailJurnal.akun'])
-            ->penutup()
-            ->when($periodeId, fn($q) => $q->where('periode_id', $periodeId))
-            ->when($status, fn($q) => $q->where('status', strtoupper($status)))
-            ->when($search, fn($q) => $q->where('keterangan', 'like', "%{$search}%"))
-            ->orderBy('tanggal', 'desc')
-            ->paginate($perPage)
-            ->withQueryString();
-    }
-
-    public function getById(Jurnal $jurnal): Jurnal
-    {
-        return $jurnal->load('periode', 'detailJurnal.akun');
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Ringkasan Saldo Periode
-    // ─────────────────────────────────────────────────────────────
-
+    /**
+     * Ringkasan pendapatan/beban periode.
+     * Catatan: `pesan_tidak_siap` di sini murni untuk DATA TAMPILAN di halaman
+     * create (bukan guard). Guard yang otoritatif berjalan sekali di
+     * catatDanPostingPenutupan / postingDraftPenutupan / catatSemuaTahapPenutupan.
+     */
     public function getRingkasanPeriode(Periode $periode): array
     {
-        if ($this->isPeriodeClosed($periode)) {
+        if ($this->periode->isPeriodeClosed($periode)) {
             throw new \RuntimeException('Periode sudah ditutup.');
         }
 
-        // Guard Opsi B — dikembalikan sebagai data, bukan throw,
-        // supaya view bisa menampilkan pesan yang tepat.
-        $pesanTidakSiap = $this->guardPeriodeSiapTutup($periode);
+        $pesanTidakSiap = $this->validasiPeriodeSiapTutup($periode);
 
         $jurnals = Jurnal::with('detailJurnal.akun.kategoriAkun')
             ->where('periode_id', $periode->id)
@@ -191,11 +137,11 @@ class JurnalPenutupService extends JurnalService
                 $kodeKat = $kategori->kode_kategori;
 
                 if ($kodeKat === self::KODE_KATEGORI_PENDAPATAN) {
-                    $this->akumulasiSaldo($pendapatan, $akun, $detail, 'KREDIT');
+                    $this->hitungAkumulasiSaldo($pendapatan, $akun, $detail, 'KREDIT');
                 }
 
                 if ($kodeKat === self::KODE_KATEGORI_BEBAN) {
-                    $this->akumulasiSaldo($beban, $akun, $detail, 'DEBIT');
+                    $this->hitungAkumulasiSaldo($beban, $akun, $detail, 'DEBIT');
                 }
             }
         }
@@ -209,11 +155,11 @@ class JurnalPenutupService extends JurnalService
             'total_pendapatan' => $totalPendapatan,
             'total_beban'      => $totalBeban,
             'surplus'          => $totalPendapatan - $totalBeban,
-            'pesan_tidak_siap' => $pesanTidakSiap, 
+            'pesan_tidak_siap' => $pesanTidakSiap,
         ];
     }
 
-    private function akumulasiSaldo(
+    private function hitungAkumulasiSaldo(
         Collection $collection,
         $akun,
         $detail,
@@ -222,10 +168,7 @@ class JurnalPenutupService extends JurnalService
         $key = $akun->id;
 
         if (!$collection->has($key)) {
-            $collection->put($key, [
-                'akun'  => $akun,
-                'saldo' => 0,
-            ]);
+            $collection->put($key, ['akun' => $akun, 'saldo' => 0]);
         }
 
         $item = $collection->get($key);
@@ -237,34 +180,24 @@ class JurnalPenutupService extends JurnalService
         $collection->put($key, $item);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Klasifikasi Dana
-    // ─────────────────────────────────────────────────────────────
+    // ── Klasifikasi dana ───────────────────────────────
 
-    private function resolveKlasifikasi(Akun $akun): string
+    /**
+     * Tentukan KODE akun dana (aset neto) tujuan penutupan sebuah akun
+     * pendapatan berdasarkan peta prefix. Tidak cocok → dana umum.
+     */
+    private function tentukanKodeDanaPendapatan(Akun $akun): string
     {
-        foreach (self::PREFIX_DENGAN_PEMBATASAN as $prefix) {
+        foreach (self::PETA_DANA_PENDAPATAN as $prefix => $kodeDana) {
             if (str_starts_with($akun->kode_akun, $prefix)) {
-                return 'DENGAN_PEMBATASAN';
+                return $kodeDana;
             }
         }
 
-        return 'TANPA_PEMBATASAN';
+        return self::KODE_DANA_UMUM;
     }
 
-    private function resolveAkunAsetNetoByKlasifikasi(
-        string $klasifikasi
-    ): ?Akun {
-        $kode = $klasifikasi === 'DENGAN_PEMBATASAN'
-            ? self::KODE_ASET_NETO_DENGAN_PEMBATASAN
-            : self::KODE_ASET_NETO_TANPA_PEMBATASAN;
-
-        return Akun::where('kode_akun', $kode)->first();
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Status Tahap
-    // ─────────────────────────────────────────────────────────────
+    // ── Status tahap ─────────────────────────────────
 
     public function getStatusTahap(Periode $periode): array
     {
@@ -325,30 +258,32 @@ class JurnalPenutupService extends JurnalService
         return $result;
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Generate Tutup Pendapatan
-    // ─────────────────────────────────────────────────────────────
+    // ── Menyusun entri jurnal penutup ──────────────────────
 
-    public function generateTutupPendapatan(array $ringkasan): array
+    public function susunJurnalTutupPendapatan(array $ringkasan): array
     {
         if ($ringkasan['total_pendapatan'] <= 0) {
             return [];
         }
 
+        // Kelompokkan pendapatan berdasarkan KODE akun dana tujuannya, sehingga
+        // tiap dana (umum, zakat, qurban, pembangunan, wakaf) ditutup ke akun
+        // LEAF-nya sendiri — bukan ke header seperti implementasi sebelumnya.
         $grouped = collect($ringkasan['pendapatan'])
             ->filter(fn($item) => $item['saldo'] > 0)
-            ->groupBy(fn($item) => $this->resolveKlasifikasi($item['akun']));
+            ->groupBy(fn($item) => $this->tentukanKodeDanaPendapatan($item['akun']));
 
         $detail = [];
 
-        foreach ($grouped as $klasifikasi => $items) {
-            $totalKlasifikasi = $items->sum('saldo');
-            $asetNetoAkun     = $this->resolveAkunAsetNetoByKlasifikasi($klasifikasi);
+        foreach ($grouped as $kodeDana => $items) {
+            $totalDana = $items->sum('saldo');
+            $danaAkun  = Akun::where('kode_akun', $kodeDana)->first();
 
-            if (!$asetNetoAkun || $totalKlasifikasi <= 0) continue;
+            if (!$danaAkun || $totalDana <= 0) continue;
 
+            // DEBIT tiap akun pendapatan (menutup saldo kreditnya) ...
             foreach ($items as $item) {
-                $detail[] = $this->buatEntri(
+                $detail[] = $this->buatEntriJurnal(
                     $item['akun']->id,
                     $item['akun']->nama_akun,
                     $item['akun']->kode_akun,
@@ -357,43 +292,40 @@ class JurnalPenutupService extends JurnalService
                 );
             }
 
-            $detail[] = $this->buatEntri(
-                $asetNetoAkun->id,
-                $asetNetoAkun->nama_akun,
-                $asetNetoAkun->kode_akun,
+            // ... KREDIT ke akun dana (LEAF) tujuannya.
+            $detail[] = $this->buatEntriJurnal(
+                $danaAkun->id,
+                $danaAkun->nama_akun,
+                $danaAkun->kode_akun,
                 'KREDIT',
-                $totalKlasifikasi
+                $totalDana
             );
         }
 
         return $detail;
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Generate Tutup Beban
-    // ─────────────────────────────────────────────────────────────
-
-    public function generateTutupBeban(array $ringkasan): array
+    public function susunJurnalTutupBeban(array $ringkasan): array
     {
         if ($ringkasan['total_beban'] <= 0) {
             return [];
         }
 
-        $asetNetoAkun = Akun::where(
-            'kode_akun',
-            self::KODE_ASET_NETO_TANPA_PEMBATASAN
-        )->first();
+        $danaUmum = Akun::where('kode_akun', self::KODE_DANA_UMUM)->first();
 
-        if (!$asetNetoAkun) {
+        if (!$danaUmum) {
             return [];
         }
 
         $detail = [];
 
-        $detail[] = $this->buatEntri(
-            $asetNetoAkun->id,
-            $asetNetoAkun->nama_akun,
-            $asetNetoAkun->kode_akun,
+        // Seluruh beban (termasuk penyaluran zakat) ditutup ke Dana Umum
+        // (aset neto tanpa pembatasan) sesuai ISAK 35. Bagian yang didanai dana
+        // terikat "dikembalikan" lewat tahap PELEPASAN_PEMBATASAN di bawah.
+        $detail[] = $this->buatEntriJurnal(
+            $danaUmum->id,
+            $danaUmum->nama_akun,
+            $danaUmum->kode_akun,
             'DEBIT',
             $ringkasan['total_beban']
         );
@@ -401,7 +333,7 @@ class JurnalPenutupService extends JurnalService
         foreach ($ringkasan['beban'] as $item) {
             if ($item['saldo'] <= 0) continue;
 
-            $detail[] = $this->buatEntri(
+            $detail[] = $this->buatEntriJurnal(
                 $item['akun']->id,
                 $item['akun']->nama_akun,
                 $item['akun']->kode_akun,
@@ -413,7 +345,62 @@ class JurnalPenutupService extends JurnalService
         return $detail;
     }
 
-    private function buatEntri(
+    /**
+     * Tahap-3 (ISAK 35): pelepasan aset neto dari pembatasan.
+     *
+     * Saat dana terikat (mis. zakat) disalurkan, bebannya sudah ditutup ke Dana
+     * Umum pada tahap Tutup Beban. Di sini kita mereklasifikasi sebesar nilai
+     * penyaluran itu dari dana terikat → Dana Umum, sehingga:
+     *   - Dana Umum tidak ikut berkurang oleh beban dana terikat, dan
+     *   - saldo dana terikat berkurang sebesar yang sudah tersalurkan.
+     * Nilai ini tampil sebagai baris "Aset neto yang dibebaskan dari pembatasan"
+     * pada Laporan Perubahan Aset Neto.
+     */
+    public function susunJurnalPelepasanPembatasan(array $ringkasan): array
+    {
+        $danaUmum = Akun::where('kode_akun', self::KODE_DANA_UMUM)->first();
+        if (!$danaUmum) {
+            return [];
+        }
+
+        $detail = [];
+
+        foreach (self::PETA_DANA_BEBAN_TERIKAT as $prefixBeban => $kodeDana) {
+            $totalTersalur = collect($ringkasan['beban'])
+                ->filter(fn($item) =>
+                    $item['saldo'] > 0 &&
+                    str_starts_with($item['akun']->kode_akun, $prefixBeban)
+                )
+                ->sum('saldo');
+
+            if ($totalTersalur <= 0) continue;
+
+            $danaTerikat = Akun::where('kode_akun', $kodeDana)->first();
+            if (!$danaTerikat) continue;
+
+            // DEBIT dana terikat (kurangi pembatasan) ...
+            $detail[] = $this->buatEntriJurnal(
+                $danaTerikat->id,
+                $danaTerikat->nama_akun,
+                $danaTerikat->kode_akun,
+                'DEBIT',
+                $totalTersalur
+            );
+
+            // ... KREDIT Dana Umum (aset neto dibebaskan ke tanpa pembatasan).
+            $detail[] = $this->buatEntriJurnal(
+                $danaUmum->id,
+                $danaUmum->nama_akun,
+                $danaUmum->kode_akun,
+                'KREDIT',
+                $totalTersalur
+            );
+        }
+
+        return $detail;
+    }
+
+    private function buatEntriJurnal(
         int    $akunId,
         string $namaAkun,
         string $kodeAkun,
@@ -429,46 +416,29 @@ class JurnalPenutupService extends JurnalService
         ];
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Store Semua Tahap (hanya DRAFT)
-    // ─────────────────────────────────────────────────────────────
+    // ── Mencatat semua tahap (DRAFT) ──────────────────────
 
-    public function storeAllTahap(
+    public function catatSemuaTahapPenutupan(
         Periode $periode,
         array   $semua,
         string  $tanggal,
         string  $status = 'DRAFT'
     ): array {
-        if ($this->isPeriodeClosed($periode)) {
+        if ($this->periode->isPeriodeClosed($periode)) {
             throw new \RuntimeException('Periode sudah ditutup.');
+        }
+
+        // Guard kesiapan tutup dijalankan sekali (otoritatif) untuk jalur ini.
+        if ($err = $this->validasiPeriodeSiapTutup($periode)) {
+            throw new \RuntimeException($err);
         }
 
         return DB::transaction(function () use ($periode, $semua, $tanggal, $status) {
             $hasil = [];
 
             foreach ($semua as $tipe => $detail) {
-                $sudahPosted = Jurnal::where('periode_id', $periode->id)
-                    ->where('jenis_jurnal', 'PENUTUP')
-                    ->where('tipe_penutupan', $tipe)
-                    ->where('status', 'POSTED')
-                    ->exists();
-
-                if ($sudahPosted) {
-                    throw new \RuntimeException(
-                        'Tahap ' . (self::TIPE_LABELS[$tipe] ?? $tipe) .
-                        ' sudah diposting dan tidak dapat diulang.'
-                    );
-                }
-
-                // Hapus draft lama
-                Jurnal::where('periode_id', $periode->id)
-                    ->where('jenis_jurnal', 'PENUTUP')
-                    ->where('tipe_penutupan', $tipe)
-                    ->where('status', 'DRAFT')
-                    ->each(function ($j) {
-                        $j->detailJurnal()->delete();
-                        $j->delete();
-                    });
+                $this->pastikanBelumDiposting($periode, $tipe);
+                $this->hapusDraftLama($periode, $tipe);
 
                 $jurnal = Jurnal::create([
                     'periode_id'     => $periode->id,
@@ -481,7 +451,7 @@ class JurnalPenutupService extends JurnalService
                     'status'         => $status,
                 ]);
 
-                $this->storeDetail($jurnal, $detail);
+                $this->catatDetailJurnal($jurnal, $detail);
 
                 $hasil[$tipe] = $jurnal->load('detailJurnal.akun');
             }
@@ -490,21 +460,19 @@ class JurnalPenutupService extends JurnalService
         });
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Posting Existing Draft
-    // ─────────────────────────────────────────────────────────────
+    // ── Posting draft yang sudah ada ──────────────────────
 
-    public function postExistingDraft(Periode $periode): bool|string
+    public function postingDraftPenutupan(Periode $periode): bool|string
     {
-        if ($this->isPeriodeClosed($periode)) {
+        if ($this->periode->isPeriodeClosed($periode)) {
             return 'Periode sudah ditutup.';
         }
 
-        if ($err = $this->guardPeriodeSiapTutup($periode)) {
+        if ($err = $this->validasiPeriodeSiapTutup($periode)) {
             return $err;
         }
 
-        if ($err = $this->guardPeriodeBerikutnya($periode)) {
+        if ($err = $this->periode->validasiPeriodeBerikutnya($periode)) {
             return $err;
         }
 
@@ -514,57 +482,35 @@ class JurnalPenutupService extends JurnalService
                 ->where('status', 'DRAFT')
                 ->update(['status' => 'POSTED']);
 
-            $this->finalizeClosing($periode);
+            $this->periode->finalisasiPenutupan($periode);
         });
 
         return true;
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Store dan Posting (atomik, tanpa nested transaction)
-    // ─────────────────────────────────────────────────────────────
+    // ── Catat & posting sekaligus (atomik) ───────────────────
 
-    public function storeAndPost(
+    public function catatDanPostingPenutupan(
         Periode $periode,
         array   $semua,
         string  $tanggal
     ): bool|string {
-        if ($this->isPeriodeClosed($periode)) {
+        if ($this->periode->isPeriodeClosed($periode)) {
             return 'Periode sudah ditutup.';
         }
 
-        if ($err = $this->guardPeriodeSiapTutup($periode)) {
+        if ($err = $this->validasiPeriodeSiapTutup($periode)) {
             return $err;
         }
 
-        if ($err = $this->guardPeriodeBerikutnya($periode)) {
+        if ($err = $this->periode->validasiPeriodeBerikutnya($periode)) {
             return $err;
         }
 
         DB::transaction(function () use ($periode, $semua, $tanggal) {
             foreach ($semua as $tipe => $detail) {
-                $sudahPosted = Jurnal::where('periode_id', $periode->id)
-                    ->where('jenis_jurnal', 'PENUTUP')
-                    ->where('tipe_penutupan', $tipe)
-                    ->where('status', 'POSTED')
-                    ->exists();
-
-                if ($sudahPosted) {
-                    throw new \RuntimeException(
-                        'Tahap ' . (self::TIPE_LABELS[$tipe] ?? $tipe) .
-                        ' sudah diposting dan tidak dapat diulang.'
-                    );
-                }
-
-                // Hapus draft lama jika ada
-                Jurnal::where('periode_id', $periode->id)
-                    ->where('jenis_jurnal', 'PENUTUP')
-                    ->where('tipe_penutupan', $tipe)
-                    ->where('status', 'DRAFT')
-                    ->each(function ($j) {
-                        $j->detailJurnal()->delete();
-                        $j->delete();
-                    });
+                $this->pastikanBelumDiposting($periode, $tipe);
+                $this->hapusDraftLama($periode, $tipe);
 
                 $jurnal = Jurnal::create([
                     'periode_id'     => $periode->id,
@@ -577,12 +523,42 @@ class JurnalPenutupService extends JurnalService
                     'status'         => 'POSTED',
                 ]);
 
-                $this->storeDetail($jurnal, $detail);
+                $this->catatDetailJurnal($jurnal, $detail);
             }
 
-            $this->finalizeClosing($periode);
+            $this->periode->finalisasiPenutupan($periode);
         });
 
         return true;
+    }
+
+    // ── Helper internal (menghapus duplikasi antara dua alur di atas) ───────
+
+    private function pastikanBelumDiposting(Periode $periode, string $tipe): void
+    {
+        $sudahPosted = Jurnal::where('periode_id', $periode->id)
+            ->where('jenis_jurnal', 'PENUTUP')
+            ->where('tipe_penutupan', $tipe)
+            ->where('status', 'POSTED')
+            ->exists();
+
+        if ($sudahPosted) {
+            throw new \RuntimeException(
+                'Tahap ' . (self::TIPE_LABELS[$tipe] ?? $tipe) .
+                ' sudah diposting dan tidak dapat diulang.'
+            );
+        }
+    }
+
+    private function hapusDraftLama(Periode $periode, string $tipe): void
+    {
+        Jurnal::where('periode_id', $periode->id)
+            ->where('jenis_jurnal', 'PENUTUP')
+            ->where('tipe_penutupan', $tipe)
+            ->where('status', 'DRAFT')
+            ->each(function ($j) {
+                $j->detailJurnal()->delete();
+                $j->delete();
+            });
     }
 }

@@ -12,7 +12,7 @@ class JurnalPembukaService extends JurnalService
 {
     private const JENIS = 'PEMBUKA';
 
-    // untuk daftar jurnal pembuka terfilter
+    /** Daftar jurnal pembuka terfilter. */
     public function daftar(array $filter): LengthAwarePaginator
     {
         return Jurnal::with(['periode', 'detailJurnal'])
@@ -21,15 +21,14 @@ class JurnalPembukaService extends JurnalService
             ->when($filter['status'] ?? null, fn($q) => $q->where('status', $filter['status']))
             ->when($filter['search'] ?? null, fn($q) =>
                 $q->where('keterangan', 'like', "%{$filter['search']}%")
-                  ->orWhere('kode_jurnal', 'like', "%{$filter['search']}%")
             )
             ->orderByDesc('tanggal')
             ->paginate($filter['per_page'] ?? 10)
             ->withQueryString();
     }
 
-    // untuk statistik jumlah jurnal pembuka
-    public function stats(): array
+    /** Statistik jumlah jurnal pembuka. */
+    public function getStatistik(): array
     {
         return [
             'total'  => Jurnal::where('jenis_jurnal', self::JENIS)->count(),
@@ -38,20 +37,8 @@ class JurnalPembukaService extends JurnalService
         ];
     }
 
-    // untuk cek seimbang dari raw detail (sebelum jurnal dibuat)
-    public function detailSeimbang(array $detail): bool
-    {
-        $totalDebit = $totalKredit = 0;
-        foreach ($detail as $row) {
-            $nominal = $this->parseNominal($row['nominal'] ?? 0);
-            if ($row['tipe'] === 'DEBIT')  $totalDebit  += $nominal;
-            if ($row['tipe'] === 'KREDIT') $totalKredit += $nominal;
-        }
-        return round($totalDebit, 2) === round($totalKredit, 2);
-    }
-
-    // untuk simpan jurnal pembuka baru (buat/ambil periode dulu)
-    public function simpan(array $data): Jurnal
+    /** Catat jurnal pembuka (saldo awal) baru; buat/ambil periode dulu. */
+    public function catatSaldoAwal(array $data): Jurnal
     {
         return DB::transaction(function () use ($data) {
             $periode = Periode::firstOrCreate(
@@ -73,13 +60,15 @@ class JurnalPembukaService extends JurnalService
                 'keterangan'   => $data['keterangan'] ?? null,
                 'status'       => ($data['submit_type'] ?? null) === 'posting' ? 'POSTED' : 'DRAFT',
             ]);
-            $this->storeDetail($jurnal, $data['detail'] ?? []);
+
+            $this->catatDetailJurnal($jurnal, $data['detail'] ?? []);
+
             return $jurnal;
         });
     }
 
-    // untuk perbarui jurnal pembuka
-    public function perbarui(Jurnal $jurnal, array $data): Jurnal
+    /** Perbarui jurnal pembuka (saldo awal). */
+    public function perbaruiSaldoAwal(Jurnal $jurnal, array $data): Jurnal
     {
         return DB::transaction(function () use ($jurnal, $data) {
             $jurnal->update([
@@ -88,8 +77,10 @@ class JurnalPembukaService extends JurnalService
                 'keterangan' => $data['keterangan'] ?? null,
                 'status'     => ($data['submit_type'] ?? null) === 'posting' ? 'POSTED' : 'DRAFT',
             ]);
+
             $jurnal->detailJurnal()->delete();
-            $this->storeDetail($jurnal, $data['detail'] ?? []);
+            $this->catatDetailJurnal($jurnal, $data['detail'] ?? []);
+
             return $jurnal;
         });
     }
