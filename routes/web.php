@@ -71,6 +71,10 @@ Route::prefix('laporan')->name('laporan.')->group(function () {
     Route::get('/perubahan-aset-neto', [LaporanKeuanganController::class, 'perubahanAsetNeto'])->name('perubahan-aset-neto');
     Route::get('/arus-kas', [LaporanKeuanganController::class, 'arusKas'])->name('arus-kas');
     Route::get('/catatan-atas-laporan', [LaporanKeuanganController::class, 'calk'])->name('catatan-atas-laporan');
+
+    Route::get('/{jenis}/unduh-pdf', [LaporanKeuanganController::class, 'downloadPdf'])
+        ->where('jenis', 'posisi-keuangan|penghasilan-komprehensif|perubahan-aset-neto|arus-kas|calk')
+        ->name('pdf');
 });
     
 // ── Dashboard ──────────────────────────────────────────────────────────────
