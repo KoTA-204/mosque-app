@@ -91,7 +91,7 @@
             </div>
         </div>
         <div id="tableWrapper">
-            @include('pages.operasional.kegiatan.table')
+            @include('pages.data-induk.kegiatan.table')
         </div>
     </div>
 </div>

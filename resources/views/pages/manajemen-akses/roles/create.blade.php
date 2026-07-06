@@ -21,12 +21,12 @@
 
         {{-- Info Role --}}
         <div class="rounded-xl border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark mb-6">
-            <h3 class="mb-4 text-lg font-medium text-black dark:text-white">Informasi Role</h3>
+            <h3 class="mb-4 text-lg font-medium text-black dark:text-white">Informasi Peran</h3>
 
             {{-- Role Name --}}
             <div class="mb-4">
                 <label class="mb-2 block text-sm font-medium text-black dark:text-white">
-                    Nama Role <span class="text-red-500">*</span>
+                    Nama Peran <span class="text-red-500">*</span>
                 </label>
                 <input type="text" name="role_name" value="{{ old('role_name') }}"
                        class="w-full rounded-lg border border-stroke px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white @error('role_name') border-red-500 @enderror"
@@ -49,7 +49,7 @@
 
         {{-- Permission Matrix --}}
         <div class="rounded-xl border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark mb-6">
-            <h3 class="mb-4 text-lg font-medium text-black dark:text-white">Permissions</h3>
+            <h3 class="mb-4 text-lg font-medium text-black dark:text-white">Hak Akses</h3>
 
             <div class="overflow-x-auto">
                 <table class="w-full table-auto">

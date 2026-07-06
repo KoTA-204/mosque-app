@@ -12,7 +12,7 @@ use App\Http\Controllers\ManajemenAkses\UserController;
 use App\Http\Controllers\Operasional\TransaksiController;
 use App\Http\Controllers\Operasional\TransaksiKegiatanController;
 use App\Http\Controllers\Operasional\ApprovalController;
-use App\Http\Controllers\Operasional\KegiatanController;
+use App\Http\Controllers\DataInduk\KegiatanController;
 use App\Http\Controllers\DataInduk\ChartOfAccountController;
 use App\Http\Controllers\Operasional\KenclengController;
 use App\Http\Controllers\DataInduk\KategoriTransaksiController;
@@ -76,6 +76,11 @@ Route::prefix('laporan')->name('laporan.')->group(function () {
 // ── Dashboard ──────────────────────────────────────────────────────────────
 Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('index');
+
+    // ── Laporan Keuangan Index (redirect ke halaman pertama) ───────────────
+    Route::get('/laporan-keuangan', function () {
+        return redirect()->route('dashboard.laporan.penghasilan-komprehensif');
+    })->name('laporan-keuangan.index');
 
     // ── Manajemen User ─────────────────────────────────────────────────────
     Route::middleware('permission:VIEW_USERS')->group(function () {

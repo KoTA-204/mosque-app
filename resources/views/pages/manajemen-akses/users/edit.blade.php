@@ -1,4 +1,4 @@
-<x-modal id="editUserModal" title="Edit User">
+<x-modal id="editUserModal" title="Edit Pengguna">
 
     <form id="editUserForm">
         @csrf

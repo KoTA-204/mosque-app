@@ -9,6 +9,15 @@
         onsubmit="handleFormSubmit(this)">
     @csrf
     @method('PUT')
+    @if(($terkunci ?? false))
+        <div class="p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs">
+            Sub kategori ini sudah memiliki akun turunan, sehingga seluruh datanya dikunci dan tidak dapat diubah.
+        </div>
+    @elseif(($terpakai ?? false))
+        <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+            Data ini sudah dipakai pada transaksi. Kode, saldo normal, dan kategori induk dikunci; hanya nama yang dapat diubah.
+        </div>
+    @endif
     <input type="hidden" name="_form" value="edit-subkategori">
     <input type="hidden" name="_id" value="<?php echo e($subKat->id); ?>">
 
@@ -23,7 +32,7 @@
         </label>
 
         <div class="relative">
-            <select name="kategori_akun_id" 
+            <select name="kategori_akun_id" <?php echo (($terpakai ?? false) || ($terkunci ?? false)) ? 'disabled' : ''; ?> 
                 class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none appearance-none transition-colors
                 {{ $errors->has('kategori_akun_id') 
                     ? 'border-red-400' 
@@ -56,7 +65,7 @@
             Kode Sub Kategori <span class="text-red-500">*</span>
         </label>
 
-        <input type="text" name="kode_akun" value="{{ ($isTarget ? old('kode_akun', $subKat->kode_akun) : $subKat->kode_akun) }}" class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
+        <input type="text" name="kode_akun" <?php echo (($terpakai ?? false) || ($terkunci ?? false)) ? 'readonly' : ''; ?> value="{{ ($isTarget ? old('kode_akun', $subKat->kode_akun) : $subKat->kode_akun) }}" class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
             {{ $errors->has('kode_akun') 
                 ? 'border-red-400' 
                 : 'border-gray-200 dark:border-gray-700 focus:border-green-400' 
@@ -73,7 +82,7 @@
             Nama Sub Kategori <span class="text-red-500">*</span>
         </label>
 
-        <input type="text" name="nama_akun" value="{{ ($isTarget ? old('nama_akun', $subKat->nama_akun) : $subKat->nama_akun) }}" class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
+        <input type="text" name="nama_akun" <?php echo ($terkunci ?? false) ? 'readonly' : ''; ?> value="{{ ($isTarget ? old('nama_akun', $subKat->nama_akun) : $subKat->nama_akun) }}" class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
             {{ $errors->has('nama_akun') 
                 ? 'border-red-400' 
                 : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }}
@@ -91,7 +100,7 @@
 
         <div class="relative">
             <select
-                name="saldo_normal"
+                name="saldo_normal" <?php echo (($terpakai ?? false) || ($terkunci ?? false)) ? 'disabled' : ''; ?>
                 class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none appearance-none transition-colors
                 {{ $errors->has('saldo_normal')
                     ? 'border-red-400'
@@ -120,7 +129,7 @@
     </div>
 
     <div class="flex items-center gap-3 pt-2">
-        <button type="submit"
+        <button type="submit" <?php echo ($terkunci ?? false) ? 'disabled' : ''; ?>
                 class="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors">
             Simpan Perubahan
         </button>

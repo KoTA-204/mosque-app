@@ -85,9 +85,11 @@ class AsetController extends Controller
     // form edit
     public function tampilkanFormUbahAset(Aset $aset)
     {
+        $keuanganTerkunci = $aset->jurnalPenyesuaian()->exists();
+
         if (request()->ajax()) {
             return response()->json([
-                'html' => view('pages.aset.edit', compact('aset'))->render(),
+                'html' => view('pages.aset.edit', compact('aset', 'keuanganTerkunci'))->render(),
             ]);
         }
         return redirect()->route('dashboard.aset.index');
@@ -128,6 +130,7 @@ class AsetController extends Controller
                 $aset,
                 $request->input('alasan_nonaktif'),
                 $request->input('catatan_nonaktif'),
+                $request->input('jenis_pelepasan'),
             );
         } catch (\InvalidArgumentException $e) {
             if ($request->ajax()) {

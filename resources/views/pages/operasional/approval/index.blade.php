@@ -5,7 +5,7 @@
     {{-- Header --}}
     <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
         <div>
-            <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Approval Transaksi</h1>
+            <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Persetujuan Transaksi</h1>
         </div>
     </div>
 

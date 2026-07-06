@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Manajemen Permission')
+@section('title', 'Manajemen Hak Akses')
 
 @section('content')
 <div class="p-6 space-y-6">
@@ -8,7 +8,7 @@
     {{-- Header --}}
     <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
         <div>
-            <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Manajemen Permission</h1>
+            <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Manajemen Hak Akses</h1>
         </div>
         <div class="flex items-center gap-2">
             <a href="{{ route('dashboard.permissions.create') }}"
@@ -16,7 +16,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                Tambah Permission
+                Tambah Hak Akses
             </a>
         </div>
     </div>

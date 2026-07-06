@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Operasional;
+namespace App\Http\Controllers\DataInduk;
 
 use App\Http\Controllers\Controller;
 use App\Models\Kegiatan;
@@ -48,12 +48,12 @@ class KegiatanController extends Controller
 
         if ($request->ajax()) {
             return response()->json([
-                'html'  => view('pages.operasional.kegiatan.table', compact('kegiatan', 'panitias'))->render(),
+                'html'  => view('pages.data-induk.kegiatan.table', compact('kegiatan', 'panitias'))->render(),
                 'stats' => $stats,
             ]);
         }
 
-        return view('pages.operasional.kegiatan.index', compact('kegiatan', 'panitias', 'stats'));
+        return view('pages.data-induk.kegiatan.index', compact('kegiatan', 'panitias', 'stats'));
     }
 
     public function tampilkanFormTambahKegiatan(Request $request)
@@ -62,11 +62,11 @@ class KegiatanController extends Controller
 
         if ($request->ajax()) {
             return response()->json([
-                'html' => view('pages.operasional.kegiatan.create', compact('panitias'))->render(),
+                'html' => view('pages.data-induk.kegiatan.create', compact('panitias'))->render(),
             ]);
         }
 
-        return view('pages.operasional.kegiatan.create', compact('panitias'));
+        return view('pages.data-induk.kegiatan.create', compact('panitias'));
     }
 
     public function simpanKegiatanBaru(Request $request)
@@ -104,11 +104,11 @@ class KegiatanController extends Controller
 
         if ($request->ajax()) {
             return response()->json([
-                'html' => view('pages.operasional.kegiatan.show', compact('kegiatan'))->render(),
+                'html' => view('pages.data-induk.kegiatan.show', compact('kegiatan'))->render(),
             ]);
         }
 
-        return view('pages.operasional.kegiatan.show', compact('kegiatan'));
+        return view('pages.data-induk.kegiatan.show', compact('kegiatan'));
     }
 
     public function tampilkanFormUbahKegiatan(Request $request, Kegiatan $kegiatan)
@@ -117,11 +117,11 @@ class KegiatanController extends Controller
 
         if ($request->ajax()) {
             return response()->json([
-                'html' => view('pages.operasional.kegiatan.edit', compact('kegiatan', 'panitias'))->render(),
+                'html' => view('pages.data-induk.kegiatan.edit', compact('kegiatan', 'panitias'))->render(),
             ]);
         }
 
-        return view('pages.operasional.kegiatan.edit', compact('kegiatan', 'panitias'));
+        return view('pages.data-induk.kegiatan.edit', compact('kegiatan', 'panitias'));
     }
 
     public function perbaruiKegiatan(Request $request, Kegiatan $kegiatan)
@@ -138,7 +138,6 @@ class KegiatanController extends Controller
 
         $kegiatan->update($validated);
 
-        // Cek ulang setelah update (misal tanggal diubah jadi sudah lewat)
         $kegiatan->tutupJikaSelesai();
 
         if ($request->ajax()) {
@@ -159,7 +158,7 @@ class KegiatanController extends Controller
 
         if ($request->ajax()) {
             return response()->json([
-                'html' => view('pages.operasional.kegiatan.delete', compact(
+                'html' => view('pages.data-induk.kegiatan.delete', compact(
                     'kegiatan', 'hasTransaksi', 'transaksiCount'
                 ))->render(),
             ]);

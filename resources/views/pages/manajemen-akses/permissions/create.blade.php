@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah Permission')
+@section('title', 'Tambah Hak Akses')
 
 @section('content')
 <div class="p-6 space-y-6">
@@ -14,13 +14,13 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
             </a>
-            <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Tambah Permission</h1>
+            <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Tambah Hak Akses</h1>
         </div>
     </div>
 
     <div class="max-w-2xl mx-auto">
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-            <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-6">Informasi Permission</h2>
+            <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-6">Informasi Hak Akses</h2>
 
             <form method="POST" action="{{ route('dashboard.permissions.store') }}" class="space-y-5">
                 @csrf
@@ -28,7 +28,7 @@
                 {{-- Permission Code --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        Kode Permission <span class="text-red-500">*</span>
+                        Kode Hak Akses <span class="text-red-500">*</span>
                     </label>
                     <input type="text" name="permission_code" value="{{ old('permission_code') }}"
                         placeholder="Contoh: PEMASUKAN_CREATE"
@@ -43,7 +43,7 @@
                 {{-- Permission Name --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        Nama Permission <span class="text-red-500">*</span>
+                        Nama Hak Akses <span class="text-red-500">*</span>
                     </label>
                     <input type="text" name="permission_name" value="{{ old('permission_name') }}"
                         placeholder="Contoh: Buat Pemasukan"

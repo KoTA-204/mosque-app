@@ -1,4 +1,4 @@
-<x-modal id="createUserModal" title="Tambah User">
+<x-modal id="createUserModal" title="Tambah Pengguna">
 
     <form id="createUserForm">
         @csrf

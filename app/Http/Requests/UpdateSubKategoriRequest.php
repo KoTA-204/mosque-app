@@ -24,10 +24,10 @@ class UpdateSubKategoriRequest extends FormRequest
         $subKategoriId = $this->route('subKategori')->id;
 
         return [
-            'kategori_akun_id' => 'required|exists:kategori_akun,id',
+            'kategori_akun_id' => 'sometimes|required|exists:kategori_akun,id',
             'kode_akun'        => 'required|string|max:20|unique:akun,kode_akun,' . $subKategoriId,
             'nama_akun'        => 'required|string|max:150',
-            'saldo_normal'     => 'required|in:DEBIT,KREDIT',
+            'saldo_normal'     => 'sometimes|required|in:DEBIT,KREDIT',
         ];
     }
  

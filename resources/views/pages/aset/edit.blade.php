@@ -47,6 +47,9 @@
             {{-- Perolehan Aset --}}
             <div>
                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">Perolehan Aset</p>
+                @if(($keuanganTerkunci ?? false))
+                <div class="mb-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">Aset ini sudah memiliki jurnal penyesuaian. Data keuangan (tanggal &amp; nilai perolehan, umur manfaat, tanggal mulai penyusutan) dikunci agar konsisten dengan jurnal.</div>
+                @endif
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Sumber Perolehan <span class="text-red-500">*</span></label>
@@ -64,7 +67,7 @@
                         <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Tanggal Perolehan <span class="text-red-500">*</span></label>
                         <input type="hidden" name="tanggal_perolehan" id="edit-tanggal_perolehan"
                             value="{{ $aset->tanggal_perolehan?->format('Y-m-d') }}">
-                        <input type="text" id="edit-fp-tanggal_perolehan" readonly
+                        <input type="text" id="edit-fp-tanggal_perolehan" <?php echo ($keuanganTerkunci ?? false) ? 'disabled' : ''; ?> readonly
                             value="{{ $aset->tanggal_perolehan?->translatedFormat('d F Y') }}"
                             placeholder="Pilih tanggal"
                             class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors cursor-pointer">
@@ -77,7 +80,7 @@
                         </label>
                         <input type="hidden" name="nilai_tercatat" id="edit-nilai_tercatat"
                             value="{{ $aset->nilai_tercatat }}">
-                        <input type="text" id="edit-display-nilai"
+                        <input type="text" id="edit-display-nilai" <?php echo ($keuanganTerkunci ?? false) ? 'disabled' : ''; ?>
                             value="{{ number_format((float)$aset->nilai_tercatat, 0, ',', '.') }}"
                             inputmode="numeric"
                             class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
@@ -121,7 +124,7 @@
 
             {{-- Checkbox Penyusutan --}}
             <div class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                <input type="checkbox" id="edit-cbDisusutkan"
+                <input type="checkbox" id="edit-cbDisusutkan" <?php echo ($keuanganTerkunci ?? false) ? 'disabled' : ''; ?>
                     {{ $isDisusutkan ? 'checked' : '' }}
                     class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer">
                 <div>
@@ -140,14 +143,14 @@
                         <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Tanggal Mulai Penyusutan <span class="text-red-500">*</span></label>
                         <input type="hidden" name="tanggal_mulai_penyusutan" id="edit-tanggal_mulai_penyusutan"
                             value="{{ $aset->tanggal_mulai_penyusutan?->format('Y-m-d') }}">
-                        <input type="text" id="edit-fp-tanggal_mulai" readonly
+                        <input type="text" id="edit-fp-tanggal_mulai" <?php echo ($keuanganTerkunci ?? false) ? 'disabled' : ''; ?> readonly
                             value="{{ $aset->tanggal_mulai_penyusutan?->translatedFormat('d F Y') }}"
                             placeholder="Pilih tanggal"
                             class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors cursor-pointer">
                     </div>
                     <div>
                         <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Umur Manfaat (Tahun) <span class="text-red-500">*</span></label>
-                        <input type="number" name="umur_manfaat" id="edit-umurManfaat"
+                        <input type="number" name="umur_manfaat" id="edit-umurManfaat" <?php echo ($keuanganTerkunci ?? false) ? 'readonly' : ''; ?>
                             value="{{ $aset->umur_manfaat }}" placeholder="Contoh: 20" min="1"
                             class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
                     </div>

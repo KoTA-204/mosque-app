@@ -8,6 +8,11 @@
         class="space-y-5">
     @csrf
     @method('PUT')
+    @if(($terpakai ?? false))
+        <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+            Akun ini sudah dipakai pada transaksi (jurnal), sehingga seluruh data dikunci; hanya status yang dapat diubah.
+        </div>
+    @endif
     <input type="hidden" name="_form" value="edit-akun">
     <input type="hidden" name="_id" value="<?php echo e($akun->id); ?>">
 
@@ -22,7 +27,7 @@
                 Nomor Akun <span class="text-red-500">*</span>
             </label>
 
-            <input type="text" name="kode_akun" value="{{ ($isTarget ? old('kode_akun', $akun->kode_akun) : $akun->kode_akun) }}" 
+            <input type="text" name="kode_akun" <?php echo ($terpakai ?? false) ? 'readonly' : ''; ?> value="{{ ($isTarget ? old('kode_akun', $akun->kode_akun) : $akun->kode_akun) }}" 
                 class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
                 {{ $errors->has('kode_akun') 
                     ? 'border-red-400' 
@@ -41,7 +46,7 @@
                 Nama Akun <span class="text-red-500">*</span>
             </label>
 
-            <input type="text" name="nama_akun" value="{{ ($isTarget ? old('nama_akun', $akun->nama_akun) : $akun->nama_akun) }}" 
+            <input type="text" name="nama_akun" <?php echo ($terpakai ?? false) ? 'readonly' : ''; ?> value="{{ ($isTarget ? old('nama_akun', $akun->nama_akun) : $akun->nama_akun) }}" 
                 class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
                 {{ $errors->has('nama_akun') 
                     ? 'border-red-400' 
@@ -63,7 +68,7 @@
             </label>
 
             <div class="relative">
-                <select name="parent_id" 
+                <select name="parent_id" <?php echo ($terpakai ?? false) ? 'disabled' : ''; ?> 
                     class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none appearance-none transition-colors
                     {{ $errors->has('parent_id') 
                         ? 'border-red-400' 
@@ -97,7 +102,7 @@
             </label>
 
             <div class="relative">
-                <select name="saldo_normal"
+                <select name="saldo_normal" <?php echo ($terpakai ?? false) ? 'disabled' : ''; ?>
                     class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none appearance-none transition-colors
                     {{ $errors->has('saldo_normal')
                         ? 'border-red-400'
@@ -134,7 +139,7 @@
             Deskripsi
         </label>
 
-        <textarea name="deskripsi" rows="4"
+        <textarea name="deskripsi" rows="4" <?php echo ($terpakai ?? false) ? 'readonly' : ''; ?>
             class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 focus:border-green-400 rounded-xl outline-none resize-none transition-colors
             bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400">{{ ($isTarget ? old('deskripsi', $akun->deskripsi) : $akun->deskripsi) }}</textarea>
     </div>

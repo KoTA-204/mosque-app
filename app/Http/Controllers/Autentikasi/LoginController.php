@@ -13,7 +13,7 @@ class LoginController extends Controller
     public function tampilkanFormLogin(Request $request): View|RedirectResponse
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard.index');
+            return redirect()->route($this->redirectRouteUntukRole(Auth::user()));
         }
 
         return view('pages.autentikasi.login');
@@ -22,7 +22,7 @@ class LoginController extends Controller
     public function prosesLogin(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'email'    => ['required', 'email'],
             'password' => ['required'],
         ], [
             'email.required'    => 'Email wajib diisi.',
@@ -36,11 +36,7 @@ class LoginController extends Controller
             ]);
         }
 
-        // ── PERBAIKAN: tolak login jika akun dinonaktifkan ───────────────────
-        // Kredensial sudah benar (Auth::attempt sukses & sesi sudah dibuat),
-        // tapi kita masih harus memastikan akunnya berstatus 'active'.
-        // Kalau tidak aktif: bongkar lagi sesi yang baru dibuat, lalu tolak.
-        // Nilai 'active' menyesuaikan kolom users.status pada seeder.
+        // Tolak login jika akun dinonaktifkan
         if (Auth::user()->status !== 'active') {
             Auth::logout();
             $request->session()->invalidate();
@@ -50,10 +46,10 @@ class LoginController extends Controller
                 'email' => 'Akun Anda dinonaktifkan. Silakan hubungi administrator.',
             ]);
         }
-        // ─────────────────────────────────────────────────────────────────────
 
         $request->session()->regenerate();
-        return redirect()->intended(route('dashboard.index'));
+
+        return redirect()->intended(route($this->redirectRouteUntukRole(Auth::user())));
     }
 
     public function prosesLogout(Request $request): RedirectResponse
@@ -63,5 +59,48 @@ class LoginController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('auth.login');
+    }
+
+    /**
+     * Tentukan halaman pertama yang ditampilkan setelah login
+     * berdasarkan role pengguna.
+     *
+     * Mapping slug role → route tujuan:
+     *   admin / super-admin         → Manajemen Pengguna
+     *   bendahara-1 / bendahara-2   → Dashboard Operasional
+     *   ketua-dkm                   → Dashboard Operasional
+     *   phm                         → Pencatatan Kencleng
+     *   panitia-khusus              → Pencatatan Transaksi Kegiatan
+     *     (akan diupdate ke panitia-kegiatan-khusus setelah bulk seeder)
+     *   sekretaris                  → Aset
+     *   default                     → Dashboard Operasional
+     */
+    private function redirectRouteUntukRole($user): string
+    {
+        $slug = optional($user->roles)->slug;
+
+        $map = [
+            // Admin — akses penuh, langsung ke manajemen pengguna
+            'super-admin'              => 'dashboard.users.index',
+            'admin'                    => 'dashboard.users.index',
+
+            // Bendahara & Ketua DKM — landing di dashboard utama
+            'bendahara-1'              => 'dashboard.index',
+            'bendahara-2'              => 'dashboard.index',
+            'ketua-dkm'               => 'dashboard.index',
+
+            // PHM — tugas utama: kencleng
+            'phm'                      => 'dashboard.kencleng.index',
+
+            // Panitia — langsung ke transaksi kegiatan yang ditugaskan
+            // Catatan: slug akan berubah jadi panitia-kegiatan-khusus setelah bulk seeder
+            'panitia-khusus'           => 'dashboard.transaksi-kegiatan.index',
+            'panitia-kegiatan-khusus'  => 'dashboard.transaksi-kegiatan.index',
+
+            // Sekretaris — langsung ke aset
+            'sekretaris'               => 'dashboard.aset.index',
+        ];
+
+        return $map[$slug] ?? 'dashboard.index';
     }
 }

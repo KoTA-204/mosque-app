@@ -43,6 +43,7 @@ class Aset extends Model
         'alasan_nonaktif',
         'catatan_nonaktif',
         'tanggal_nonaktif',
+        'jenis_pelepasan',
         'nilai_buku',
         'akumulasi_penyusutan',
     ];

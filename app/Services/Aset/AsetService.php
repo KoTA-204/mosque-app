@@ -35,6 +35,10 @@ class AsetService
 
     public function perbaruiAset(Aset $aset, array $data, ?UploadedFile $dokumen, bool $disusutkan): Aset
     {
+        // Bila aset SUDAH memiliki jurnal penyesuaian, field keuangan dikunci
+        // agar tidak mengubah angka yang sudah masuk jurnal.
+        $keuanganTerkunci = $aset->jurnalPenyesuaian()->exists();
+
         // ganti dokumen kalau ada file baru
         $dokumenPath = $aset->dokumen_pendukung;
         if ($dokumen) {
@@ -42,6 +46,21 @@ class AsetService
                 Storage::disk('public')->delete($dokumenPath);
             }
             $dokumenPath = $this->simpanDokumen($dokumen);
+        }
+
+        if ($keuanganTerkunci) {
+            $aset->fill([
+                'nama_aset'         => $data['nama_aset'],
+                'sumber_perolehan'  => $data['sumber_perolehan'],
+                'kondisi_aset'      => $data['kondisi_aset'],
+                'lokasi_aset'       => $data['lokasi_aset'],
+                'nama_pemberi'      => $data['nama_pemberi'] ?? $aset->nama_pemberi,
+                'jumlah_unit'       => $data['jumlah_unit'] ?? $aset->jumlah_unit,
+                'dokumen_pendukung' => $dokumenPath,
+                'keterangan'        => $data['keterangan'] ?? $aset->keterangan,
+            ]);
+            $aset->save();
+            return $aset;
         }
 
         // 1) isi dulu semua kolom KECUALI nilai_buku & akumulasi_penyusutan
@@ -81,7 +100,7 @@ class AsetService
      * Reaktivasi meneruskan nilai buku terakhir (tidak direset) agar tidak
      * terjadi lonjakan / penyusutan ganda.
      */
-    public function ubahStatusAset(Aset $aset, ?string $alasan = null, ?string $catatan = null): string
+    public function ubahStatusAset(Aset $aset, ?string $alasan = null, ?string $catatan = null, ?string $jenisPerlepasan = null): string
     {
         // DRAFT tidak boleh di-toggle.
         if ($aset->status_aset === 'DRAFT') {
@@ -116,11 +135,17 @@ class AsetService
             throw new \InvalidArgumentException('Alasan penonaktifan aset tidak valid.');
         }
 
+        // Validasi: AKAN_DILEPAS wajib menyertakan jenis pelepasan
+        if ($alasan === Aset::ALASAN_AKAN_DILEPAS && empty($jenisPerlepasan)) {
+            throw new \InvalidArgumentException('Pilih jenis pelepasan (Dijual/Dibuang/Donasi/Hilang) untuk menandai aset yang akan dilepas.');
+        }
+
         $updateData = [
             'status_aset'      => 'TIDAK AKTIF',
             'alasan_nonaktif'  => $alasan,
             'catatan_nonaktif' => $catatan,
             'tanggal_nonaktif' => now()->toDateString(),
+            'jenis_pelepasan'  => $alasan === Aset::ALASAN_AKAN_DILEPAS ? $jenisPerlepasan : null,
         ];
 
         // Menganggur sementara TETAP menyusut -> jangan bekukan.

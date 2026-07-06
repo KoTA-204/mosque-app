@@ -507,18 +507,21 @@
 @include('pages.data-induk.coa.create-subkategori')
 @include('pages.data-induk.coa.create-akun')
 @foreach($kategori as $kat)
-    @include('pages.data-induk.coa.edit-kategori', ['kat' => $kat])
+    @include('pages.data-induk.coa.edit-kategori', ['kat' => $kat, 'terpakai' => $kat->akunKeuangan()->exists(), 'terkunci' => $kat->akunKeuangan()->exists()])
 
     @foreach($kat->akunKeuangan as $subKat)
         @include('pages.data-induk.coa.edit-subkategori', [
             'subKat' => $subKat,
-            'allKategori' => $allKategori
+            'allKategori' => $allKategori,
+            'terpakai' => ($subKat->children()->exists() || \App\Models\DetailJurnal::where('akun_id', $subKat->id)->exists()),
+            'terkunci' => $subKat->children()->exists(),
         ])
 
         @foreach($subKat->children as $akun)
             @include('pages.data-induk.coa.edit-akun', [
                 'akun' => $akun,
-                'subKategoriList' => $subKategoriList
+                'subKategoriList' => $subKategoriList,
+                'terpakai' => \App\Models\DetailJurnal::where('akun_id', $akun->id)->exists(),
             ])
         @endforeach
 

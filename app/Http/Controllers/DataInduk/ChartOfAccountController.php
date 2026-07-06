@@ -119,6 +119,15 @@ class ChartOfAccountController extends Controller
 
     public function perbaruiKategoriAkun(UpdateKategoriRequest $request, KategoriAkun $kategori)
     {
+        // Kategori yang sudah memiliki sub kategori/akun turunan TIDAK boleh diubah
+        // sama sekali (seluruh field terkunci) demi menjaga integritas struktur &
+        // penomoran CoA. Aturan ini konsisten dengan larangan hapus saat masih punya anak.
+        if ($kategori->akunKeuangan()->exists()) {
+            return redirect()
+                ->route('dashboard.coa.index')
+                ->with('error', 'Kategori tidak dapat diubah karena sudah memiliki akun turunan.');
+        }
+
         $kategori->update($request->validated());
 
         return redirect()
@@ -193,9 +202,19 @@ class ChartOfAccountController extends Controller
 
     public function perbaruiSubKategori(UpdateSubKategoriRequest $request, Akun $subKategori)
     {
-        $subKategori->update([
-            ...$request->validated(),
-        ]);
+        // Sub kategori yang sudah memiliki akun turunan TIDAK boleh diubah sama
+        // sekali (seluruh field terkunci) demi menjaga integritas struktur CoA.
+        if ($subKategori->children()->exists()) {
+            return redirect()
+                ->route('dashboard.coa.index')
+                ->with('error', 'Sub kategori tidak dapat diubah karena sudah memiliki akun turunan.');
+        }
+
+        $data = $request->validated();
+
+        // Sub kategori bukan akun postable (tidak pernah dipakai di pencatatan
+        // transaksi), sehingga tidak ada penguncian berbasis jurnal di sini.
+        $subKategori->update($data);
 
         return redirect()
             ->route('dashboard.coa.index')
@@ -283,12 +302,19 @@ class ChartOfAccountController extends Controller
 
     public function perbaruiAkun(UpdateAkunRequest $request, Akun $akun)
     {
-        $subKategori = Akun::findOrFail($request->parent_id);
+        $data = $request->validated();
 
-        $akun->update([
-            ...$request->validated(),
-            'kategori_akun_id' => $subKategori->kategori_akun_id,
-        ]);
+        // Akun yang sudah dipakai pada transaksi (jurnal) HANYA boleh mengubah status.
+        // Seluruh atribut identitas & struktur (kode, nama, saldo, induk, deskripsi)
+        // dikunci demi menjaga integritas jurnal yang sudah tercatat.
+        if (DetailJurnal::where('akun_id', $akun->id)->exists()) {
+            $data = ['status' => $data['status']];
+        } else {
+            $subKategori = Akun::findOrFail($request->parent_id);
+            $data['kategori_akun_id'] = $subKategori->kategori_akun_id;
+        }
+
+        $akun->update($data);
 
         return redirect()
             ->route('dashboard.coa.index')

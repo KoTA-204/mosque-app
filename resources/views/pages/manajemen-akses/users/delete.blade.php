@@ -1,8 +1,8 @@
-<x-modal id="deleteUserModal" title="Hapus User">
+<x-modal id="deleteUserModal" title="Hapus Pengguna">
 
     <div class="px-6 py-5 space-y-4">
         <p class="text-sm text-gray-600 dark:text-gray-400">
-            Yakin ingin menghapus user <span class="font-semibold text-gray-900 dark:text-white">{{ $user->name }}</span>?
+            Yakin ingin menghapus pengguna <span class="font-semibold text-gray-900 dark:text-white">{{ $user->name }}</span>?
             Tindakan ini tidak dapat dibatalkan.
         </p>
     </div>

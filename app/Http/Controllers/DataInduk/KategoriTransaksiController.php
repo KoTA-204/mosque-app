@@ -71,11 +71,20 @@ class KategoriTransaksiController extends Controller
 
     public function perbaruiKategoriTransaksi(Request $request, KategoriTransaksi $kategoriTransaksi)
     {
-        $validator = Validator::make($request->all(), [
-            'nama_kategori'   => 'required|string|max:100|unique:kategori_transaksi,nama_kategori,' . $kategoriTransaksi->id,
-            'status'          => 'required|in:aktif,tidak_aktif',
-            'deskripsi'       => 'nullable|string|max:500',
-        ], [
+        // Kategori yang sudah dipakai pada transaksi HANYA boleh mengubah status;
+        // nama & deskripsi dikunci agar riwayat/laporan transaksi tetap konsisten.
+        $terpakai = $kategoriTransaksi->transaksi()->exists();
+
+        $rules = [
+            'status' => 'required|in:aktif,tidak_aktif',
+        ];
+
+        if (! $terpakai) {
+            $rules['nama_kategori'] = 'required|string|max:100|unique:kategori_transaksi,nama_kategori,' . $kategoriTransaksi->id;
+            $rules['deskripsi']     = 'nullable|string|max:500';
+        }
+
+        $validator = Validator::make($request->all(), $rules, [
             'nama_kategori.required'   => 'Nama kategori wajib diisi.',
             'nama_kategori.unique'     => 'Nama kategori sudah digunakan.',
             'status.required'          => 'Status wajib dipilih.',
@@ -89,11 +98,17 @@ class KategoriTransaksiController extends Controller
                 ->with('edit_error_id', $kategoriTransaksi->id);
         }
 
-        $kategoriTransaksi->update([
-            'nama_kategori'   => $request->nama_kategori,
-            'status'          => $request->status,
-            'deskripsi'       => $request->deskripsi,
-        ]);
+        if ($terpakai) {
+            $kategoriTransaksi->update([
+                'status' => $request->status,
+            ]);
+        } else {
+            $kategoriTransaksi->update([
+                'nama_kategori'   => $request->nama_kategori,
+                'status'          => $request->status,
+                'deskripsi'       => $request->deskripsi,
+            ]);
+        }
 
         return redirect()
             ->route('dashboard.kategori-transaksi.index')

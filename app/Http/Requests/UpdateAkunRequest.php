@@ -24,10 +24,10 @@ class UpdateAkunRequest extends FormRequest
         $akunId = $this->route('akun')->id;
  
         return [
-            'parent_id'    => 'required|exists:akun,id',
+            'parent_id'    => 'sometimes|required|exists:akun,id',
             'kode_akun'    => 'required|string|max:20|unique:akun,kode_akun,' . $akunId,
             'nama_akun'    => 'required|string|max:150',
-            'saldo_normal' => 'required|in:DEBIT,KREDIT',
+            'saldo_normal' => 'sometimes|required|in:DEBIT,KREDIT',
             'deskripsi'    => 'nullable|string',
             'status'       => 'required|in:aktif,tidak_aktif',
         ];

@@ -105,8 +105,13 @@ class MenuHelper
         // Parent menu sesuai permission user.
         // ONE-TO-MANY: child menu punya satu permission -> pakai relasi 'permission' (singular)
         $parentMenus = Menu::with(['children' => function ($query) use ($permissionCodes) {
-                $query->whereHas('permissions', function ($q) use ($permissionCodes) {
-                        $q->whereIn('permission_code', $permissionCodes);
+                $query->where(function ($q) use ($permissionCodes) {
+                        // Tampilkan child yang tidak memerlukan permission (null)
+                        // ATAU yang permission-nya dimiliki user
+                        $q->whereNull('permission_id')
+                          ->orWhereHas('permissions', function ($qp) use ($permissionCodes) {
+                              $qp->whereIn('permission_code', $permissionCodes);
+                          });
                     })
                     ->where('is_active', true)
                     ->orderBy('sort_order');

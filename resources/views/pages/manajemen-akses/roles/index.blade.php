@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Role Management')
+@section('title', 'Manajemen Peran')
 
 @section('content')
 <div class="p-6 space-y-6">
@@ -8,12 +8,12 @@
     {{-- Header --}}
     <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
         <div>
-            <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Role Management</h1>
+            <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Manajemen Peran</h1>
         </div>
         <div class="flex items-center gap-2">
             <a href="{{ route('dashboard.roles.create') }}"
                class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-                Tambah Role
+                Tambah Peran
             </a>
         </div>
     </div>
@@ -43,9 +43,9 @@
             <p class="text-sm text-gray-500 dark:text-gray-400">
                 @if($search)
                     Hasil pencarian "<span class="font-medium text-gray-900 dark:text-white">{{ $search }}</span>":
-                    <span class="font-medium">{{ $roles->total() }}</span> role ditemukan
+                    <span class="font-medium">{{ $roles->total() }}</span> peran ditemukan
                 @else
-                    Total <span class="font-medium text-gray-900 dark:text-white">{{ $roles->total() }}</span> role
+                    Total <span class="font-medium text-gray-900 dark:text-white">{{ $roles->total() }}</span> peran
                 @endif
             </p>
             <form method="GET" action="{{ route('dashboard.roles.index') }}" class="flex items-center gap-2">
@@ -107,7 +107,7 @@
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                             <circle cx="12" cy="7" r="4"/>
                         </svg>
-                        <span><strong class="text-gray-800 dark:text-gray-200">{{ $role->users_count }}</strong> User</span>
+                        <span><strong class="text-gray-800 dark:text-gray-200">{{ $role->users_count }}</strong> Pengguna</span>
                     </div>
                     <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -115,7 +115,7 @@
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                         </svg>
-                        <span><strong class="text-gray-800 dark:text-gray-200">{{ $role->permissions->count() }}</strong> Permission</span>
+                        <span><strong class="text-gray-800 dark:text-gray-200">{{ $role->permissions->count() }}</strong> Hak Akses</span>
                     </div>
                 </div>
             </div>

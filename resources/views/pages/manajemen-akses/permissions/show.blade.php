@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Detail Permission')
+@section('title', 'Detail Hak Akses')
 
 @section('content')
 <div class="p-6 space-y-6">
@@ -14,7 +14,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
             </a>
-            <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Detail Permission</h1>
+            <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Detail Hak Akses</h1>
         </div>
         <a href="{{ route('dashboard.permissions.edit', $permission) }}"
            class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
@@ -29,7 +29,7 @@
 
         {{-- Main Info Card --}}
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 space-y-5">
-            <h2 class="text-base font-semibold text-gray-900 dark:text-white">Informasi Permission</h2>
+            <h2 class="text-base font-semibold text-gray-900 dark:text-white">Informasi Hak Akses</h2>
 
             {{-- Kode --}}
             <div>
@@ -85,7 +85,7 @@
 
         {{-- Roles Card --}}
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-            <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Dipakai oleh Role</h2>
+            <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Dipakai oleh Peran</h2>
             <div class="flex flex-wrap gap-2">
                 @forelse($permission->roles as $role)
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">

@@ -5,10 +5,10 @@
 
     {{-- Header --}}
     <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
-        <h1 class="text-lg font-semibold text-gray-900 dark:text-white">User Management</h1>
+        <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Manajemen Pengguna</h1>
         <button onclick="openCreateModal()"
             class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-            Tambah User
+            Tambah Pengguna
         </button>
     </div>
 
@@ -22,7 +22,7 @@
             </div>
             <div>
                 <p id="stat-total" class="text-2xl font-bold text-gray-900 dark:text-white">{{ $stats['total'] }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total User</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total Pengguna</p>
             </div>
         </div>
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center gap-4">
@@ -33,7 +33,7 @@
             </div>
             <div>
                 <p id="stat-aktif" class="text-2xl font-bold text-green-600">{{ $stats['aktif'] }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">User Aktif</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Pengguna Aktif</p>
             </div>
         </div>
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 flex items-center gap-4">
@@ -44,7 +44,7 @@
             </div>
             <div>
                 <p id="stat-tidak-aktif" class="text-2xl font-bold text-red-500">{{ $stats['tidak_aktif'] }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">User Tidak Aktif</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Pengguna Tidak Aktif</p>
             </div>
         </div>
     </div>
@@ -69,7 +69,7 @@
             <div class="flex items-center gap-2 flex-wrap">
                 <select id="filterRole" onchange="applyFilters()"
                     class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
-                    <option value="">Semua Role</option>
+                    <option value="">Semua Peran</option>
                     @foreach($roles as $role)
                     <option value="{{ $role->role_name }}">{{ $role->role_name }}</option>
                     @endforeach
