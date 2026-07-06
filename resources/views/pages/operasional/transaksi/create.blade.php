@@ -79,6 +79,13 @@
         <span id="jurnalTambahStatus" class="font-medium text-gray-400">Belum diisi</span>
     </div>
 
+    <div id="jurnalTambahZakatWarning" class="hidden mb-3 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700">
+        <svg class="w-4 h-4 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.28 11.18c.75 1.334-.213 2.98-1.742 2.98H3.72c-1.53 0-2.493-1.646-1.743-2.98l6.28-11.18zM11 14a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V7a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <span>Transaksi ini melibatkan akun <strong>Zakat</strong>. Mohon isi <strong>Keterangan</strong> secara detail (jenis zakat, jumlah muzakki/mustahik, atau tujuan penyaluran) agar sesuai ketentuan pencatatan zakat.</span>
+    </div>
+
     <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan</label>
         <textarea name="deskripsi" rows="2"
@@ -298,7 +305,19 @@
 
 <script>
 // Daftar akun untuk dropdown jurnal (dipakai juga oleh editTransaksi() di index.blade.php)
-const akunListTambah = @json($akuns->map(fn($a) => ['id' => $a->id, 'label' => $a->kode_akun . ' – ' . $a->nama_akun]));
+const akunListTambah = {!! json_encode($akuns->map(fn($a) => [
+    'id'       => $a->id,
+    'label'    => $a->kode_akun . ' – ' . $a->nama_akun,
+    'is_zakat' => str_contains(strtolower($a->nama_akun), 'zakat'),
+])) !!};
+
+function buatOpsiAkunHTML(akunList, selected = '') {
+    let html = '<option value="">Pilih akun</option>';
+    akunList.forEach(a => {
+        html += `<option value="${a.id}" data-zakat="${a.is_zakat ? 1 : 0}" ${String(a.id) === String(selected) ? 'selected' : ''}>${a.label}</option>`;
+    });
+    return html;
+}
 
 document.addEventListener('DOMContentLoaded', function () {
     flatpickr('#inputTanggalTambah', {
@@ -322,17 +341,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Default 1 baris debit + 1 baris kredit
     buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah, 'DEBIT');
     buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah, 'KREDIT');
+    checkZakatWarning('jurnalTambahBody', 'jurnalTambah');
 });
 
 // ── Jurnal dinamis (dipakai bersama oleh form Tambah & Edit) ───────────────
-
-function buatOpsiAkunHTML(akunList, selected = '') {
-    let html = '<option value="">Pilih akun</option>';
-    akunList.forEach(a => {
-        html += `<option value="${a.id}" ${String(a.id) === String(selected) ? 'selected' : ''}>${a.label}</option>`;
-    });
-    return html;
-}
 
 function buatBarisJurnal(tbodyId, prefix, akunList, tipe = 'DEBIT', akunId = '', nominal = '') {
     const tbody = document.getElementById(tbodyId);
@@ -340,7 +352,8 @@ function buatBarisJurnal(tbodyId, prefix, akunList, tipe = 'DEBIT', akunId = '',
     const tr = document.createElement('tr');
     tr.innerHTML = `
         <td class="px-3 py-2">
-            <select class="jurnalAkun w-full h-9 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500">
+            <select class="jurnalAkun w-full h-9 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500"
+                onchange="checkZakatWarning('${tbodyId}', '${prefix}')">
                 ${buatOpsiAkunHTML(akunList, akunId)}
             </select>
         </td>
@@ -379,6 +392,7 @@ function hapusBarisJurnal(btn, tbodyId, prefix) {
     }
     btn.closest('tr').remove();
     hitungTotalJurnal(tbodyId, prefix);
+    checkZakatWarning(tbodyId, prefix);
 }
 
 function hitungTotalJurnal(tbodyId, prefix) {
@@ -406,6 +420,19 @@ function hitungTotalJurnal(tbodyId, prefix) {
     }
 
     return { totalDebit, totalKredit };
+}
+
+function checkZakatWarning(tbodyId, prefix) {
+    const tbody = document.getElementById(tbodyId);
+    const warningEl = document.getElementById(prefix + 'ZakatWarning');
+    if (!tbody || !warningEl) return;
+
+    const adaZakat = [...tbody.querySelectorAll('.jurnalAkun')].some(sel => {
+        const opt = sel.options[sel.selectedIndex];
+        return opt && opt.dataset.zakat === '1';
+    });
+
+    warningEl.classList.toggle('hidden', !adaZakat);
 }
 
 // ── Aset toggle ──────────────────────────────────────────────────────────
