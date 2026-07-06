@@ -57,7 +57,7 @@
     <div class="flex items-center justify-between px-4 border-b border-gray-100 dark:border-gray-800 h-[72px]">
 
         <!-- Logo & Name (expanded) -->
-        <a href="/" class="flex items-center gap-3 overflow-hidden"
+        <a href="{{ route('dashboard.home') }}" class="flex items-center gap-3 overflow-hidden"
             x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen">
             <img class="dark:hidden flex-shrink-0" src="{{ asset('images/logo.png') }}" alt="Logo" width="40" height="40" />
             <img class="hidden dark:block flex-shrink-0" src="{{ asset('images/logo.png') }}" alt="Logo" width="40" height="40" />
@@ -67,7 +67,7 @@
         </a>
 
         <!-- Logo only (collapsed) -->
-        <a href="/" class="flex items-center justify-center w-full"
+        <a href="{{ route('dashboard.home') }}" class="flex items-center justify-center w-full"
             x-show="!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen">
             <img src="{{ asset('images/logo.png') }}" alt="Logo" width="36" height="36" />
         </a>

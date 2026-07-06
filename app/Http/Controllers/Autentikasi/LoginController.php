@@ -66,12 +66,11 @@ class LoginController extends Controller
      * berdasarkan role pengguna.
      *
      * Mapping slug role → route tujuan:
-     *   admin / super-admin         → Manajemen Pengguna
+     *   admin                       → Manajemen Pengguna
      *   bendahara-1 / bendahara-2   → Dashboard Operasional
      *   ketua-dkm                   → Dashboard Operasional
-     *   phm                         → Pencatatan Kencleng
-     *   panitia-khusus              → Pencatatan Transaksi Kegiatan
-     *     (akan diupdate ke panitia-kegiatan-khusus setelah bulk seeder)
+     *   pengurus-harian-masjid       → Pencatatan Kencleng
+     *   panitia-kegiatan-khusus     → Pencatatan Transaksi Kegiatan
      *   sekretaris                  → Aset
      *   default                     → Dashboard Operasional
      */
@@ -81,20 +80,17 @@ class LoginController extends Controller
 
         $map = [
             // Admin — akses penuh, langsung ke manajemen pengguna
-            'super-admin'              => 'dashboard.users.index',
-            'admin'                    => 'dashboard.users.index',
+            'administrator'            => 'dashboard.users.index',
 
             // Bendahara & Ketua DKM — landing di dashboard utama
             'bendahara-1'              => 'dashboard.index',
             'bendahara-2'              => 'dashboard.index',
             'ketua-dkm'               => 'dashboard.index',
 
-            // PHM — tugas utama: kencleng
-            'phm'                      => 'dashboard.kencleng.index',
+            // Pengurus Harian Masjid — tugas utama: kencleng
+            'pengurus-harian-masjid'   => 'dashboard.kencleng.index',
 
             // Panitia — langsung ke transaksi kegiatan yang ditugaskan
-            // Catatan: slug akan berubah jadi panitia-kegiatan-khusus setelah bulk seeder
-            'panitia-khusus'           => 'dashboard.transaksi-kegiatan.index',
             'panitia-kegiatan-khusus'  => 'dashboard.transaksi-kegiatan.index',
 
             // Sekretaris — langsung ke aset

@@ -6,465 +6,169 @@ use Illuminate\Database\Seeder;
 use App\Models\KategoriAkun;
 use App\Models\Akun;
 
+/**
+ * Chart of Accounts (CoA) sesuai Laporan Tugas Akhir — Tabel IV.7.
+ *
+ * Struktur:
+ *  - Kode header  : X-Y00  (parent_id = null)
+ *  - Kode leaf    : X-Y0Z  (parent_id = header)
+ *
+ * Tambahan dari CoA laporan: rincian Aset Neto Dengan Pembatasan (3-2xx)
+ * dipecah per jenis dana agar dana terikat tetap terinci.
+ */
 class AkunSeeder extends Seeder
 {
     public function run(): void
     {
-        $aset       = KategoriAkun::where('kode_kategori', '1')->first();
-        $liabilitas = KategoriAkun::where('kode_kategori', '2')->first();
-        $asetNeto   = KategoriAkun::where('kode_kategori', '3')->first();
-        $pendapatan = KategoriAkun::where('kode_kategori', '4')->first();
-        $beban      = KategoriAkun::where('kode_kategori', '5')->first();
+        $kategori = [
+            '1' => KategoriAkun::where('kode_kategori', '1')->first(), // Aset
+            '2' => KategoriAkun::where('kode_kategori', '2')->first(), // Liabilitas
+            '3' => KategoriAkun::where('kode_kategori', '3')->first(), // Aset Neto
+            '4' => KategoriAkun::where('kode_kategori', '4')->first(), // Pendapatan
+            '5' => KategoriAkun::where('kode_kategori', '5')->first(), // Beban
+        ];
 
-        // ── 1. ASET ────────────────────────────────────────────────────────
-        $asetLancar = Akun::create([
-            'kategori_akun_id' => $aset->id,
-            'parent_id'        => null,
-            'kode_akun'        => '1-1000',
-            'nama_akun'        => 'Aset Lancar',
-            'saldo_normal'     => 'DEBIT',
-        ]);
+        // Struktur CoA: setiap grup = [katKode, headerKode, headerNama, normalHeader, [leaf...]]
+        // leaf = [kode, nama, saldo_normal]
+        $struktur = [
+            // ── 1. ASET ────────────────────────────────────────────────
+            ['1', '1-100', 'Aset Lancar', 'DEBIT', [
+                ['1-101', 'Kas Kecil', 'DEBIT'],
+                ['1-102', 'Kas Infak', 'DEBIT'],
+                ['1-103', 'Kas Zakat', 'DEBIT'],
+                ['1-104', 'Piutang', 'DEBIT'],
+                ['1-105', 'Beban Dibayar Dimuka', 'DEBIT'],
+                ['1-106', 'Perlengkapan Masjid', 'DEBIT'],
+            ]],
+            ['1', '1-200', 'Aset Tetap', 'DEBIT', [
+                ['1-201', 'Tanah Masjid', 'DEBIT'],
+                ['1-202', 'Bangunan Masjid', 'DEBIT'],
+                ['1-203', 'Akumulasi Penyusutan Bangunan', 'KREDIT'],
+                ['1-204', 'Aset Dalam Pembangunan', 'DEBIT'],
+                ['1-205', 'Investasi Jangka Panjang', 'DEBIT'],
+                ['1-206', 'Peralatan Masjid', 'DEBIT'],
+                ['1-207', 'Akumulasi Penyusutan Peralatan Masjid', 'KREDIT'],
+            ]],
 
-        Akun::create([
-            'kategori_akun_id' => $aset->id,
-            'parent_id'        => $asetLancar->id,
-            'kode_akun'        => '1-1100',
-            'nama_akun'        => 'Kas dan Setara Kas',
-            'saldo_normal'     => 'DEBIT',
-        ]);
+            // ── 2. LIABILITAS ──────────────────────────────────────────
+            ['2', '2-100', 'Liabilitas Jangka Pendek', 'KREDIT', [
+                ['2-101', 'Utang Operasional', 'KREDIT'],
+                ['2-102', 'Utang Listrik', 'KREDIT'],
+                ['2-103', 'Utang Air', 'KREDIT'],
+                ['2-104', 'Utang Honorarium', 'KREDIT'],
+                ['2-105', 'Utang Kegiatan', 'KREDIT'],
+                ['2-106', 'Dana Titipan Zakat Maal', 'KREDIT'],
+                ['2-107', 'Dana Titipan Zakat Fitrah', 'KREDIT'],
+                ['2-108', 'Dana Titipan Qurban', 'KREDIT'],
+            ]],
+            ['2', '2-200', 'Liabilitas Jangka Panjang', 'KREDIT', [
+                ['2-201', 'Utang Jangka Panjang', 'KREDIT'],
+            ]],
 
-        Akun::create([
-            'kategori_akun_id' => $aset->id,
-            'parent_id'        => $asetLancar->id,
-            'kode_akun'        => '1-1110',
-            'nama_akun'        => 'Kas Utama',
-            'saldo_normal'     => 'DEBIT',
-        ]);
+            // ── 3. ASET NETO ───────────────────────────────────────────
+            ['3', '3-100', 'Aset Neto Tanpa Pembatasan', 'KREDIT', [
+                ['3-101', 'Saldo Awal Aset Neto', 'KREDIT'],
+                ['3-102', 'Surplus/Defisit Tahun Berjalan', 'KREDIT'],
+            ]],
+            ['3', '3-200', 'Aset Neto Dengan Pembatasan', 'KREDIT', [
+                ['3-201', 'Dana Zakat Maal', 'KREDIT'],
+                ['3-202', 'Dana Zakat Fitrah', 'KREDIT'],
+                ['3-203', 'Dana Wakaf', 'KREDIT'],
+                ['3-204', 'Dana Pembangunan', 'KREDIT'],
+                ['3-205', 'Dana Qurban', 'KREDIT'],
+                ['3-206', 'Dana Program Terikat', 'KREDIT'],
+            ]],
 
-        Akun::create([
-            'kategori_akun_id' => $aset->id,
-            'parent_id'        => $asetLancar->id,
-            'kode_akun'        => '1-1120',
-            'nama_akun'        => 'Kas Operasional',
-            'saldo_normal'     => 'DEBIT',
-        ]);
+            // ── 4. PENDAPATAN ──────────────────────────────────────────
+            ['4', '4-100', 'Pendapatan Tanpa Pembatasan', 'KREDIT', [
+                ['4-101', 'Infak Tunai', 'KREDIT'],
+                ['4-102', 'Infak Kotak Amal', 'KREDIT'],
+                ['4-103', 'Infak Online', 'KREDIT'],
+                ['4-104', 'Donasi Umum', 'KREDIT'],
+                ['4-105', 'Pendapatan Lain-lain', 'KREDIT'],
+                ['4-106', 'Keuntungan Pelepasan Aset Tetap', 'KREDIT'],
+            ]],
+            ['4', '4-200', 'Pendapatan Dengan Pembatasan', 'KREDIT', [
+                ['4-201', 'Zakat Maal Emas & Perak', 'KREDIT'],
+                ['4-202', 'Zakat Maal Uang & Tabungan', 'KREDIT'],
+                ['4-203', 'Zakat Maal Perdagangan', 'KREDIT'],
+                ['4-204', 'Zakat Maal Pertanian', 'KREDIT'],
+                ['4-205', 'Zakat Maal Profesi', 'KREDIT'],
+                ['4-206', 'Zakat Maal Ternak', 'KREDIT'],
+                ['4-207', 'Zakat Maal Investasi Syariah', 'KREDIT'],
+                ['4-208', 'Zakat Fitrah Beras', 'KREDIT'],
+                ['4-209', 'Zakat Fitrah Uang', 'KREDIT'],
+                ['4-210', 'Wakaf Tunai', 'KREDIT'],
+                ['4-211', 'Wakaf Aset', 'KREDIT'],
+                ['4-212', 'Dana Pembangunan', 'KREDIT'],
+                ['4-213', 'Dana Qurban', 'KREDIT'],
+                ['4-214', 'Donasi Terikat Program', 'KREDIT'],
+            ]],
 
-        Akun::create([
-            'kategori_akun_id' => $aset->id,
-            'parent_id'        => $asetLancar->id,
-            'kode_akun'        => '1-1130',
-            'nama_akun'        => 'Rekening BRI',
-            'saldo_normal'     => 'DEBIT',
-        ]);
+            // ── 5. BEBAN ───────────────────────────────────────────────
+            ['5', '5-100', 'Beban Operasional', 'DEBIT', [
+                ['5-101', 'Listrik', 'DEBIT'],
+                ['5-102', 'Air', 'DEBIT'],
+                ['5-103', 'Internet', 'DEBIT'],
+                ['5-104', 'Kebersihan', 'DEBIT'],
+                ['5-105', 'Perlengkapan Masjid', 'DEBIT'],
+                ['5-106', 'Honor Imam', 'DEBIT'],
+                ['5-107', 'Honor Muadzin', 'DEBIT'],
+                ['5-108', 'Honor Marbot', 'DEBIT'],
+            ]],
+            ['5', '5-200', 'Beban Kegiatan', 'DEBIT', [
+                ['5-201', 'Kajian', 'DEBIT'],
+                ['5-202', 'Pengajian', 'DEBIT'],
+                ['5-203', 'PHBI', 'DEBIT'],
+                ['5-204', 'Konsumsi Kegiatan', 'DEBIT'],
+                ['5-205', 'Kegiatan Sosial', 'DEBIT'],
+            ]],
+            ['5', '5-300', 'Beban Penyaluran Zakat', 'DEBIT', [
+                ['5-301', 'Fakir', 'DEBIT'],
+                ['5-302', 'Miskin', 'DEBIT'],
+                ['5-303', 'Amil', 'DEBIT'],
+                ['5-304', 'Muallaf', 'DEBIT'],
+                ['5-305', 'Gharimin', 'DEBIT'],
+                ['5-306', 'Fisabilillah', 'DEBIT'],
+                ['5-307', 'Ibnu Sabil', 'DEBIT'],
+                ['5-308', 'Penyaluran Zakat Fitrah', 'DEBIT'],
+            ]],
+            ['5', '5-400', 'Beban Lainnya', 'DEBIT', [
+                ['5-401', 'Penyaluran Wakaf', 'DEBIT'],
+                ['5-402', 'Beban Pembangunan Masjid', 'DEBIT'],
+                ['5-403', 'Beban Qurban', 'DEBIT'],
+                ['5-404', 'Bantuan Sosial', 'DEBIT'],
+                ['5-405', 'Kerugian Pelepasan Aset Tetap', 'DEBIT'],
+            ]],
+            ['5', '5-500', 'Beban Pemeliharaan', 'DEBIT', [
+                ['5-501', 'Perawatan Bangunan', 'DEBIT'],
+                ['5-502', 'Perawatan Peralatan Masjid', 'DEBIT'],
+                ['5-503', 'Perbaikan Fasilitas', 'DEBIT'],
+            ]],
+            ['5', '5-600', 'Beban Penyusutan', 'DEBIT', [
+                ['5-601', 'Penyusutan Bangunan', 'DEBIT'],
+                ['5-602', 'Penyusutan Peralatan Masjid', 'DEBIT'],
+            ]],
+        ];
 
-        Akun::create([
-            'kategori_akun_id' => $aset->id,
-            'parent_id'        => $asetLancar->id,
-            'kode_akun'        => '1-1140',
-            'nama_akun'        => 'Rekening BSI',
-            'saldo_normal'     => 'DEBIT',
-        ]);
+        foreach ($struktur as [$katKode, $headerKode, $headerNama, $normalHeader, $leaves]) {
+            $header = Akun::create([
+                'kategori_akun_id' => $kategori[$katKode]->id,
+                'parent_id'        => null,
+                'kode_akun'        => $headerKode,
+                'nama_akun'        => $headerNama,
+                'saldo_normal'     => $normalHeader,
+            ]);
 
-        Akun::create([
-            'kategori_akun_id' => $aset->id,
-            'parent_id'        => $asetLancar->id,
-            'kode_akun'        => '1-1200',
-            'nama_akun'        => 'Piutang',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $aset->id,
-            'parent_id'        => $asetLancar->id,
-            'kode_akun'        => '1-1300',
-            'nama_akun'        => 'Beban Dibayar Dimuka',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        $asetTetap = Akun::create([
-            'kategori_akun_id' => $aset->id,
-            'parent_id'        => null,
-            'kode_akun'        => '1-2000',
-            'nama_akun'        => 'Aset Tetap',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $aset->id,
-            'parent_id'        => $asetTetap->id,
-            'kode_akun'        => '1-2100',
-            'nama_akun'        => 'Tanah',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $aset->id,
-            'parent_id'        => $asetTetap->id,
-            'kode_akun'        => '1-2200',
-            'nama_akun'        => 'Bangunan Masjid',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $aset->id,
-            'parent_id'        => $asetTetap->id,
-            'kode_akun'        => '1-2210',
-            'nama_akun'        => 'Akumulasi Penyusutan Bangunan',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $aset->id,
-            'parent_id'        => $asetTetap->id,
-            'kode_akun'        => '1-2300',
-            'nama_akun'        => 'Peralatan Masjid',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $aset->id,
-            'parent_id'        => $asetTetap->id,
-            'kode_akun'        => '1-2310',
-            'nama_akun'        => 'Akumulasi Penyusutan Peralatan',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        // ── 2. LIABILITAS ──────────────────────────────────────────────────
-        $liabilitasLancar = Akun::create([
-            'kategori_akun_id' => $liabilitas->id,
-            'parent_id'        => null,
-            'kode_akun'        => '2-1000',
-            'nama_akun'        => 'Liabilitas Jangka Pendek',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $liabilitas->id,
-            'parent_id'        => $liabilitasLancar->id,
-            'kode_akun'        => '2-1100',
-            'nama_akun'        => 'Utang Beban',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $liabilitas->id,
-            'parent_id'        => $liabilitasLancar->id,
-            'kode_akun'        => '2-1110',
-            'nama_akun'        => 'Utang Beban Listrik',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $liabilitas->id,
-            'parent_id'        => $liabilitasLancar->id,
-            'kode_akun'        => '2-1120',
-            'nama_akun'        => 'Utang Beban Air',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $liabilitas->id,
-            'parent_id'        => $liabilitasLancar->id,
-            'kode_akun'        => '2-1200',
-            'nama_akun'        => 'Dana Titipan Zakat',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $liabilitas->id,
-            'parent_id'        => $liabilitasLancar->id,
-            'kode_akun'        => '2-1300',
-            'nama_akun'        => 'Dana Titipan Qurban',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        // ── 3. ASET NETO ───────────────────────────────────────────────────
-        //
-        // Terminologi diselaraskan dengan ISAK 335:
-        //   "Tanpa Pembatasan" (without restrictions) — sebelumnya "Tidak Terikat"
-        //   "Dengan Pembatasan" (with restrictions)   — sebelumnya "Terikat Temporer"
-        //
-        // Akun 3-1200 Surplus/Defisit Tahun Berjalan DIHAPUS — tidak diperlukan
-        // karena surplus sudah tercermin otomatis di saldo 3-1000 setelah
-        // jurnal penutup diposting.
-
-        $asetNetoTanpaPembatasan = Akun::create([
-            'kategori_akun_id' => $asetNeto->id,
-            'parent_id'        => null,
-            'kode_akun'        => '3-1000',
-            'nama_akun'        => 'Aset Neto Tanpa Pembatasan',  // ← diperbarui
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $asetNeto->id,
-            'parent_id'        => $asetNetoTanpaPembatasan->id,
-            'kode_akun'        => '3-1100',
-            'nama_akun'        => 'Saldo Awal',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        // 3-1200 Surplus/Defisit Tahun Berjalan → DIHAPUS
-
-        $asetNetoDenganPembatasan = Akun::create([
-            'kategori_akun_id' => $asetNeto->id,
-            'parent_id'        => null,
-            'kode_akun'        => '3-2000',
-            'nama_akun'        => 'Aset Neto Dengan Pembatasan', // ← diperbarui
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $asetNeto->id,
-            'parent_id'        => $asetNetoDenganPembatasan->id,
-            'kode_akun'        => '3-2100',
-            'nama_akun'        => 'Dana Wakaf',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $asetNeto->id,
-            'parent_id'        => $asetNetoDenganPembatasan->id,
-            'kode_akun'        => '3-2200',
-            'nama_akun'        => 'Dana Pembangunan',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        // ── 4. PENDAPATAN ──────────────────────────────────────────────────
-        //
-        // Struktur sudah benar — dua parent sesuai klasifikasi ISAK 335:
-        //   4-1000 Pendapatan Tidak Terikat  → PREFIX_DENGAN_PEMBATASAN tidak cocok
-        //                                      → closing ke 3-1000
-        //   4-2000 Pendapatan Terikat        → prefix '4-2' cocok
-        //                                      → closing ke 3-2000
-
-        $pendapatanTidakTerikat = Akun::create([
-            'kategori_akun_id' => $pendapatan->id,
-            'parent_id'        => null,
-            'kode_akun'        => '4-1000',
-            'nama_akun'        => 'Pendapatan Tidak Terikat',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $pendapatan->id,
-            'parent_id'        => $pendapatanTidakTerikat->id,
-            'kode_akun'        => '4-1100',
-            'nama_akun'        => 'Pendapatan Infaq Jumat',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $pendapatan->id,
-            'parent_id'        => $pendapatanTidakTerikat->id,
-            'kode_akun'        => '4-1200',
-            'nama_akun'        => 'Pendapatan Infaq Harian',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $pendapatan->id,
-            'parent_id'        => $pendapatanTidakTerikat->id,
-            'kode_akun'        => '4-1300',
-            'nama_akun'        => 'Pendapatan Kencleng',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $pendapatan->id,
-            'parent_id'        => $pendapatanTidakTerikat->id,
-            'kode_akun'        => '4-1400',
-            'nama_akun'        => 'Pendapatan Hibah',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        $pendapatanTerikat = Akun::create([
-            'kategori_akun_id' => $pendapatan->id,
-            'parent_id'        => null,
-            'kode_akun'        => '4-2000',
-            'nama_akun'        => 'Pendapatan Terikat',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $pendapatan->id,
-            'parent_id'        => $pendapatanTerikat->id,
-            'kode_akun'        => '4-2100',
-            'nama_akun'        => 'Penerimaan Zakat Fitrah',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $pendapatan->id,
-            'parent_id'        => $pendapatanTerikat->id,
-            'kode_akun'        => '4-2200',
-            'nama_akun'        => 'Penerimaan Zakat Maal',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $pendapatan->id,
-            'parent_id'        => $pendapatanTerikat->id,
-            'kode_akun'        => '4-2300',
-            'nama_akun'        => 'Penerimaan Donasi Qurban',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $pendapatan->id,
-            'parent_id'        => $pendapatanTerikat->id,
-            'kode_akun'        => '4-2400',
-            'nama_akun'        => 'Penerimaan Donasi Pembangunan',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $pendapatan->id,
-            'parent_id'        => $pendapatanTerikat->id,
-            'kode_akun'        => '4-2500',
-            'nama_akun'        => 'Penerimaan Wakaf Uang',
-            'saldo_normal'     => 'KREDIT',
-        ]);
-
-        // ── 5. BEBAN ───────────────────────────────────────────────────────
-        //
-        // Semua beban → Tanpa Pembatasan (sesuai ISAK 335).
-        // Tidak perlu pembagian terikat/tidak terikat di sini.
-
-        $bebanOperasional = Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => null,
-            'kode_akun'        => '5-1000',
-            'nama_akun'        => 'Beban Operasional',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => $bebanOperasional->id,
-            'kode_akun'        => '5-1100',
-            'nama_akun'        => 'Beban Listrik',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => $bebanOperasional->id,
-            'kode_akun'        => '5-1200',
-            'nama_akun'        => 'Beban Air (PDAM)',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => $bebanOperasional->id,
-            'kode_akun'        => '5-1300',
-            'nama_akun'        => 'Beban Internet',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => $bebanOperasional->id,
-            'kode_akun'        => '5-1400',
-            'nama_akun'        => 'Beban Honor Imam',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => $bebanOperasional->id,
-            'kode_akun'        => '5-1500',
-            'nama_akun'        => 'Beban Honor Muadzin',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => $bebanOperasional->id,
-            'kode_akun'        => '5-1600',
-            'nama_akun'        => 'Beban Kebersihan',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => $bebanOperasional->id,
-            'kode_akun'        => '5-1700',
-            'nama_akun'        => 'Beban ATK & Perlengkapan',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => $bebanOperasional->id,
-            'kode_akun'        => '5-1800',
-            'nama_akun'        => 'Beban Perlengkapan Ibadah',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        $bebanKegiatan = Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => null,
-            'kode_akun'        => '5-2000',
-            'nama_akun'        => 'Beban Kegiatan',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => $bebanKegiatan->id,
-            'kode_akun'        => '5-2100',
-            'nama_akun'        => 'Beban Qurban',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => $bebanKegiatan->id,
-            'kode_akun'        => '5-2200',
-            'nama_akun'        => 'Beban Penyaluran Zakat',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => $bebanKegiatan->id,
-            'kode_akun'        => '5-2300',
-            'nama_akun'        => 'Beban Kegiatan Sosial',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => $bebanKegiatan->id,
-            'kode_akun'        => '5-2400',
-            'nama_akun'        => 'Beban Kegiatan Kajian',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        $bebanPenyusutan = Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => null,
-            'kode_akun'        => '5-3000',
-            'nama_akun'        => 'Beban Penyusutan',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => $bebanPenyusutan->id,
-            'kode_akun'        => '5-3100',
-            'nama_akun'        => 'Beban Penyusutan Bangunan',
-            'saldo_normal'     => 'DEBIT',
-        ]);
-
-        Akun::create([
-            'kategori_akun_id' => $beban->id,
-            'parent_id'        => $bebanPenyusutan->id,
-            'kode_akun'        => '5-3200',
-            'nama_akun'        => 'Beban Penyusutan Peralatan',
-            'saldo_normal'     => 'DEBIT',
-        ]);
+            foreach ($leaves as [$kode, $nama, $normal]) {
+                Akun::create([
+                    'kategori_akun_id' => $kategori[$katKode]->id,
+                    'parent_id'        => $header->id,
+                    'kode_akun'        => $kode,
+                    'nama_akun'        => $nama,
+                    'saldo_normal'     => $normal,
+                ]);
+            }
+        }
     }
 }

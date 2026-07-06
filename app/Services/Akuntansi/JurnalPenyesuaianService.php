@@ -33,7 +33,8 @@ class JurnalPenyesuaianService extends JurnalService
      * Akun yang dikecualikan dari semua tipe penyesuaian.
      * Kas & Bank tidak pernah disesuaikan lewat jurnal penyesuaian.
      */
-    const EXCLUDED_AKUN_KODE = ['1-1100', '1-1200', '1-1300', '1-1400'];
+    // Kas tidak pernah disesuaikan lewat jurnal penyesuaian (CoA laporan).
+    const EXCLUDED_AKUN_KODE = ['1-101', '1-102', '1-103'];
 
     // ── Query ──────────────────────────────────────────────────────────────
 

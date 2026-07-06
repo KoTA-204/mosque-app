@@ -33,6 +33,16 @@ class DompetSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+
+            [
+                'nama_dompet' => 'Bank BRI Operasional',
+                'jenis_dompet' => 'BANK',
+                'nomor_rekening' => '0234567890123',
+                'nama_bank' => 'BRI',
+                'saldo_awal' => 30000000,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
     }
 }

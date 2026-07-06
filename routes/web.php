@@ -71,15 +71,12 @@ Route::prefix('laporan')->name('laporan.')->group(function () {
     Route::get('/perubahan-aset-neto', [LaporanKeuanganController::class, 'perubahanAsetNeto'])->name('perubahan-aset-neto');
     Route::get('/arus-kas', [LaporanKeuanganController::class, 'arusKas'])->name('arus-kas');
     Route::get('/catatan-atas-laporan', [LaporanKeuanganController::class, 'calk'])->name('catatan-atas-laporan');
-
-    Route::get('/{jenis}/unduh-pdf', [LaporanKeuanganController::class, 'downloadPdf'])
-        ->where('jenis', 'posisi-keuangan|penghasilan-komprehensif|perubahan-aset-neto|arus-kas|calk')
-        ->name('pdf');
 });
     
 // ── Dashboard ──────────────────────────────────────────────────────────────
 Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('index');
+        Route::get('/home', [DashboardController::class, 'home'])->name('home');
 
     // ── Laporan Keuangan Index (redirect ke halaman pertama) ───────────────
     Route::get('/laporan-keuangan', function () {
@@ -116,6 +113,10 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
         Route::get('/permissions/{permission}/edit', [PermissionController::class, 'tampilkanFormEditPermission'])->name('permissions.edit');
         Route::put('/permissions/{permission}', [PermissionController::class, 'perbaruiPermission'])->name('permissions.update');
         Route::delete('/permissions/{permission}', [PermissionController::class, 'hapusPermission'])->name('permissions.destroy');
+    });
+
+    // ── Manajemen Menu (CRUD khusus Administrator via VIEW_MENU) ─────────
+    Route::middleware('permission:VIEW_MENU')->group(function () {
         Route::get('/menus', [MenuController::class, 'tampilkanDaftarMenu'])->name('menus.index');
         Route::post('/menus', [MenuController::class, 'simpanMenuBaru'])->name('menus.store');
         Route::get('/menus/{menu}', [MenuController::class, 'tampilkanDetailMenu'])->name('menus.show');

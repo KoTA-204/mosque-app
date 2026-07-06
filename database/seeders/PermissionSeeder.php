@@ -26,6 +26,12 @@ class PermissionSeeder extends Seeder
             ['permission_code' => 'EDIT_PERMISSIONS',           'permission_name' => 'Edit Permissions',          'module' => 'permissions',        'action' => 'update'],
             ['permission_code' => 'DELETE_PERMISSIONS',         'permission_name' => 'Delete Permissions',        'module' => 'permissions',        'action' => 'delete'],
 
+            // ── Manajemen Menu (khusus Administrator) ─────────────
+            ['permission_code' => 'VIEW_MENU',                 'permission_name' => 'View Menu',                 'module' => 'menus',              'action' => 'view'],
+            ['permission_code' => 'CREATE_MENU',               'permission_name' => 'Create Menu',               'module' => 'menus',              'action' => 'create'],
+            ['permission_code' => 'EDIT_MENU',                 'permission_name' => 'Edit Menu',                 'module' => 'menus',              'action' => 'update'],
+            ['permission_code' => 'DELETE_MENU',               'permission_name' => 'Delete Menu',               'module' => 'menus',              'action' => 'delete'],
+
             // ── Transaksi ──────────────────────────────────────────
             ['permission_code' => 'VIEW_TRANSAKSI',             'permission_name' => 'Lihat Transaksi',           'module' => 'transaksi',          'action' => 'view'],
             ['permission_code' => 'CREATE_TRANSAKSI',           'permission_name' => 'Tambah Transaksi',          'module' => 'transaksi',          'action' => 'create'],
@@ -133,7 +139,7 @@ class PermissionSeeder extends Seeder
         ];
 
         foreach ($data as $item) {
-            Permission::create($item);
+            Permission::firstOrCreate(['permission_code' => $item['permission_code']], $item);
         }
     }
 }

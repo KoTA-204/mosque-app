@@ -28,6 +28,7 @@ class TransaksiSeeder extends Seeder
         $katSosial      = KategoriTransaksi::where('nama_kategori', 'Sosial & Santunan')->first();
         $katKegiatan    = KategoriTransaksi::where('nama_kategori', 'Kegiatan')->first();
         $katDonasi      = KategoriTransaksi::where('nama_kategori', 'Donasi Kegiatan')->first();
+        $katKonsumsi    = KategoriTransaksi::where('nama_kategori', 'Konsumsi')->first();
 
         $kegQurban = Kegiatan::where('nama_kegiatan', 'Qurban 1447 H')->first();
         $kegZakat  = Kegiatan::where('nama_kegiatan', 'Zakat Fitrah 1447 H')->first();

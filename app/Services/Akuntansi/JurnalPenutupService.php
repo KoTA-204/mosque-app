@@ -14,8 +14,9 @@ class JurnalPenutupService extends JurnalService
     // Konstanta
     // ─────────────────────────────────────────────────────────────
 
-    const KODE_ASET_NETO_TANPA_PEMBATASAN  = '3-1000';
-    const KODE_ASET_NETO_DENGAN_PEMBATASAN = '3-2000';
+    // Akun aset neto tujuan penutupan (CoA laporan)
+    const KODE_ASET_NETO_TANPA_PEMBATASAN  = '3-102'; // Surplus/Defisit Tahun Berjalan
+    const KODE_ASET_NETO_DENGAN_PEMBATASAN = '3-200'; // header dana dengan pembatasan
 
     const KODE_KATEGORI_PENDAPATAN = '4';
     const KODE_KATEGORI_BEBAN      = '5';
@@ -262,6 +263,37 @@ class JurnalPenutupService extends JurnalService
         return Akun::where('kode_akun', $kode)->first();
     }
 
+    /**
+     * Peta akun pendapatan/beban -> akun aset neto (ekuitas) leaf tujuan penutupan.
+     * Sesuai CoA laporan: pendapatan/beban tanpa pembatasan ditutup ke
+     * Surplus/Defisit Tahun Berjalan (3-102), sedangkan dana terikat ditutup
+     * ke leaf dana masing-masing (3-201..3-206).
+     */
+    private function resolveKodeEkuitas(string $kode): string
+    {
+        // Pendapatan tanpa pembatasan -> Surplus/Defisit Tahun Berjalan
+        if (str_starts_with($kode, '4-1')) return '3-102';
+
+        // Pendapatan dengan pembatasan -> dana terikat sesuai jenis
+        if (in_array($kode, ['4-201','4-202','4-203','4-204','4-205','4-206','4-207'], true)) return '3-201';
+        if (in_array($kode, ['4-208','4-209'], true)) return '3-202';
+        if (in_array($kode, ['4-210','4-211'], true)) return '3-203';
+        if ($kode === '4-212') return '3-204';
+        if ($kode === '4-213') return '3-205';
+        if ($kode === '4-214') return '3-206';
+
+        // Beban yang mengurangi dana terikat
+        if (in_array($kode, ['5-301','5-302','5-303','5-304','5-305','5-306','5-307'], true)) return '3-201';
+        if ($kode === '5-308') return '3-202';
+        if ($kode === '5-401') return '3-203';
+        if ($kode === '5-402') return '3-204';
+        if ($kode === '5-403') return '3-205';
+        if ($kode === '5-404') return '3-206';
+
+        // Beban lain -> Surplus/Defisit Tahun Berjalan (tanpa pembatasan)
+        return '3-102';
+    }
+
     // ─────────────────────────────────────────────────────────────
     // Status Tahap
     // ─────────────────────────────────────────────────────────────
@@ -335,34 +367,34 @@ class JurnalPenutupService extends JurnalService
             return [];
         }
 
-        $grouped = collect($ringkasan['pendapatan'])
-            ->filter(fn($item) => $item['saldo'] > 0)
-            ->groupBy(fn($item) => $this->resolveKlasifikasi($item['akun']));
-
         $detail = [];
+        $kreditEkuitas = []; // kode akun ekuitas (leaf) => total
 
-        foreach ($grouped as $klasifikasi => $items) {
-            $totalKlasifikasi = $items->sum('saldo');
-            $asetNetoAkun     = $this->resolveAkunAsetNetoByKlasifikasi($klasifikasi);
-
-            if (!$asetNetoAkun || $totalKlasifikasi <= 0) continue;
-
-            foreach ($items as $item) {
-                $detail[] = $this->buatEntri(
-                    $item['akun']->id,
-                    $item['akun']->nama_akun,
-                    $item['akun']->kode_akun,
-                    'DEBIT',
-                    $item['saldo']
-                );
-            }
+        foreach ($ringkasan['pendapatan'] as $item) {
+            if ($item['saldo'] <= 0) continue;
 
             $detail[] = $this->buatEntri(
-                $asetNetoAkun->id,
-                $asetNetoAkun->nama_akun,
-                $asetNetoAkun->kode_akun,
+                $item['akun']->id,
+                $item['akun']->nama_akun,
+                $item['akun']->kode_akun,
+                'DEBIT',
+                $item['saldo']
+            );
+
+            $tujuan = $this->resolveKodeEkuitas($item['akun']->kode_akun);
+            $kreditEkuitas[$tujuan] = ($kreditEkuitas[$tujuan] ?? 0) + $item['saldo'];
+        }
+
+        foreach ($kreditEkuitas as $kode => $total) {
+            $akunEkuitas = Akun::where('kode_akun', $kode)->first();
+            if (!$akunEkuitas || $total <= 0) continue;
+
+            $detail[] = $this->buatEntri(
+                $akunEkuitas->id,
+                $akunEkuitas->nama_akun,
+                $akunEkuitas->kode_akun,
                 'KREDIT',
-                $totalKlasifikasi
+                $total
             );
         }
 
@@ -379,24 +411,8 @@ class JurnalPenutupService extends JurnalService
             return [];
         }
 
-        $asetNetoAkun = Akun::where(
-            'kode_akun',
-            self::KODE_ASET_NETO_TANPA_PEMBATASAN
-        )->first();
-
-        if (!$asetNetoAkun) {
-            return [];
-        }
-
         $detail = [];
-
-        $detail[] = $this->buatEntri(
-            $asetNetoAkun->id,
-            $asetNetoAkun->nama_akun,
-            $asetNetoAkun->kode_akun,
-            'DEBIT',
-            $ringkasan['total_beban']
-        );
+        $debitEkuitas = []; // kode akun ekuitas (leaf) => total
 
         foreach ($ringkasan['beban'] as $item) {
             if ($item['saldo'] <= 0) continue;
@@ -407,6 +423,22 @@ class JurnalPenutupService extends JurnalService
                 $item['akun']->kode_akun,
                 'KREDIT',
                 $item['saldo']
+            );
+
+            $tujuan = $this->resolveKodeEkuitas($item['akun']->kode_akun);
+            $debitEkuitas[$tujuan] = ($debitEkuitas[$tujuan] ?? 0) + $item['saldo'];
+        }
+
+        foreach ($debitEkuitas as $kode => $total) {
+            $akunEkuitas = Akun::where('kode_akun', $kode)->first();
+            if (!$akunEkuitas || $total <= 0) continue;
+
+            $detail[] = $this->buatEntri(
+                $akunEkuitas->id,
+                $akunEkuitas->nama_akun,
+                $akunEkuitas->kode_akun,
+                'DEBIT',
+                $total
             );
         }
 

@@ -166,7 +166,7 @@ class TransaksiKegiatanController extends Controller
     // ── Helpers ────────────────────────────────────────────────
     private function pastikanBerhakAtasKegiatan(Kegiatan $kegiatan): void
     {
-        if (auth()->user()->hasRole('panitia-khusus') && $kegiatan->panitia_id !== auth()->id()) {
+        if (auth()->user()->hasRole('panitia-kegiatan-khusus') && $kegiatan->panitia_id !== auth()->id()) {
             abort(403);
         }
     }

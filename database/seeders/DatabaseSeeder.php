@@ -35,6 +35,8 @@ class DatabaseSeeder extends Seeder
             AsetSeeder::class,
             PeriodeSeeder::class,
             TransaksiKegiatanSeeder::class,
+            JurnalUmumSeeder::class,
+            JurnalLengkapSeeder::class,
         ]);
     }
 }

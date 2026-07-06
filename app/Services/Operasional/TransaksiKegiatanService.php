@@ -21,7 +21,7 @@ class TransaksiKegiatanService
                 'transaksi as transaksi_pending_count' => fn ($q) =>
                     $q->where('status_approval', 'PENDING'),
             ])
-            ->when(auth()->user()->hasRole('panitia-khusus'), fn ($q) =>
+            ->when(auth()->user()->hasRole('panitia-kegiatan-khusus'), fn ($q) =>
                 $q->where('panitia_id', auth()->id()))
             // 'like' agar portable. Jika pakai PostgreSQL boleh ganti 'ilike'.
             ->when($search, fn ($q) =>
@@ -37,14 +37,14 @@ class TransaksiKegiatanService
     public function hitungRingkasanKegiatan(): array
     {
         $query = Kegiatan::query()
-            ->when(auth()->user()->hasRole('panitia-khusus'), fn ($q) =>
+            ->when(auth()->user()->hasRole('panitia-kegiatan-khusus'), fn ($q) =>
                 $q->where('panitia_id', auth()->id()));
 
         return [
             'total'   => (clone $query)->count(),
             'aktif'   => (clone $query)->where('status', Kegiatan::STATUS_AKTIF)->count(),
             'pending' => Transaksi::whereHas('kegiatan', fn ($q) =>
-                    $q->when(auth()->user()->hasRole('panitia-khusus'), fn ($q) =>
+                    $q->when(auth()->user()->hasRole('panitia-kegiatan-khusus'), fn ($q) =>
                         $q->where('panitia_id', auth()->id())))
                 ->where('status_approval', 'PENDING')
                 ->count(),

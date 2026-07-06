@@ -16,6 +16,25 @@ class DashboardController extends Controller
 {
     public function __construct(private readonly DashboardService $dashboard) {}
 
+    // ── Redirect logo sidebar berdasarkan role ────────────────────────────
+    // Dipanggil dari route dashboard.home (sidebar logo click)
+    public function home()
+    {
+        $slug = optional(auth()->user()->roles)->slug;
+
+        $map = [
+            'administrator'            => 'dashboard.users.index',
+            'ketua-dkm'                => 'dashboard.index',
+            'bendahara-1'              => 'dashboard.index',
+            'bendahara-2'              => 'dashboard.index',
+            'pengurus-harian-masjid'   => 'dashboard.kencleng.index',
+            'panitia-kegiatan-khusus'  => 'dashboard.transaksi-kegiatan.index',
+            'sekretaris'               => 'dashboard.aset.index',
+        ];
+
+        return redirect()->route($map[$slug] ?? 'dashboard.index');
+    }
+
     // ── Dashboard Internal ─────────────────────────────────────────────────
     public function index(Request $request)
     {
@@ -220,7 +239,146 @@ class DashboardController extends Controller
     // ── Dashboard Laporan Keuangan Publik ───────────────────────────
     public function laporanKeuangan(Request $request)
     {
-        return $this->index($request);
+        return $this->publik();
+    }
+
+    // ── Dashboard Publik ───────────────────────────────────────────────────
+    public function publik()
+    {
+        $now = Carbon::now();
+
+        $approved = fn() => Transaksi::where(function ($q) {
+            $q->whereNull('status_approval')
+            ->orWhere('status_approval', 'APPROVED');
+        });
+
+        [$periodeAktif, $periodeSebelumnya] = $this->dashboard->resolvePeriodeAktif();
+
+        $dompetList = Dompet::all();
+        $dompetIds  = $dompetList->pluck('id');
+
+        // ── Saldo Awal = saldo dompet pada AWAL periode aktif (tanggal_awal) ──
+        // = saldo_awal dompet + mutasi sebelum tanggal_awal periode aktif
+        $saldoAwal = $periodeAktif
+            ? $dompetList->sum(function ($d) use ($approved, $periodeAktif) {
+                $mutasiSebelum = (float) $approved()
+                    ->where('dompet_id', $d->id)
+                    ->where('tanggal_transaksi', '<', $periodeAktif->tanggal_awal->startOfDay())
+                    ->selectRaw("SUM(CASE WHEN jenis_transaksi = 'PEMASUKAN' THEN jumlah ELSE -jumlah END) as mutasi")
+                    ->value('mutasi') ?? 0;
+                return (float) $d->saldo_awal + $mutasiSebelum;
+            })
+            : (float) $dompetList->sum('saldo_awal');
+
+        // ── Pemasukan & Pengeluaran = transaksi dompet dalam rentang periode aktif, hingga hari ini ──
+        $batasAwal  = $periodeAktif ? $periodeAktif->tanggal_awal->startOfDay() : Carbon::today()->startOfDay();
+        $batasAkhir = $periodeAktif
+            ? min($periodeAktif->tanggal_akhir->endOfDay(), Carbon::now())
+            : Carbon::now();
+
+        $pemasukan = (float) $approved()
+            ->whereIn('dompet_id', $dompetIds)
+            ->where('jenis_transaksi', 'PEMASUKAN')
+            ->whereBetween('tanggal_transaksi', [$batasAwal, $batasAkhir])
+            ->sum('jumlah');
+
+        $pengeluaran = (float) $approved()
+            ->whereIn('dompet_id', $dompetIds)
+            ->where('jenis_transaksi', 'PENGELUARAN')
+            ->whereBetween('tanggal_transaksi', [$batasAwal, $batasAkhir])
+            ->sum('jumlah');
+
+        // ── Saldo Akhir = Saldo Awal + Pemasukan - Pengeluaran (periode aktif, s.d. hari ini) ──
+        $saldoAkhir = $saldoAwal + $pemasukan - $pengeluaran;
+
+        // ── Sumber Pemasukan per Dompet ────────────────────────────────────────
+        $sumberDana = $dompetList->map(function ($d) use ($approved, $batasAwal, $batasAkhir) {
+            $total = (float) $approved()
+                ->where('dompet_id', $d->id)
+                ->where('jenis_transaksi', 'PEMASUKAN')
+                ->whereBetween('tanggal_transaksi', [$batasAwal, $batasAkhir])
+                ->sum('jumlah');
+            return (object) ['nama_kategori' => $d->nama_dompet, 'total' => $total];
+        })->filter(fn($r) => $r->total > 0)->sortByDesc('total')->values();
+
+        // ── Distribusi Pengeluaran per Kegiatan (fallback: Operasional Umum) ───
+        $penggunaanDana = $approved()
+            ->whereIn('dompet_id', $dompetIds)
+            ->where('jenis_transaksi', 'PENGELUARAN')
+            ->whereBetween('tanggal_transaksi', [$batasAwal, $batasAkhir])
+            ->leftJoin('kegiatan', 'transaksi.kegiatan_id', '=', 'kegiatan.id')
+            ->selectRaw("COALESCE(kegiatan.nama_kegiatan, 'Operasional Umum') as nama_kategori, SUM(transaksi.jumlah) as total")
+            ->groupBy('nama_kategori')
+            ->orderByDesc('total')
+            ->get()
+            ->map(function ($row) {
+                $row->total = (float) $row->total;
+                return $row;
+            });
+
+        // ── Perkembangan dana (line chart, 30 hari terakhir) ─────────────────
+        $perkembangan = collect(range(29, 0))->map(function ($i) use ($approved, $dompetIds) {
+            $tgl   = Carbon::today()->subDays($i);
+            $total = (float) $approved()
+                ->whereIn('dompet_id', $dompetIds)
+                ->where('jenis_transaksi', 'PEMASUKAN')
+                ->whereDate('tanggal_transaksi', $tgl)
+                ->sum('jumlah');
+            return ['tanggal' => $tgl->format('d/m'), 'total' => $total];
+        });
+
+        $totalDonasi          = $pemasukan;
+        $totalPemasukan30Hari = $perkembangan->sum('total');
+        $avgHari              = $totalPemasukan30Hari / 30;
+        $avgMinggu            = $avgHari * 7;
+        $avgBulan             = $totalPemasukan30Hari;
+
+        $pemasukan30HariSebelumnya = (float) $approved()
+            ->whereIn('dompet_id', $dompetIds)
+            ->where('jenis_transaksi', 'PEMASUKAN')
+            ->whereBetween('tanggal_transaksi', [
+                Carbon::today()->subDays(59),
+                Carbon::today()->subDays(30),
+            ])
+            ->sum('jumlah');
+
+        $persenPerkembangan = $pemasukan30HariSebelumnya > 0
+            ? round((($totalPemasukan30Hari - $pemasukan30HariSebelumnya) / $pemasukan30HariSebelumnya) * 100, 1)
+            : ($totalPemasukan30Hari > 0 ? 100 : 0);
+
+        // ── Kegiatan berjalan ─────────────────────────────────────────────────
+        $kegiatanBerjalan = Kegiatan::aktif()
+            ->withSum(['transaksi as terkumpul' => fn($q) =>
+                $q->where('jenis_transaksi', 'PEMASUKAN')
+                ->where(function ($q2) {
+                    $q2->whereNull('status_approval')
+                        ->orWhere('status_approval', 'APPROVED');
+                })
+            ], 'jumlah')
+            ->take(4)
+            ->get();
+
+        // ── Transaksi terbaru ─────────────────────────────────────────────────
+        $transaksiTerbaru = Transaksi::with('kategoriTransaksi')
+            ->where(function ($q) {
+                $q->whereNull('status_approval')
+                ->orWhere('status_approval', 'APPROVED');
+            })
+            ->when($periodeAktif, fn($q) => $q->whereBetween('tanggal_transaksi', [
+                $periodeAktif->tanggal_awal->startOfDay(),
+                $periodeAktif->tanggal_akhir->endOfDay(),
+            ]))
+            ->latest('tanggal_transaksi')
+            ->get();
+
+        $tanggalFilter = now()->format('Y-m-d');
+
+        return view('pages.dashboard.publik', compact(
+            'now', 'periodeAktif', 'saldoAwal', 'pemasukan', 'pengeluaran', 'saldoAkhir',
+            'sumberDana', 'penggunaanDana', 'perkembangan',
+            'totalDonasi', 'avgHari', 'avgMinggu', 'avgBulan', 'persenPerkembangan',
+            'kegiatanBerjalan', 'transaksiTerbaru', 'tanggalFilter',
+        ));
     }
 
 

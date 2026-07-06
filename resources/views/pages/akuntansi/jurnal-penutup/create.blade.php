@@ -324,16 +324,16 @@ function generateEntriTahap(tipe) {
 
         tanpa.forEach(i => detail.push({ akun: i.akun.nama_akun, kode: i.akun.kode_akun, posisi: 'DEBIT', nominal: i.saldo }));
         const totalTanpa = tanpa.reduce((s, i) => s + i.saldo, 0);
-        if (totalTanpa > 0) detail.push({ akun: 'Aset Neto Tanpa Pembatasan', kode: '3-1000', posisi: 'KREDIT', nominal: totalTanpa });
+        if (totalTanpa > 0) detail.push({ akun: 'Surplus/Defisit Tahun Berjalan', kode: '3-102', posisi: 'KREDIT', nominal: totalTanpa });
 
         dengan.forEach(i => detail.push({ akun: i.akun.nama_akun, kode: i.akun.kode_akun, posisi: 'DEBIT', nominal: i.saldo }));
         const totalDengan = dengan.reduce((s, i) => s + i.saldo, 0);
-        if (totalDengan > 0) detail.push({ akun: 'Aset Neto Dengan Pembatasan', kode: '3-2000', posisi: 'KREDIT', nominal: totalDengan });
+        if (totalDengan > 0) detail.push({ akun: 'Aset Neto Dengan Pembatasan', kode: '3-200', posisi: 'KREDIT', nominal: totalDengan });
     }
 
     if (tipe === 'TUTUP_BEBAN') {
         const totalB = beban.reduce((s, i) => s + i.saldo, 0);
-        if (totalB > 0) detail.push({ akun: 'Aset Neto Tanpa Pembatasan', kode: '3-1000', posisi: 'DEBIT', nominal: totalB });
+        if (totalB > 0) detail.push({ akun: 'Surplus/Defisit Tahun Berjalan', kode: '3-102', posisi: 'DEBIT', nominal: totalB });
         beban.filter(i => i.saldo > 0).forEach(i => {
             detail.push({ akun: i.akun.nama_akun, kode: i.akun.kode_akun, posisi: 'KREDIT', nominal: i.saldo });
         });
