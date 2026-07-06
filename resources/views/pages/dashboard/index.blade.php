@@ -136,7 +136,7 @@
                         <span class="font-semibold text-gray-900 dark:text-white">Rp{{ number_format($totalAsetNeto, 0, ',', '.') }}</span>
                     </div>
                 </div>
-                <a href="{{ route('dashboard.laporan.posisi-keuangan') }}" class="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors pt-3 border-t border-gray-100 dark:border-gray-800">
+                <a href="{{ auth()->check() ? route('dashboard.laporan.posisi-keuangan') : route('laporan.posisi-keuangan') }}"  class="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors pt-3 border-t border-gray-100 dark:border-gray-800">
                     Lihat detail <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
             </div>
@@ -159,7 +159,7 @@
                         <span class="font-semibold {{ $surplus >= 0 ? 'text-emerald-600' : 'text-red-500' }}">Rp{{ number_format($surplus, 0, ',', '.') }}</span>
                     </div>
                 </div>
-                <a href="{{ route('dashboard.laporan.penghasilan-komprehensif') }}" class="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors pt-3 border-t border-gray-100 dark:border-gray-800">
+                <a href="{{ auth()->check() ? route('dashboard.laporan.penghasilan-komprehensif') : route('laporan.penghasilan-komprehensif') }}" class="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors pt-3 border-t border-gray-100 dark:border-gray-800">
                     Lihat detail <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
             </div>
@@ -182,7 +182,7 @@
                         <span class="font-medium text-gray-800 dark:text-gray-200">Rp0</span>
                     </div>
                 </div>
-                <a href="{{ route('dashboard.laporan.perubahan-aset-neto') }}" class="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors pt-3 border-t border-gray-100 dark:border-gray-800">
+                <a href="{{ auth()->check() ? route('dashboard.laporan.perubahan-aset-neto') : route('laporan.perubahan-aset-neto') }}" class="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors pt-3 border-t border-gray-100 dark:border-gray-800">
                     Lihat detail <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
             </div>
@@ -209,7 +209,7 @@
                         <span class="font-semibold text-xs {{ $kenaikanNetoKas >= 0 ? 'text-emerald-600' : 'text-red-500' }}">Rp{{ number_format($kenaikanNetoKas, 0, ',', '.') }}</span>
                     </div>
                 </div>
-                <a href="{{ route('dashboard.laporan.arus-kas') }}" class="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors pt-3 border-t border-gray-100 dark:border-gray-800">
+                <a href="{{ auth()->check() ? route('dashboard.laporan.arus-kas') : route('laporan.arus-kas') }}" class="mt-4 flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors pt-3 border-t border-gray-100 dark:border-gray-800">
                     Lihat detail <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
             </div>
@@ -221,12 +221,14 @@
 
         {{-- Transaksi Terbaru --}}
         <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-            <div class="flex items-center justify-between px-5 py-4">
+           <div class="flex items-center justify-between px-5 py-4">
                 <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Transaksi Terbaru</p>
+                @auth
                 <a href="{{ route('dashboard.transaksi.index') }}"
                     class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex items-center gap-1">
                     Lihat semua <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
+                @endauth
             </div>
             <div>
                 <table class="w-full text-sm">
