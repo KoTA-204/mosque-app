@@ -127,10 +127,18 @@ class TransaksiService
         $duplikat     = 0;
         $gagalPeriode = [];
         $gagalBalance = [];
+        $gagalJenis   = [];
 
         foreach ($rowsMap as $ref => $row) {
             if ($row['is_duplikat']) {
                 $duplikat++;
+                continue;
+            }
+
+            // Baris debit/kredit tidak sesuai jenis_transaksi
+            if (($row['jenis_transaksi'] ?? null) !== $jenis) {
+                $dilewati++;
+                $gagalJenis[] = $ref;
                 continue;
             }
 
@@ -203,6 +211,7 @@ class TransaksiService
             'total'        => $rowsMap->count(),
             'gagalPeriode' => $gagalPeriode,
             'gagalBalance' => $gagalBalance,
+            'gagalJenis'   => $gagalJenis,
         ];
     }
 

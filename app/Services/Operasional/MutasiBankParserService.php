@@ -40,7 +40,7 @@ class MutasiBankParserService
      *
      * @return array{ rows: array, meta: array, errors: array }
      */
-    public function uraikanFileMutasiBank(UploadedFile $file, string $bank = 'BSI'): array
+    public function uraikanFileMutasiBank(UploadedFile $file, string $bank = 'BSI', ?string $jenisTransaksi = null): array
     {
         $bank = strtoupper($bank);
 
@@ -87,6 +87,8 @@ class MutasiBankParserService
                 $parsed = $this->uraikanBarisTransaksi($row, $headerMap, $bank);
 
                 $parsed['is_duplikat'] = in_array($parsed['no_referensi'], $existingRefs);
+                $parsed['is_jenis_mismatch'] = $jenisTransaksi !== null
+                    && $parsed['jenis_transaksi'] !== strtoupper($jenisTransaksi);
 
                 $rows[] = $parsed;
             } catch (\Throwable $e) {
@@ -100,8 +102,8 @@ class MutasiBankParserService
     private function cariBarisHeader(array $rows, string $bank): ?int
     {
         $targets = match ($bank) {
-            'BSI' => ['no', 'waktu transaksi'],
-            'BRI' => ['no', 'tanggal'],
+            'BSI' => ['waktu transaksi', 'no. referensi'],
+            'BRI' => ['tanggal'],
             default => [],
         };
 
