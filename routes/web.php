@@ -316,12 +316,12 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
 
     // ── Akuntansi - Buku Besar ─────────────────────────────────────────────
     Route::middleware('permission:VIEW_BUKU_BESAR')->group(function () {
-        Route::get('/buku-besar', [BukuBesarController::class, 'index'])->name('buku-besar.index');
+        Route::get('/buku-besar', [BukuBesarController::class, 'tampilkanBukuBesar'])->name('buku-besar.index');
     });
 
     // ── Akuntansi - Neraca Saldo ───────────────────────────────────────────
     Route::middleware('permission:VIEW_NERACA_SALDO')->group(function () {
-        Route::get('/neraca-saldo', [NeracaSaldoController::class, 'index'])->name('neraca-saldo.index');
+        Route::get('/neraca-saldo', [NeracaSaldoController::class, 'tampilkanNeracaSaldo'])->name('neraca-saldo.index');
     });
 
     // ── Master Data - Chart of Accounts ────────────────────────────────────
@@ -338,19 +338,24 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
             Route::post('/akun', [ChartOfAccountController::class, 'simpanAkunBaru'])->name('akun.store');
         });
  
+        // GET form ubah termasuk hak VIEW: Administrator boleh MELIHAT form ubah.
         Route::get('/kategori/{kategori}/edit', [ChartOfAccountController::class, 'tampilkanFormUbahKategoriAkun'])->name('kategori.edit');
-        Route::put('/sub-kategori/{subKategori}', [ChartOfAccountController::class, 'perbaruiSubKategori'])->name('sub-kategori.update');
-        Route::put('/akun/{akun}', [ChartOfAccountController::class, 'perbaruiAkun'])->name('akun.update');
+        Route::get('/sub-kategori/{subKategori}/edit', [ChartOfAccountController::class, 'tampilkanFormUbahSubKategori'])->name('sub-kategori.edit');
+        Route::get('/akun/{akun}/edit', [ChartOfAccountController::class, 'tampilkanFormUbahAkun'])->name('akun.edit');
  
+        // UBAH data -- hanya role berhak (mis. Bendahara 1). Admin: ditolak (403).
         Route::middleware('permission:EDIT_COA')->group(function () {
             Route::put('/kategori/{kategori}', [ChartOfAccountController::class, 'perbaruiKategoriAkun'])->name('kategori.update');
-            Route::get('/sub-kategori/{subKategori}/edit', [ChartOfAccountController::class, 'tampilkanFormUbahSubKategori'])->name('sub-kategori.edit');
-            Route::get('/akun/{akun}/edit', [ChartOfAccountController::class, 'tampilkanFormUbahAkun'])->name('akun.edit');
+            Route::put('/sub-kategori/{subKategori}', [ChartOfAccountController::class, 'perbaruiSubKategori'])->name('sub-kategori.update');
+            Route::put('/akun/{akun}', [ChartOfAccountController::class, 'perbaruiAkun'])->name('akun.update');
         });
         
-        Route::delete('/kategori/{kategori}', [ChartOfAccountController::class, 'hapusKategoriAkun'])->name('kategori.destroy');
-        Route::delete('/sub-kategori/{subKategori}', [ChartOfAccountController::class, 'hapusSubKategori'])->name('sub-kategori.destroy');
-        Route::delete('/akun/{akun}', [ChartOfAccountController::class, 'hapusAkun'])->name('akun.destroy');
+        // HAPUS data -- hanya role berhak. Admin: ditolak (403).
+        Route::middleware('permission:DELETE_COA')->group(function () {
+            Route::delete('/kategori/{kategori}', [ChartOfAccountController::class, 'hapusKategoriAkun'])->name('kategori.destroy');
+            Route::delete('/sub-kategori/{subKategori}', [ChartOfAccountController::class, 'hapusSubKategori'])->name('sub-kategori.destroy');
+            Route::delete('/akun/{akun}', [ChartOfAccountController::class, 'hapusAkun'])->name('akun.destroy');
+        });
     });
  
     // ── Master Data - Kategori Transaksi ───────────────────────────────────
@@ -367,36 +372,42 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
             Route::put('/kategori-transaksi/{kategoriTransaksi}', [KategoriTransaksiController::class, 'perbaruiKategoriTransaksi'])->name('kategori-transaksi.update');
         });
         
-        Route::delete('/kategori-transaksi/{kategoriTransaksi}', [KategoriTransaksiController::class, 'hapusKategoriTransaksi'])->name('kategori-transaksi.destroy');
+        // HAPUS data -- hanya role berhak. Admin: ditolak (403).
+        Route::middleware('permission:DELETE_KATEGORI')->group(function () {
+            Route::delete('/kategori-transaksi/{kategoriTransaksi}', [KategoriTransaksiController::class, 'hapusKategoriTransaksi'])->name('kategori-transaksi.destroy');
+        });
     });
 
     // ── Akuntansi - Jurnal Pembuka ─────────────────────────────────────────
     Route::middleware('permission:VIEW_JURNAL_PEMBUKA')->group(function () {
-        Route::get('/jurnal-pembuka', [JurnalPembukaController::class, 'index'])->name('jurnal-pembuka.index');
-        Route::get('/jurnal-pembuka/create', [JurnalPembukaController::class, 'create'])->name('jurnal-pembuka.create');
-        Route::get('/jurnal-pembuka/{jurnalPembuka}/edit', [JurnalPembukaController::class, 'edit'])->name('jurnal-pembuka.edit')->whereNumber('jurnalPembuka');
+        Route::get('/jurnal-pembuka', [JurnalPembukaController::class, 'tampilkanJurnalPembuka'])->name('jurnal-pembuka.index');
+        Route::get('/jurnal-pembuka/create', [JurnalPembukaController::class, 'tambahJurnalPembuka'])->name('jurnal-pembuka.create');
+        Route::get('/jurnal-pembuka/{jurnalPembuka}/edit', [JurnalPembukaController::class, 'ubahJurnalPembuka'])->name('jurnal-pembuka.edit')->whereNumber('jurnalPembuka');
 
         Route::middleware('permission:CREATE_JURNAL_PEMBUKA')->group(function () {
-            Route::post('/jurnal-pembuka', [JurnalPembukaController::class, 'store'])->name('jurnal-pembuka.store');
+            Route::post('/jurnal-pembuka', [JurnalPembukaController::class, 'simpanJurnalPembuka'])->name('jurnal-pembuka.store');
         });
 
-        Route::patch('/jurnal-pembuka/{jurnalPembuka}/posting', [JurnalPembukaController::class, 'posting'])
-            ->name('jurnal-pembuka.posting')
-            ->whereNumber('jurnalPembuka');
+        // POSTING (write) -- konsisten dgn modul jurnal lain: di bawah CREATE_*. Admin: ditolak (403).
+        Route::middleware('permission:CREATE_JURNAL_PEMBUKA')->group(function () {
+            Route::patch('/jurnal-pembuka/{jurnalPembuka}/posting', [JurnalPembukaController::class, 'posting'])
+                ->name('jurnal-pembuka.posting')
+                ->whereNumber('jurnalPembuka');
+        });
 
         Route::middleware('permission:EDIT_JURNAL_PEMBUKA')->group(function () {
-            Route::put('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'update'])
+            Route::put('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'perbaruiJurnalPembuka'])
                 ->name('jurnal-pembuka.update')
                 ->whereNumber('jurnalPembuka');
         });
 
         Route::middleware('permission:DELETE_JURNAL_PEMBUKA')->group(function () {
-            Route::delete('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'destroy'])
+            Route::delete('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'hapusJurnalPembuka'])
                 ->name('jurnal-pembuka.destroy')
                 ->whereNumber('jurnalPembuka');
         });
 
-        Route::get('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'show'])
+        Route::get('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'tampilkanDetailJurnalPembuka'])
             ->name('jurnal-pembuka.show')
             ->whereNumber('jurnalPembuka');
     });

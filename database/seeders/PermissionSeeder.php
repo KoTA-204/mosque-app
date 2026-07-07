@@ -30,16 +30,16 @@ class PermissionSeeder extends Seeder
             ['permission_code' => 'DELETE_PERMISSIONS', 'permission_name' => 'Delete Permissions', 'module' => 'permissions', 'action' => 'delete'],
 
             // ── Manajemen Menu ─────────────────────────────────────
-            ['permission_code' => 'VIEW_MENU',   'permission_name' => 'View Menu',   'module' => 'menu', 'action' => 'view'],
-            ['permission_code' => 'CREATE_MENU', 'permission_name' => 'Create Menu', 'module' => 'menu', 'action' => 'create'],
-            ['permission_code' => 'EDIT_MENU',   'permission_name' => 'Edit Menu',   'module' => 'menu', 'action' => 'update'],
-            ['permission_code' => 'DELETE_MENU', 'permission_name' => 'Delete Menu', 'module' => 'menu', 'action' => 'delete'],
+            ['permission_code' => 'VIEW_MENUS',   'permission_name' => 'View Menu',   'module' => 'menu', 'action' => 'view'],
+            ['permission_code' => 'CREATE_MENUS', 'permission_name' => 'Create Menu', 'module' => 'menu', 'action' => 'create'],
+            ['permission_code' => 'EDIT_MENUS',   'permission_name' => 'Edit Menu',   'module' => 'menu', 'action' => 'update'],
+            ['permission_code' => 'DELETE_MENUS', 'permission_name' => 'Delete Menu', 'module' => 'menu', 'action' => 'delete'],
 
             // ── Manajemen Menu (khusus Administrator) ─────────────
-            ['permission_code' => 'VIEW_MENU',                 'permission_name' => 'View Menu',                 'module' => 'menus',              'action' => 'view'],
-            ['permission_code' => 'CREATE_MENU',               'permission_name' => 'Create Menu',               'module' => 'menus',              'action' => 'create'],
-            ['permission_code' => 'EDIT_MENU',                 'permission_name' => 'Edit Menu',                 'module' => 'menus',              'action' => 'update'],
-            ['permission_code' => 'DELETE_MENU',               'permission_name' => 'Delete Menu',               'module' => 'menus',              'action' => 'delete'],
+            ['permission_code' => 'VIEW_MENUS',                 'permission_name' => 'View Menu',                 'module' => 'menus',              'action' => 'view'],
+            ['permission_code' => 'CREATE_MENUS',               'permission_name' => 'Create Menu',               'module' => 'menus',              'action' => 'create'],
+            ['permission_code' => 'EDIT_MENUS',                 'permission_name' => 'Edit Menu',                 'module' => 'menus',              'action' => 'update'],
+            ['permission_code' => 'DELETE_MENUS',               'permission_name' => 'Delete Menu',               'module' => 'menus',              'action' => 'delete'],
 
             // ── Transaksi ──────────────────────────────────────────
             ['permission_code' => 'VIEW_TRANSAKSI',   'permission_name' => 'Lihat Transaksi',  'module' => 'transaksi', 'action' => 'view'],

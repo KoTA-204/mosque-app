@@ -3,11 +3,12 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use illuminate\Support\Facades\DB;
 use App\Models\Transaksi;
+use App\Models\Kegiatan;
 use App\Models\Dompet;
 use App\Models\User;
 use App\Models\KategoriTransaksi;
-use App\Models\User;
 
 /**
  * Transaksi demo TAHUN BERJALAN (2026) — SETELAH Jurnal Pembuka.
@@ -161,8 +162,8 @@ class TransaksiSeeder extends Seeder
             ['dompet_id' => $bsi->id, 'kegiatan_id' => $kegQurban->id, 'kategori_transaksi_id' => $katKegiatan->id, 'tanggal_transaksi' => '2026-06-12', 'jenis_transaksi' => 'PEMASUKAN',  'jumlah' => 3000000, 'deskripsi' => 'Donasi tambahan untuk qurban dari donatur',  'catatan' => null,                            'status_approval' => 'PENDING',  'status_jurnal' => 'UNMAPPED'],
         ];
 
-        foreach ($data as $row) {
-            Transaksi::create($row);
+        foreach ($transaksiApproval as $row) {
+            Transaksi::create($row + ['user_id' => $user->id]);
         }
     }
 }

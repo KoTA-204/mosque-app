@@ -5,8 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Kencleng;
 use App\Models\Transaksi;
-use App\Models\Kencleng;
-use App\Models\Transaksi;
+
 
 class KenclengSeeder extends Seeder
 {

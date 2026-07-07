@@ -72,14 +72,14 @@ class MenuSeeder extends Seeder
             'permission_id' => $perm('VIEW_PERMISSIONS'),
         ]);
 
-        // Manajemen Menu — hanya Administrator (punya VIEW_MENU) yang melihat & CRUD
+        // Manajemen Menu — hanya Administrator (punya VIEW_MENUS) yang melihat & CRUD
         Menu::create([
             'menu_name'     => 'Manajemen Menu',
             'route_name'    => 'dashboard.menus.index',
             'icon'          => 'tables',
             'parent_id'     => $manajemenUser->id,
             'sort_order'    => 14,
-            'permission_id' => $perm('VIEW_MENU'),
+            'permission_id' => $perm('VIEW_MENUS'),
         ]);
 
         // ── Pencatatan Transaksi ─────────────────────────────────────────────
