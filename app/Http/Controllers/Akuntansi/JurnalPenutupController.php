@@ -46,7 +46,7 @@ class JurnalPenutupController extends Controller
         ));
     }
 
-    public function formTambah()
+    public function tambahJurnalPenutup()
     {
         $periodeAktif = $this->service->getPeriodeAktif();
         $periodeList  = $this->service->getPeriodeList();
