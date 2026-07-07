@@ -228,7 +228,11 @@
         </span>
         <button type="button" onclick="simpanKlasifikasi()"
             id="btnSimpanKlasifikasi"
-            class="h-9 px-5 bg-green-700 text-white text-sm font-medium rounded-xl hover:bg-green-800 transition-colors flex items-center gap-2">
+            @class([
+                'h-9 px-5 text-sm font-medium rounded-xl transition-colors flex items-center gap-2',
+                'bg-green-700 text-white hover:bg-green-800' => auth()->user()->hasPermission('CREATE_TRANSAKSI'),
+                'bg-gray-200 text-gray-400' => !auth()->user()->hasPermission('CREATE_TRANSAKSI'),
+            ])>
             <svg id="spinnerKlasifikasi" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
@@ -444,6 +448,8 @@ function updateEntryCount() {
 
 // ── Simpan ──────────────────────────────────────────────────────
 
+const CAN_CREATE_TRANSAKSI = @json(auth()->user()->hasPermission('CREATE_TRANSAKSI'));
+
 async function simpanKlasifikasi() {
     const btn     = document.getElementById('btnSimpanKlasifikasi');
     const spinner = document.getElementById('spinnerKlasifikasi');
@@ -451,6 +457,11 @@ async function simpanKlasifikasi() {
     if (btn.disabled) return;
     hideAlert('success');
     hideAlert('error');
+
+    if (!CAN_CREATE_TRANSAKSI) {
+        showAlert('error', 'Anda tidak memiliki hak akses untuk menyimpan hasil impor transaksi.');
+        return;
+    }
 
     let valid = true;
     const klasifikasi = [];
@@ -524,6 +535,13 @@ async function simpanKlasifikasi() {
             },
             credentials: 'same-origin',
         });
+
+        if (res.status === 403) {
+            showAlert('error', 'Anda tidak memiliki hak akses untuk menyimpan hasil impor transaksi.');
+            btn.disabled = false;
+            spinner.classList.add('hidden');
+            return;
+        }
 
         const contentType = res.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {

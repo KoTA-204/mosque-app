@@ -1,6 +1,10 @@
 @extends('layouts.app')
 @section('title', 'Jurnal Pembuka')
 @section('content')
+@php
+    $canEditJurnalPembuka   = auth()->user()->hasPermission('EDIT_JURNAL_PEMBUKA');
+    $canDeleteJurnalPembuka = auth()->user()->hasPermission('DELETE_JURNAL_PEMBUKA');
+@endphp
 <div class="space-y-4 p-6">
 
     {{-- ── Header ─────────────────────────────────────────────────────────── --}}
@@ -14,7 +18,6 @@
                 </p>
             @endif
         </div>
-        @if(auth()->user()->hasPermission('CREATE_JURNAL_PEMBUKA'))
         <a href="{{ route('dashboard.jurnal-pembuka.create') }}"
         class="inline-flex items-center gap-2 border border-green-700 text-green-700
                 text-sm font-medium px-4 py-2 rounded-xl hover:bg-green-50 transition-colors">
@@ -23,7 +26,6 @@
             </svg>
             Buat Jurnal
         </a>
-        @endif
     </div>
 
     {{-- ── Flash message ───────────────────────────────────────────────────── --}}
@@ -33,6 +35,9 @@
     @if(session('error'))
         <x-jurnal.alert type="error" :message="session('error')"/>
     @endif
+
+    {{-- ── Permission alert (diisi via JS saat tombol edit/hapus ditolak) ───── --}}
+    <div id="permissionAlertContainer"></div>
 
     {{-- ── Stats ──────────────────────────────────────────────────────────── --}}
     <div class="grid grid-cols-3 gap-4">
@@ -172,6 +177,7 @@
                             <div class="flex items-center justify-center gap-1.5">
                                 @if($j->status === 'DRAFT')
                                     <a href="{{ route('dashboard.jurnal-pembuka.edit', $j) }}"
+                                    onclick="{{ $canEditJurnalPembuka ? '' : "event.preventDefault(); showPageAlert('Anda tidak memiliki akses untuk mengedit data jurnal pembuka.'); return false;" }}"
                                     class="w-7 h-7 rounded-lg border border-gray-200 dark:border-gray-700
                                             flex items-center justify-center text-gray-500 dark:text-gray-400
                                             hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -250,6 +256,38 @@
 @push('scripts')
 <script>
 const CSRF = document.querySelector('meta[name=csrf-token]').content;
+
+// ── Permission flags (dari route update/destroy) ────────────────────────────
+const CAN_EDIT_JURNAL_PEMBUKA   = @json($canEditJurnalPembuka);
+const CAN_DELETE_JURNAL_PEMBUKA = @json($canDeleteJurnalPembuka);
+
+// Tampilkan alert peringatan akses pada halaman (di luar modal)
+function showPageAlert(message) {
+    const container = document.getElementById('permissionAlertContainer');
+    if (!container) return;
+    container.innerHTML = `
+        <div class="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400 mb-4">
+            <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span>${message}</span>
+        </div>
+    `;
+    clearTimeout(container._alertTimeout);
+    container._alertTimeout = setTimeout(() => { container.innerHTML = ''; }, 5000);
+}
+
+// Tampilkan alert peringatan akses di dalam sebuah modal/form tertentu
+function showModalAlert(form, message) {
+    if (!form) return;
+    let alertEl = form.querySelector('.permission-alert-notice');
+    if (!alertEl) {
+        alertEl = document.createElement('div');
+        alertEl.className = 'permission-alert-notice flex items-center gap-2 mb-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2 text-xs text-red-600 dark:text-red-400';
+        form.prepend(alertEl);
+    }
+    alertEl.textContent = message;
+}
 
 // ── Buka drawer & load data ───────────────────────────────────────────────────
 async function bukaDrawer(id) {
@@ -396,6 +434,19 @@ function hapusJurnal(id) {
     const modal = document.getElementById('deleteJurnalModal');
     modal.style.display = 'flex';
 }
+
+// Guard submit form hapus (confirm modal) sesuai hak akses DELETE_JURNAL_PEMBUKA
+document.addEventListener('DOMContentLoaded', function () {
+    const deleteJurnalForm = document.getElementById('deleteJurnalModalForm');
+    if (deleteJurnalForm) {
+        deleteJurnalForm.addEventListener('submit', function (e) {
+            if (!CAN_DELETE_JURNAL_PEMBUKA) {
+                e.preventDefault();
+                showModalAlert(deleteJurnalForm, 'Anda tidak memiliki akses untuk menghapus data jurnal pembuka.');
+            }
+        });
+    }
+});
 
 function openModal(id) {
     const modal = document.getElementById(id);

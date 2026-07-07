@@ -53,13 +53,13 @@
                             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                     </svg>
                     <p class="text-sm text-gray-500">
-                        <span class="font-semibold text-green-700 underline">Pilih File EXCEL</span>
+                        <span class="font-semibold text-green-700 underline">Pilih File Excel/CSV/PDF</span>
                     </p>
-                    <p class="text-xs text-gray-400 mt-1">atau tarik file EXCEL mutasi bank untuk diunggah disini</p>
+                    <p class="text-xs text-gray-400 mt-1">atau tarik file Excel/CSV/PDF mutasi bank untuk diunggah disini</p>
                     <p id="namaFileImpor" class="text-xs text-green-700 font-medium mt-2 hidden"></p>
                 </div>
                 <input type="file" id="inputFileImpor" name="file"
-                    accept=".xlsx,.xls" class="hidden"
+                    accept=".xlsx,.xls,.csv,.pdf" class="hidden"
                     onchange="onFileImpor(this)">
             </div>
 
@@ -89,17 +89,7 @@
             <p class="font-medium text-gray-900">File berhasil diproses</p>
             <p class="text-sm text-gray-500">Silakan lanjut ke halaman review untuk mengklasifikasikan akun.</p>
 
-            <div id="peringatanJenisBox" class="hidden w-full mt-3 px-4">
-                <div class="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-left">
-                    <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                    <p id="peringatanJenisMsg" class="text-xs text-amber-700"></p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-4 gap-3 w-full mt-4 px-4">
+            <div class="grid grid-cols-3 gap-3 w-full mt-4 px-4">
                 <div class="text-center border border-gray-200 rounded-xl py-3 bg-white">
                     <p id="statTotal" class="text-xl font-semibold text-gray-900">–</p>
                     <p class="text-xs text-gray-500 mt-0.5">Total baris</p>
@@ -107,10 +97,6 @@
                 <div class="text-center border border-amber-200 rounded-xl py-3 bg-amber-50">
                     <p id="statDuplikat" class="text-xl font-semibold text-amber-600">–</p>
                     <p class="text-xs text-gray-500 mt-0.5">Duplikat</p>
-                </div>
-                <div class="text-center border border-rose-200 rounded-xl py-3 bg-rose-50">
-                    <p id="statTidakSesuai" class="text-xl font-semibold text-rose-600">–</p>
-                    <p class="text-xs text-gray-500 mt-0.5">Tak sesuai jenis</p>
                 </div>
                 <div class="text-center border border-green-200 rounded-xl py-3 bg-green-50">
                     <p id="statBersih" class="text-xl font-semibold text-green-700">–</p>
@@ -143,6 +129,10 @@
 </div>
 
 <script>
+// Flag hak akses — dipakai untuk menampilkan pesan yang sesuai saat pengguna
+// hanya memiliki akses view (bisa membuka modal, tapi tidak bisa mengunggah).
+const CAN_IMPOR_TRANSAKSI = @json(auth()->user()->hasPermission('CREATE_TRANSAKSI'));
+
 // Reset seluruh isian form impor + state tampilan ke kondisi awal.
 // Dipanggil saat modal dibuka dan saat tombol "Coba Lagi" ditekan,
 // agar data dari percobaan impor sebelumnya tidak tertinggal.
@@ -163,9 +153,6 @@ function resetImpor() {
 
     const pesanGagal = document.getElementById('pesanGagal');
     if (pesanGagal) pesanGagal.textContent = '';
-
-    const peringatanBox = document.getElementById('peringatanJenisBox');
-    if (peringatanBox) peringatanBox.classList.add('hidden');
 
     imporSetState('upload');
 }
@@ -197,6 +184,12 @@ async function submitImpor() {
     const form = document.getElementById('formImpor');
     const fd   = new FormData(form);
 
+    if (!CAN_IMPOR_TRANSAKSI) {
+        document.getElementById('imporErrorMsg').textContent = 'Anda tidak memiliki hak akses untuk mengimpor transaksi.';
+        document.getElementById('imporErrorBox').classList.remove('hidden');
+        return;
+    }
+
     if (!fd.get('bank') || !fd.get('jenis_transaksi') || !fd.get('file')?.name) {
         document.getElementById('imporErrorMsg').textContent = 'Lengkapi semua field sebelum mengunggah.';
         document.getElementById('imporErrorBox').classList.remove('hidden');
@@ -216,23 +209,20 @@ async function submitImpor() {
                 'Accept': 'application/json',
             },
         });
+        if (res.status === 403) {
+            document.getElementById('pesanGagal').textContent =
+                'Anda tidak memiliki hak akses untuk mengimpor transaksi.';
+            imporSetState('gagal');
+            return;
+        }
+
         const data = await res.json();
 
         if (data.success && data.type === 'parse_success') {
-            document.getElementById('statTotal').textContent       = data.stats.total;
-            document.getElementById('statDuplikat').textContent    = data.stats.duplikat;
-            document.getElementById('statTidakSesuai').textContent = data.stats.tidak_sesuai ?? 0;
-            document.getElementById('statBersih').textContent      = data.stats.bersih;
-            document.getElementById('linkReview').href             = data.redirect;
-
-            const peringatanBox = document.getElementById('peringatanJenisBox');
-            if (data.peringatan_jenis) {
-                document.getElementById('peringatanJenisMsg').textContent = data.peringatan_jenis;
-                peringatanBox.classList.remove('hidden');
-            } else {
-                peringatanBox.classList.add('hidden');
-            }
-
+            document.getElementById('statTotal').textContent    = data.stats.total;
+            document.getElementById('statDuplikat').textContent = data.stats.duplikat;
+            document.getElementById('statBersih').textContent   = data.stats.bersih;
+            document.getElementById('linkReview').href          = data.redirect;
             imporSetState('sukses');
         } else {
             document.getElementById('pesanGagal').textContent =

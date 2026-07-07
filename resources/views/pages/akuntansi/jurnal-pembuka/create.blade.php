@@ -1,6 +1,9 @@
 @extends('layouts.app')
 @section('title', 'Jurnal Pembuka')
 @section('content')
+@php
+    $canCreateJurnalPembuka = auth()->user()->hasPermission('CREATE_JURNAL_PEMBUKA');
+@endphp
 <div class="space-y-4 p-6">
 
     {{-- ── Header ─────────────────────────────────────────────────────────── --}}
@@ -244,6 +247,7 @@
                 </div>
             </div>
 
+            <div id="alertContainerStep3"></div>
             <x-jurnal.form-footer :step="3" :total="3" :showSubmit="true"/>
         </div>
 
@@ -256,6 +260,8 @@
 const AKUN_OPTIONS = @json($akuns);
 let barisCount = 0;
 let stepSaat   = 1;
+
+const CAN_CREATE_JURNAL_PEMBUKA = @json($canCreateJurnalPembuka);
 
 document.addEventListener('DOMContentLoaded', () => {
     tambahBaris();
@@ -560,6 +566,13 @@ document.getElementById('formJurnalPembuka').addEventListener('submit', function
 
     if (!_submitType || !['draft', 'posting'].includes(_submitType)) {
         console.warn('submitType tidak valid');
+        return;
+    }
+
+    if (!CAN_CREATE_JURNAL_PEMBUKA) {
+        showAlert('error', 'Anda tidak memiliki akses untuk menyimpan data jurnal pembuka.', 'alertContainerStep3');
+        goToStep(3);
+        _submitType = null;
         return;
     }
 

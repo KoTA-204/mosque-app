@@ -304,6 +304,10 @@
 </form>
 
 <script>
+// Flag hak akses — dipakai untuk menampilkan pesan yang sesuai saat pengguna
+// hanya memiliki akses view (bisa membuka modal, tapi tidak bisa menyimpan).
+const CAN_TAMBAH_TRANSAKSI = @json(auth()->user()->hasPermission('CREATE_TRANSAKSI'));
+
 // Daftar akun untuk dropdown jurnal (dipakai juga oleh editTransaksi() di index.blade.php)
 const akunListTambah = {!! json_encode($akuns->map(fn($a) => [
     'id'       => $a->id,
@@ -513,6 +517,12 @@ async function submitTambah(force = false) {
     errBox.classList.add('hidden');
     errList.innerHTML = '';
 
+    if (!CAN_TAMBAH_TRANSAKSI) {
+        errList.insertAdjacentHTML('beforeend', `<li>Anda tidak memiliki hak akses untuk mencatat transaksi.</li>`);
+        errBox.classList.remove('hidden');
+        return;
+    }
+
     const { totalDebit, totalKredit } = hitungTotalJurnal('jurnalTambahBody', 'jurnalTambah');
     if (totalDebit === 0 || totalDebit !== totalKredit) {
         errList.insertAdjacentHTML('beforeend', `<li>Total debit dan kredit harus sama dan tidak boleh kosong.</li>`);
@@ -568,6 +578,10 @@ async function submitTambah(force = false) {
             Object.values(data.errors).flat().forEach(msg => {
                 errList.insertAdjacentHTML('beforeend', `<li>${msg}</li>`);
             });
+            errBox.classList.remove('hidden');
+
+        } else if (res.status === 403) {
+            errList.insertAdjacentHTML('beforeend', `<li>Anda tidak memiliki hak akses untuk mencatat transaksi.</li>`);
             errBox.classList.remove('hidden');
 
         } else {
