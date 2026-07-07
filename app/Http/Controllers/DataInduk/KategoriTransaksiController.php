@@ -102,6 +102,10 @@ class KategoriTransaksiController extends Controller
 
     public function hapusKategoriTransaksi(KategoriTransaksi $kategoriTransaksi)
     {
+        if (!auth()->user()->hasPermission('DELETE_KATEGORI')) {
+            return back()->with('error', 'Anda tidak memiliki akses untuk menghapus kategori transaksi ini.');
+        }
+
         if ($kategoriTransaksi->transaksi()->exists()) {
             return back()->with('error', 'Kategori tidak dapat dihapus karena sudah digunakan oleh transaksi.');
         }

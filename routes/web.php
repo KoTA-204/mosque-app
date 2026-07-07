@@ -282,51 +282,47 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
     // ── Master Data - Chart of Accounts ────────────────────────────────────
     Route::middleware('permission:VIEW_COA')->prefix('chart-of-account')->name('coa.')->group(function () {
         Route::get('/', [ChartOfAccountController::class, 'tampilkanDaftarCoa'])->name('index');
-
+ 
         Route::get('/kategori/create', [ChartOfAccountController::class, 'tampilkanFormTambahKategoriAkun'])->name('kategori.create');
         Route::get('/sub-kategori/create', [ChartOfAccountController::class, 'tampilkanFormTambahSubKategori'])->name('sub-kategori.create');
         Route::get('/akun/create', [ChartOfAccountController::class, 'tampilkanFormTambahAkun'])->name('akun.create');
-
+ 
         Route::middleware('permission:CREATE_COA')->group(function () {
             Route::post('/kategori', [ChartOfAccountController::class, 'simpanKategoriAkunBaru'])->name('kategori.store');
             Route::post('/sub-kategori', [ChartOfAccountController::class, 'simpanSubKategoriBaru'])->name('sub-kategori.store');
             Route::post('/akun', [ChartOfAccountController::class, 'simpanAkunBaru'])->name('akun.store');
         });
-
+ 
         Route::get('/kategori/{kategori}/edit', [ChartOfAccountController::class, 'tampilkanFormUbahKategoriAkun'])->name('kategori.edit');
         Route::put('/sub-kategori/{subKategori}', [ChartOfAccountController::class, 'perbaruiSubKategori'])->name('sub-kategori.update');
         Route::put('/akun/{akun}', [ChartOfAccountController::class, 'perbaruiAkun'])->name('akun.update');
-
+ 
         Route::middleware('permission:EDIT_COA')->group(function () {
             Route::put('/kategori/{kategori}', [ChartOfAccountController::class, 'perbaruiKategoriAkun'])->name('kategori.update');
             Route::get('/sub-kategori/{subKategori}/edit', [ChartOfAccountController::class, 'tampilkanFormUbahSubKategori'])->name('sub-kategori.edit');
             Route::get('/akun/{akun}/edit', [ChartOfAccountController::class, 'tampilkanFormUbahAkun'])->name('akun.edit');
         });
-
-        Route::middleware('permission:DELETE_COA')->group(function () {
-            Route::delete('/kategori/{kategori}', [ChartOfAccountController::class, 'hapusKategoriAkun'])->name('kategori.destroy');
-            Route::delete('/sub-kategori/{subKategori}', [ChartOfAccountController::class, 'hapusSubKategori'])->name('sub-kategori.destroy');
-            Route::delete('/akun/{akun}', [ChartOfAccountController::class, 'hapusAkun'])->name('akun.destroy');
-        });
+        
+        Route::delete('/kategori/{kategori}', [ChartOfAccountController::class, 'hapusKategoriAkun'])->name('kategori.destroy');
+        Route::delete('/sub-kategori/{subKategori}', [ChartOfAccountController::class, 'hapusSubKategori'])->name('sub-kategori.destroy');
+        Route::delete('/akun/{akun}', [ChartOfAccountController::class, 'hapusAkun'])->name('akun.destroy');
     });
-
+ 
     // ── Master Data - Kategori Transaksi ───────────────────────────────────
     Route::middleware('permission:VIEW_KATEGORI')->group(function () {
         Route::get('/kategori-transaksi', [KategoriTransaksiController::class, 'tampilkanDaftarKategoriTransaksi'])->name('kategori-transaksi.index');
         Route::get('/kategori-transaksi/create', [KategoriTransaksiController::class, 'tampilkanFormTambahKategoriTransaksi'])->name('kategori-transaksi.create');
         Route::get('/kategori-transaksi/{kategoriTransaksi}/edit', [KategoriTransaksiController::class, 'tampilkanFormUbahKategoriTransaksi'])->name('kategori-transaksi.edit');
-
+ 
         Route::middleware('permission:CREATE_KATEGORI')->group(function () {
             Route::post('/kategori-transaksi', [KategoriTransaksiController::class, 'simpanKategoriTransaksiBaru'])->name('kategori-transaksi.store');
         });
-
+ 
         Route::middleware('permission:EDIT_KATEGORI')->group(function () {
             Route::put('/kategori-transaksi/{kategoriTransaksi}', [KategoriTransaksiController::class, 'perbaruiKategoriTransaksi'])->name('kategori-transaksi.update');
         });
-
-        Route::middleware('permission:DELETE_KATEGORI')->group(function () {
-            Route::delete('/kategori-transaksi/{kategoriTransaksi}', [KategoriTransaksiController::class, 'hapusKategoriTransaksi'])->name('kategori-transaksi.destroy');
-        });
+        
+        Route::delete('/kategori-transaksi/{kategoriTransaksi}', [KategoriTransaksiController::class, 'hapusKategoriTransaksi'])->name('kategori-transaksi.destroy');
     });
 
     // ── Akuntansi - Jurnal Pembuka ─────────────────────────────────────────

@@ -2,6 +2,12 @@
 @section('title', 'Chart of Account')
 @section('content')
 
+@php
+    $canCreateCoa = auth()->user()->hasPermission('CREATE_COA');
+    $canEditCoa   = auth()->user()->hasPermission('EDIT_COA');
+    $canDeleteCoa = auth()->user()->hasPermission('DELETE_COA');
+@endphp
+
 <div class="p-6 space-y-6">
 
     <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
@@ -233,7 +239,7 @@
                                         @csrf @method('DELETE')
                                         <button
                                             type="button"
-                                            onclick="openDeleteModal('{{ route('dashboard.coa.kategori.destroy', $kat->id) }}')"
+                                            onclick="openDeleteModal('{{ route('dashboard.coa.kategori.destroy', $kat->id) }}', 'kategori akun')"
                                             class="text-green-200">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -281,7 +287,7 @@
                                         @csrf @method('DELETE')
                                         <button
                                             type="button"
-                                            onclick="openDeleteModal('{{ route('dashboard.coa.sub-kategori.destroy', $subKat->id) }}')"
+                                            onclick="openDeleteModal('{{ route('dashboard.coa.sub-kategori.destroy', $subKat->id) }}', 'sub kategori')"
                                             class="text-gray-400">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -346,7 +352,7 @@
                                         @csrf @method('DELETE')
                                         <button
                                             type="button"
-                                            onclick="openDeleteModal('{{ route('dashboard.coa.akun.destroy', $akun->id) }}')"
+                                            onclick="openDeleteModal('{{ route('dashboard.coa.akun.destroy', $akun->id) }}', 'akun')"
                                             class="text-gray-400">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -435,6 +441,33 @@
 
 @push('scripts') 
 <script>
+    // ── Permission flags (dari route store/update/destroy) ─────────────────
+    const CAN_CREATE_COA = @json($canCreateCoa);
+    const CAN_EDIT_COA   = @json($canEditCoa);
+    const CAN_DELETE_COA = @json($canDeleteCoa);
+
+    // Tampilkan alert peringatan akses di dalam sebuah modal/form tertentu
+    function showModalAlert(form, message) {
+        if (!form) return;
+        let alertEl = form.querySelector('.permission-alert-notice');
+        if (!alertEl) {
+            alertEl = document.createElement('div');
+            alertEl.className = 'permission-alert-notice flex items-center gap-2 mb-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2 text-xs text-red-600 dark:text-red-400';
+            form.prepend(alertEl);
+        }
+        alertEl.textContent = message;
+    }
+
+    // Cek hak akses sebelum form (create/edit) dikirim ke server.
+    // Jika tidak memiliki akses, submit dibatalkan dan alert ditampilkan di dalam modal.
+    function guardSubmit(form, allowed, message) {
+        if (!allowed) {
+            showModalAlert(form, message);
+            return false;
+        }
+        return true;
+    }
+
     @php $formSource = old('_form', ''); @endphp
     @if($errors->any() && $formSource === 'kategori')
         openModal('createKategoriModal');
@@ -464,14 +497,21 @@
         modal.classList.add('hidden');
     }
 
-    function openDeleteModal(actionUrl) {
+    function openDeleteModal(actionUrl, entityLabel) {
         const modal = document.getElementById('confirmModal');
         const form = document.getElementById('confirmModalForm');
 
         form.action = actionUrl;
+        form.dataset.entityLabel = entityLabel || 'data ini';
 
         modal.style.display = 'flex';
     }
+
+    // Catatan: submit form hapus (confirm modal) SENGAJA tidak dicegat di
+    // sisi client lagi. Biarkan request sampai ke server — kalau pengguna
+    // tidak punya akses DELETE_COA, backend akan redirect balik dengan
+    // session('error'), dan pesannya tampil lewat alert #error-alert di atas
+    // halaman (bukan di dalam modal konfirmasi).
 
     function clearSearch() {
         const input = document.getElementById('search-input');
