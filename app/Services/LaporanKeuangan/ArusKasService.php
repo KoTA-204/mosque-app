@@ -5,102 +5,68 @@ namespace App\Services\LaporanKeuangan;
 use App\Models\Akun;
 use App\Models\DetailJurnal;
 use App\Models\Periode;
+use Illuminate\Support\Collection;
 
-class ArusKasService
+/** Laporan Arus Kas (metode langsung, disederhanakan). */
+class ArusKasService implements LaporanKeuanganInterface
 {
-    public function __construct(private LaporanKeuanganService $saldo) {}
+    public function __construct(private KalkulatorSaldoAkun $kalkulator) {}
 
-    public function build(?Periode $periode): array
+    public function judulLaporan(): string   { return 'Laporan Arus Kas'; }
+    public function namaViewHalaman(): string { return 'pages.laporan.arus-kas'; }
+    public function namaViewPdf(): string     { return 'pages.laporan.pdf.arus-kas'; }
+
+    public function susunLaporan(?Periode $periode, ?Periode $periodeSebelumnya): array
     {
-        $empty = [
-            'penerimaanOperasional' => collect(),
-            'pengeluaranOperasional' => collect(),
-            'kasNetoOperasional'    => 0,
-            'pengeluaranInvestasi'  => collect(),
-            'penerimaanInvestasi'   => collect(),
-            'kasNetoInvestasi'      => 0,
-            'penerimaanPendanaan'   => collect(),
-            'penyaluranPendanaan'   => collect(),
-            'kasNetoPendanaan'      => 0,
-            'kenaikanNeto'          => 0,
-            'kasAwal'               => 0,
-            'kasAkhir'              => 0,
-        ];
-        if (!$periode) return $empty;
+        if (!$periode) {
+            return [
+                'penerimaanOperasional'  => collect(),
+                'pengeluaranOperasional' => collect(),
+                'kasNetoOperasional'     => 0,
+                'penerimaanInvestasi'    => collect(),
+                'pengeluaranInvestasi'   => collect(),
+                'kasNetoInvestasi'       => 0,
+                'penerimaanPendanaan'    => collect(),
+                'penyaluranPendanaan'    => collect(),
+                'kasNetoPendanaan'       => 0,
+                'kenaikanNeto'           => 0,
+                'kasAwal'                => 0,
+                'kasAkhir'               => 0,
+            ];
+        }
 
-        $pid  = $periode->id;
-        $pids = $this->saldo->getPeriodeIdsUpTo($pid);
+        $pid = $periode->id;
 
-        // periode sebelumnya untuk delta aset tetap
-        $periodePrevObj = Periode::where('tipe', $periode->tipe)
-            ->where('tanggal_akhir', '<', $periode->tanggal_awal)
-            ->orderByDesc('tanggal_akhir')
-            ->first();
-
-        // operasional: penerimaan = 4-1
-        $penerimaanOperasional = $this->saldo->getRincianAkun('4-1', $pid, 'KREDIT')
+        // ── Aktivitas Operasional ─────────────────────────────────────
+        $penerimaanOperasional = $this->kalkulator->getRincianSaldoKelompok('4-1', $pid, 'KREDIT')
             ->filter(fn($r) => $r->saldo != 0)->values();
         $totalPenerimaanOp = $penerimaanOperasional->sum('saldo');
 
-        // operasional: pengeluaran = 5- KECUALI penyusutan/depresiasi
+        // Semua beban (5-) KECUALI penyusutan/depresiasi (beban non-kas)
         $semuaBeban = collect();
-        $headerBeban = Akun::where('kode_akun', 'like', '5-%')
-            ->whereNull('parent_id')
-            ->orderBy('kode_akun')
-            ->get();
-        foreach ($headerBeban as $header) {
+        foreach ($this->headerBeban() as $header) {
             $kode    = rtrim($header->kode_akun, '0');
-            $rincian = $this->saldo->getRincianAkun($kode, $pid, 'DEBIT')
+            $rincian = $this->kalkulator->getRincianSaldoKelompok($kode, $pid, 'DEBIT')
                 ->filter(fn($r) => $r->saldo != 0)
-                ->filter(fn($r) => !preg_match('/penyusutan|depresiasi/i', $r->nama_akun))
-                ->values();
-            foreach ($rincian as $r) {
-                $semuaBeban->push($r);
-            }
+                ->reject(fn($r) => preg_match('/penyusutan|depresiasi/i', $r->nama_akun));
+            $semuaBeban = $semuaBeban->concat($rincian);
         }
 
-        // pisah operasional vs dana terikat (zakat/santunan/wakaf -> pendanaan)
+        // Dana terikat (zakat/santunan/wakaf) diklasifikasikan sebagai pendanaan
         $pengeluaranOperasional = $semuaBeban
-            ->filter(fn($r) => !preg_match('/zakat|santunan|wakaf/i', $r->nama_akun))
+            ->reject(fn($r) => preg_match('/zakat|santunan|wakaf/i', $r->nama_akun))
             ->values();
         $penyaluranPendanaan = $semuaBeban
             ->filter(fn($r) => preg_match('/zakat|santunan|wakaf/i', $r->nama_akun))
             ->values();
 
-        $totalPengeluaranOp  = $pengeluaranOperasional->sum('saldo');
-        $kasNetoOperasional  = $totalPenerimaanOp - $totalPengeluaranOp;
+        $kasNetoOperasional = $totalPenerimaanOp - $pengeluaranOperasional->sum('saldo');
 
-        // investasi: delta aset tetap (1-2 DEBIT) vs periode lalu
-        $asetTetapSekarang = Akun::where('kode_akun', 'like', '1-2%')
-            ->whereNotNull('parent_id')
-            ->where('saldo_normal', 'DEBIT')
-            ->get()
-            ->map(fn($akun) => $this->saldo->hitungSaldo(
-                DetailJurnal::where('akun_id', $akun->id)
-                    ->whereHas('jurnal', fn($q) => $q
-                        ->whereIn('periode_id', $pids)
-                        ->where('status', 'POSTED')
-                    ),
-                'DEBIT'
-            ))->sum();
-
-        $asetTetapSebelumnya = 0;
-        if ($periodePrevObj) {
-            $prevPids = $this->saldo->getPeriodeIdsUpTo($periodePrevObj->id);
-            $asetTetapSebelumnya = Akun::where('kode_akun', 'like', '1-2%')
-                ->whereNotNull('parent_id')
-                ->where('saldo_normal', 'DEBIT')
-                ->get()
-                ->map(fn($akun) => $this->saldo->hitungSaldo(
-                    DetailJurnal::where('akun_id', $akun->id)
-                        ->whereHas('jurnal', fn($q) => $q
-                            ->whereIn('periode_id', $prevPids)
-                            ->where('status', 'POSTED')
-                        ),
-                    'DEBIT'
-                ))->sum();
-        }
-
+        // ── Aktivitas Investasi ─────────────────────────────────────
+        $asetTetapSekarang   = $this->totalHargaPerolehanAsetTetap($periode->getIdsSampaiSekarang());
+        $asetTetapSebelumnya = $periodeSebelumnya
+            ? $this->totalHargaPerolehanAsetTetap($periodeSebelumnya->getIdsSampaiSekarang())
+            : 0;
         $deltaAsetTetap = $asetTetapSekarang - $asetTetapSebelumnya;
 
         $pengeluaranInvestasi = collect();
@@ -111,30 +77,28 @@ class ArusKasService
             ]);
         }
 
-        // penerimaan investasi = 4-1 yg mengandung "penjualan aset"/"divestasi"
-        $penerimaanInvestasi = $this->saldo->getRincianAkun('4-1', $pid, 'KREDIT')
+        $penerimaanInvestasi = $this->kalkulator->getRincianSaldoKelompok('4-1', $pid, 'KREDIT')
             ->filter(fn($r) => preg_match('/penjualan aset|divestasi/i', $r->nama_akun))
             ->values();
 
         $kasNetoInvestasi = $penerimaanInvestasi->sum('saldo') - $pengeluaranInvestasi->sum('saldo');
 
-        // pendanaan: penerimaan = 4-2 (terikat)
-        $penerimaanPendanaan = $this->saldo->getRincianAkun('4-2', $pid, 'KREDIT')
+        // ── Aktivitas Pendanaan ─────────────────────────────────────
+        $penerimaanPendanaan = $this->kalkulator->getRincianSaldoKelompok('4-2', $pid, 'KREDIT')
             ->filter(fn($r) => $r->saldo != 0)->values();
         $kasNetoPendanaan = $penerimaanPendanaan->sum('saldo') - $penyaluranPendanaan->sum('saldo');
 
-        // rekonsiliasi
+        // ── Rekonsiliasi ──────────────────────────────────────────
         $kenaikanNeto = $kasNetoOperasional + $kasNetoInvestasi + $kasNetoPendanaan;
 
-        // kas awal: 1-1 (bukan piutang) s.d. periode lalu
+        // Kas awal: saldo kas (1-1, bukan piutang) s.d. periode sebelumnya
         $kasAwal = 0;
-        if ($periodePrevObj) {
-            $prevPids2 = $this->saldo->getPeriodeIdsUpTo($periodePrevObj->id);
-            $kasAwal = $this->saldo->getRincianAkunKumulatif('1-1', $prevPids2, 'DEBIT')
-                ->filter(fn($r) => !preg_match('/piutang/i', $r->nama_akun))
+        if ($periodeSebelumnya) {
+            $kasAwal = $this->kalkulator
+                ->getRincianSaldoKumulatifKelompok('1-1', $periodeSebelumnya->getIdsSampaiSekarang(), 'DEBIT')
+                ->reject(fn($r) => preg_match('/piutang/i', $r->nama_akun))
                 ->sum('saldo');
         }
-
         $kasAkhir = $kasAwal + $kenaikanNeto;
 
         return compact(
@@ -143,5 +107,30 @@ class ArusKasService
             'penerimaanPendanaan', 'penyaluranPendanaan', 'kasNetoPendanaan',
             'kenaikanNeto', 'kasAwal', 'kasAkhir'
         );
+    }
+
+    private function headerBeban()
+    {
+        return Akun::where('kode_akun', 'like', '5-%')
+            ->whereNull('parent_id')
+            ->orderBy('kode_akun')
+            ->get();
+    }
+
+    /** Total harga perolehan aset tetap (1-2, saldo normal DEBIT) s.d. periode tertentu. */
+    private function totalHargaPerolehanAsetTetap(array $periodeIds): float
+    {
+        return (float) Akun::where('kode_akun', 'like', '1-2%')
+            ->whereNotNull('parent_id')
+            ->where('saldo_normal', 'DEBIT')
+            ->get()
+            ->sum(fn($akun) => $this->kalkulator->terapkanSaldoNormal(
+                DetailJurnal::where('akun_id', $akun->id)
+                    ->whereHas('jurnal', fn($q) => $q
+                        ->whereIn('periode_id', $periodeIds)
+                        ->where('status', 'POSTED')
+                    ),
+                'DEBIT'
+            ));
     }
 }

@@ -21,20 +21,22 @@ class CheckPermission
             return redirect()->route('auth.login');
         }
 
-        if (!$this->hasPermission($user, $permission)) {
-            abort(403, 'Anda tidak memiliki akses ke halaman ini');
+        if (!$user->hasPermission($permission)) {
+            if ($request->isMethod('get')) {
+                abort(403, 'Anda tidak memiliki akses ke halaman ini');
+            }
+
+            $redirect = redirect()->back()
+                ->withErrors(['permission' => 'Anda tidak memiliki izin untuk melakukan aksi ini.'])
+                ->withInput();
+
+            if ($request->isMethod('put') || $request->isMethod('patch') || $request->isMethod('delete')) {
+                $redirect->with('error', 'Anda tidak memiliki izin untuk melakukan aksi ini.');
+            }
+
+            return $redirect;
         }
 
         return $next($request);
-    }
-
-    private function hasPermission($user, string $permissionCode): bool
-    {
-        return $user->roles()
-            ->whereHas('permissions', function ($query) use ($permissionCode) {
-                $query->where('permission_code', $permissionCode)
-                      ->where('is_active', true);
-            })
-            ->exists();
     }
 }

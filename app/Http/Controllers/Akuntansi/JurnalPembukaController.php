@@ -3,17 +3,18 @@
 namespace App\Http\Controllers\Akuntansi;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreJurnalPembukaRequest;
+use App\Http\Requests\UpdateJurnalPembukaRequest;
 use App\Models\Jurnal;
 use App\Models\Akun;
-use App\Models\Periode;
 use App\Services\Akuntansi\JurnalPembukaService;
 use Illuminate\Http\Request;
 
 class JurnalPembukaController extends Controller
 {
-    public function __construct(private JurnalPembukaService $jurnal) {}
+    public function __construct(private JurnalPembukaService $service) {}
 
-    public function index(Request $request)
+    public function tampilkanJurnalPembuka(Request $request)
     {
         $filter = [
             'search'   => $request->input('search', ''),
@@ -22,23 +23,24 @@ class JurnalPembukaController extends Controller
             'per_page' => $request->input('per_page', 10),
         ];
 
-        $jurnals  = $this->jurnal->daftar($filter);
-        $periodes = $this->jurnal->getPeriodeList();
-        $stats    = $this->jurnal->stats();
+        $jurnals  = $this->service->daftar($filter);
+        $periodes = $this->service->getPeriodeList();
+        $stats    = $this->service->getStatistik();
 
         $search  = $filter['search'];
         $periode = $filter['periode'];
         $status  = $filter['status'];
         $perPage = $filter['per_page'];
+
         return view('pages.akuntansi.jurnal-pembuka.index', compact(
             'jurnals', 'periodes', 'stats', 'search', 'periode', 'status', 'perPage'
         ));
     }
 
-    public function create()
+    public function tambahJurnalPembuka()
     {
-        $periodes     = $this->jurnal->getPeriodeList();
-        $periodeAktif = Periode::aktif()->latest('tanggal_awal')->first();
+        $periodes     = $this->service->getPeriodeList();
+        $periodeAktif = $this->service->getPeriodeAktif();
         $akuns = Akun::with('kategoriAkun')
             ->whereNotNull('parent_id')
             ->orderBy('kode_akun')
@@ -49,36 +51,27 @@ class JurnalPembukaController extends Controller
                 'nama'         => $a->nama_akun,
                 'saldo_normal' => $a->saldo_normal,
             ]);
+
         return view('pages.akuntansi.jurnal-pembuka.create', compact('periodes', 'periodeAktif', 'akuns'));
     }
 
-    public function store(Request $request)
+    public function simpanJurnalPembuka(StoreJurnalPembukaRequest $request)
     {
-        $request->validate([
-            'tanggal_mulai'      => 'required|date',
-            'tanggal_akhir'      => 'required|date|after_or_equal:tanggal_mulai',
-            'keterangan'         => 'nullable|string|max:500',
-            'submit_type'        => 'required|in:draft,posting',
-            'detail'             => 'required|array|min:2',
-            'detail.*.akun_id'   => 'required|exists:akun,id',
-            'detail.*.tipe'      => 'required|in:DEBIT,KREDIT',
-            'detail.*.nominal'   => 'required',
-        ]);
-
-        if (!$this->jurnal->detailSeimbang($request->detail)) {
+        if (!$this->service->isDetailSeimbang($request->detail)) {
             return back()->withInput()
                 ->withErrors(['balance' => 'Total Debit dan Kredit harus seimbang.']);
         }
 
-        $this->jurnal->simpan($request->all());
+        $this->service->catatSaldoAwal($request->validated());
 
         return redirect()->route('dashboard.jurnal-pembuka.index')
             ->with('success', 'Jurnal pembuka berhasil disimpan.');
     }
 
-    public function show(Jurnal $jurnalPembuka)
+    public function tampilkanDetailJurnalPembuka(Jurnal $jurnalPembuka)
     {
         $jurnalPembuka->load(['periode', 'detailJurnal.akun']);
+
         return response()->json([
             'success' => true,
             'data'    => [
@@ -87,7 +80,6 @@ class JurnalPembukaController extends Controller
                 'tanggal'      => $jurnalPembuka->tanggal->format('d M Y'),
                 'periode'      => $jurnalPembuka->periode?->nama_periode,
                 'keterangan'   => $jurnalPembuka->keterangan ?? '—',
-                'dibuat_oleh'  => optional($jurnalPembuka->user)->name ?? '—',
                 'total_debit'  => $jurnalPembuka->total_debit,
                 'total_kredit' => $jurnalPembuka->total_kredit,
                 'is_balance'   => $jurnalPembuka->is_balance,
@@ -100,45 +92,35 @@ class JurnalPembukaController extends Controller
         ]);
     }
 
-    public function edit(Jurnal $jurnalPembuka)
+    public function ubahJurnalPembuka(Jurnal $jurnalPembuka)
     {
         if ($jurnalPembuka->status === 'POSTED') {
             return redirect()->route('dashboard.jurnal-pembuka.index')
                 ->with('error', 'Jurnal yang sudah diposting tidak dapat diedit.');
         }
+
         $jurnalPembuka->load(['periode', 'detailJurnal.akun']);
-        $periodes = $this->jurnal->getPeriodeList();
+        $periodes = $this->service->getPeriodeList();
         $akuns    = Akun::with('kategoriAkun')
             ->whereNotNull('parent_id')
             ->orderBy('kode_akun')
             ->get();
+
         return view('pages.akuntansi.jurnal-pembuka.edit', compact('jurnalPembuka', 'periodes', 'akuns'));
     }
 
-    public function update(Request $request, Jurnal $jurnalPembuka)
+    public function perbaruiJurnalPembuka(UpdateJurnalPembukaRequest $request, Jurnal $jurnalPembuka)
     {
         if ($jurnalPembuka->status === 'POSTED') {
             return back()->with('error', 'Jurnal yang sudah diposting tidak dapat diubah.');
         }
 
-        $request->validate([
-            'periode_id'         => 'required|exists:periode,id',
-            'tanggal_mulai'      => 'required|date',
-            'tanggal_akhir'      => 'required|date|after_or_equal:tanggal_mulai',
-            'keterangan'         => 'nullable|string|max:500',
-            'submit_type'        => 'required|in:draft,posting',
-            'detail'             => 'required|array|min:2',
-            'detail.*.akun_id'   => 'required|exists:akun,id',
-            'detail.*.tipe'      => 'required|in:DEBIT,KREDIT',
-            'detail.*.nominal'   => 'required',
-        ]);
-
-        if ($request->submit_type === 'posting' && !$this->jurnal->detailSeimbang($request->detail)) {
+        if ($request->submit_type === 'posting' && !$this->service->isDetailSeimbang($request->detail)) {
             return back()->withInput()
                 ->withErrors(['balance' => 'Total Debit dan Kredit harus seimbang sebelum dapat diposting.']);
         }
 
-        $this->jurnal->perbarui($jurnalPembuka, $request->all());
+        $this->service->perbaruiSaldoAwal($jurnalPembuka, $request->validated());
 
         return redirect()->route('dashboard.jurnal-pembuka.index')
             ->with('success', 'Jurnal pembuka berhasil diperbarui.');
@@ -146,29 +128,34 @@ class JurnalPembukaController extends Controller
 
     public function posting(Jurnal $jurnalPembuka)
     {
-        $result = $this->jurnal->post($jurnalPembuka); // dari abstract
+        $result = $this->service->postingKeBukuBesar($jurnalPembuka);
+
         if ($result === true) {
             return response()->json([
                 'success' => true,
                 'message' => 'Jurnal berhasil diposting.',
             ]);
         }
+
         $code = str_contains($result, 'sudah diposting') ? 403 : 422;
+
         return response()->json([
             'success' => false,
             'message' => $result,
         ], $code);
     }
 
-    public function destroy(Jurnal $jurnalPembuka)
+    public function hapusJurnalPembuka(Jurnal $jurnalPembuka)
     {
-        $result = $this->jurnal->delete($jurnalPembuka); // dari abstract
+        $result = $this->service->hapusJurnal($jurnalPembuka);
+
         if ($result === true) {
             return response()->json([
                 'success' => true,
                 'message' => 'Jurnal pembuka berhasil dihapus.',
             ]);
         }
+
         return response()->json([
             'success' => false,
             'message' => $result,

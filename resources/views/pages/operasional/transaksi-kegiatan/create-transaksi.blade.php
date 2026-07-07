@@ -22,6 +22,8 @@
           data-pengeluaran="<?php echo (int) $kegiatan->totalPengeluaranBerjalan(); ?>">
         @csrf
 
+        <x-jurnal.error-banner />
+
         {{-- Toggle Jenis Transaksi --}}
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Jenis transaksi <span class="text-red-500">*</span></label>
@@ -141,7 +143,7 @@
             defaultDate: '{{ now()->format('Y-m-d') }}',
         });
 
-        @if($errors->createTransaksi->isNotEmpty())
+        @if($errors->createTransaksi->isNotEmpty() || $errors->has('permission'))
             openModal('modal-catat-transaksi');
         @endif
     });
