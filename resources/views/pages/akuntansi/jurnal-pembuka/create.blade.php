@@ -11,7 +11,7 @@
                 Periode aktif: {{ $periodeAktif->nama_periode }}
             </p>
         @endif
-    </div>
+    </div>z
 
     {{-- ── Stepper ─────────────────────────────────────────────────────────── --}}
     <x-jurnal.stepper :steps="['Informasi Umum', 'Entri Saldo Awal', 'Review & Simpan']"/>

@@ -2,6 +2,8 @@
     <form action="{{ route('dashboard.menus.store') }}" method="POST" class="space-y-5">
         @csrf
 
+        <x-jurnal.error-banner />
+
         {{-- Nama Menu --}}
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nama Menu <span class="text-red-500">*</span></label>
