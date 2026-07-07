@@ -5,7 +5,7 @@
 <form method="POST"
         action="{{ route('dashboard.coa.akun.store') }}"
         class="space-y-5"
-        onsubmit="handleFormSubmit(this)">
+        onsubmit="return guardSubmit(this, {{ $canCreateCoa ? 'true' : 'false' }}, 'Anda tidak memiliki akses untuk menyimpan data akun.') && handleFormSubmit(this)">
     @csrf
     <input type="hidden" name="_form" value="akun">
 

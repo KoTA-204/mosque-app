@@ -27,7 +27,7 @@ class ImportTransaksiRequest extends FormRequest
             'bank'            => 'required|in:BSI,BRI',
             'dompet_id'       => 'required|exists:dompet,id',
             'jenis_transaksi' => 'required|in:PEMASUKAN,PENGELUARAN',
-            'file'            => 'required|file|mimes:xlsx,xls|max:10240',
+            'file'            => 'required|file|mimes:xlsx,xls,csv,pdf|max:10240',
         ];
     }
 
@@ -40,7 +40,7 @@ class ImportTransaksiRequest extends FormRequest
             'jenis_transaksi.required' => 'Jenis transaksi wajib dipilih.',
             'jenis_transaksi.in'       => 'Jenis transaksi tidak valid.',
             'file.required'            => 'File mutasi bank wajib diunggah.',
-            'file.mimes'               => 'File harus berformat Excel (.xlsx atau .xls).',
+            'file.mimes'               => 'File harus berformat Excel (.xlsx, .xls) untuk BSI atau CSV (.csv) dan PDF untuk BRI (.pdf).',
             'file.max'                 => 'Ukuran file maksimal 10 MB.',
         ];
     }

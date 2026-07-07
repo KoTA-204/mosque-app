@@ -3,7 +3,8 @@
     $isEditErr = $errors->editKategori->isNotEmpty() && (int) session('edit_error_id') === (int) $item->id;
 @endphp
 <x-modal id="editKategoriModal{{ $item->id }}" title="Edit Kategori">
-    <form method="POST" action="{{ route('dashboard.kategori-transaksi.update', $item) }}" class="space-y-5">
+    <form method="POST" action="{{ route('dashboard.kategori-transaksi.update', $item) }}" class="space-y-5"
+        onsubmit="return guardSubmit(this, {{ $canEditKategoriTransaksi ? 'true' : 'false' }}, 'Anda tidak memiliki akses untuk mengedit data kategori transaksi.')">
         @csrf
         @method('PUT')
         @if($item->transaksi_count > 0)

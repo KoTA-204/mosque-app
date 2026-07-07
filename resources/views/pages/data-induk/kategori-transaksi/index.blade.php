@@ -1,6 +1,11 @@
 @extends('layouts.app')
 @section('title', 'Kategori Transaksi')
 @section('content')
+@php
+    $canCreateKategoriTransaksi = auth()->user()->hasPermission('CREATE_KATEGORI');
+    $canEditKategoriTransaksi   = auth()->user()->hasPermission('EDIT_KATEGORI');
+    $canDeleteKategoriTransaksi = auth()->user()->hasPermission('DELETE_KATEGORI');
+@endphp
 <div class="p-6 space-y-6">
 
     <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
@@ -145,7 +150,8 @@
                            @if($item->transaksi_count == 0)
                             <button type="button"
                                 onclick="openDeleteModal(
-                                    '{{ route('dashboard.kategori-transaksi.destroy', $item) }}'
+                                    '{{ route('dashboard.kategori-transaksi.destroy', $item) }}',
+                                    'kategori transaksi'
                                 )"
                                 class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
 
@@ -232,6 +238,33 @@
 @include('pages.data-induk.kategori-transaksi.edit')
 
 <script>
+    // ── Permission flags (dari route store/update/destroy) ─────────────────
+    const CAN_CREATE_KATEGORI_TRANSAKSI = @json($canCreateKategoriTransaksi);
+    const CAN_EDIT_KATEGORI_TRANSAKSI   = @json($canEditKategoriTransaksi);
+    const CAN_DELETE_KATEGORI_TRANSAKSI = @json($canDeleteKategoriTransaksi);
+
+    // Tampilkan alert peringatan akses di dalam sebuah modal/form tertentu
+    function showModalAlert(form, message) {
+        if (!form) return;
+        let alertEl = form.querySelector('.permission-alert-notice');
+        if (!alertEl) {
+            alertEl = document.createElement('div');
+            alertEl.className = 'permission-alert-notice flex items-center gap-2 mb-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2 text-xs text-red-600 dark:text-red-400';
+            form.prepend(alertEl);
+        }
+        alertEl.textContent = message;
+    }
+
+    // Cek hak akses sebelum form (create/edit) dikirim ke server.
+    // Jika tidak memiliki akses, submit dibatalkan dan alert ditampilkan di dalam modal.
+    function guardSubmit(form, allowed, message) {
+        if (!allowed) {
+            showModalAlert(form, message);
+            return false;
+        }
+        return true;
+    }
+
     // -- Auto-reopen modal jika ada validation error --
     @if($errors->createKategori->isNotEmpty())
     openModal('createKategoriModal');
@@ -285,9 +318,10 @@
         if (note) note.remove();
     }
 
-    function openDeleteModal(actionUrl) {
+    function openDeleteModal(actionUrl, entityLabel) {
         const form = document.getElementById('deleteModalForm');
         form.action = actionUrl;
+        form.dataset.entityLabel = entityLabel || 'data ini';
         openModal('deleteModal');
     }
 

@@ -53,13 +53,13 @@
                             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                     </svg>
                     <p class="text-sm text-gray-500">
-                        <span class="font-semibold text-green-700 underline">Pilih File EXCEL</span>
+                        <span class="font-semibold text-green-700 underline">Pilih File Excel/CSV/PDF</span>
                     </p>
-                    <p class="text-xs text-gray-400 mt-1">atau tarik file EXCEL mutasi bank untuk diunggah disini</p>
+                    <p class="text-xs text-gray-400 mt-1">atau tarik file Excel/CSV/PDF mutasi bank untuk diunggah disini</p>
                     <p id="namaFileImpor" class="text-xs text-green-700 font-medium mt-2 hidden"></p>
                 </div>
                 <input type="file" id="inputFileImpor" name="file"
-                    accept=".xlsx,.xls" class="hidden"
+                    accept=".xlsx,.xls,.csv,.pdf" class="hidden"
                     onchange="onFileImpor(this)">
             </div>
 
@@ -129,6 +129,10 @@
 </div>
 
 <script>
+// Flag hak akses — dipakai untuk menampilkan pesan yang sesuai saat pengguna
+// hanya memiliki akses view (bisa membuka modal, tapi tidak bisa mengunggah).
+const CAN_IMPOR_TRANSAKSI = @json(auth()->user()->hasPermission('CREATE_TRANSAKSI'));
+
 // Reset seluruh isian form impor + state tampilan ke kondisi awal.
 // Dipanggil saat modal dibuka dan saat tombol "Coba Lagi" ditekan,
 // agar data dari percobaan impor sebelumnya tidak tertinggal.
@@ -180,6 +184,12 @@ async function submitImpor() {
     const form = document.getElementById('formImpor');
     const fd   = new FormData(form);
 
+    if (!CAN_IMPOR_TRANSAKSI) {
+        document.getElementById('imporErrorMsg').textContent = 'Anda tidak memiliki hak akses untuk mengimpor transaksi.';
+        document.getElementById('imporErrorBox').classList.remove('hidden');
+        return;
+    }
+
     if (!fd.get('bank') || !fd.get('jenis_transaksi') || !fd.get('file')?.name) {
         document.getElementById('imporErrorMsg').textContent = 'Lengkapi semua field sebelum mengunggah.';
         document.getElementById('imporErrorBox').classList.remove('hidden');
@@ -199,6 +209,13 @@ async function submitImpor() {
                 'Accept': 'application/json',
             },
         });
+        if (res.status === 403) {
+            document.getElementById('pesanGagal').textContent =
+                'Anda tidak memiliki hak akses untuk mengimpor transaksi.';
+            imporSetState('gagal');
+            return;
+        }
+
         const data = await res.json();
 
         if (data.success && data.type === 'parse_success') {

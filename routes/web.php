@@ -130,13 +130,12 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
     // ── Pencatatan - Transaksi ─────────────────────────────────────────────
     Route::middleware('permission:VIEW_TRANSAKSI')->group(function () {
         Route::get('/transaksi', [TransaksiController::class, 'tampilkanDaftarTransaksi'])->name('transaksi.index');
+        Route::get('/transaksi/create', [TransaksiController::class, 'tampilkanFormTambahTransaksi'])->name('transaksi.create');
+        Route::get('/transaksi/import', [TransaksiController::class, 'tampilkanFormImporTransaksi'])->name('transaksi.import.create');
+        Route::get('/transaksi/import/review', [TransaksiController::class, 'tampilkanReviewImpor'])->name('transaksi.import.review');
 
-        Route::get('/transaksi/{transaksi}', [TransaksiController::class, 'tampilkanDetailTransaksi'])
-            ->name('transaksi.show')
-            ->whereNumber('transaksi');
-
-        Route::get('/transaksi/import/review', [TransaksiController::class, 'tampilkanReviewImpor'])
-            ->name('transaksi.import.review');
+        Route::get('/transaksi/{transaksi}', [TransaksiController::class, 'tampilkanDetailTransaksi'])->name('transaksi.show')->whereNumber('transaksi');
+        Route::get('/transaksi/{transaksi}/edit', [TransaksiController::class, 'tampilkanFormEditTransaksi'])->name('transaksi.edit')->whereNumber('transaksi');
     });
 
     Route::middleware('permission:CREATE_TRANSAKSI')->group(function () {
@@ -146,19 +145,12 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
     });
 
     Route::middleware('permission:EDIT_TRANSAKSI')->group(function () {
-        Route::put('/transaksi/{transaksi}', [TransaksiController::class, 'perbaruiTransaksi'])
-            ->name('transaksi.update')
-            ->whereNumber('transaksi');
+        Route::put('/transaksi/{transaksi}', [TransaksiController::class, 'perbaruiTransaksi'])->name('transaksi.update')->whereNumber('transaksi');
     });
 
     Route::middleware('permission:DELETE_TRANSAKSI')->group(function () {
-        Route::delete('/transaksi/{transaksi}', [TransaksiController::class, 'hapusTransaksi'])
-            ->name('transaksi.destroy')
-            ->whereNumber('transaksi');
-
-        Route::delete('/transaksi/bukti/{bukti}', [TransaksiController::class, 'hapusBuktiTransaksi'])
-            ->name('transaksi.bukti.destroy')
-            ->whereNumber('bukti');
+        Route::delete('/transaksi/{transaksi}', [TransaksiController::class, 'hapusTransaksi'])->name('transaksi.destroy')->whereNumber('transaksi');
+        Route::delete('/transaksi/bukti/{bukti}', [TransaksiController::class, 'hapusBuktiTransaksi'])->name('transaksi.bukti.destroy')->whereNumber('bukti');
     });
 
     // ── Pencatatan - Kencleng ──────────────────────────────────────────────
@@ -304,57 +296,56 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
     // ── Master Data - Chart of Accounts ────────────────────────────────────
     Route::middleware('permission:VIEW_COA')->prefix('chart-of-account')->name('coa.')->group(function () {
         Route::get('/', [ChartOfAccountController::class, 'tampilkanDaftarCoa'])->name('index');
-
+ 
+        Route::get('/kategori/create', [ChartOfAccountController::class, 'tampilkanFormTambahKategoriAkun'])->name('kategori.create');
+        Route::get('/sub-kategori/create', [ChartOfAccountController::class, 'tampilkanFormTambahSubKategori'])->name('sub-kategori.create');
+        Route::get('/akun/create', [ChartOfAccountController::class, 'tampilkanFormTambahAkun'])->name('akun.create');
+ 
         Route::middleware('permission:CREATE_COA')->group(function () {
-            Route::get('/kategori/create', [ChartOfAccountController::class, 'tampilkanFormTambahKategoriAkun'])->name('kategori.create');
             Route::post('/kategori', [ChartOfAccountController::class, 'simpanKategoriAkunBaru'])->name('kategori.store');
-            Route::get('/sub-kategori/create', [ChartOfAccountController::class, 'tampilkanFormTambahSubKategori'])->name('sub-kategori.create');
             Route::post('/sub-kategori', [ChartOfAccountController::class, 'simpanSubKategoriBaru'])->name('sub-kategori.store');
-            Route::get('/akun/create', [ChartOfAccountController::class, 'tampilkanFormTambahAkun'])->name('akun.create');
             Route::post('/akun', [ChartOfAccountController::class, 'simpanAkunBaru'])->name('akun.store');
         });
-
+ 
+        Route::get('/kategori/{kategori}/edit', [ChartOfAccountController::class, 'tampilkanFormUbahKategoriAkun'])->name('kategori.edit');
+        Route::put('/sub-kategori/{subKategori}', [ChartOfAccountController::class, 'perbaruiSubKategori'])->name('sub-kategori.update');
+        Route::put('/akun/{akun}', [ChartOfAccountController::class, 'perbaruiAkun'])->name('akun.update');
+ 
         Route::middleware('permission:EDIT_COA')->group(function () {
-            Route::get('/kategori/{kategori}/edit', [ChartOfAccountController::class, 'tampilkanFormUbahKategoriAkun'])->name('kategori.edit');
             Route::put('/kategori/{kategori}', [ChartOfAccountController::class, 'perbaruiKategoriAkun'])->name('kategori.update');
             Route::get('/sub-kategori/{subKategori}/edit', [ChartOfAccountController::class, 'tampilkanFormUbahSubKategori'])->name('sub-kategori.edit');
-            Route::put('/sub-kategori/{subKategori}', [ChartOfAccountController::class, 'perbaruiSubKategori'])->name('sub-kategori.update');
             Route::get('/akun/{akun}/edit', [ChartOfAccountController::class, 'tampilkanFormUbahAkun'])->name('akun.edit');
-            Route::put('/akun/{akun}', [ChartOfAccountController::class, 'perbaruiAkun'])->name('akun.update');
         });
-
-        Route::middleware('permission:DELETE_COA')->group(function () {
-            Route::delete('/kategori/{kategori}', [ChartOfAccountController::class, 'hapusKategoriAkun'])->name('kategori.destroy');
-            Route::delete('/sub-kategori/{subKategori}', [ChartOfAccountController::class, 'hapusSubKategori'])->name('sub-kategori.destroy');
-            Route::delete('/akun/{akun}', [ChartOfAccountController::class, 'hapusAkun'])->name('akun.destroy');
-        });
+        
+        Route::delete('/kategori/{kategori}', [ChartOfAccountController::class, 'hapusKategoriAkun'])->name('kategori.destroy');
+        Route::delete('/sub-kategori/{subKategori}', [ChartOfAccountController::class, 'hapusSubKategori'])->name('sub-kategori.destroy');
+        Route::delete('/akun/{akun}', [ChartOfAccountController::class, 'hapusAkun'])->name('akun.destroy');
     });
-
+ 
     // ── Master Data - Kategori Transaksi ───────────────────────────────────
     Route::middleware('permission:VIEW_KATEGORI')->group(function () {
         Route::get('/kategori-transaksi', [KategoriTransaksiController::class, 'tampilkanDaftarKategoriTransaksi'])->name('kategori-transaksi.index');
-
+        Route::get('/kategori-transaksi/create', [KategoriTransaksiController::class, 'tampilkanFormTambahKategoriTransaksi'])->name('kategori-transaksi.create');
+        Route::get('/kategori-transaksi/{kategoriTransaksi}/edit', [KategoriTransaksiController::class, 'tampilkanFormUbahKategoriTransaksi'])->name('kategori-transaksi.edit');
+ 
         Route::middleware('permission:CREATE_KATEGORI')->group(function () {
-            Route::get('/kategori-transaksi/create', [KategoriTransaksiController::class, 'tampilkanFormTambahKategoriTransaksi'])->name('kategori-transaksi.create');
             Route::post('/kategori-transaksi', [KategoriTransaksiController::class, 'simpanKategoriTransaksiBaru'])->name('kategori-transaksi.store');
         });
-
+ 
         Route::middleware('permission:EDIT_KATEGORI')->group(function () {
-            Route::get('/kategori-transaksi/{kategoriTransaksi}/edit', [KategoriTransaksiController::class, 'tampilkanFormUbahKategoriTransaksi'])->name('kategori-transaksi.edit');
             Route::put('/kategori-transaksi/{kategoriTransaksi}', [KategoriTransaksiController::class, 'perbaruiKategoriTransaksi'])->name('kategori-transaksi.update');
         });
-
-        Route::middleware('permission:DELETE_KATEGORI')->group(function () {
-            Route::delete('/kategori-transaksi/{kategoriTransaksi}', [KategoriTransaksiController::class, 'hapusKategoriTransaksi'])->name('kategori-transaksi.destroy');
-        });
+        
+        Route::delete('/kategori-transaksi/{kategoriTransaksi}', [KategoriTransaksiController::class, 'hapusKategoriTransaksi'])->name('kategori-transaksi.destroy');
     });
 
     // ── Akuntansi - Jurnal Pembuka ─────────────────────────────────────────
     Route::middleware('permission:VIEW_JURNAL_PEMBUKA')->group(function () {
         Route::get('/jurnal-pembuka', [JurnalPembukaController::class, 'index'])->name('jurnal-pembuka.index');
+        Route::get('/jurnal-pembuka/create', [JurnalPembukaController::class, 'create'])->name('jurnal-pembuka.create');
+        Route::get('/jurnal-pembuka/{jurnalPembuka}/edit', [JurnalPembukaController::class, 'edit'])->name('jurnal-pembuka.edit')->whereNumber('jurnalPembuka');
 
         Route::middleware('permission:CREATE_JURNAL_PEMBUKA')->group(function () {
-            Route::get('/jurnal-pembuka/create', [JurnalPembukaController::class, 'create'])->name('jurnal-pembuka.create');
             Route::post('/jurnal-pembuka', [JurnalPembukaController::class, 'store'])->name('jurnal-pembuka.store');
         });
 
@@ -363,9 +354,6 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
             ->whereNumber('jurnalPembuka');
 
         Route::middleware('permission:EDIT_JURNAL_PEMBUKA')->group(function () {
-            Route::get('/jurnal-pembuka/{jurnalPembuka}/edit', [JurnalPembukaController::class, 'edit'])
-                ->name('jurnal-pembuka.edit')
-                ->whereNumber('jurnalPembuka');
             Route::put('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'update'])
                 ->name('jurnal-pembuka.update')
                 ->whereNumber('jurnalPembuka');

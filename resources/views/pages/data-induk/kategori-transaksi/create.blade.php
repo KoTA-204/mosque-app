@@ -1,5 +1,6 @@
 <x-modal id="createKategoriModal" title="Tambah Kategori">
-    <form method="POST" action="{{ route('dashboard.kategori-transaksi.store') }}" class="space-y-5">
+    <form method="POST" action="{{ route('dashboard.kategori-transaksi.store') }}" class="space-y-5"
+        onsubmit="return guardSubmit(this, {{ $canCreateKategoriTransaksi ? 'true' : 'false' }}, 'Anda tidak memiliki akses untuk menyimpan data kategori transaksi.')">
         @csrf
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">

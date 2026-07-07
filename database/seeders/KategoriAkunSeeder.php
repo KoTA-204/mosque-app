@@ -2,14 +2,13 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\KategoriAkun;
 
 class KategoriAkunSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Kategori akun = Level 1 CoA (grup utama).
      */
     public function run(): void
     {

@@ -39,7 +39,7 @@
         <span id="error-alert-msg"></span>
     </div>
 
-    <div class="grid grid-cols-3 gap-4">
+    <div class="grid grid-cols-4 gap-4">
         <div class="bg-white rounded-2xl border border-gray-200 p-4 text-center">
             <p id="statTotalBaris" class="text-3xl font-semibold text-gray-900">{{ $stats['total'] }}</p>
             <p class="text-sm text-gray-500 mt-1">Total baris</p>
@@ -52,7 +52,21 @@
             <p class="text-3xl font-semibold text-amber-500">{{ $stats['duplikat'] }}</p>
             <p class="text-sm text-gray-500 mt-1">Duplikat (dilewati)</p>
         </div>
+        <div class="bg-white rounded-2xl border border-gray-200 p-4 text-center">
+            <p class="text-3xl font-semibold text-rose-500">{{ $stats['tidak_sesuai'] }}</p>
+            <p class="text-sm text-gray-500 mt-1">Tak sesuai jenis (dilewati)</p>
+        </div>
     </div>
+
+    @if(!empty($peringatanJenis))
+    <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-start gap-3">
+        <svg class="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <p class="text-sm text-rose-700">{{ $peringatanJenis }}</p>
+    </div>
+    @endif
 
     @if(!empty($warnings))
     <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
@@ -214,7 +228,11 @@
         </span>
         <button type="button" onclick="simpanKlasifikasi()"
             id="btnSimpanKlasifikasi"
-            class="h-9 px-5 bg-green-700 text-white text-sm font-medium rounded-xl hover:bg-green-800 transition-colors flex items-center gap-2">
+            @class([
+                'h-9 px-5 text-sm font-medium rounded-xl transition-colors flex items-center gap-2',
+                'bg-green-700 text-white hover:bg-green-800' => auth()->user()->hasPermission('CREATE_TRANSAKSI'),
+                'bg-gray-200 text-gray-400' => !auth()->user()->hasPermission('CREATE_TRANSAKSI'),
+            ])>
             <svg id="spinnerKlasifikasi" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
@@ -430,6 +448,8 @@ function updateEntryCount() {
 
 // ── Simpan ──────────────────────────────────────────────────────
 
+const CAN_CREATE_TRANSAKSI = @json(auth()->user()->hasPermission('CREATE_TRANSAKSI'));
+
 async function simpanKlasifikasi() {
     const btn     = document.getElementById('btnSimpanKlasifikasi');
     const spinner = document.getElementById('spinnerKlasifikasi');
@@ -438,12 +458,20 @@ async function simpanKlasifikasi() {
     hideAlert('success');
     hideAlert('error');
 
+    if (!CAN_CREATE_TRANSAKSI) {
+        showAlert('error', 'Anda tidak memiliki hak akses untuk menyimpan hasil impor transaksi.');
+        return;
+    }
+
     let valid = true;
     const klasifikasi = [];
 
     document.querySelectorAll('tbody tr').forEach(row => {
         const noRefInput = row.querySelector('input[name^="klasifikasi"][name$="[no_referensi]"]');
-        if (!noRefInput) return; // baris duplikat, dilewati
+        if (!noRefInput) {
+            showAlert('error', 'Tidak dapat menemukan input no_referensi pada baris.');
+            return; // baris duplikat, dilewati
+        }
 
         const idxMatch = noRefInput.name.match(/klasifikasi\[(\d+)\]/);
         const idx = idxMatch ? idxMatch[1] : null;
@@ -507,6 +535,13 @@ async function simpanKlasifikasi() {
             },
             credentials: 'same-origin',
         });
+
+        if (res.status === 403) {
+            showAlert('error', 'Anda tidak memiliki hak akses untuk menyimpan hasil impor transaksi.');
+            btn.disabled = false;
+            spinner.classList.add('hidden');
+            return;
+        }
 
         const contentType = res.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {

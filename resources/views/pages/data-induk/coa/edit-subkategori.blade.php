@@ -6,7 +6,7 @@
 <form method="POST" 
         action="{{ route('dashboard.coa.sub-kategori.update', $subKat->id) }}" 
         class="space-y-5"
-        onsubmit="handleFormSubmit(this)">
+        onsubmit="return guardSubmit(this, {{ $canEditCoa ? 'true' : 'false' }}, 'Anda tidak memiliki akses untuk mengedit data sub kategori.') && handleFormSubmit(this)">
     @csrf
     @method('PUT')
     @if(($terkunci ?? false))

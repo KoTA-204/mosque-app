@@ -4,7 +4,7 @@
 >
 
 <form method="POST" 
-        action="{{ route('dashboard.coa.kategori.update', $kat->id) }}" class="space-y-5" onsubmit="handleFormSubmit(this)">
+        action="{{ route('dashboard.coa.kategori.update', $kat->id) }}" class="space-y-5" onsubmit="return guardSubmit(this, {{ $canEditCoa ? 'true' : 'false' }}, 'Anda tidak memiliki akses untuk mengedit data kategori akun.') && handleFormSubmit(this)">
     @csrf
     @method('PUT')
     @if(($terkunci ?? false))

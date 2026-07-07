@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Transaksi;
 use App\Models\Dompet;
-use App\Models\Kegiatan;
+use App\Models\User;
 use App\Models\KategoriTransaksi;
 use App\Models\User;
 
@@ -24,6 +24,17 @@ use App\Models\User;
  */
 class TransaksiSeeder extends Seeder
 {
+    /**
+     * Transaksi NON-kegiatan:
+     *  (A) Infak kencleng  -> lewat approval (status_approval = APPROVED), punya record kencleng.
+     *  (B) Pencatatan bendahara langsung -> status_approval = null (tidak butuh approval).
+     *
+     * Kondisi mapping akun:
+     *  - status_jurnal = MAPPED   -> sudah dipetakan, ada jurnal umum (lihat JurnalUmumSeeder).
+     *  - status_jurnal = UNMAPPED -> belum dipetakan bendahara, belum punya jurnal.
+     *
+     * no_referensi dipakai sebagai kunci stabil oleh seeder lain (Kencleng, Bukti, JurnalUmum).
+     */
     public function run(): void
     {
         $user = User::first();
@@ -150,8 +161,9 @@ class TransaksiSeeder extends Seeder
             ['dompet_id' => $bsi->id, 'kegiatan_id' => $kegQurban->id, 'kategori_transaksi_id' => $katKegiatan->id, 'tanggal_transaksi' => '2026-06-12', 'jenis_transaksi' => 'PEMASUKAN',  'jumlah' => 3000000, 'deskripsi' => 'Donasi tambahan untuk qurban dari donatur',  'catatan' => null,                            'status_approval' => 'PENDING',  'status_jurnal' => 'UNMAPPED'],
         ];
 
-        foreach ($transaksiApproval as $item) {
-            Transaksi::create(array_merge(['user_id' => $user->id], $item));
+        foreach ($data as $row) {
+            Transaksi::create($row);
         }
     }
 }
+

@@ -137,6 +137,10 @@ class ChartOfAccountController extends Controller
 
     public function hapusKategoriAkun(KategoriAkun $kategori)
     {
+        if (!auth()->user()->hasPermission('DELETE_COA')) {
+            return back()->with('error', 'Anda tidak memiliki akses untuk menghapus kategori akun ini.');
+        }
+
         try {
 
             if ($kategori->akunKeuangan()->exists()) {
@@ -223,6 +227,10 @@ class ChartOfAccountController extends Controller
 
     public function hapusSubKategori(Akun $subKategori)
     {
+        if (!auth()->user()->hasPermission('DELETE_COA')) {
+            return back()->with('error', 'Anda tidak memiliki akses untuk menghapus sub kategori ini.');
+        }
+
         try {
 
             if ($subKategori->children()->exists()) {
@@ -323,6 +331,10 @@ class ChartOfAccountController extends Controller
 
     public function hapusAkun(Akun $akun)
     {
+        if (!auth()->user()->hasPermission('DELETE_COA')) {
+            return back()->with('error', 'Anda tidak memiliki akses untuk menghapus akun ini.');
+        }
+
         try {
             // Akun tidak boleh dihapus bila sudah dipakai pada transaksi (jurnal).
             if (DetailJurnal::where('akun_id', $akun->id)->exists()) {
