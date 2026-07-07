@@ -254,8 +254,8 @@ class MenuSeeder extends Seeder
             'permission_id' => $perm('VIEW_KATEGORI'),
         ]);
 
-        // Kegiatan Khusus — route: dashboard.kegiatan.index (BUKAN data-induk)
-        // Pakai CREATE_KEGIATAN agar Panitia tidak melihat menu ini
+        // Kegiatan Khusus — tetap dikelompokkan di bawah Data Induk
+        // Gate CREATE_KEGIATAN agar hanya role yang berwenang (mis. Administrator) yang melihatnya
         Menu::create([
             'menu_name'     => 'Kegiatan Khusus',
             'route_name'    => 'dashboard.kegiatan.index',
@@ -265,14 +265,7 @@ class MenuSeeder extends Seeder
             'permission_id' => $perm('CREATE_KEGIATAN'),
         ]);
 
-        Menu::create([
-            'menu_name'     => 'Aset',
-            'route_name'    => 'dashboard.aset.index',
-            'icon'          => 'ecommerce',
-            'parent_id'     => $dataInduk->id,
-            'sort_order'    => 64,
-            'permission_id' => $perm('VIEW_ASET'),
-        ]);
+        // Aset TIDAK di bawah Data Induk — lihat grup menu utama "Aset" (induk › anak) di bawah.
 
         // ── Kencleng (standalone untuk PHM, nama unik) ─────────────────────────────────
         // PHM hanya melihat menu ini, tidak melihat grup Pencatatan Transaksi
@@ -293,12 +286,22 @@ class MenuSeeder extends Seeder
             'permission_id' => $perm('VIEW_TRANSAKSI_KEGIATAN'),
         ]);
 
-        // ── Aset (standalone untuk Sekretaris) ───────────────────────────────
+        // ── Aset (grup menu utama khusus Sekretaris) ─────────────────────────
+        // Struktur: Aset (induk) › Manajemen Aset (anak)
+        $aset = Menu::create([
+            'menu_name'     => 'Aset',
+            'route_name'    => null,
+            'icon'          => 'ecommerce',
+            'sort_order'    => 72,
+            'permission_id' => $perm('VIEW_ASET'),
+        ]);
+
         Menu::create([
             'menu_name'     => 'Manajemen Aset',
             'route_name'    => 'dashboard.aset.index',
             'icon'          => 'ecommerce',
-            'sort_order'    => 72,
+            'parent_id'     => $aset->id,
+            'sort_order'    => 73,
             'permission_id' => $perm('VIEW_ASET'),
         ]);
     }

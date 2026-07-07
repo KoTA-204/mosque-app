@@ -245,20 +245,25 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
     // ── Manajemen Aset ─────────────────────────────────────────────────────
     Route::middleware('permission:VIEW_ASET')->group(function () {
         Route::get('/aset', [AsetController::class, 'tampilkanDaftarAset'])->name('aset.index');
+        // Menampilkan modal form (create/edit) termasuk hak VIEW: Administrator boleh
+        // MELIHAT modal tambah/ubah aset. Alur SIMPAN (store/update) tetap dijaga
+        // permission CREATE_ASET / EDIT_ASET di bawah -- sesuai pola "guard di route POST".
+        Route::get('/aset/create', [AsetController::class, 'tampilkanFormTambahAset'])->name('aset.create');
+        Route::get('/aset/{aset}/edit', [AsetController::class, 'tampilkanFormUbahAset'])
+            ->name('aset.edit')
+            ->whereNumber('aset');
         Route::get('/aset/{aset}', [AsetController::class, 'tampilkanDetailAset'])
             ->name('aset.show')
             ->whereNumber('aset');
     });
 
+    // Alur SIMPAN aset baru -- hanya role berhak (Sekretaris). Admin: ditolak (403).
     Route::middleware('permission:CREATE_ASET')->group(function () {
-        Route::get('/aset/create', [AsetController::class, 'tampilkanFormTambahAset'])->name('aset.create');
         Route::post('/aset', [AsetController::class, 'simpanAsetBaru'])->name('aset.store');
     });
 
+    // Alur UBAH / toggle status aset -- hanya role berhak (Sekretaris). Admin: ditolak (403).
     Route::middleware('permission:EDIT_ASET')->group(function () {
-        Route::get('/aset/{aset}/edit', [AsetController::class, 'tampilkanFormUbahAset'])
-            ->name('aset.edit')
-            ->whereNumber('aset');
         Route::put('/aset/{aset}', [AsetController::class, 'perbaruiAset'])->name('aset.update');
         Route::patch('/aset/{aset}/toggle-status', [AsetController::class, 'ubahStatusAset'])
             ->name('aset.toggle-status');
@@ -282,17 +287,18 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
         });
 
         Route::get('/jurnal-umum/{jurnalUmum}', [JurnalUmumController::class, 'tampilkanDetailJurnalUmum'])
-            ->whereNumber('jurnalUmum')->name('jurnal-umum.show');
+            ->whereNumber('jurnalUmum')
+            ->name('jurnal-umum.show');
     });
 
-    // ── Buku Besar ──
+    // ── Akuntansi - Buku Besar ─────────────────────────────────────────────
     Route::middleware('permission:VIEW_BUKU_BESAR')->group(function () {
-        Route::get('/buku-besar', [BukuBesarController::class, 'tampilkanBukuBesar'])->name('buku-besar.index');
+        Route::get('/buku-besar', [BukuBesarController::class, 'index'])->name('buku-besar.index');
     });
 
-    // ── Neraca Saldo ──
+    // ── Akuntansi - Neraca Saldo ───────────────────────────────────────────
     Route::middleware('permission:VIEW_NERACA_SALDO')->group(function () {
-        Route::get('/neraca-saldo', [NeracaSaldoController::class, 'tampilkanNeracaSaldo'])->name('neraca-saldo.index');
+        Route::get('/neraca-saldo', [NeracaSaldoController::class, 'index'])->name('neraca-saldo.index');
     });
 
     // ── Master Data - Chart of Accounts ────────────────────────────────────
@@ -345,98 +351,104 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
 
     // ── Akuntansi - Jurnal Pembuka ─────────────────────────────────────────
     Route::middleware('permission:VIEW_JURNAL_PEMBUKA')->group(function () {
-        Route::get('/jurnal-pembuka', [JurnalPembukaController::class, 'tampilkanJurnalPembuka'])->name('jurnal-pembuka.index');
+        Route::get('/jurnal-pembuka', [JurnalPembukaController::class, 'index'])->name('jurnal-pembuka.index');
 
         Route::middleware('permission:CREATE_JURNAL_PEMBUKA')->group(function () {
-            Route::get('/jurnal-pembuka/create', [JurnalPembukaController::class, 'tambahJurnalPembuka'])->name('jurnal-pembuka.create');
-            Route::post('/jurnal-pembuka', [JurnalPembukaController::class, 'simpanJurnalPembuka'])->name('jurnal-pembuka.store');
+            Route::get('/jurnal-pembuka/create', [JurnalPembukaController::class, 'create'])->name('jurnal-pembuka.create');
+            Route::post('/jurnal-pembuka', [JurnalPembukaController::class, 'store'])->name('jurnal-pembuka.store');
         });
 
         Route::patch('/jurnal-pembuka/{jurnalPembuka}/posting', [JurnalPembukaController::class, 'posting'])
-            ->name('jurnal-pembuka.posting')->whereNumber('jurnalPembuka');
+            ->name('jurnal-pembuka.posting')
+            ->whereNumber('jurnalPembuka');
 
         Route::middleware('permission:EDIT_JURNAL_PEMBUKA')->group(function () {
-            Route::get('/jurnal-pembuka/{jurnalPembuka}/edit', [JurnalPembukaController::class, 'ubahJurnalPembuka'])
-                ->name('jurnal-pembuka.edit')->whereNumber('jurnalPembuka');
-            Route::put('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'perbaruiJurnalPembuka'])
-                ->name('jurnal-pembuka.update')->whereNumber('jurnalPembuka');
+            Route::get('/jurnal-pembuka/{jurnalPembuka}/edit', [JurnalPembukaController::class, 'edit'])
+                ->name('jurnal-pembuka.edit')
+                ->whereNumber('jurnalPembuka');
+            Route::put('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'update'])
+                ->name('jurnal-pembuka.update')
+                ->whereNumber('jurnalPembuka');
         });
 
         Route::middleware('permission:DELETE_JURNAL_PEMBUKA')->group(function () {
-            Route::delete('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'hapusJurnalPembuka'])
-                ->name('jurnal-pembuka.destroy')->whereNumber('jurnalPembuka');
+            Route::delete('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'destroy'])
+                ->name('jurnal-pembuka.destroy')
+                ->whereNumber('jurnalPembuka');
         });
 
-        Route::get('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'tampilkanDetailJurnalPembuka'])
-            ->name('jurnal-pembuka.show')->whereNumber('jurnalPembuka');
+        Route::get('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'show'])
+            ->name('jurnal-pembuka.show')
+            ->whereNumber('jurnalPembuka');
     });
 
     // ── Akuntansi - Jurnal Penyesuaian ────────────────────────────────────
     Route::middleware('permission:VIEW_JURNAL_PENYESUAIAN')->group(function () {
-        Route::get('/jurnal-penyesuaian', [JurnalPenyesuaianController::class, 'tampilkanJurnalPenyesuaian'])->name('jurnal-penyesuaian.index');
+        Route::get('/jurnal-penyesuaian', [JurnalPenyesuaianController::class, 'index'])->name('jurnal-penyesuaian.index');
 
         Route::middleware('permission:CREATE_JURNAL_PENYESUAIAN')->group(function () {
-            Route::get('/jurnal-penyesuaian/create', [JurnalPenyesuaianController::class, 'tambahJurnalPenyesuaian'])->name('jurnal-penyesuaian.create');
+            Route::get('/jurnal-penyesuaian/create', [JurnalPenyesuaianController::class, 'create'])->name('jurnal-penyesuaian.create');
             Route::get('/jurnal-penyesuaian/aset-detail', [JurnalPenyesuaianController::class, 'getAsetDetail'])->name('jurnal-penyesuaian.aset-detail');
-            Route::post('/jurnal-penyesuaian', [JurnalPenyesuaianController::class, 'simpanJurnalPenyesuaian'])->name('jurnal-penyesuaian.store');
+            Route::post('/jurnal-penyesuaian', [JurnalPenyesuaianController::class, 'store'])->name('jurnal-penyesuaian.store');
             Route::post('/jurnal-penyesuaian/bulk-post', [JurnalPenyesuaianController::class, 'bulkPost'])->name('jurnal-penyesuaian.bulk-post');
-            Route::delete('/jurnal-penyesuaian/{jurnal}', [JurnalPenyesuaianController::class, 'hapusJurnalPenyesuaian'])
-                ->whereNumber('jurnal')->name('jurnal-penyesuaian.destroy');
+            Route::delete('/jurnal-penyesuaian/{jurnal}', [JurnalPenyesuaianController::class, 'destroy'])
+                ->whereNumber('jurnal')
+                ->name('jurnal-penyesuaian.destroy');
         });
 
-        Route::get('/jurnal-penyesuaian/{jurnal}', [JurnalPenyesuaianController::class, 'tampilkanDetailJurnalPenyesuaian'])
-            ->whereNumber('jurnal')->name('jurnal-penyesuaian.show');
+        Route::get('/jurnal-penyesuaian/{jurnal}', [JurnalPenyesuaianController::class, 'show'])
+            ->whereNumber('jurnal')
+            ->name('jurnal-penyesuaian.show');
     });
 
     // ── Akuntansi - Jurnal Koreksi ─────────────────────────────────────────
     Route::middleware('permission:VIEW_JURNAL_KOREKSI')->group(function () {
-        Route::get('/jurnal-koreksi', [JurnalKoreksiController::class, 'tampilkanJurnalKoreksi'])->name('jurnal-koreksi.index');
+        Route::get('/jurnal-koreksi', [JurnalKoreksiController::class, 'index'])->name('jurnal-koreksi.index');
 
         Route::middleware('permission:CREATE_JURNAL_KOREKSI')->group(function () {
-            Route::get('/jurnal-koreksi/create', [JurnalKoreksiController::class, 'tambahJurnalKoreksi'])->name('jurnal-koreksi.create');
+            Route::get('/jurnal-koreksi/create', [JurnalKoreksiController::class, 'create'])->name('jurnal-koreksi.create');
             Route::get('/jurnal-koreksi/aset-detail', [JurnalKoreksiController::class, 'getAsetDetail'])->name('jurnal-koreksi.aset-detail');
-            Route::post('/jurnal-koreksi', [JurnalKoreksiController::class, 'simpanJurnalKoreksi'])->name('jurnal-koreksi.store');
+            Route::post('/jurnal-koreksi', [JurnalKoreksiController::class, 'store'])->name('jurnal-koreksi.store');
             Route::post('/jurnal-koreksi/bulk-post', [JurnalKoreksiController::class, 'bulkPost'])->name('jurnal-koreksi.bulk-post');
-            Route::delete('/jurnal-koreksi/{jurnal}', [JurnalKoreksiController::class, 'hapusJurnalKoreksi'])
-                ->whereNumber('jurnal')->name('jurnal-koreksi.destroy');
+            Route::delete('/jurnal-koreksi/{jurnal}', [JurnalKoreksiController::class, 'destroy'])
+                ->whereNumber('jurnal')
+                ->name('jurnal-koreksi.destroy');
         });
 
-        Route::get('/jurnal-koreksi/{jurnal}', [JurnalKoreksiController::class, 'tampilkanDetailJurnalKoreksi'])
-            ->whereNumber('jurnal')->name('jurnal-koreksi.show');
+        Route::get('/jurnal-koreksi/{jurnal}', [JurnalKoreksiController::class, 'show'])
+            ->whereNumber('jurnal')
+            ->name('jurnal-koreksi.show');
     });
 
     // ── Akuntansi - Jurnal Penutup ─────────────────────────────────────────
     Route::middleware('permission:VIEW_JURNAL_PENUTUP')->group(function () {
-        Route::get('/jurnal-penutup', [JurnalPenutupController::class, 'tampilkanJurnalPenutup'])->name('jurnal-penutup.index');
+        Route::get('/jurnal-penutup', [JurnalPenutupController::class, 'index'])->name('jurnal-penutup.index');
 
         Route::middleware('permission:CREATE_JURNAL_PENUTUP')->group(function () {
-            Route::get('/jurnal-penutup/create', [JurnalPenutupController::class, 'tambahJurnalPenutup'])->name('jurnal-penutup.create');
+            Route::get('/jurnal-penutup/create', [JurnalPenutupController::class, 'create'])->name('jurnal-penutup.create');
             Route::get('/jurnal-penutup/aset-detail', [JurnalPenutupController::class, 'getAsetDetail'])->name('jurnal-penutup.aset-detail');
-            Route::post('/jurnal-penutup', [JurnalPenutupController::class, 'simpanJurnalPenutup'])->name('jurnal-penutup.store');
+            Route::post('/jurnal-penutup', [JurnalPenutupController::class, 'store'])->name('jurnal-penutup.store');
             Route::post('/jurnal-penutup/post-draft', [JurnalPenutupController::class, 'postDraft'])->name('jurnal-penutup.post-draft');
             Route::post('/jurnal-penutup/konfirmasi-tahap', [JurnalPenutupController::class, 'konfirmasiTahap'])->name('jurnal-penutup.konfirmasi-tahap');
             Route::post('/jurnal-penutup/bulk-post', [JurnalPenutupController::class, 'bulkPost'])->name('jurnal-penutup.bulk-post');
-            Route::delete('/jurnal-penutup/{jurnal}', [JurnalPenutupController::class, 'hapusJurnalPenutup'])
-                ->whereNumber('jurnal')->name('jurnal-penutup.destroy');
+            Route::delete('/jurnal-penutup/{jurnal}', [JurnalPenutupController::class, 'destroy'])
+                ->whereNumber('jurnal')
+                ->name('jurnal-penutup.destroy');
         });
 
-        Route::get('/jurnal-penutup/{jurnal}', [JurnalPenutupController::class, 'tampilkanDetailJurnalPenutup'])
-            ->whereNumber('jurnal')->name('jurnal-penutup.show');
+        Route::get('/jurnal-penutup/{jurnal}', [JurnalPenutupController::class, 'show'])
+            ->whereNumber('jurnal')
+            ->name('jurnal-penutup.show');
     });
 
     // ── Laporan Keuangan ───────────────────────────────────────────────────
     Route::prefix('laporan')->name('laporan.')->group(function () {
-        Route::get('/penghasilan-komprehensif', [LaporanKeuanganController::class, 'tampilkanLaporan'])
-            ->defaults('jenis', 'penghasilan-komprehensif')->name('penghasilan-komprehensif');
-        Route::get('/posisi-keuangan', [LaporanKeuanganController::class, 'tampilkanLaporan'])
-            ->defaults('jenis', 'posisi-keuangan')->name('posisi-keuangan');
-        Route::get('/perubahan-aset-neto', [LaporanKeuanganController::class, 'tampilkanLaporan'])
-            ->defaults('jenis', 'perubahan-aset-neto')->name('perubahan-aset-neto');
-        Route::get('/arus-kas', [LaporanKeuanganController::class, 'tampilkanLaporan'])
-            ->defaults('jenis', 'arus-kas')->name('arus-kas');
-        Route::get('/calk', [LaporanKeuanganController::class, 'tampilkanLaporan'])
-            ->defaults('jenis', 'calk')->name('calk');
-        Route::get('/{jenis}/unduh-pdf', [LaporanKeuanganController::class, 'unduhLaporanPdf'])
+        Route::get('/penghasilan-komprehensif', [LaporanKeuanganController::class, 'penghasilanKomprehensif'])->name('penghasilan-komprehensif');
+        Route::get('/posisi-keuangan', [LaporanKeuanganController::class, 'posisiKeuangan'])->name('posisi-keuangan');
+        Route::get('/perubahan-aset-neto', [LaporanKeuanganController::class, 'perubahanAsetNeto'])->name('perubahan-aset-neto');
+        Route::get('/arus-kas', [LaporanKeuanganController::class, 'arusKas'])->name('arus-kas');
+        Route::get('/calk', [LaporanKeuanganController::class, 'calk'])->name('calk');
+        Route::get('/{jenis}/unduh-pdf', [LaporanKeuanganController::class, 'downloadPdf'])
             ->where('jenis', 'posisi-keuangan|penghasilan-komprehensif|perubahan-aset-neto|arus-kas|calk')
             ->name('pdf');
     });

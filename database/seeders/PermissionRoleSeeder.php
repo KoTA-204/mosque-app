@@ -18,9 +18,18 @@ class PermissionRoleSeeder extends Seeder
         $panitia    = Role::where('role_name', 'Panitia Kegiatan Khusus')->firstOrFail();
         $sekretaris = Role::where('role_name', 'Sekretaris')->firstOrFail();
 
-        // ── Administrator → semua permission ─────────────────────────────────────────
+        // ── Administrator → akses ke SELURUH tampilan/menu, TAPI aksi tulis pada modul
+        //    fungsional tetap dijaga role yang bertanggung jawab (segregation of duties).
+        //    Admin TETAP punya VIEW_ASET & VIEW_JURNAL (bisa buka halaman + modal),
+        //    tapi TIDAK punya izin simpan/ubah/hapus Aset & Jurnal Umum:
+        //      - Aksi Aset (tambah/ubah/hapus/toggle)   → hanya Sekretaris.
+        //      - Aksi Jurnal Umum (post/bulk-post/hapus) → hanya Bendahara 1.
+        $aksiDikecualikanDariAdmin = [
+            'CREATE_ASET', 'EDIT_ASET', 'DELETE_ASET',
+            'CREATE_JURNAL', 'EDIT_JURNAL', 'DELETE_JURNAL',
+        ];
         $admin->permissions()->sync(
-            Permission::pluck('id')
+            Permission::whereNotIn('permission_code', $aksiDikecualikanDariAdmin)->pluck('id')
         );
 
         // ── Ketua DKM → dashboard + laporan keuangan ────────────────────────
@@ -38,7 +47,7 @@ class PermissionRoleSeeder extends Seeder
                 'VIEW_TRANSAKSI',          'CREATE_TRANSAKSI',          'EDIT_TRANSAKSI',          'DELETE_TRANSAKSI',
                 'VIEW_KENCLENG',           'CREATE_KENCLENG',           'EDIT_KENCLENG',           'DELETE_KENCLENG',
                 'VIEW_TRANSAKSI_KEGIATAN', 'CREATE_TRANSAKSI_KEGIATAN', 'EDIT_TRANSAKSI_KEGIATAN', 'DELETE_TRANSAKSI_KEGIATAN',
-                'VIEW_KEGIATAN',           'CREATE_KEGIATAN',           'EDIT_KEGIATAN',           'DELETE_KEGIATAN',
+                // Kegiatan Khusus (event) dicabut dari Bendahara 1 → menu Kegiatan Khusus di Data Induk tidak muncul untuk Bendahara 1 (hanya CoA + Kategori)
                 'VIEW_APPROVAL',           'CREATE_APPROVAL',           'EDIT_APPROVAL',           'DELETE_APPROVAL',
                 'VIEW_JURNAL',             'CREATE_JURNAL',             'EDIT_JURNAL',             'DELETE_JURNAL',
                 'VIEW_JURNAL_PEMBUKA',     'CREATE_JURNAL_PEMBUKA',     'EDIT_JURNAL_PEMBUKA',     'DELETE_JURNAL_PEMBUKA',
@@ -50,7 +59,7 @@ class PermissionRoleSeeder extends Seeder
                 'VIEW_LAPORAN_KEUANGAN',
                 'VIEW_COA',                'CREATE_COA',                'EDIT_COA',                'DELETE_COA',
                 'VIEW_KATEGORI',           'CREATE_KATEGORI',           'EDIT_KATEGORI',           'DELETE_KATEGORI',
-                'VIEW_ASET',               'CREATE_ASET',               'EDIT_ASET',               'DELETE_ASET',
+                // Aset dikelola khusus oleh Sekretaris — Bendahara 1 TIDAK punya akses menu Aset
                 'VIEW_PEMASUKAN',          'CREATE_PEMASUKAN',          'EDIT_PEMASUKAN',
                 'VIEW_PENGELUARAN',        'CREATE_PENGELUARAN',        'EDIT_PENGELUARAN',
             ])->pluck('id')

@@ -190,11 +190,13 @@
                 class="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 Batal
             </button>
+            @if(auth()->user()?->hasPermission('EDIT_ASET'))
             <button type="button"
                 onclick="submitAsetForm('editAsetForm', 'PUT', '{{ route('dashboard.aset.update', $aset) }}')"
                 class="px-5 py-2 text-sm font-medium text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors">
                 Simpan Perubahan
             </button>
+            @endif
         </div>
     </form>
 </x-modal>

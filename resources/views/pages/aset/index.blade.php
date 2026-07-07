@@ -15,13 +15,13 @@
     <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
         <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Manajemen Aset</h1>
         @if(!empty($asetTerkunci))
-            <button type="button" disabled aria-disabled="true"
+            <button type="button" id="btnTambahAset" disabled aria-disabled="true"
                title="Jurnal pembuka sudah diposting. Penambahan aset kini otomatis melalui pencatatan transaksi (pembelian aset)."
                class="inline-flex items-center gap-2 border border-gray-300 dark:border-gray-700 text-gray-400 dark:text-gray-500 text-sm font-medium px-4 py-2 rounded-lg cursor-not-allowed opacity-60">
                 Tambah Aset
             </button>
         @else
-            <button onclick="openCreateModal()"
+            <button id="btnTambahAset" onclick="openCreateModal()"
                class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
                 Tambah Aset
             </button>
