@@ -8,6 +8,9 @@ use Illuminate\Database\Seeder;
 
 class KegiatanSeeder extends Seeder
 {
+    /**
+     * Kegiatan khusus masjid. panitia_id mengarah ke user ber-role Panitia Khusus.
+     */
     public function run(): void
     {
         $panitia = User::where('email', 'panitia@masjid.id')->firstOrFail();

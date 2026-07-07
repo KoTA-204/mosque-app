@@ -42,7 +42,14 @@
                     Anggaran: Rp {{ number_format($kegiatan->anggaran, 0, ',', '.') }} · Realisasi pemasukan: {{ $porsi }}%
                 </p>
             </div>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $statusColor }}">{{ ucfirst(strtolower($kegiatan->status)) }}</span>
+            @php
+                $kegiatanStatusLabel = match($kegiatan->status) {
+                    'AKTIF'   => 'Aktif',
+                    'DITUTUP' => 'Ditutup',
+                    default   => $kegiatan->status,
+                };
+            @endphp
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $statusColor }}">{{ $kegiatanStatusLabel }}</span>
         </div>
     </div>
 
@@ -61,10 +68,10 @@
                     <select name="status" onchange="this.form.submit()"
                             class="text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 pr-8 appearance-none bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
                         <option value="" {{ request('status') === '' ? 'selected' : '' }}>Semua Status</option>
-                        <option value="PENDING" {{ request('status') === 'PENDING' ? 'selected' : '' }}>Pending</option>
+                        <option value="PENDING" {{ request('status') === 'PENDING' ? 'selected' : '' }}>Menunggu</option>
                         <option value="REVISION" {{ request('status') === 'REVISION' ? 'selected' : '' }}>Revisi</option>
-                        <option value="APPROVED" {{ request('status') === 'APPROVED' ? 'selected' : '' }}>Approved</option>
-                        <option value="REJECTED" {{ request('status') === 'REJECTED' ? 'selected' : '' }}>Rejected</option>
+                        <option value="APPROVED" {{ request('status') === 'APPROVED' ? 'selected' : '' }}>Disetujui</option>
+                        <option value="REJECTED" {{ request('status') === 'REJECTED' ? 'selected' : '' }}>Ditolak</option>
                     </select>
                 </form>
                 @if($kegiatan->status === 'AKTIF')
@@ -102,6 +109,13 @@
                             'REVISION' => 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
                             default    => 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
                         };
+                        $statusLabel = match($item->status_approval) {
+                            'PENDING'  => 'Menunggu',
+                            'APPROVED' => 'Disetujui',
+                            'REJECTED' => 'Ditolak',
+                            'REVISION' => 'Revisi',
+                            default    => $item->status_approval,
+                        };
                         $bisaUbah = $item->bisaDiedit() && $item->user_id === auth()->id();
                     @endphp
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
@@ -113,7 +127,7 @@
                         </td>
                         <td class="px-4 py-3.5 font-semibold {{ $jenis === 'PEMASUKAN' ? 'text-green-600' : 'text-red-500' }}">{{ $jenis === 'PEMASUKAN' ? '+' : '-' }} Rp {{ number_format($item->jumlah, 0, ',', '.') }}</td>
                         <td class="px-4 py-3.5 text-gray-500">{{ $item->dompet->nama_dompet }}</td>
-                        <td class="px-4 py-3.5 text-center"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusBadge }}">{{ ucfirst(strtolower($item->status_approval)) }}</span></td>
+                        <td class="px-4 py-3.5 text-center"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusBadge }}">{{ $statusLabel }}</span></td>
                         <td class="px-5 py-3.5">
                             <div class="flex items-center justify-center gap-1">
                                 {{-- Detail --}}

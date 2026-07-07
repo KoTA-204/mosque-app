@@ -19,15 +19,15 @@ class PermissionController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function tampilkanDaftarPermission(Request $request)
     {
         $search  = $request->get('search', '');
         $module  = $request->get('module', '');
         $action  = $request->get('action', '');
         $perPage = (int) $request->get('per_page', 10);
 
-        $permissions = $this->permissionService->getAll($search, $module, $action, $perPage);
-        $modules     = $this->permissionService->getDistinctModules();
+        $permissions = $this->permissionService->getDataPermission($search, $module, $action, $perPage);
+        $modules     = $this->permissionService->getDaftarModul();
 
         return view('pages.manajemen-akses.permissions.index', compact('permissions', 'search', 'module', 'action', 'perPage', 'modules'));
     }
@@ -35,7 +35,7 @@ class PermissionController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function tampilkanFormTambahPermission()
     {
         return view('pages.manajemen-akses.permissions.create');
     }
@@ -43,10 +43,10 @@ class PermissionController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StorePermissionRequest $request)
+    public function simpanPermissionBaru(StorePermissionRequest $request)
     {
         try {
-            $this->permissionService->create($request->validated());
+            $this->permissionService->buatPermission($request->validated());
 
             return redirect()->route('dashboard.permissions.index')
                 ->with('success', 'Permission berhasil dibuat.');
@@ -62,10 +62,10 @@ class PermissionController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Permission $permission)
+    public function tampilkanDetailPermission(Permission $permission)
     {
         try {
-            $permission = $this->permissionService->getById($permission);
+            $permission = $this->permissionService->getDetailPermission($permission);
 
             return view('pages.manajemen-akses.permissions.show', compact('permission'));
         } catch (\Throwable $e) {
@@ -79,7 +79,7 @@ class PermissionController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Permission $permission)
+    public function tampilkanFormEditPermission(Permission $permission)
     {
         return view('pages.manajemen-akses.permissions.edit', compact('permission'));
     }
@@ -87,10 +87,10 @@ class PermissionController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdatePermissionRequest $request, Permission $permission)
+    public function perbaruiPermission(UpdatePermissionRequest $request, Permission $permission)
     {
         try {
-            $this->permissionService->update($permission, $request->validated());
+            $this->permissionService->perbaruiPermission($permission, $request->validated());
 
             return redirect()->route('dashboard.permissions.index')
                 ->with('success', 'Permission berhasil diperbarui.');
@@ -106,10 +106,10 @@ class PermissionController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Permission $permission)
+    public function hapusPermission(Permission $permission)
     {
         try {
-            $result = $this->permissionService->delete($permission);
+            $result = $this->permissionService->hapusPermission($permission);
 
             if ($result !== true) {
                 return redirect()->back()->with('error', $result);

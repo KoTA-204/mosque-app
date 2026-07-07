@@ -15,7 +15,7 @@ class ApprovalController extends Controller
     ) {}
 
     // ── Index & Show ──────────────────────────────────────────────────────
-    public function approvalIndex(Request $request)
+    public function tampilkanDaftarApproval(Request $request)
     {
         $search  = $request->get('search', '') ?? '';
         $sumber  = $request->get('sumber', '') ?? '';
@@ -29,8 +29,8 @@ class ApprovalController extends Controller
             $tab = 'PENDING';
         }
 
-        $stats     = $this->approvalService->getStats();
-        $transaksi = $this->approvalService->getTransaksiByStatus(
+        $stats     = $this->approvalService->hitungStatistikApproval();
+        $transaksi = $this->approvalService->getTransaksiBerdasarkanStatus(
             $tab, $search, $sumber, $dari, $sampai, $urut, $perPage
         );
 
@@ -39,9 +39,9 @@ class ApprovalController extends Controller
         ));
     }
 
-    public function approvalShow(Transaksi $transaksi)
+    public function tampilkanDetailApproval(Transaksi $transaksi)
     {
-        $transaksi = $this->approvalService->getTransaksiById($transaksi);
+        $transaksi = $this->approvalService->getDetailTransaksi($transaksi);
 
         return $transaksi->kencleng !== null
             ? view('pages.operasional.approval.show-kencleng', compact('transaksi'))
@@ -49,31 +49,31 @@ class ApprovalController extends Controller
     }
 
     // ── Single Actions ────────────────────────────────────────────────────
-    public function approve(Transaksi $transaksi): RedirectResponse
+    public function setujuiTransaksi(Transaksi $transaksi): RedirectResponse
     {
-        $result = $this->approvalService->approve($transaksi);
+        $result = $this->approvalService->setujuiTransaksi($transaksi);
 
         return $result !== true
             ? redirect()->back()->with('error', $result)
             : redirect()->route('dashboard.approval.index')->with('success', 'Transaksi berhasil disetujui');
     }
 
-    public function reject(Request $request, Transaksi $transaksi): RedirectResponse
+    public function tolakTransaksi(Request $request, Transaksi $transaksi): RedirectResponse
     {
         $request->validate(['catatan' => 'nullable|string|max:500']);
 
-        $result = $this->approvalService->reject($transaksi, $request->catatan ?? '');
+        $result = $this->approvalService->tolakTransaksi($transaksi, $request->catatan ?? '');
 
         return $result !== true
             ? redirect()->back()->with('error', $result)
             : redirect()->route('dashboard.approval.index')->with('success', 'Transaksi berhasil ditolak');
     }
 
-    public function revision(Request $request, Transaksi $transaksi): RedirectResponse
+    public function revisiTransaksi(Request $request, Transaksi $transaksi): RedirectResponse
     {
         $request->validate(['catatan' => 'required|string|max:500']);
 
-        $result = $this->approvalService->revision($transaksi, $request->catatan);
+        $result = $this->approvalService->revisiTransaksi($transaksi, $request->catatan);
 
         return $result !== true
             ? redirect()->back()->with('error', $result)
@@ -81,7 +81,7 @@ class ApprovalController extends Controller
     }
 
     // ── Bulk Actions ──────────────────────────────────────────────────────
-    private function handleBulk(Request $request, string $action): RedirectResponse
+    private function prosesAksiMassal(Request $request, string $action): RedirectResponse
     {
         $labels = [
             'approve' => 'disetujui',
@@ -97,7 +97,7 @@ class ApprovalController extends Controller
                 return redirect()->back()->with('error', 'Tidak ada transaksi yang dipilih');
             }
 
-            $result = $this->approvalService->bulkApprove($ids);
+            $result = $this->approvalService->setujuiTransaksiMassal($ids);
         } else {
             $request->validate([
                 'ids'       => 'required|array|min:1',
@@ -110,8 +110,8 @@ class ApprovalController extends Controller
                 ->all();
 
             $result = $action === 'reject'
-                ? $this->approvalService->bulkReject($catatanMap)
-                : $this->approvalService->bulkRevisi($catatanMap);
+                ? $this->approvalService->tolakTransaksiMassal($catatanMap)
+                : $this->approvalService->revisiTransaksiMassal($catatanMap);
         }
 
         $msg = "{$result['done']} transaksi berhasil {$labels[$action]}";
@@ -122,18 +122,18 @@ class ApprovalController extends Controller
         return redirect()->route('dashboard.approval.index')->with('success', $msg);
     }
 
-    public function bulkApprove(Request $request): RedirectResponse
+    public function setujuiTransaksiMassal(Request $request): RedirectResponse
     {
-        return $this->handleBulk($request, 'approve');
+        return $this->prosesAksiMassal($request, 'approve');
     }
 
-    public function bulkReject(Request $request): RedirectResponse
+    public function tolakTransaksiMassal(Request $request): RedirectResponse
     {
-        return $this->handleBulk($request, 'reject');
+        return $this->prosesAksiMassal($request, 'reject');
     }
 
-    public function bulkRevisi(Request $request): RedirectResponse
+    public function revisiTransaksiMassal(Request $request): RedirectResponse
     {
-        return $this->handleBulk($request, 'revisi');
+        return $this->prosesAksiMassal($request, 'revisi');
     }
 }

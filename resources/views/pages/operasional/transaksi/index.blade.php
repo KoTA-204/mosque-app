@@ -223,21 +223,21 @@
         </div>
 
         {{-- Tabel --}}
-        <div>
-            <table class="w-full text-sm table-fixed">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm table-fixed min-w-[1100px]">
                 <thead>
                     <tr class="border-b border-gray-100">
-                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[3%]">No</th>
-                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[7%]">Tanggal</th>
-                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[9%]">Jumlah</th>
-                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[15%]">Keterangan</th>
-                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[7%]">Kategori</th>
-                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 py-3 w-[10%]">Jenis</th>
-                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 py-3 w-[9%]">Status</th>
-                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 py-3 w-[9%]">Jurnal</th>
-                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[18%]">Detail Jurnal</th>
-                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[4%]">Bukti</th>
-                        <th class="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[9%]">Aksi</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[3%] whitespace-nowrap">No</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[7%] whitespace-nowrap">Tanggal</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[9%] whitespace-nowrap">Jumlah</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[15%] whitespace-nowrap">Keterangan</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[7%] whitespace-nowrap">Kategori</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 py-3 w-[10%] whitespace-nowrap">Jenis</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 py-3 w-[9%] whitespace-nowrap">Status</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 py-3 w-[9%] whitespace-nowrap">Jurnal</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[18%] whitespace-nowrap">Detail Jurnal</th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[4%] whitespace-nowrap">Bukti</th>
+                        <th class="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-3 w-[9%] whitespace-nowrap">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
@@ -280,7 +280,7 @@
                         <td class="px-2 py-3 text-xs">
                             @if($dariApproval)
                                 <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                                    Approved
+                                    Disetujui
                                 </span>
                             @else
                                 <span class="text-gray-300 text-xs">–</span>
@@ -288,12 +288,12 @@
                         </td>
                         <td class="px-2 py-3 text-xs">
                             @if($t->status_jurnal === 'UNMAPPED')
-                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                                    Unmapped
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 text-center">
+                                    Belum Dipetakan
                                 </span>
                             @elseif($t->status_jurnal === 'MAPPED')
-                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                                    Mapped
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 text-center">
+                                    Sudah Dipetakan
                                 </span>
                             @else
                                 <span class="text-gray-300 text-xs">–</span>
@@ -353,7 +353,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="10" class="px-4 py-16 text-center text-gray-400 text-sm">
+                        <td colspan="11" class="px-4 py-16 text-center text-gray-400 text-sm">
                             Belum ada data transaksi.
                         </td>
                     </tr>

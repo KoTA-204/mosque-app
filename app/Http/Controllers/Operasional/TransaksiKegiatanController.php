@@ -19,29 +19,29 @@ class TransaksiKegiatanController extends Controller
     ) {}
 
     // ── List Kegiatan ─────────────────────────────────────────
-    public function index(Request $request)
+    public function tampilkanDaftarKegiatan(Request $request)
     {
         $search   = $request->get('search', '');
         $status   = $request->get('status', '');
-        $kegiatan = $this->transaksiKegiatanService->getKegiatanList($search, $status);
-        $summary  = $this->transaksiKegiatanService->getSummary();
+        $kegiatan = $this->transaksiKegiatanService->getDaftarKegiatan($search, $status);
+        $summary  = $this->transaksiKegiatanService->hitungRingkasanKegiatan();
 
         return view('pages.operasional.transaksi-kegiatan.index', compact('kegiatan', 'summary', 'search', 'status'));
     }
 
     // ── List Transaksi per Kegiatan ────────────────────────────
-    public function show(Kegiatan $kegiatan, Request $request)
+    public function tampilkanTransaksiKegiatan(Kegiatan $kegiatan, Request $request)
     {
-        $this->authorizeKegiatan($kegiatan);
+        $this->pastikanBerhakAtasKegiatan($kegiatan);
 
         $search        = $request->get('search', '');
         $jenis         = $request->get('jenis', '');
         $status        = $request->get('status', '');
-        $transaksi     = $this->transaksiKegiatanService->getTransaksiByKegiatan($kegiatan, $search, $jenis, $status);
-        $porsi         = $this->transaksiKegiatanService->getPorsiAnggaran($kegiatan);
-        $dompetList    = $this->transaksiKegiatanService->getDompetList();
-        $kategoriList  = $this->transaksiKegiatanService->getKategoriList();
-        $kodeTransaksi = $this->transaksiKegiatanService->generateKodeTransaksi();
+        $transaksi     = $this->transaksiKegiatanService->getTransaksiPerKegiatan($kegiatan, $search, $jenis, $status);
+        $porsi         = $this->transaksiKegiatanService->hitungPorsiAnggaran($kegiatan);
+        $dompetList    = $this->transaksiKegiatanService->getDaftarDompet();
+        $kategoriList  = $this->transaksiKegiatanService->getDaftarKategori();
+        $kodeTransaksi = $this->transaksiKegiatanService->buatKodeTransaksi();
 
         return view('pages.operasional.transaksi-kegiatan.show', compact(
             'kegiatan', 'transaksi', 'porsi', 'search', 'jenis', 'status',
@@ -50,9 +50,9 @@ class TransaksiKegiatanController extends Controller
     }
 
     // ── Simpan Transaksi ───────────────────────────────────────
-    public function storeTransaksi(StoreTransaksiKegiatanRequest $request, Kegiatan $kegiatan)
+    public function simpanTransaksiKegiatan(StoreTransaksiKegiatanRequest $request, Kegiatan $kegiatan)
     {
-        $this->authorizeKegiatan($kegiatan);
+        $this->pastikanBerhakAtasKegiatan($kegiatan);
 
         //yang mengunci pencatatan adalah STATUS kegiatan, bukan tanggal.
         if (! $kegiatan->sedangAktif()) {
@@ -62,7 +62,7 @@ class TransaksiKegiatanController extends Controller
         $data = $request->validated();
 
         try {
-            $this->transaksiKegiatanService->storeTransaksi($kegiatan, $data);
+            $this->transaksiKegiatanService->simpanTransaksiKegiatan($kegiatan, $data);
         } catch (\Throwable $e) {
             \Log::error('Gagal menyimpan transaksi kegiatan', [
                 'kegiatan_id' => $kegiatan->id,
@@ -96,19 +96,19 @@ class TransaksiKegiatanController extends Controller
     }
 
     // ── Detail Transaksi ───────────────────────────────────────
-    public function showTransaksi(Kegiatan $kegiatan, Transaksi $transaksi)
+    public function tampilkanDetailTransaksiKegiatan(Kegiatan $kegiatan, Transaksi $transaksi)
     {
-        $this->ensureMilikKegiatan($kegiatan, $transaksi);
+        $this->pastikanTransaksiMilikKegiatan($kegiatan, $transaksi);
 
-        $transaksi = $this->transaksiKegiatanService->getTransaksiById($transaksi);
+        $transaksi = $this->transaksiKegiatanService->getDetailTransaksi($transaksi);
 
         return view('pages.operasional.transaksi-kegiatan.show-transaksi', compact('kegiatan', 'transaksi'));
     }
 
     // ── Update Transaksi (hanya PENDING / REVISION) ───────────
-    public function updateTransaksi(UpdateTransaksiKegiatanRequest $request, Kegiatan $kegiatan, Transaksi $transaksi)
+    public function perbaruiTransaksiKegiatan(UpdateTransaksiKegiatanRequest $request, Kegiatan $kegiatan, Transaksi $transaksi)
     {
-        $this->ensureMilikKegiatan($kegiatan, $transaksi);
+        $this->pastikanTransaksiMilikKegiatan($kegiatan, $transaksi);
 
         if (! $transaksi->bisaDiedit()) {
             return back()->with('error', 'Transaksi tidak dapat diedit karena sudah diproses');
@@ -120,7 +120,7 @@ class TransaksiKegiatanController extends Controller
         $data = $request->validated();
 
         try {
-            $this->transaksiKegiatanService->updateTransaksi($transaksi, $data);
+            $this->transaksiKegiatanService->perbaruiTransaksiKegiatan($transaksi, $data);
         } catch (\Throwable $e) {
             \Log::error('Gagal memperbarui transaksi kegiatan', [
                 'transaksi_id' => $transaksi->id,
@@ -148,11 +148,11 @@ class TransaksiKegiatanController extends Controller
     }
 
     // ── Hapus Transaksi ────────────────────────────────────────
-    public function destroyTransaksi(Kegiatan $kegiatan, Transaksi $transaksi)
+    public function hapusTransaksiKegiatan(Kegiatan $kegiatan, Transaksi $transaksi)
     {
-        $this->ensureMilikKegiatan($kegiatan, $transaksi);
+        $this->pastikanTransaksiMilikKegiatan($kegiatan, $transaksi);
 
-        $result = $this->transaksiKegiatanService->deleteTransaksi($transaksi);
+        $result = $this->transaksiKegiatanService->hapusTransaksiKegiatan($transaksi);
 
         if ($result !== true) {
             return back()->with('error', $result);
@@ -164,18 +164,18 @@ class TransaksiKegiatanController extends Controller
     }
 
     // ── Helpers ────────────────────────────────────────────────
-    private function authorizeKegiatan(Kegiatan $kegiatan): void
+    private function pastikanBerhakAtasKegiatan(Kegiatan $kegiatan): void
     {
         if (auth()->user()->hasRole('panitia-khusus') && $kegiatan->panitia_id !== auth()->id()) {
             abort(403);
         }
     }
 
-    private function ensureMilikKegiatan(Kegiatan $kegiatan, Transaksi $transaksi): void
+    private function pastikanTransaksiMilikKegiatan(Kegiatan $kegiatan, Transaksi $transaksi): void
     {
         if ($transaksi->kegiatan_id !== $kegiatan->id) {
             abort(404);
         }
-        $this->authorizeKegiatan($kegiatan);
+        $this->pastikanBerhakAtasKegiatan($kegiatan);
     }
 }

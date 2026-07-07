@@ -64,14 +64,18 @@
             <div class="mb-5">
                 <label class="mb-2 block text-sm font-sans font-medium text-gray-700 dark:text-gray-300">
                     Email
-                </label>
                 <input
                     type="email"
                     name="email"
                     value="{{ old('email') }}"
                     placeholder="email-anda@gmail.com"
                     required
-                    class="w-full rounded-3xl border border-gray-300 px-4 py-2 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                    class="w-full rounded-3xl border px-4 py-2 text-sm focus:ring-2 dark:bg-gray-800 dark:text-white
+                        @error('email')
+                            border-red-400 focus:border-red-500 focus:ring-red-200
+                        @else
+                            border-gray-300 focus:border-brand-500 focus:ring-brand-200 dark:border-gray-600
+                        @enderror"
                 >
                 @error('email')
                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>

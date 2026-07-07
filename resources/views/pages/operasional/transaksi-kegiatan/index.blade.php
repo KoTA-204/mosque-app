@@ -124,7 +124,7 @@
                         <span class="text-sm font-medium {{ $statusColor }}">{{ $statusLabel }}</span>
                         @if($item->transaksi_pending_count > 0)
                             <span class="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
-                                {{ $item->transaksi_pending_count }} pending
+                                {{ $item->transaksi_pending_count }} menunggu
                             </span>
                         @endif
                     </div>
@@ -133,7 +133,7 @@
                         <span class="text-xs font-medium text-gray-900 dark:text-white">{{ $porsi }}%</span>
                     </div>
                     <div class="mb-1 h-1.5 w-40 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                        <div class="h-full rounded-full {{ $item->status === 'SELESAI' ? 'bg-gray-400' : 'bg-green-600' }}"
+                        <div class="h-full rounded-full {{ $item->status === 'DITUTUP' ? 'bg-gray-400' : 'bg-green-600' }}"
                              style="width: {{ $porsi }}%"></div>
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400">{{ $item->transaksi_count }} transaksi</p>

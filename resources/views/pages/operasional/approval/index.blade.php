@@ -12,12 +12,12 @@
     {{-- Kartu Statistik --}}
     @php
         $statCards = [
-            ['label' => 'Transaksi Kencleng', 'value' => $stats['kencleng'], 'wrap' => 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400', 'icon' => 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'],
+            ['label' => 'Transaksi Kencleng', 'value' => $stats['kencleng'], 'wrap' => 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400', 'icon' => 'M20 12v9a1 1 0 01-1 1H5a1 1 0 01-1-1v-9m16 0H4m16 0a2 2 0 002-2V8a2 2 0 00-2-2h-3.5m-9 6H2m0 0a2 2 0 01-2-2m2 2V8a2 2 0 012-2h3.5M12 6V4a2 2 0 114 0 4 4 0 01-4 2zm0 0V4a2 2 0 10-4 0 4 4 0 004 2z'],
             ['label' => 'Transaksi Kegiatan', 'value' => $stats['kegiatan'], 'wrap' => 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400', 'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'],
-            ['label' => 'Belum Diapprove', 'value' => $stats['pending'], 'wrap' => 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400', 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
+            ['label' => 'Belum Disetujui', 'value' => $stats['pending'], 'wrap' => 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400', 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
             ['label' => 'Disetujui', 'value' => $stats['approved'], 'wrap' => 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
             ['label' => 'Ditolak', 'value' => $stats['rejected'], 'wrap' => 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400', 'icon' => 'M9 9l6 6m0-6l-6 6m9-3a9 9 0 11-18 0 9 9 0 0118 0z'],
-            ['label' => 'Revisi', 'value' => $stats['revision'], 'wrap' => 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400', 'icon' => 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'],
+            ['label' => 'Revisi', 'value' => $stats['revision'], 'wrap' => 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400', 'icon' => 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'],
         ];
     @endphp
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -59,10 +59,10 @@
     {{-- Tabs --}}
     @php
         $tabs = [
-            'PENDING'  => ['label' => 'Pending',  'count' => $stats['pending'],  'active' => 'border-yellow-500 text-yellow-600 dark:text-yellow-400'],
-            'APPROVED' => ['label' => 'Approved', 'count' => $stats['approved'], 'active' => 'border-green-500 text-green-600 dark:text-green-400'],
-            'REJECTED' => ['label' => 'Rejected', 'count' => $stats['rejected'], 'active' => 'border-red-500 text-red-600 dark:text-red-400'],
-            'REVISION' => ['label' => 'Revisi',   'count' => $stats['revision'], 'active' => 'border-blue-500 text-blue-600 dark:text-blue-400'],
+            'PENDING'  => ['label' => 'Menunggu',  'count' => $stats['pending'],  'active' => 'border-yellow-500 text-yellow-600 dark:text-yellow-400'],
+            'APPROVED' => ['label' => 'Disetujui', 'count' => $stats['approved'], 'active' => 'border-green-500 text-green-600 dark:text-green-400'],
+            'REJECTED' => ['label' => 'Ditolak', 'count' => $stats['rejected'], 'active' => 'border-red-500 text-red-600 dark:text-red-400'],
+            'REVISION' => ['label' => 'Revisi', 'count' => $stats['revision'], 'active' => 'border-orange-500 text-orange-600 dark:text-orange-400'],
         ];
     @endphp
     <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-3">
@@ -176,16 +176,16 @@
 
                                 @if(!$isKencleng && $jenis === 'PENGELUARAN'
                                     && $item->kegiatan && $item->kegiatan->selisihLebihAnggaran() > 0)
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 text-center"
                                         title="Pengeluaran kegiatan ini melebihi anggaran">
-                                        Over-budget
+                                        Melebihi Anggaran
                                     </span>
                                 @endif
                             </div>
                         </td>
                         <td class="px-4 py-3.5 text-gray-500 dark:text-gray-400">{{ $item->user->name }}</td>
                         <td class="px-4 py-3.5 text-center">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $jenis === 'PEMASUKAN' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 'bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400' }}">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $jenis === 'PEMASUKAN' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'}}">
                                 {{ ucfirst(strtolower($jenis)) }}
                             </span>
                         </td>
@@ -259,7 +259,7 @@
                     <input type="hidden" name="ids" id="approve-ids">
                     <button type="submit"
                             class="px-4 py-2 text-sm font-medium border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-                        Ya, Approve Semua
+                        Ya, Setujui Semua
                     </button>
                 </form>
             </div>
@@ -314,7 +314,7 @@
                         Batal
                     </button>
                     <button type="submit"
-                            class="px-4 py-2 text-sm font-medium border border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                            class="px-4 py-2 text-sm font-medium border border-indigo-500 text-indigo-600 dark:text-indigo-400 dark:border-indigo-500 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
                         Revisi Semua
                     </button>
                 </div>

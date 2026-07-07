@@ -155,6 +155,14 @@
                             'DRAFT'    => 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
                             default    => 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
                         };
+
+                        $statusIcon = match($itemStatus) {
+                            'APPROVED' => '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>',
+                            'PENDING'  => '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+                            'REVISION' => '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>',
+                            'REJECTED' => '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>',
+                            default    => '',
+                        };
                     @endphp
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                         <td class="px-5 py-3.5 text-center text-gray-500 dark:text-gray-400">
@@ -170,8 +178,8 @@
                             Rp {{ number_format($item->transaksi->jumlah, 0, ',', '.') }}
                         </td>
                         <td class="px-4 py-3.5 text-center">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusClass }}">
-                                {{ $statusLabel }}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusClass }}">
+                                {!! $statusIcon !!} {{ $statusLabel }}
                             </span>
                         </td>
                         <td class="px-5 py-3.5">

@@ -28,7 +28,46 @@ class TransaksiController extends Controller
         private readonly MutasiBankParserService $parserService,
     ) {}
 
-    public function index(Request $request)
+    /**
+     * Deteksi apakah exception database adalah pelanggaran constraint unik
+     * (mis. no_referensi yang sama sudah ada), supaya bisa ditampilkan
+     * dengan pesan yang ramah alih-alih pesan SQL mentah.
+     */
+    private function isUniqueViolation(\Throwable $e): bool
+    {
+        if (!($e instanceof \Illuminate\Database\QueryException)) {
+            return false;
+        }
+
+        // 23505 = unique_violation (PostgreSQL), 23000 = integrity constraint (MySQL)
+        return in_array($e->getCode(), ['23505', '23000'], true);
+    }
+
+    /**
+     * Bangun pesan peringatan saat sebagian/seluruh baris file mutasi
+     * tidak sesuai dengan jenis_transaksi yang dipilih pengguna saat import.
+     */
+    private function buildPeringatanJenis(array $rows, ?string $jenisTransaksi): ?string
+    {
+        if (!$jenisTransaksi) {
+            return null;
+        }
+
+        $total       = count($rows);
+        $tidakSesuai = count(array_filter($rows, fn($r) => $r['is_jenis_mismatch'] ?? false));
+
+        if ($tidakSesuai === 0) {
+            return null;
+        }
+
+        $lawan = $jenisTransaksi === 'PEMASUKAN' ? 'Pengeluaran' : 'Pemasukan';
+
+        return $tidakSesuai === $total
+            ? "Seluruh baris pada file ini bertipe {$lawan}, tidak sesuai dengan jenis transaksi yang dipilih ({$jenisTransaksi}). Periksa kembali pilihan Anda."
+            : "{$tidakSesuai} dari {$total} baris terdeteksi sebagai {$lawan}, tidak sesuai dengan jenis transaksi yang dipilih ({$jenisTransaksi}). Baris tersebut ditandai dan akan dilewati saat disimpan.";
+    }
+
+    public function tampilkanDaftarTransaksi(Request $request)
     {
         $periodeAktif = Periode::aktif()->first();
 
@@ -97,11 +136,11 @@ class TransaksiController extends Controller
         ));
     }
 
-    public function store(StoreTransaksiRequest $request)
+    public function simpanTransaksiBaru(StoreTransaksiRequest $request)
     {
         try {
             $force     = $request->boolean('force');
-            $transaksi = $this->transaksiService->store($request, $force);
+            $transaksi = $this->transaksiService->simpanTransaksiBaru($request, $force);
 
             return response()->json([
                 'success' => true,
@@ -122,12 +161,14 @@ class TransaksiController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal menyimpan transaksi: ' . $e->getMessage(),
+                'message' => $this->isUniqueViolation($e)
+                    ? 'Transaksi ini sudah pernah tersimpan sebelumnya (nomor referensi sama). Silakan periksa kembali daftar transaksi.'
+                    : 'Gagal menyimpan transaksi. Silakan coba lagi atau hubungi admin jika masalah berlanjut.',
             ], 500);
         }
     }
 
-    public function show(Transaksi $transaksi)
+    public function tampilkanDetailTransaksi(Transaksi $transaksi)
     {
         $transaksi->load([
             'kategoriTransaksi',
@@ -158,7 +199,7 @@ class TransaksiController extends Controller
         ]);
     }
 
-    public function update(UpdateTransaksiRequest $request, Transaksi $transaksi)
+    public function perbaruiTransaksi(UpdateTransaksiRequest $request, Transaksi $transaksi)
     {
         $jurnal = $transaksi->jurnal()->where('jenis_jurnal', 'UMUM')->first();
         $isUnmapped = $transaksi->status_approval === 'APPROVED' 
@@ -172,7 +213,7 @@ class TransaksiController extends Controller
         }
 
         try {
-            $transaksi = $this->transaksiService->update($request, $transaksi);
+            $transaksi = $this->transaksiService->perbaruiTransaksi($request, $transaksi);
             return response()->json([
                 'success' => true,
                 'message' => 'Transaksi berhasil diperbarui.',
@@ -186,7 +227,7 @@ class TransaksiController extends Controller
         }
     }
 
-    public function destroy(Transaksi $transaksi)
+    public function hapusTransaksi(Transaksi $transaksi)
     {
         $jurnal = $transaksi->jurnal()->where('jenis_jurnal', 'UMUM')->first();
         $isUnmapped = $transaksi->status_approval === 'APPROVED'
@@ -200,7 +241,7 @@ class TransaksiController extends Controller
         }
 
         try {
-            $this->transaksiService->destroy($transaksi);
+            $this->transaksiService->hapusTransaksi($transaksi);
             return response()->json([
                 'success' => true,
                 'message' => 'Transaksi berhasil dihapus.',
@@ -213,7 +254,7 @@ class TransaksiController extends Controller
         }
     }
 
-    public function destroyBukti(BuktiTransaksi $bukti)
+    public function hapusBuktiTransaksi(BuktiTransaksi $bukti)
     {
         Storage::disk('public')->delete($bukti->path_file);
         $bukti->delete();
@@ -221,12 +262,13 @@ class TransaksiController extends Controller
         return response()->json(['success' => true, 'message' => 'Bukti dihapus.']);
     }
 
-    public function import(ImportTransaksiRequest $request)
+    public function imporMutasiBank(ImportTransaksiRequest $request)
     {
         try {
-            $result = $this->parserService->parse(
+            $result = $this->parserService->uraikanFileMutasiBank(
                 file: $request->file('file'),
                 bank: $request->bank,
+                jenisTransaksi: $request->jenis_transaksi,
             );
 
             if (!empty($result['errors']) && empty($result['rows'])) {
@@ -247,8 +289,9 @@ class TransaksiController extends Controller
                 'warnings'        => $result['errors'],
             ]]);
 
-            $total    = count($result['rows']);
-            $duplikat = count(array_filter($result['rows'], fn($r) => $r['is_duplikat']));
+            $total       = count($result['rows']);
+            $duplikat    = count(array_filter($result['rows'], fn($r) => $r['is_duplikat']));
+            $tidakSesuai = count(array_filter($result['rows'], fn($r) => $r['is_jenis_mismatch']));
 
             return response()->json([
                 'success'    => true,
@@ -256,10 +299,12 @@ class TransaksiController extends Controller
                 'import_key' => $key,
                 'redirect'   => route('dashboard.transaksi.import.review', ['key' => $key]),
                 'stats'      => [
-                    'total'    => $total,
-                    'duplikat' => $duplikat,
-                    'bersih'   => $total - $duplikat,
+                    'total'        => $total,
+                    'duplikat'     => $duplikat,
+                    'tidak_sesuai' => $tidakSesuai,
+                    'bersih'       => $total - $duplikat - $tidakSesuai,
                 ],
+                'peringatan_jenis' => $this->buildPeringatanJenis($result['rows'], $request->jenis_transaksi),
             ]);
         } catch (\Throwable $e) {
             return response()->json([
@@ -270,7 +315,7 @@ class TransaksiController extends Controller
         }
     }
 
-    public function importReview(Request $request)
+    public function tampilkanReviewImpor(Request $request)
     {
         $key  = $request->query('key');
         $data = session($key);
@@ -285,20 +330,23 @@ class TransaksiController extends Controller
         $warnings = $data['warnings'] ?? [];
 
         $stats = [
-            'total'    => count($rows),
-            'duplikat' => count(array_filter($rows, fn($r) => $r['is_duplikat'])),
-            'bersih'   => count(array_filter($rows, fn($r) => !$r['is_duplikat'])),
+            'total'        => count($rows),
+            'duplikat'     => count(array_filter($rows, fn($r) => $r['is_duplikat'])),
+            'tidak_sesuai' => count(array_filter($rows, fn($r) => $r['is_jenis_mismatch'] ?? false)),
+            'bersih'       => count(array_filter($rows, fn($r) => !$r['is_duplikat'] && !($r['is_jenis_mismatch'] ?? false))),
         ];
+
+        $peringatanJenis = $this->buildPeringatanJenis($rows, $data['jenis_transaksi'] ?? null);
 
         $akuns = Akun::whereDoesntHave('children')->orderBy('kode_akun')->get();
         $dompets = Dompet::orderBy('nama_dompet')->get();
 
         return view('pages.operasional.transaksi.import-review', compact(
-            'rows', 'meta', 'stats', 'warnings', 'key', 'akuns', 'dompets'
+            'rows', 'meta', 'stats', 'warnings', 'key', 'akuns', 'dompets', 'peringatanJenis'
         ));
     }
 
-    public function importSimpan(Request $request)
+    public function simpanHasilImpor(Request $request)
     {
         $request->validate([
             'import_key'                      => 'required|string',
@@ -309,8 +357,10 @@ class TransaksiController extends Controller
             'klasifikasi.*.entries.*.tipe'    => 'required|in:DEBIT,KREDIT',
             'klasifikasi.*.entries.*.nominal' => 'required|numeric|min:1',
         ], [
+            'klasifikasi.required'                     => 'Tidak ada data transaksi yang dapat disimpan.',
             'klasifikasi.*.entries.required'           => 'Setiap baris wajib memiliki minimal 1 akun debit dan 1 akun kredit.',
             'klasifikasi.*.entries.*.akun_id.required' => 'Akun wajib dipilih pada setiap baris jurnal.',
+            
         ]);
 
         $key  = $request->import_key;
@@ -344,7 +394,7 @@ class TransaksiController extends Controller
         }
 
         try {
-            $result = $this->transaksiService->simpanImport($data, $request->klasifikasi);
+            $result = $this->transaksiService->simpanTransaksiHasilImpor($data, $request->klasifikasi);
 
             session()->forget($key);
             session()->save();
@@ -360,6 +410,12 @@ class TransaksiController extends Controller
             if (!empty($result['gagalBalance'])) {
                 $pesanTambahan .= ' ' . count($result['gagalBalance']) . ' transaksi dilewati karena jurnal tidak balance (total debit ≠ total kredit).';
             }
+            if (!empty($result['gagalJenis'])) {
+                $pesanTambahan .= ' ' . count($result['gagalJenis']) . ' transaksi dilewati karena jenisnya (pemasukan/pengeluaran) tidak sesuai dengan jenis transaksi yang dipilih saat import.';
+            }
+            if (!empty($result['gagalDuplikat'])) {
+                $pesanTambahan .= ' ' . count($result['gagalDuplikat']) . ' transaksi dilewati karena nomor referensi sudah ada di database.';
+            }
 
             return response()->json([
                 'success'   => true,
@@ -374,7 +430,9 @@ class TransaksiController extends Controller
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal menyimpan: ' . $e->getMessage(),
+                'message' => $this->isUniqueViolation($e)
+                    ? 'Terdapat transaksi yang memiliki nomor referensi sama. Silakan hapus baris tersebut dari daftar.'
+                    : 'Gagal menyimpan hasil impor. Silakan coba lagi atau hubungi admin jika masalah berlanjut.',
             ], 500);
         }
     }

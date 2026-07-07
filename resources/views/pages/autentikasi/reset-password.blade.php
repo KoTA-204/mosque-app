@@ -49,7 +49,9 @@
                         name="password"
                         x-model="password"
                         required
-                        class="w-full rounded-3xl border border-gray-300 px-4 py-2 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                        class="w-full rounded-3xl border px-4 py-2 text-sm focus:ring-2 dark:bg-gray-800 dark:text-white
+                            @error('password') border-red-400 focus:border-red-500 focus:ring-red-200
+                            @else border-gray-300 focus:border-brand-500 focus:ring-brand-200 dark:border-gray-600 @enderror"
                     >
                 </div>
 
@@ -60,7 +62,9 @@
                         name="password_confirmation"
                         x-model="confirm"
                         required
-                        class="w-full rounded-3xl border border-gray-300 px-4 py-2 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                        class="w-full rounded-3xl border px-4 py-2 text-sm focus:ring-2 dark:bg-gray-800 dark:text-white
+                            @error('password_confirmation') border-red-400 focus:border-red-500 focus:ring-red-200
+                            @else border-gray-300 focus:border-brand-500 focus:ring-brand-200 dark:border-gray-600 @enderror"
                     >
                 </div>
 

@@ -10,7 +10,7 @@ use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-    public function index(Request $request): View|RedirectResponse
+    public function tampilkanFormLogin(Request $request): View|RedirectResponse
     {
         if (Auth::check()) {
             return redirect()->route('dashboard.index');
@@ -19,11 +19,15 @@ class LoginController extends Controller
         return view('pages.autentikasi.login');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function prosesLogin(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
+        ], [
+            'email.required'    => 'Email wajib diisi.',
+            'email.email'       => 'Format email tidak valid. Contoh: nama@email.com',
+            'password.required' => 'Password wajib diisi.',
         ]);
 
         if (!Auth::attempt($credentials)) {
@@ -52,7 +56,7 @@ class LoginController extends Controller
         return redirect()->intended(route('dashboard.index'));
     }
 
-    public function destroy(Request $request): RedirectResponse
+    public function prosesLogout(Request $request): RedirectResponse
     {
         Auth::logout();
         $request->session()->invalidate();

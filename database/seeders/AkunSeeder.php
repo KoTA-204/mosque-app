@@ -4,17 +4,16 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\KategoriAkun;
-use App\Models\Akun;
 
 class AkunSeeder extends Seeder
 {
     public function run(): void
     {
-        $aset       = KategoriAkun::where('kode_kategori', '1')->first();
-        $liabilitas = KategoriAkun::where('kode_kategori', '2')->first();
-        $asetNeto   = KategoriAkun::where('kode_kategori', '3')->first();
-        $pendapatan = KategoriAkun::where('kode_kategori', '4')->first();
-        $beban      = KategoriAkun::where('kode_kategori', '5')->first();
+        // 'kode_kategori' => id
+        $kategoriMap = KategoriAkun::pluck('id', 'kode_kategori');
+
+        // 'kode_akun' => id, diisi seiring proses insert
+        $map = [];
 
         // ── 1. ASET ────────────────────────────────────────────────────────
         $asetLancar = Akun::create([

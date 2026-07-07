@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class ApprovalService
 {
     // ── Query Dasar ───────────────────────────────────────────────────────
-    private function baseQuery()
+    private function queryDasarApproval()
     {
         return Transaksi::query()
             ->where(function ($q) {
@@ -18,20 +18,20 @@ class ApprovalService
             });
     }
 
-    public function getStats(): array
+    public function hitungStatistikApproval(): array
     {
         return [
-            'kencleng' => $this->baseQuery()->whereHas('kencleng')->count(),
-            'kegiatan' => $this->baseQuery()->whereNotNull('kegiatan_id')->whereDoesntHave('kencleng')->count(),
-            'pending'  => $this->baseQuery()->where('status_approval', 'PENDING')->count(),
-            'approved' => $this->baseQuery()->where('status_approval', 'APPROVED')->count(),
-            'rejected' => $this->baseQuery()->where('status_approval', 'REJECTED')->count(),
-            'revision' => $this->baseQuery()->where('status_approval', 'REVISION')->count(),
+            'kencleng' => $this->queryDasarApproval()->whereHas('kencleng')->count(),
+            'kegiatan' => $this->queryDasarApproval()->whereNotNull('kegiatan_id')->whereDoesntHave('kencleng')->count(),
+            'pending'  => $this->queryDasarApproval()->where('status_approval', 'PENDING')->count(),
+            'approved' => $this->queryDasarApproval()->where('status_approval', 'APPROVED')->count(),
+            'rejected' => $this->queryDasarApproval()->where('status_approval', 'REJECTED')->count(),
+            'revision' => $this->queryDasarApproval()->where('status_approval', 'REVISION')->count(),
         ];
     }
 
     // ── Query List ────────────────────────────────────────────────────────
-    public function getTransaksiByStatus(
+    public function getTransaksiBerdasarkanStatus(
         string $status,
         string $search  = '',
         string $sumber  = '',
@@ -40,7 +40,7 @@ class ApprovalService
         string $urut    = 'asc',
         int    $perPage = 10
     ) {
-        return $this->baseQuery()
+        return $this->queryDasarApproval()
             ->with(['dompet', 'kategoriTransaksi', 'user', 'kegiatan', 'buktiTransaksi', 'kencleng.detail'])
             ->where('status_approval', $status)
             ->when($sumber === 'kegiatan', fn($q) => $q->whereNotNull('kegiatan_id')->whereDoesntHave('kencleng'))
@@ -57,13 +57,13 @@ class ApprovalService
             ->withQueryString();
     }
 
-    public function getTransaksiById(Transaksi $transaksi): Transaksi
+    public function getDetailTransaksi(Transaksi $transaksi): Transaksi
     {
         return $transaksi->load('dompet', 'kategoriTransaksi', 'user', 'kegiatan', 'buktiTransaksi');
     }
 
     // ── Core ──────────────────────────────────────────────────────────────
-    private function changeStatus(Transaksi $transaksi, string $status, ?string $catatan = null): true|string
+    private function ubahStatusApproval(Transaksi $transaksi, string $status, ?string $catatan = null): true|string
     {
         if ($transaksi->status_approval !== 'PENDING') {
             return 'Transaksi tidak dalam status PENDING';
@@ -75,10 +75,10 @@ class ApprovalService
     }
 
     // ── Single Actions ────────────────────────────────────────────────────
-    public function approve(Transaksi $transaksi): true|string
+    public function setujuiTransaksi(Transaksi $transaksi): true|string
     {
         return DB::transaction(function () use ($transaksi) {
-            $result = $this->changeStatus($transaksi, 'APPROVED');
+            $result = $this->ubahStatusApproval($transaksi, 'APPROVED');
 
             if ($result === true && $transaksi->kegiatan_id) {
                 $transaksi->kegiatan->tutupJikaSelesai();
@@ -88,18 +88,18 @@ class ApprovalService
         });
     }
 
-    public function reject(Transaksi $transaksi, string $catatan = ''): true|string
+    public function tolakTransaksi(Transaksi $transaksi, string $catatan = ''): true|string
     {
-        return $this->changeStatus($transaksi, 'REJECTED', $catatan ?: null);
+        return $this->ubahStatusApproval($transaksi, 'REJECTED', $catatan ?: null);
     }
 
-    public function revision(Transaksi $transaksi, string $catatan): true|string
+    public function revisiTransaksi(Transaksi $transaksi, string $catatan): true|string
     {
-        return $this->changeStatus($transaksi, 'REVISION', $catatan);
+        return $this->ubahStatusApproval($transaksi, 'REVISION', $catatan);
     }
 
     // ── Bulk Actions ──────────────────────────────────────────────────────
-    private function bulkChangeStatus(array $catatanMap, string $status): array
+    private function ubahStatusApprovalMassal(array $catatanMap, string $status): array
     {
         $done    = 0;
         $skipped = 0;
@@ -109,7 +109,7 @@ class ApprovalService
 
             Transaksi::whereIn('id', array_keys($catatanMap))->get()
                 ->each(function ($t) use ($catatanMap, $status, &$done, &$skipped, &$kegiatanIds) {
-                    $result = $this->changeStatus($t, $status, $catatanMap[$t->id] ?? null);
+                    $result = $this->ubahStatusApproval($t, $status, $catatanMap[$t->id] ?? null);
 
                     if ($result !== true) {
                         $skipped++;
@@ -131,18 +131,18 @@ class ApprovalService
         return compact('done', 'skipped');
     }
 
-    public function bulkApprove(array $ids): array
+    public function setujuiTransaksiMassal(array $ids): array
     {
-        return $this->bulkChangeStatus(array_fill_keys($ids, null), 'APPROVED');
+        return $this->ubahStatusApprovalMassal(array_fill_keys($ids, null), 'APPROVED');
     }
 
-    public function bulkReject(array $catatanMap): array
+    public function tolakTransaksiMassal(array $catatanMap): array
     {
-        return $this->bulkChangeStatus($catatanMap, 'REJECTED');
+        return $this->ubahStatusApprovalMassal($catatanMap, 'REJECTED');
     }
 
-    public function bulkRevisi(array $catatanMap): array
+    public function revisiTransaksiMassal(array $catatanMap): array
     {
-        return $this->bulkChangeStatus($catatanMap, 'REVISION');
+        return $this->ubahStatusApprovalMassal($catatanMap, 'REVISION');
     }
 }
