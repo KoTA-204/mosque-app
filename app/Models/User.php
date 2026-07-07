@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -12,42 +11,31 @@ use Illuminate\Auth\Notifications\ResetPassword;
 
 class User extends Authenticatable implements CanResetPasswordContract
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, CanResetPassword;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
+        'initial_password',
         'status',
         'role_id',
+        'credentials_sent_at',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
+        'initial_password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'email_verified_at'   => 'datetime',
+            'password'            => 'hashed',
+            'initial_password'    => 'encrypted',
+            'credentials_sent_at' => 'datetime',
         ];
     }
 
@@ -66,7 +54,7 @@ class User extends Authenticatable implements CanResetPasswordContract
         return $this->roles()
             ->whereHas('permissions', function ($query) use ($permissionCode) {
                 $query->where('permission_code', $permissionCode)
-                    ->where('is_active', true);
+                      ->where('is_active', true);
             })
             ->exists();
     }
@@ -75,9 +63,21 @@ class User extends Authenticatable implements CanResetPasswordContract
     {
         return optional($this->roles)->slug === $roleSlug;
     }
-    
-    public function getUsernameAttribute()
+
+    public function getUsernameAttribute(): string
     {
         return explode('@', $this->email)[0];
+    }
+
+    // Cek apakah user sudah pernah mencatat transaksi
+    public function hasTransaksi(): bool
+    {
+        return \App\Models\Transaksi::where('user_id', $this->id)->exists();
+    }
+
+    // Apakah kredensial (email + password awal) sudah dikirim ke user?
+    public function credentialsSent(): bool
+    {
+        return $this->credentials_sent_at !== null;
     }
 }

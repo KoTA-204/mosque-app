@@ -32,4 +32,12 @@ class UpdatePermissionRequest extends FormRequest
             'is_active'       => 'nullable|boolean',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'permission_code.required' => 'Kode permission wajib diisi.',
+            'permission_code.unique'   => 'Kode permission sudah digunakan.',
+        ];
+    }
 }

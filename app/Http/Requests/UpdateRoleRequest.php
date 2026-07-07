@@ -31,4 +31,12 @@ class UpdateRoleRequest extends FormRequest
             'permission_ids.*' => 'integer|exists:permissions,id',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'role_name.required' => 'Nama role wajib diisi.',
+            'role_name.unique'   => 'Nama role sudah digunakan.',
+        ];
+    }
 }

@@ -3,8 +3,11 @@
 .env
 .env.backup
 .env.production
+.env.dusk.local
+
 .phpactor.json
 .phpunit.result.cache
+
 /.fleet
 /.idea
 /.nova
@@ -22,3 +25,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+/tests/Browser/
+/tests/Feature/
+/tests/Unit/

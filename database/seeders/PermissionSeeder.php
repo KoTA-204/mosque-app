@@ -47,10 +47,10 @@ class PermissionSeeder extends Seeder
             ['permission_code' => 'EDIT_KENCLENG',   'permission_name' => 'Edit Kencleng',   'module' => 'kencleng', 'action' => 'update'],
             ['permission_code' => 'DELETE_KENCLENG', 'permission_name' => 'Delete Kencleng', 'module' => 'kencleng', 'action' => 'delete'],
 
-            ['permission_code' => 'VIEW_TRANSAKSI_KEGIATAN',   'permission_name' => 'View Transaksi Kegiatan',   'module' => 'transaksi-kegiatan', 'action' => 'view'],
-            ['permission_code' => 'CREATE_TRANSAKSI_KEGIATAN', 'permission_name' => 'Create Transaksi Kegiatan', 'module' => 'transaksi-kegiatan', 'action' => 'create'],
-            ['permission_code' => 'EDIT_TRANSAKSI_KEGIATAN',   'permission_name' => 'Edit Transaksi Kegiatan',   'module' => 'transaksi-kegiatan', 'action' => 'update'],
-            ['permission_code' => 'DELETE_TRANSAKSI_KEGIATAN', 'permission_name' => 'Delete Transaksi Kegiatan', 'module' => 'transaksi-kegiatan', 'action' => 'delete'],
+            ['permission_code' => 'VIEW_TRANSAKSI_KEGIATAN',   'permission_name' => 'View Transaksi Kegiatan',   'module' => 'transaksi-kegiatan',   'action' => 'view'],
+            ['permission_code' => 'CREATE_TRANSAKSI_KEGIATAN', 'permission_name' => 'Create Transaksi Kegiatan', 'module' => 'transaksi-kegiatan',   'action' => 'create'],
+            ['permission_code' => 'EDIT_TRANSAKSI_KEGIATAN',   'permission_name' => 'Edit Transaksi Kegiatan',   'module' => 'transaksi-kegiatan',   'action' => 'update'],
+            ['permission_code' => 'DELETE_TRANSAKSI_KEGIATAN', 'permission_name' => 'Delete Transaksi Kegiatan', 'module' => 'transaksi-kegiatan',   'action' => 'delete'],
 
             // ── Kegiatan Khusus ────────────────────────────────────
             ['permission_code' => 'VIEW_KEGIATAN',   'permission_name' => 'View Kegiatan',   'module' => 'kegiatan', 'action' => 'view'],
@@ -65,10 +65,10 @@ class PermissionSeeder extends Seeder
             ['permission_code' => 'DELETE_APPROVAL', 'permission_name' => 'Delete Approval', 'module' => 'approval', 'action' => 'delete'],
 
             // ── Akuntansi - Jurnal Umum ────────────────────────────
-            ['permission_code' => 'VIEW_JURNAL',   'permission_name' => 'View Jurnal Umum',   'module' => 'jurnal', 'action' => 'view'],
-            ['permission_code' => 'CREATE_JURNAL', 'permission_name' => 'Create Jurnal Umum', 'module' => 'jurnal', 'action' => 'create'],
-            ['permission_code' => 'EDIT_JURNAL',   'permission_name' => 'Edit Jurnal Umum',   'module' => 'jurnal', 'action' => 'update'],
-            ['permission_code' => 'DELETE_JURNAL', 'permission_name' => 'Delete Jurnal Umum', 'module' => 'jurnal', 'action' => 'delete'],
+            ['permission_code' => 'VIEW_JURNAL',                'permission_name' => 'View Jurnal Umum',          'module' => 'jurnal',             'action' => 'view'],
+            ['permission_code' => 'CREATE_JURNAL',              'permission_name' => 'Create Jurnal Umum',        'module' => 'jurnal',             'action' => 'create'],
+            ['permission_code' => 'EDIT_JURNAL',                'permission_name' => 'Edit Jurnal Umum',          'module' => 'jurnal',             'action' => 'update'],
+            ['permission_code' => 'DELETE_JURNAL',              'permission_name' => 'Delete Jurnal Umum',        'module' => 'jurnal',             'action' => 'delete'],
 
             // ── Akuntansi - Jurnal Pembuka ─────────────────────────
             ['permission_code' => 'VIEW_JURNAL_PEMBUKA',   'permission_name' => 'View Jurnal Pembuka',   'module' => 'jurnal-pembuka', 'action' => 'view'],

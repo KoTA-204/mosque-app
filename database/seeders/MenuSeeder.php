@@ -51,10 +51,33 @@ class MenuSeeder extends Seeder
             'sort_order' => 20,
         ]);
 
-        Menu::create(['menu_name' => 'Chart of Accounts',  'route_name' => 'dashboard.coa.index',                'icon' => 'book-2', 'parent_id' => $masterData->id, 'sort_order' => 71, 'permission_id' => $perm('VIEW_COA')]);
-        Menu::create(['menu_name' => 'Kategori Transaksi', 'route_name' => 'dashboard.kategori-transaksi.index', 'icon' => 'tag',    'parent_id' => $masterData->id, 'sort_order' => 72, 'permission_id' => $perm('VIEW_KATEGORI')]);
-        Menu::create(['menu_name' => 'Aset',               'route_name' => 'dashboard.aset.index',               'icon' => 'building-warehouse', 'parent_id' => $masterData->id, 'sort_order' => 73, 'permission_id' => $perm('VIEW_ASET')]);
-        
+        Menu::create([
+            'menu_name'     => 'Pencatatan Transaksi',   
+            'route_name'    => 'dashboard.transaksi.index',
+            'icon'          => 'arrows-exchange',
+            'parent_id'     => $pencatatan->id,
+            'sort_order'    => 20,
+            'permission_id' => $perm('VIEW_TRANSAKSI'),
+        ]);
+
+        Menu::create([
+            'menu_name'     => 'Kencleng',
+            'route_name'    => 'dashboard.kencleng.index',
+            'icon'          => 'pig-money',
+            'parent_id'     => $pencatatan->id,
+            'sort_order'    => 21,
+            'permission_id' => $perm('VIEW_KENCLENG'),
+        ]);
+
+        Menu::create([
+            'menu_name'     => 'Transaksi Kegiatan',
+            'route_name'    => 'dashboard.transaksi-kegiatan.index',
+            'icon'          => 'receipt',
+            'parent_id'     => $pencatatan->id,
+            'sort_order'    => 22,
+            'permission_id' => $perm('VIEW_TRANSAKSI_KEGIATAN'),
+        ]);
+
         // ── Kegiatan Khusus ────────────────────────────────────────
         $kegiatanKhusus = Menu::create([
             'menu_name'  => 'Kegiatan Khusus',
@@ -98,14 +121,59 @@ class MenuSeeder extends Seeder
             'sort_order' => 60,
         ]);
 
-        Menu::create(['menu_name' => 'Jurnal Pembuka',      'route_name' => 'dashboard.jurnal-pembuka.index',      'icon' => 'book-upload', 'parent_id' => $akuntansi->id, 'sort_order' => 51, 'permission_id' => $perm('VIEW_JURNAL_PEMBUKA')]);
-        Menu::create(['menu_name' => 'Jurnal Umum',         'route_name' => 'dashboard.jurnal-umum.index',         'icon' => 'book-open',   'parent_id' => $akuntansi->id, 'sort_order' => 52, 'permission_id' => $perm('VIEW_JURNAL')]);
-        Menu::create(['menu_name' => 'Jurnal Penyesuaian',  'route_name' => 'dashboard.jurnal-penyesuaian.index',  'icon' => 'book-open',   'parent_id' => $akuntansi->id, 'sort_order' => 53, 'permission_id' => $perm('VIEW_JURNAL_PENYESUAIAN')]);
-        Menu::create(['menu_name' => 'Jurnal Koreksi',      'route_name' => 'dashboard.jurnal-koreksi.index',      'icon' => 'book-open',   'parent_id' => $akuntansi->id, 'sort_order' => 54, 'permission_id' => $perm('VIEW_JURNAL_KOREKSI')]);
-        Menu::create(['menu_name' => 'Jurnal Penutup',      'route_name' => 'dashboard.jurnal-penutup.index',      'icon' => 'book-open',   'parent_id' => $akuntansi->id, 'sort_order' => 55, 'permission_id' => $perm('VIEW_JURNAL_PENUTUP')]);
-        Menu::create(['menu_name' => 'Buku Besar',          'route_name' => 'dashboard.buku-besar.index',          'icon' => 'briefcase',   'parent_id' => $akuntansi->id, 'sort_order' => 56, 'permission_id' => $perm('VIEW_BUKU_BESAR')]);
-        Menu::create(['menu_name' => 'Neraca Saldo',        'route_name' => 'dashboard.neraca-saldo.index',        'icon' => 'scale',       'parent_id' => $akuntansi->id, 'sort_order' => 57, 'permission_id' => $perm('VIEW_NERACA_SALDO')]);
-        Menu::create(['menu_name' => 'Manajemen Periode',   'route_name' => 'dashboard.periode.index',             'icon' => 'calendar',    'parent_id' => $akuntansi->id, 'sort_order' => 58, 'permission_id' => $perm('VIEW_PERIODE')]);
+        Menu::create([
+            'menu_name'     => 'Jurnal Umum',
+            'route_name'    => 'dashboard.jurnal-umum.index',
+            'icon'          => 'book-open',
+            'parent_id'     => $akuntansi->id,
+            'sort_order'    => 46,
+            'permission_id' => $perm('VIEW_JURNAL'),
+        ]);
+
+        Menu::create([
+            'menu_name'     => 'Jurnal Penyesuaian',
+            'route_name'    => 'dashboard.jurnal-penyesuaian.index',
+            'icon'          => 'book-open',
+            'parent_id'     => $akuntansi->id,
+            'sort_order'    => 47,
+            'permission_id' => $perm('VIEW_JURNAL_PENYESUAIAN'),
+        ]);
+
+        Menu::create([
+            'menu_name'     => 'Jurnal Koreksi',
+            'route_name'    => 'dashboard.jurnal-koreksi.index',
+            'icon'          => 'book-open',
+            'parent_id'     => $akuntansi->id,
+            'sort_order'    => 48,
+            'permission_id' => $perm('VIEW_JURNAL_KOREKSI'),
+        ]);
+
+        Menu::create([
+            'menu_name'     => 'Jurnal Penutup',
+            'route_name'    => 'dashboard.jurnal-penutup.index',
+            'icon'          => 'book-open',
+            'parent_id'     => $akuntansi->id,
+            'sort_order'    => 49,
+            'permission_id' => $perm('VIEW_JURNAL_PENUTUP'),
+        ]);
+
+        Menu::create([
+            'menu_name'     => 'Buku Besar',
+            'route_name'    => 'dashboard.buku-besar.index',
+            'icon'          => 'briefcase',
+            'parent_id'     => $akuntansi->id,
+            'sort_order'    => 50,
+            'permission_id' => $perm('VIEW_BUKU_BESAR'),
+        ]);
+
+        Menu::create([
+            'menu_name'     => 'Neraca Saldo',
+            'route_name'    => 'dashboard.neraca-saldo.index',
+            'icon'          => 'balance-scale',
+            'parent_id'     => $akuntansi->id,
+            'sort_order'    => 51,
+            'permission_id' => $perm('VIEW_NERACA_SALDO'),
+        ]);
 
         // ── Laporan ────────────────────────────────────────────────
         $laporan = Menu::create([

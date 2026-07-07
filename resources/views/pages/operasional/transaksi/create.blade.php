@@ -1,0 +1,596 @@
+<form id="formTambah"
+      action="{{ route('dashboard.transaksi.store') }}"
+      method="POST"
+      enctype="multipart/form-data">
+    @csrf
+    <input type="hidden" name="force" id="forceSubmit" value="0">
+
+    <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+                Tanggal <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+                <input type="text" id="inputTanggalTambah" name="tanggal_transaksi" required
+                    placeholder="Pilih tanggal"
+                    readonly
+                    class="w-full h-10 px-3 pr-9 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 cursor-pointer bg-white">
+                <svg class="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </div>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+                Dompet <span class="text-red-500">*</span>
+            </label>
+            <select name="dompet_id" required
+                class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                <option value="">Pilih dompet</option>
+                @foreach ($dompets as $d)
+                    <option value="{{ $d->id }}">{{ $d->nama_dompet }}</option>
+                @endforeach
+            </select>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+            Jenis Transaksi <span class="text-red-500">*</span>
+        </label>
+        <select name="jenis_transaksi" required
+            class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+            <option value="">Pilih jenis transaksi</option>
+            <option value="PEMASUKAN">Pemasukan</option>
+            <option value="PENGELUARAN">Pengeluaran</option>
+        </select>
+    </div>
+
+    {{-- Detail Jurnal --}}
+    <div class="mb-1 flex items-center justify-between">
+        <label class="block text-sm font-medium text-gray-700">
+            Detail Jurnal <span class="text-red-500">*</span>
+        </label>
+       <button type="button" onclick="buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah)"
+            class="text-xs font-medium text-green-700 hover:underline">
+            + Tambah Baris
+        </button>
+    </div>
+    <div class="border border-gray-200 rounded-xl overflow-hidden mb-2">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="text-left text-xs font-medium text-gray-500 px-3 py-2">Akun</th>
+                    <th class="text-left text-xs font-medium text-gray-500 px-3 py-2 w-24">Tipe</th>
+                    <th class="text-left text-xs font-medium text-gray-500 px-3 py-2 w-32">Nominal</th>
+                    <th class="w-8"></th>
+                </tr>
+            </thead>
+            <tbody id="jurnalTambahBody" class="divide-y divide-gray-100"></tbody>
+        </table>
+    </div>
+    <div class="flex items-center justify-between text-xs px-1 mb-4">
+        <div class="flex items-center gap-4">
+            <span class="text-gray-500">Total Debit: <span id="jurnalTambahTotalDebit" class="font-semibold text-red-600">Rp 0</span></span>
+            <span class="text-gray-500">Total Kredit: <span id="jurnalTambahTotalKredit" class="font-semibold text-green-700">Rp 0</span></span>
+        </div>
+        <span id="jurnalTambahStatus" class="font-medium text-gray-400">Belum diisi</span>
+    </div>
+
+    <div id="jurnalTambahZakatWarning" class="hidden mb-3 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700">
+        <svg class="w-4 h-4 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.28 11.18c.75 1.334-.213 2.98-1.742 2.98H3.72c-1.53 0-2.493-1.646-1.743-2.98l6.28-11.18zM11 14a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V7a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <span>Transaksi ini melibatkan akun <strong>Zakat</strong>. Mohon isi <strong>Keterangan</strong> secara detail (jenis zakat, jumlah muzakki/mustahik, atau tujuan penyaluran) agar sesuai ketentuan pencatatan zakat.</span>
+    </div>
+
+    <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan</label>
+        <textarea name="deskripsi" rows="2"
+            placeholder="Masukan keterangan transaksi"
+            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"></textarea>
+    </div>
+
+    <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Bukti Transaksi</label>
+        <div id="dropzoneBukti"
+            class="border border-dashed border-gray-300 rounded-xl p-5 text-center cursor-pointer hover:border-green-400 hover:bg-green-50/30 transition-colors"
+            onclick="document.getElementById('inputBukti').click()"
+            ondragover="event.preventDefault()"
+            ondrop="handleDropBukti(event)">
+            <svg class="w-6 h-6 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+            <p class="text-sm text-gray-500">
+                <span class="font-medium text-green-700 underline">Pilih File</span>
+                atau tarik file bukti transaksi untuk diunggah disini
+            </p>
+            <p class="text-xs text-gray-400 mt-1">.PNG, .JPG, .PDF</p>
+        </div>
+        <input type="file" id="inputBukti" name="bukti_transaksi[]"
+            accept=".png,.jpg,.jpeg,.pdf" multiple class="hidden"
+            onchange="previewBukti(this.files)">
+        <div id="listBukti" class="mt-2 space-y-1.5"></div>
+    </div>
+
+    <div class="border-t border-gray-100 pt-4 mb-4">
+        <div class="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 cursor-pointer select-none"
+            onclick="tambahToggleAset()">
+            <input type="hidden" name="is_aset" id="tambahIsAset" value="0">
+            <div id="tambahTrack"
+                class="relative w-10 h-5 rounded-full bg-gray-300 flex-shrink-0 transition-colors duration-200">
+                <span id="tambahThumb"
+                    class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200"></span>
+            </div>
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-800">Transaksi ini merupakan perolehan aset</p>
+                <p class="text-xs text-gray-500">Aktifkan untuk mencatat detail aset terkait transaksi</p>
+            </div>
+            <span id="tambahBadgeAset"
+                class="hidden items-center gap-1.5 px-2.5 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-lg">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                </svg>
+                Aset aktif
+            </span>
+        </div>
+    </div>
+
+    <div id="sectionAset" class="hidden space-y-4 mb-4">
+
+        <div>
+            <div class="flex items-center gap-2 mb-3">
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/>
+                </svg>
+                <h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Identitas Aset</h4>
+                <div class="flex-1 h-px bg-gray-200"></div>
+            </div>
+            <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                            Nama Aset <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="nama_aset"
+                            placeholder="Masukkan nama aset"
+                            class="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                            Tanggal Perolehan <span class="text-red-500">*</span>
+                        </label>
+                        <input type="date" name="tanggal_perolehan"
+                            class="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">
+                        Kondisi Aset <span class="text-red-500">*</span>
+                    </label>
+                    <select name="kondisi_aset"
+                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                        <option value="">Pilih kondisi aset</option>
+                        <option value="BARU">Baru</option>
+                        <option value="BAIK">Baik</option>
+                        <option value="RUSAK_RINGAN">Rusak Ringan</option>
+                        <option value="RUSAK_BERAT">Rusak Berat</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="flex items-center gap-2 mb-3">
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0120 9.414V19a2 2 0 01-2 2z"/>
+                </svg>
+                <h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Perolehan Aset</h4>
+                <div class="flex-1 h-px bg-gray-200"></div>
+            </div>
+            <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                            Sumber Perolehan <span class="text-red-500">*</span>
+                        </label>
+                        <select name="sumber_perolehan"
+                            class="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                            <option value="">Pilih sumber</option>
+                            <option value="PEMBELIAN">Pembelian</option>
+                            <option value="DONASI">Donasi</option>
+                            <option value="WAKAF">Wakaf</option>
+                            <option value="HIBAH">Hibah</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                            Lokasi Aset <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="lokasi_aset"
+                            placeholder="Masukkan lokasi"
+                            class="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                            Jumlah Unit <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" name="jumlah_unit" value="1" min="1"
+                            class="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Dokumen Pendukung</label>
+                        <div class="relative">
+                            <input type="file" name="dokumen_aset" id="inputDokumenAset"
+                                accept=".jpg,.jpeg,.png,.pdf" class="hidden"
+                                onchange="previewDokumen(this)">
+                            <button type="button"
+                                onclick="document.getElementById('inputDokumenAset').click()"
+                                class="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg bg-white text-left flex items-center gap-2 hover:border-green-400 transition-colors">
+                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                </svg>
+                                <span id="labelDokumenAset" class="text-xs text-gray-400 truncate">Unggah dokumen</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="flex items-center gap-2 mb-3">
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
+                </svg>
+                <h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Penyusutan</h4>
+                <div class="flex-1 h-px bg-gray-200"></div>
+            </div>
+            <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                            Tanggal Mulai Penyusutan <span class="text-red-500">*</span>
+                        </label>
+                        <input type="date" name="tanggal_mulai_penyusutan"
+                            class="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                            Umur Manfaat (Tahun) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" name="umur_manfaat"
+                            placeholder="Contoh: 20" min="1"
+                            class="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Keterangan / Catatan</label>
+                    <textarea name="keterangan_penyusutan" rows="2"
+                        placeholder="Masukkan catatan tambahan yang perlu diungkapkan dalam laporan keuangan"
+                        class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white resize-none focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"></textarea>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="tambahErrors" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+        <ul id="tambahErrorList" class="text-sm text-red-600 space-y-0.5 list-disc list-inside"></ul>
+    </div>
+
+    <div class="flex items-center justify-end gap-3 pt-2">
+        <button type="button" onclick="closeModal('modalTambah')"
+            class="h-9 px-4 text-sm border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors">
+            Batal
+        </button>
+        <button type="button" id="btnTambahSubmit" onclick="submitTambah()"
+            class="h-9 px-5 text-sm bg-green-700 text-white rounded-xl font-medium hover:bg-green-800 transition-colors flex items-center gap-2">
+            <svg id="iconSpinnerTambah" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+            Simpan
+        </button>
+    </div>
+</form>
+
+<script>
+// Daftar akun untuk dropdown jurnal (dipakai juga oleh editTransaksi() di index.blade.php)
+const akunListTambah = {!! json_encode($akuns->map(fn($a) => [
+    'id'       => $a->id,
+    'label'    => $a->kode_akun . ' – ' . $a->nama_akun,
+    'is_zakat' => str_contains(strtolower($a->nama_akun), 'zakat'),
+])) !!};
+
+function buatOpsiAkunHTML(akunList, selected = '') {
+    let html = '<option value="">Pilih akun</option>';
+    akunList.forEach(a => {
+        html += `<option value="${a.id}" data-zakat="${a.is_zakat ? 1 : 0}" ${String(a.id) === String(selected) ? 'selected' : ''}>${a.label}</option>`;
+    });
+    return html;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    flatpickr('#inputTanggalTambah', {
+        dateFormat: 'Y-m-d',
+        altInput: true,
+        altFormat: 'd M Y',
+        allowInput: false,
+        locale: {
+            firstDayOfWeek: 1,
+            weekdays: {
+                shorthand: ['Min','Sen','Sel','Rab','Kam','Jum','Sab'],
+                longhand:  ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'],
+            },
+            months: {
+                shorthand: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+                longhand:  ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],
+            },
+        },
+    });
+
+    // Default 1 baris debit + 1 baris kredit
+    buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah, 'DEBIT');
+    buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah, 'KREDIT');
+    checkZakatWarning('jurnalTambahBody', 'jurnalTambah');
+});
+
+// ── Jurnal dinamis (dipakai bersama oleh form Tambah & Edit) ───────────────
+
+function buatBarisJurnal(tbodyId, prefix, akunList, tipe = 'DEBIT', akunId = '', nominal = '') {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td class="px-3 py-2">
+            <select class="jurnalAkun w-full h-9 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500"
+                onchange="checkZakatWarning('${tbodyId}', '${prefix}')">
+                ${buatOpsiAkunHTML(akunList, akunId)}
+            </select>
+        </td>
+        <td class="px-3 py-2">
+            <select class="jurnalTipe w-full h-9 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500"
+                onchange="hitungTotalJurnal('${tbodyId}', '${prefix}')">
+                <option value="DEBIT" ${tipe === 'DEBIT' ? 'selected' : ''}>Debit</option>
+                <option value="KREDIT" ${tipe === 'KREDIT' ? 'selected' : ''}>Kredit</option>
+            </select>
+        </td>
+        <td class="px-3 py-2">
+            <div class="relative">
+                <span class="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">Rp</span>
+                <input type="number" min="1" value="${nominal}"
+                    oninput="hitungTotalJurnal('${tbodyId}', '${prefix}')"
+                    class="jurnalNominal w-full h-9 pl-7 pr-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500">
+            </div>
+        </td>
+        <td class="px-2 py-2 text-center">
+            <button type="button" onclick="hapusBarisJurnal(this, '${tbodyId}', '${prefix}')" class="text-gray-400 hover:text-red-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+    hitungTotalJurnal(tbodyId, prefix);
+}
+
+function hapusBarisJurnal(btn, tbodyId, prefix) {
+    const tbody = document.getElementById(tbodyId);
+    if (tbody.querySelectorAll('tr').length <= 2) {
+        alert('Minimal harus ada 1 baris debit dan 1 baris kredit.');
+        return;
+    }
+    btn.closest('tr').remove();
+    hitungTotalJurnal(tbodyId, prefix);
+    checkZakatWarning(tbodyId, prefix);
+}
+
+function hitungTotalJurnal(tbodyId, prefix) {
+    const tbody = document.getElementById(tbodyId);
+    let totalDebit = 0, totalKredit = 0;
+    tbody.querySelectorAll('tr').forEach(tr => {
+        const tipe    = tr.querySelector('.jurnalTipe').value;
+        const nominal = parseFloat(tr.querySelector('.jurnalNominal').value) || 0;
+        if (tipe === 'DEBIT') totalDebit += nominal; else totalKredit += nominal;
+    });
+
+    document.getElementById(prefix + 'TotalDebit').textContent  = 'Rp ' + totalDebit.toLocaleString('id-ID');
+    document.getElementById(prefix + 'TotalKredit').textContent = 'Rp ' + totalKredit.toLocaleString('id-ID');
+
+    const statusEl = document.getElementById(prefix + 'Status');
+    if (totalDebit === 0 && totalKredit === 0) {
+        statusEl.textContent = 'Belum diisi';
+        statusEl.className = 'font-medium text-gray-400';
+    } else if (totalDebit === totalKredit) {
+        statusEl.textContent = '✓ Balance';
+        statusEl.className = 'font-medium text-green-600';
+    } else {
+        statusEl.textContent = '✗ Tidak balance';
+        statusEl.className = 'font-medium text-red-500';
+    }
+
+    return { totalDebit, totalKredit };
+}
+
+function checkZakatWarning(tbodyId, prefix) {
+    const tbody = document.getElementById(tbodyId);
+    const warningEl = document.getElementById(prefix + 'ZakatWarning');
+    if (!tbody || !warningEl) return;
+
+    const adaZakat = [...tbody.querySelectorAll('.jurnalAkun')].some(sel => {
+        const opt = sel.options[sel.selectedIndex];
+        return opt && opt.dataset.zakat === '1';
+    });
+
+    warningEl.classList.toggle('hidden', !adaZakat);
+}
+
+// ── Aset toggle ──────────────────────────────────────────────────────────
+
+let tambahAsetOn = false;
+
+function tambahToggleAset() {
+    tambahAsetOn = !tambahAsetOn;
+    const track   = document.getElementById('tambahTrack');
+    const thumb   = document.getElementById('tambahThumb');
+    const section = document.getElementById('sectionAset');
+    const badge   = document.getElementById('tambahBadgeAset');
+    const input   = document.getElementById('tambahIsAset');
+    const ASET_REQUIRED = ['nama_aset','tanggal_perolehan','kondisi_aset','sumber_perolehan','lokasi_aset','jumlah_unit','tanggal_mulai_penyusutan','umur_manfaat'];
+
+    if (tambahAsetOn) {
+        track.classList.replace('bg-gray-300', 'bg-green-600');
+        thumb.classList.add('translate-x-5');
+        section.classList.remove('hidden');
+        badge.classList.replace('hidden', 'inline-flex');
+        input.value = '1';
+        ASET_REQUIRED.forEach(n => {
+            const el = document.querySelector(`[name="${n}"]`);
+            if (el) el.setAttribute('required', '');
+        });
+    } else {
+        track.classList.replace('bg-green-600', 'bg-gray-300');
+        thumb.classList.remove('translate-x-5');
+        section.classList.add('hidden');
+        badge.classList.replace('inline-flex', 'hidden');
+        input.value = '0';
+        ASET_REQUIRED.forEach(n => {
+            const el = document.querySelector(`[name="${n}"]`);
+            if (el) el.removeAttribute('required');
+        });
+    }
+}
+
+function previewBukti(files) {
+    const list = document.getElementById('listBukti');
+    list.innerHTML = '';
+    [...files].forEach(f => {
+        list.insertAdjacentHTML('beforeend', `
+            <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">
+                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0120 9.414V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span class="flex-1 truncate">${f.name}</span>
+                <span class="text-xs text-gray-400">${(f.size/1024).toFixed(0)} KB</span>
+            </div>
+        `);
+    });
+}
+
+function handleDropBukti(e) {
+    e.preventDefault();
+    const dt = new DataTransfer();
+    [...e.dataTransfer.files].forEach(f => dt.items.add(f));
+    document.getElementById('inputBukti').files = dt.files;
+    previewBukti(dt.files);
+}
+
+function previewDokumen(input) {
+    const lbl = document.getElementById('labelDokumenAset');
+    lbl.textContent = input.files[0]?.name ?? 'Unggah dokumen';
+    lbl.classList.toggle('text-gray-400', !input.files[0]);
+    lbl.classList.toggle('text-gray-700', !!input.files[0]);
+}
+
+async function submitTambah(force = false) {
+    const form    = document.getElementById('formTambah');
+    const btn     = document.getElementById('btnTambahSubmit');
+    const spinner = document.getElementById('iconSpinnerTambah');
+    const errBox  = document.getElementById('tambahErrors');
+    const errList = document.getElementById('tambahErrorList');
+
+    errBox.classList.add('hidden');
+    errList.innerHTML = '';
+
+    const { totalDebit, totalKredit } = hitungTotalJurnal('jurnalTambahBody', 'jurnalTambah');
+    if (totalDebit === 0 || totalDebit !== totalKredit) {
+        errList.insertAdjacentHTML('beforeend', `<li>Total debit dan kredit harus sama dan tidak boleh kosong.</li>`);
+        errBox.classList.remove('hidden');
+        return;
+    }
+
+    btn.disabled = true;
+    spinner.classList.remove('hidden');
+
+    document.getElementById('forceSubmit').value = force ? '1' : '0';
+
+    try {
+        const fd  = new FormData(form);
+
+        let idx = 0;
+        document.querySelectorAll('#jurnalTambahBody tr').forEach(tr => {
+            fd.append(`jurnal[${idx}][akun_id]`, tr.querySelector('.jurnalAkun').value);
+            fd.append(`jurnal[${idx}][tipe]`,    tr.querySelector('.jurnalTipe').value);
+            fd.append(`jurnal[${idx}][nominal]`, tr.querySelector('.jurnalNominal').value);
+            idx++;
+        });
+
+        const res = await fetch(form.action, {
+            method: 'POST',
+            body: fd,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                'Accept': 'application/json',
+            },
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            closeModal('modalTambah');
+            sessionStorage.setItem('alert', JSON.stringify({
+                type: 'success',
+                message: 'Transaksi berhasil disimpan.'
+            }));
+            window.location.reload();
+
+        } else if (res.status === 409 && data.type === 'duplikat_warning') {
+            const d = data.detail;
+            document.getElementById('dd_tanggal').textContent  = d.tanggal;
+            document.getElementById('dd_jumlah').textContent   = 'Rp ' + d.jumlah;
+            document.getElementById('dd_jenis').textContent    = d.jenis === 'PEMASUKAN' ? 'Pemasukan' : 'Pengeluaran';
+            document.getElementById('dd_kategori').textContent = d.kategori;
+            document.getElementById('dd_dompet').textContent   = d.dompet;
+            document.getElementById('dd_deskripsi').textContent = d.deskripsi;
+            openModal('modalDuplikat');
+
+        } else if (res.status === 422 && data.errors) {
+            Object.values(data.errors).flat().forEach(msg => {
+                errList.insertAdjacentHTML('beforeend', `<li>${msg}</li>`);
+            });
+            errBox.classList.remove('hidden');
+
+        } else {
+            errList.insertAdjacentHTML('beforeend', `<li>${data.message ?? 'Terjadi kesalahan.'}</li>`);
+            errBox.classList.remove('hidden');
+        }
+    }catch (error) {
+        console.error(error);
+
+        errList.insertAdjacentHTML(
+            'beforeend',
+            `<li>${error.message}</li>`
+        );
+
+        errBox.classList.remove('hidden');
+    } finally {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+    }
+}
+
+function konfirmasiDuplikat() {
+    closeModal('modalDuplikat');
+    submitTambah(true);
+}
+</script>

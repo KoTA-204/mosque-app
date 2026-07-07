@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     <title>{{ $title ?? 'Dashboard' }} | MosQue</title>
 
@@ -18,7 +19,7 @@
                 init() {
                     const savedTheme = localStorage.getItem('theme');
                     const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                    this.theme = savedTheme || systemTheme;
+                    this.theme = savedTheme || 'light';
                     this.updateTheme();
                 },
                 theme: 'light',
@@ -72,7 +73,7 @@
         (function() {
             const savedTheme = localStorage.getItem('theme');
             const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            const theme = savedTheme || systemTheme;
+            const theme = savedTheme || 'light';
             if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
                 if (document.body) document.body.classList.add('dark', 'bg-gray-900');
@@ -82,6 +83,7 @@
             }
         })();
     </script>
+    @stack('styles')
 </head>
 
 <body
@@ -108,6 +110,7 @@
 
     <x-common.preloader/>
 
+    @auth
     <div class="min-h-screen xl:flex">
         @include('layouts.backdrop')
         @include('layouts.sidebar')
@@ -123,7 +126,18 @@
             </div>
         </div>
     </div>
+    @else
+    @include('layouts.header')
+    <main class="pt-16 min-h-screen bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            @yield('content')
+        </div>
+    </main>
+    @include('layouts.footer')
+    @endauth
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
+    @include('layouts.confirm-global')
 </body>
 
 @stack('scripts')

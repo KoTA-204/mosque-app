@@ -17,6 +17,7 @@ class Jurnal extends Model
         'jurnal_ref_id',
         'jenis_jurnal',
         'tipe_penyesuaian',
+        'tipe_penutupan',
         'tanggal',
         'keterangan',
         'status',
@@ -33,30 +34,16 @@ class Jurnal extends Model
         return $this->belongsTo(Periode::class);
     }
 
-    /**
-     * Relasi ke transaksi operasional.
-     * Hanya ada nilainya jika jenis_jurnal = UMUM.
-     * One to one.
-     */
     public function transaksi()
     {
         return $this->belongsTo(Transaksi::class);
     }
 
-    /**
-     * Self referencing — jurnal yang dikoreksi oleh jurnal ini.
-     * Hanya ada nilainya jika jenis_jurnal = KOREKSI.
-     * Many to one (banyak koreksi bisa mengacu ke 1 jurnal).
-     */
     public function jurnalRef()
     {
         return $this->belongsTo(Jurnal::class, 'jurnal_ref_id');
     }
 
-    /**
-     * Self referencing — semua jurnal koreksi yang mengacu ke jurnal ini.
-     * One to many.
-     */
     public function jurnalKoreksi()
     {
         return $this->hasMany(Jurnal::class, 'jurnal_ref_id');
@@ -64,13 +51,10 @@ class Jurnal extends Model
 
     public function aset()
     {
-        return $this->belongsToMany(Aset::class);
+        return $this->belongsToMany(Aset::class, 'jurnal_aset', 'jurnal_id', 'aset_id')
+            ->withPivot('nominal');
     }
 
-    /**
-     * Baris debit/kredit jurnal ini.
-     * One to many.
-     */
     public function detailJurnal()
     {
         return $this->hasMany(DetailJurnal::class);
@@ -93,6 +77,30 @@ class Jurnal extends Model
         return round($this->total_debit, 2) === round($this->total_kredit, 2);
     }
 
+    public function getKodeJurnalAttribute(): string
+    {
+        if (!$this->id || !$this->tanggal || !$this->jenis_jurnal) {
+            return '—';
+        }
+
+        $prefix = match (strtoupper($this->jenis_jurnal)) {
+            'PEMBUKA'     => 'JP',
+            'UMUM'        => 'JU',
+            'PENYESUAIAN' => 'JPS',
+            'KOREKSI'     => 'JK',
+            'PENUTUP'     => 'JPT',
+            default       => 'JX',
+        };
+
+        $tahun     = $this->tanggal->format('Y');
+        $bulan     = $this->tanggal->format('m');
+        $nomorUrut = str_pad($this->id, 3, '0', STR_PAD_LEFT);
+
+        return strtoupper($this->jenis_jurnal) === 'PENUTUP'
+            ? "{$prefix}-{$tahun}-{$nomorUrut}"
+            : "{$prefix}-{$tahun}-{$bulan}-{$nomorUrut}";
+    }
+
     // ── Scope ─────────────────────────────────────────────────────────────
 
     public function scopeDraft($query)
@@ -103,6 +111,11 @@ class Jurnal extends Model
     public function scopePosted($query)
     {
         return $query->where('status', 'POSTED');
+    }
+
+    public function scopePembuka($query)
+    {
+        return $query->where('jenis_jurnal', 'PEMBUKA');
     }
 
     public function scopeUmum($query)

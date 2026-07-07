@@ -19,7 +19,8 @@ return new class extends Migration
                 ->constrained('transaksi')
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
-                
+
+            $table->string('kode_aset')->nullable();
             $table->string('nama_aset');
             $table->string('sumber_perolehan');
             $table->date('tanggal_perolehan');
@@ -28,10 +29,15 @@ return new class extends Migration
             $table->enum('kondisi_aset', ['BAIK', 'RUSAK RINGAN', 'RUSAK BERAT']);
             $table->string('lokasi_aset');
             $table->string('nama_pemberi')->nullable();
+            $table->integer('jumlah_unit')->default(1);
+            $table->string('dokumen_pendukung')->nullable();
+            $table->date('tanggal_mulai_penyusutan')->nullable();
+            $table->text('keterangan')->nullable();
             $table->enum('status_aset', ['DRAFT', 'AKTIF', 'TIDAK AKTIF'])->default('AKTIF');
-            $table->decimal('nilai_buku', 15, 2);
+            $table->decimal('nilai_buku', 15, 2)->default(0);
             $table->decimal('akumulasi_penyusutan', 15, 2)->nullable();
             $table->timestamps();
+            $table->softDeletes(); // ← tambah ini
         });
     }
 

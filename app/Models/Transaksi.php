@@ -31,6 +31,22 @@ class Transaksi extends Model
         'jumlah' => 'decimal:2',
     ];
 
+    const STATUS_DRAFT    = 'DRAFT';
+    const STATUS_PENDING  = 'PENDING';
+    const STATUS_APPROVED = 'APPROVED';
+    const STATUS_REJECTED = 'REJECTED';
+    const STATUS_REVISION = 'REVISION';
+
+    const STATUS_EDITABLE = [self::STATUS_DRAFT, self::STATUS_PENDING, self::STATUS_REVISION];
+
+    const JENIS_TRANSAKSI_PEMASUKAN = 'PEMASUKAN';
+    const JENIS_TRANSAKSI_PENGELUARAN = 'PENGELUARAN';
+
+    public function bisaDiedit(): bool
+    {
+        return in_array($this->status_approval, self::STATUS_EDITABLE, true);
+    }
+
     public function dompet()
     {
         return $this->belongsTo(Dompet::class);

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreTransaksiRequest extends FormRequest
 {
@@ -13,20 +14,15 @@ class StoreTransaksiRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return true; // otorisasi detail ditangani di controller
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
         {
             $rules = [
             'jenis_transaksi'       => 'required|in:PEMASUKAN,PENGELUARAN',
             'tanggal_transaksi'     => 'required|date',
-            'kategori_transaksi'    => 'nullable|exists:kategori_transaksi_id',
+            'kategori_transaksi_id' => 'nullable|exists:kategori_transaksi,id',
             'dompet_id'             => 'required|exists:dompet,id',
             'jurnal'                => 'required|array|min:2',
             'jurnal.*.akun_id'      => 'required|exists:akun,id',
@@ -57,6 +53,7 @@ class StoreTransaksiRequest extends FormRequest
 
         return $rules;
     }
+    
     public function messages(): array
     {
         return [

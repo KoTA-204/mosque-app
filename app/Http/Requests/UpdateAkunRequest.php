@@ -28,6 +28,8 @@ class UpdateAkunRequest extends FormRequest
             'kode_akun'    => 'required|string|max:20|unique:akun,kode_akun,' . $akunId,
             'nama_akun'    => 'required|string|max:150',
             'saldo_normal' => 'required|in:DEBIT,KREDIT',
+            'deskripsi'    => 'nullable|string',
+            'status'       => 'required|in:aktif,tidak_aktif',
         ];
     }
  
@@ -39,6 +41,8 @@ class UpdateAkunRequest extends FormRequest
             'kode_akun.unique'      => 'Nomor akun sudah digunakan.',
             'nama_akun.required'    => 'Nama akun wajib diisi.',
             'saldo_normal.required' => 'Saldo normal wajib dipilih.',
+            'deskripsi.string'      => 'Deskripsi harus berupa teks.',
+            'status.required'       => 'Status wajib dipilih.',
         ];
     }
 }

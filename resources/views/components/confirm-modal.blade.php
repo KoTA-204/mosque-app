@@ -2,6 +2,9 @@
     'id' => 'confirmModal',
     'title' => 'Konfirmasi',
     'message' => 'Apakah anda yakin?',
+    'confirmLabel' => 'Hapus',
+    'confirmClass' => 'bg-red-600 hover:bg-red-700',
+    'onConfirm' => null, // nama function JS (contoh: 'confirmBulkPost()'). Kalau null, fallback ke form DELETE seperti semula.
 ])
 
 <div id="{{ $id }}"
@@ -13,11 +16,11 @@
         {{-- Header --}}
         <div class="flex items-start justify-between">
             <div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 id="{{ $id }}Title" class="text-lg font-semibold text-gray-900 dark:text-white">
                     {{ $title }}
                 </h3>
 
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                <p id="{{ $id }}Message" class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     {{ $message }}
                 </p>
             </div>
@@ -38,15 +41,25 @@
                 Batal
             </button>
 
-            <form id="{{ $id }}Form" method="POST">
-                @csrf
-                @method('DELETE')
-
-                <button type="submit"
-                        class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
-                    Hapus
+            @if($onConfirm)
+                {{-- Mode callback JS — dipakai untuk aksi non-form, misal bulk action via fetch/AJAX --}}
+                <button type="button"
+                        onclick="closeModal('{{ $id }}'); {{ $onConfirm }}"
+                        class="rounded-lg {{ $confirmClass }} px-4 py-2 text-sm font-medium text-white">
+                    {{ $confirmLabel }}
                 </button>
-            </form>
+            @else
+                {{-- Mode default — form DELETE, action diset dinamis lewat JS sebelum modal dibuka --}}
+                <form id="{{ $id }}Form" method="POST">
+                    @csrf
+                    @method('DELETE')
+
+                    <button type="submit"
+                            class="rounded-lg {{ $confirmClass }} px-4 py-2 text-sm font-medium text-white">
+                        {{ $confirmLabel }}
+                    </button>
+                </form>
+            @endif
 
         </div>
     </div>

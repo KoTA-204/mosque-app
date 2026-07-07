@@ -29,28 +29,18 @@ class DatabaseSeeder extends Seeder
             MenuSeeder::class,
             UserSeeder::class,
             PermissionRoleSeeder::class,
-
-            // 2) Master data keuangan
-            KategoriAkunSeeder::class,
-            AkunSeeder::class,
-            DompetSeeder::class,
             KategoriTransaksiSeeder::class,
-            PeriodeSeeder::class,
-            AsetSeeder::class,
-
-            // 3) Saldo awal
-            JurnalPembukaSeeder::class,
-
-            // 4) Data transaksional (butuh User & Kegiatan)
+            DompetSeeder::class,
             KegiatanSeeder::class,
-            TransaksiSeeder::class,          // infak kencleng + pencatatan bendahara
-            TransaksiKegiatanSeeder::class,  // transaksi kegiatan khusus
+            TransaksiSeeder::class,
             KenclengSeeder::class,
             KenclengDetailSeeder::class,
             BuktiTransaksiSeeder::class,
-
-            // 5) Jurnal umum (memetakan transaksi MAPPED -> jurnal)
-            JurnalUmumSeeder::class,
+            KategoriAkunSeeder::class,
+            AkunSeeder::class,
+            AsetSeeder::class,
+            PeriodeSeeder::class,
+            TransaksiKegiatanSeeder::class,
         ]);
     }
 }

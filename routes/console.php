@@ -2,6 +2,10 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
+
+Schedule::command('kegiatan:tutup-otomatis')->dailyAt('00:05');
+Schedule::command('jadwal-shalat:sync-kota')->monthly();
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
