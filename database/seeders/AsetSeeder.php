@@ -10,13 +10,12 @@ class AsetSeeder extends Seeder
 {
     public function run(): void
     {
-        $trxSoundSystem  = Transaksi::where('deskripsi', 'Pembelian Sound System & Amplifier TOA')->first();
-        $trxMobilJenazah = Transaksi::where('deskripsi', 'Pembelian Mobil Jenazah Toyota HiAce')->first();
-        $trxAC           = Transaksi::where('deskripsi', 'Pembelian AC Split 2 PK (4 Unit)')->first();
-        $trxKipas        = Transaksi::where('deskripsi', 'Pembelian Kipas Angin Gantung (6 Unit)')->first();
-        $trxPompaAir     = Transaksi::where('deskripsi', 'Pembelian Mesin Pompa Air')->first();
-        $trxGenerator    = Transaksi::where('deskripsi', 'Pembelian Generator Listrik 5000 Watt')->first();
-        $trxJamSholat    = Transaksi::where('deskripsi', 'Pembelian Jam Digital Jadwal Sholat')->first();
+        // Aset historis (perolehan sebelum periode berjalan) TIDAK ditautkan ke
+        // transaksi — nilainya sudah tercatat di Jurnal Pembuka (JurnalLengkapSeeder).
+        // Hanya pembelian aset SETELAH pembukaan yang berasal dari transaksi berjalan.
+        // Ini meniru TransaksiService@simpanAsetDariTransaksi yang otomatis membuat
+        // record Aset saat transaksi kategori "Pembelian Aset" disimpan.
+        $trxLaptop = Transaksi::where('deskripsi', 'Pembelian Laptop & Printer Sekretariat')->first();
 
         // Tracker nomor urut per tahun untuk generate kode
         $noPerTahun = [];
@@ -190,7 +189,7 @@ class AsetSeeder extends Seeder
                 'akumulasi_penyusutan'     => 2000000,
             ],
             [
-                'transaksi_id'             => $trxSoundSystem?->id,
+                'transaksi_id'             => null,
                 'nama_aset'                => 'Sound System & Amplifier TOA',
                 'sumber_perolehan'         => 'Pembelian',
                 'tanggal_perolehan'        => '2019-06-20',
@@ -226,7 +225,7 @@ class AsetSeeder extends Seeder
                 'akumulasi_penyusutan'     => null,
             ],
             [
-                'transaksi_id'             => $trxJamSholat?->id,
+                'transaksi_id'             => null,
                 'nama_aset'                => 'Jam Digital Jadwal Sholat',
                 'sumber_perolehan'         => 'Pembelian',
                 'tanggal_perolehan'        => '2021-01-10',
@@ -244,7 +243,7 @@ class AsetSeeder extends Seeder
                 'akumulasi_penyusutan'     => 1750000,
             ],
             [
-                'transaksi_id'             => $trxAC?->id,
+                'transaksi_id'             => null,
                 'nama_aset'                => 'AC Split 2 PK (4 Unit)',
                 'sumber_perolehan'         => 'Pembelian',
                 'tanggal_perolehan'        => '2020-07-15',
@@ -262,7 +261,7 @@ class AsetSeeder extends Seeder
                 'akumulasi_penyusutan'     => 13125000,
             ],
             [
-                'transaksi_id'             => $trxKipas?->id,
+                'transaksi_id'             => null,
                 'nama_aset'                => 'Kipas Angin Gantung (6 Unit)',
                 'sumber_perolehan'         => 'Pembelian',
                 'tanggal_perolehan'        => '2017-09-01',
@@ -280,7 +279,7 @@ class AsetSeeder extends Seeder
                 'akumulasi_penyusutan'     => 4800000,
             ],
             [
-                'transaksi_id'             => $trxMobilJenazah?->id,
+                'transaksi_id'             => null,
                 'nama_aset'                => 'Mobil Jenazah Toyota HiAce',
                 'sumber_perolehan'         => 'Pembelian',
                 'tanggal_perolehan'        => '2018-10-10',
@@ -298,7 +297,7 @@ class AsetSeeder extends Seeder
                 'akumulasi_penyusutan'     => 154000000,
             ],
             [
-                'transaksi_id'             => $trxPompaAir?->id,
+                'transaksi_id'             => null,
                 'nama_aset'                => 'Mesin Pompa Air',
                 'sumber_perolehan'         => 'Pembelian',
                 'tanggal_perolehan'        => '2019-03-12',
@@ -316,7 +315,7 @@ class AsetSeeder extends Seeder
                 'akumulasi_penyusutan'     => 3093750,
             ],
             [
-                'transaksi_id'             => $trxGenerator?->id,
+                'transaksi_id'             => null,
                 'nama_aset'                => 'Generator Listrik 5000 Watt',
                 'sumber_perolehan'         => 'Pembelian',
                 'tanggal_perolehan'        => '2020-12-01',
@@ -349,6 +348,24 @@ class AsetSeeder extends Seeder
                 'keterangan'               => 'Belum dipasang, masih dalam pengadaan',
                 'status_aset'              => 'TIDAK AKTIF',
                 'nilai_buku'               => 8500000,
+                'akumulasi_penyusutan'     => 0,
+            ],
+            [
+                'transaksi_id'             => $trxLaptop?->id,
+                'nama_aset'                => 'Laptop & Printer Sekretariat',
+                'sumber_perolehan'         => 'Pembelian',
+                'tanggal_perolehan'        => '2026-05-10',
+                'nilai_tercatat'           => 18000000,
+                'umur_manfaat'             => 5,
+                'tanggal_mulai_penyusutan' => '2026-06-01',
+                'kondisi_aset'             => 'BAIK',
+                'lokasi_aset'              => 'Ruang Sekretariat Masjid',
+                'nama_pemberi'             => null,
+                'jumlah_unit'              => 1,
+                'dokumen_pendukung'        => null,
+                'keterangan'               => 'Dibeli dari transaksi operasional 2026 (auto-generate aset)',
+                'status_aset'              => 'AKTIF',
+                'nilai_buku'               => 18000000,
                 'akumulasi_penyusutan'     => 0,
             ],
         ];

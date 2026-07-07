@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAsetRequest;
 use App\Http\Requests\UpdateAsetRequest;
 use App\Models\Aset;
+use App\Models\Jurnal;
 use App\Services\Aset\AsetService;
 use Illuminate\Http\Request;
 
@@ -32,6 +33,11 @@ class AsetController extends Controller
 
         $stats = $this->hitungStatistikAset();
 
+        // Setelah jurnal pembuka di-POSTING, saldo awal aset dianggap final.
+        // Penambahan aset selanjutnya HARUS lewat pencatatan transaksi
+        // (pembelian aset), sehingga tombol "Tambah Aset" manual dinonaktifkan.
+        $asetTerkunci = Jurnal::pembuka()->posted()->exists();
+
         // kirim potongan tabel untuk request ajax
         if ($request->ajax()) {
             return response()->json([
@@ -39,7 +45,7 @@ class AsetController extends Controller
             ]);
         }
 
-        return view('pages.aset.index', compact('asets', 'stats'));
+        return view('pages.aset.index', compact('asets', 'stats', 'asetTerkunci'));
     }
 
     // form create
