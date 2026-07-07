@@ -3,50 +3,30 @@
 namespace App\Http\Controllers\Akuntansi;
 
 use App\Http\Controllers\Controller;
-use App\Models\Akun;
-use App\Models\DetailJurnal;
+use App\Models\KategoriAkun;
 use App\Models\Periode;
+use App\Services\Akuntansi\NeracaSaldoService;
 use Illuminate\Http\Request;
 
 class NeracaSaldoController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(private NeracaSaldoService $service) {}
+
+    public function tampilkanNeracaSaldo(Request $request)
     {
         $periodeId  = $request->input('periode_id', '');
         $akunFilter = $request->input('akun_filter', '');
         $sortBy     = $request->input('sort_by', 'kode_akun_asc');
         $perPage    = $request->input('per_page', 10);
 
-        $akunQuery = Akun::with('kategoriAkun')
-            ->whereNotNull('parent_id')
-            ->when($akunFilter && $akunFilter !== 'semua', function ($q) use ($akunFilter) {
-                $q->whereHas('kategoriAkun', fn($k) =>
-                    $k->where('kode_kategori', $akunFilter)
-                );
-            });
+        $akunQuery = $this->service->getAkunQuery($akunFilter, $sortBy);
 
-        match($sortBy) {
-            'kode_akun_desc' => $akunQuery->orderByDesc('kode_akun'),
-            'nama_asc'       => $akunQuery->orderBy('nama_akun'),
-            default          => $akunQuery->orderBy('kode_akun'),
-        };
-
-        // Ambil SEMUA akun yang cocok filter untuk hitung grand total
-        $allAkuns = (clone $akunQuery)->get();
+        // Semua akun yang cocok filter (untuk grand total).
+        $allAkuns   = (clone $akunQuery)->get();
         $allAkunIds = $allAkuns->pluck('id')->toArray();
 
-        // Hitung saldo semua akun sekaligus
-        $semuaSaldo = DetailJurnal::whereIn('akun_id', $allAkunIds)
-            ->whereHas('jurnal', function ($q) use ($periodeId) {
-                $q->where('status', 'POSTED');
-                if ($periodeId) $q->where('periode_id', $periodeId);
-            })
-            ->selectRaw('akun_id, tipe, SUM(nominal) as total')
-            ->groupBy('akun_id', 'tipe')
-            ->get()
-            ->groupBy('akun_id');
+        $semuaSaldo = $this->service->hitungSaldo($allAkunIds, $periodeId);
 
-        // Grand total dari SEMUA data (bukan per halaman)
         $grandTotalDebit  = 0;
         $grandTotalKredit = 0;
         foreach ($allAkuns as $akun) {
@@ -56,10 +36,8 @@ class NeracaSaldoController extends Controller
         }
         $selisih = $grandTotalDebit - $grandTotalKredit;
 
-        // Paginate akun
         $akuns = $akunQuery->paginate($perPage)->withQueryString();
 
-        // Map saldo ke akun yang ditampilkan di halaman ini
         $akuns->getCollection()->transform(function ($akun) use ($semuaSaldo) {
             $rows = $semuaSaldo->get($akun->id, collect());
             $akun->total_debit  = $rows->where('tipe', 'DEBIT')->sum('total');
@@ -68,7 +46,7 @@ class NeracaSaldoController extends Controller
         });
 
         $periodes      = Periode::orderByDesc('tanggal_awal')->get();
-        $kategoriAkuns = \App\Models\KategoriAkun::orderBy('kode_kategori')->get();
+        $kategoriAkuns = KategoriAkun::orderBy('kode_kategori')->get();
 
         if ($request->ajax()) {
             return response()->json([

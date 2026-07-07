@@ -10,7 +10,7 @@ class JurnalUmumService extends JurnalService
 {
     private const JENIS = 'UMUM';
 
-    // untuk daftar jurnal umum terfilter
+    /** Daftar jurnal umum terfilter. */
     public function daftar(array $filter): LengthAwarePaginator
     {
         return Jurnal::with(['detailJurnal.akun', 'periode'])
@@ -29,8 +29,8 @@ class JurnalUmumService extends JurnalService
             ->withQueryString();
     }
 
-    // untuk total debit & kredit (hanya POSTED)
-    public function summary(array $filter): array
+    /** Total debit & kredit (hanya POSTED). */
+    public function getRingkasan(array $filter): array
     {
         $base = Jurnal::where('jenis_jurnal', self::JENIS)
             ->where('status', 'POSTED')
@@ -47,31 +47,6 @@ class JurnalUmumService extends JurnalService
         ];
     }
 
-    // untuk posting massal jurnal DRAFT
-    public function bulkPosting(array $ids): array
-    {
-        $jurnals = Jurnal::whereIn('id', $ids)
-            ->where('jenis_jurnal', self::JENIS)
-            ->where('status', 'DRAFT')
-            ->with('detailJurnal')
-            ->get();
-
-        $posted = 0;
-        $errors = [];
-        foreach ($jurnals as $jurnal) {
-            if (!$this->isBalanced($jurnal)) {
-                $errors[] = "Jurnal #{$jurnal->id} tidak seimbang, dilewati.";
-                continue;
-            }
-            $jurnal->update(['status' => 'POSTED']);
-            $posted++;
-        }
-
-        $message = "{$posted} jurnal berhasil diposting.";
-        if (!empty($errors)) {
-            $message .= ' ' . implode(' ', $errors);
-        }
-
-        return ['success' => $posted > 0, 'message' => $message];
-    }
+    // Posting massal memakai postingMassalKeBukuBesar() dari induk (DRY).
+    // (method bulkPosting() lama sudah dihapus.)
 }

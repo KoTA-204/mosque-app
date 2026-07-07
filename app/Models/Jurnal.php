@@ -60,6 +60,23 @@ class Jurnal extends Model
         return $this->hasMany(DetailJurnal::class);
     }
 
+    public function tambahDetail(int $akunId, string $tipe, float $nominal): DetailJurnal
+    {
+        return $this->detailJurnal()->create([
+            'akun_id' => $akunId,
+            'tipe'    => $tipe,
+            'nominal' => $nominal,
+        ]);
+    }
+
+    /**
+     * Menautkan sebuah aset ke jurnal ini beserta nominal penyusutannya.
+     */
+    public function lampirkanAset(int $asetId, float $nominal): void
+    {
+        $this->aset()->attach($asetId, ['nominal' => $nominal]);
+    }
+
     // ── Accessor ──────────────────────────────────────────────────────────
 
     public function getTotalDebitAttribute(): float
