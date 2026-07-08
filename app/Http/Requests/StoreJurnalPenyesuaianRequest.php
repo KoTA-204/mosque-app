@@ -35,6 +35,12 @@ class StoreJurnalPenyesuaianRequest extends FormRequest
             $rules['detail.0.aset_rows.*.nominal']  = 'required|string';
         }
 
+        // Aturan tambahan khusus pelepasan aset (agar aset_dilepas lolos validated()).
+        if ($this->input('tipe_penyesuaian') === 'PELEPASAN_ASET') {
+            $rules['aset_dilepas']   = 'required|array|min:1';
+            $rules['aset_dilepas.*'] = 'exists:aset,id';
+        }
+
         return $rules;
     }
 }

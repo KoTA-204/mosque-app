@@ -154,6 +154,16 @@ class Aset extends Model
             return (float) $this->akumulasi_penyusutan;
         }
         if (! $this->tanggal_mulai_penyusutan || ! $this->umur_manfaat) return 0;
+
+        // Kalau sudah ada jurnal penyesuaian yang diposting (akumulasi_penyusutan > 0
+        // di DB), kembalikan nilai aktual tersebut agar card show mencerminkan
+        // penyusutan yang BENAR-BENAR sudah dicatat, bukan proyeksi teoritis.
+        $dbAkumulasi = (float) $this->akumulasi_penyusutan;
+        if ($dbAkumulasi > 0) {
+            return $dbAkumulasi;
+        }
+
+        // Belum ada jurnal diposting → pakai proyeksi teoritis (waktu × tarif).
         $bulan = (int) $this->tanggal_mulai_penyusutan->diffInMonths(now());
         return min($this->hitungPenyusutanPerBulan() * $bulan, (float) $this->nilai_tercatat);
     }
