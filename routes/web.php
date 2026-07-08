@@ -38,7 +38,6 @@ Route::middleware('guest')->group(function () {
     Route::get('/forgot-password', [ForgotPasswordController::class, 'tampilkanFormLupaPassword'])->name('auth.forgot-password');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'kirimTautanResetPassword'])->name('auth.forgot-password.post');
     Route::get('/forgot-password/check-email', [ForgotPasswordController::class, 'tampilkanHalamanCekEmail'])->name('auth.check-email');
-    Route::get('/forgot-password/check-status', [ForgotPasswordController::class, 'checkResetStatus'])->name('auth.check-reset-status');
     Route::post('/forgot-password/resend', [ForgotPasswordController::class, 'kirimUlangEmailReset'])->name('auth.forgot-password.resend');
     Route::get('/reset-password', [ForgotPasswordController::class, 'tampilkanFormResetPassword'])->name('auth.reset-password');
     Route::get('/reset-password/success', [ForgotPasswordController::class, 'tampilkanHalamanResetBerhasil'])->name('auth.reset-success');
@@ -66,12 +65,12 @@ Route::get('/laporan-keuangan/export/pdf', [DashboardController::class, 'exportT
 
 // ── Laporan Keuangan Publik ─────────────────────────────────────────────────────────────────
 Route::prefix('laporan')->name('laporan.')->group(function () {
-    Route::get('/posisi-keuangan', [LaporanKeuanganController::class, 'posisiKeuangan'])->name('posisi-keuangan');
-    Route::get('/penghasilan-komprehensif', [LaporanKeuanganController::class, 'penghasilanKomprehensif'])->name('penghasilan-komprehensif');
-    Route::get('/perubahan-aset-neto', [LaporanKeuanganController::class, 'perubahanAsetNeto'])->name('perubahan-aset-neto');
-    Route::get('/arus-kas', [LaporanKeuanganController::class, 'arusKas'])->name('arus-kas');
-    Route::get('/catatan-atas-laporan', [LaporanKeuanganController::class, 'calk'])->name('catatan-atas-laporan');
-    Route::get('/{jenis}/unduh-pdf', [LaporanKeuanganController::class, 'downloadPdf'])
+    Route::get('/posisi-keuangan', [LaporanKeuanganController::class, 'tampilkanLaporan'])->defaults('jenis', 'posisi-keuangan')->name('posisi-keuangan');
+    Route::get('/penghasilan-komprehensif', [LaporanKeuanganController::class, 'tampilkanLaporan'])->defaults('jenis', 'penghasilan-komprehensif')->name('penghasilan-komprehensif');
+    Route::get('/perubahan-aset-neto', [LaporanKeuanganController::class, 'tampilkanLaporan'])->defaults('jenis', 'perubahan-aset-neto')->name('perubahan-aset-neto');
+    Route::get('/arus-kas', [LaporanKeuanganController::class, 'tampilkanLaporan'])->defaults('jenis', 'arus-kas')->name('arus-kas');
+    Route::get('/catatan-atas-laporan', [LaporanKeuanganController::class, 'tampilkanLaporan'])->defaults('jenis', 'calk')->name('catatan-atas-laporan');
+    Route::get('/{jenis}/unduh-pdf', [LaporanKeuanganController::class, 'unduhLaporanPdf'])
         ->where('jenis', 'posisi-keuangan|penghasilan-komprehensif|perubahan-aset-neto|arus-kas|calk')
         ->name('pdf');
 });
@@ -149,12 +148,9 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
     // ── Pencatatan - Transaksi ─────────────────────────────────────────────
     Route::middleware('permission:VIEW_TRANSAKSI')->group(function () {
         Route::get('/transaksi', [TransaksiController::class, 'tampilkanDaftarTransaksi'])->name('transaksi.index');
-        Route::get('/transaksi/create', [TransaksiController::class, 'tampilkanFormTambahTransaksi'])->name('transaksi.create');
-        Route::get('/transaksi/import', [TransaksiController::class, 'tampilkanFormImporTransaksi'])->name('transaksi.import.create');
         Route::get('/transaksi/import/review', [TransaksiController::class, 'tampilkanReviewImpor'])->name('transaksi.import.review');
 
         Route::get('/transaksi/{transaksi}', [TransaksiController::class, 'tampilkanDetailTransaksi'])->name('transaksi.show')->whereNumber('transaksi');
-        Route::get('/transaksi/{transaksi}/edit', [TransaksiController::class, 'tampilkanFormEditTransaksi'])->name('transaksi.edit')->whereNumber('transaksi');
     });
 
     Route::middleware('permission:CREATE_TRANSAKSI')->group(function () {
@@ -225,12 +221,6 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
             ->whereNumber('kegiatan')
             ->whereNumber('transaksi')
             ->name('transaksi-kegiatan.transaksi.show');
-        Route::get('/transaksi-kegiatan/{kegiatan}/transaksi/create', [TransaksiKegiatanController::class, 'createTransaksi'])
-            ->name('transaksi-kegiatan.transaksi.create');
-        Route::get('/transaksi-kegiatan/{kegiatan}/transaksi/{transaksi}/edit', [TransaksiKegiatanController::class, 'editTransaksi'])
-            ->whereNumber('kegiatan')
-            ->whereNumber('transaksi')
-            ->name('transaksi-kegiatan.transaksi.edit');
     });
  
     Route::middleware('permission:CREATE_TRANSAKSI_KEGIATAN')->group(function () {
@@ -416,7 +406,6 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
     Route::middleware('permission:VIEW_JURNAL_PENYESUAIAN')->group(function () {
         Route::get('/jurnal-penyesuaian', [JurnalPenyesuaianController::class, 'tampilkanJurnalPenyesuaian'])->name('jurnal-penyesuaian.index');
         Route::get('/jurnal-penyesuaian/create', [JurnalPenyesuaianController::class, 'tambahJurnalPenyesuaian'])->name('jurnal-penyesuaian.create');
-        Route::get('/jurnal-penyesuaian/aset-detail', [JurnalPenyesuaianController::class, 'getAsetDetail'])->name('jurnal-penyesuaian.aset-detail');
         Route::get('/jurnal-penyesuaian/{jurnal}', [JurnalPenyesuaianController::class, 'tampilkanDetailJurnalPenyesuaian'])
             ->whereNumber('jurnal')->name('jurnal-penyesuaian.show');
     });
@@ -435,7 +424,6 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
     Route::middleware('permission:VIEW_JURNAL_KOREKSI')->group(function () {
         Route::get('/jurnal-koreksi', [JurnalKoreksiController::class, 'tampilkanJurnalKoreksi'])->name('jurnal-koreksi.index');
         Route::get('/jurnal-koreksi/create', [JurnalKoreksiController::class, 'tambahJurnalKoreksi'])->name('jurnal-koreksi.create');
-        Route::get('/jurnal-koreksi/aset-detail', [JurnalKoreksiController::class, 'getAsetDetail'])->name('jurnal-koreksi.aset-detail');
         Route::get('/jurnal-koreksi/{jurnal}', [JurnalKoreksiController::class, 'tampilkanDetailJurnalKoreksi'])
             ->whereNumber('jurnal')->name('jurnal-koreksi.show');
     });
@@ -454,7 +442,6 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
     Route::middleware('permission:VIEW_JURNAL_PENUTUP')->group(function () {
         Route::get('/jurnal-penutup', [JurnalPenutupController::class, 'tampilkanJurnalPenutup'])->name('jurnal-penutup.index');
         Route::get('/jurnal-penutup/create', [JurnalPenutupController::class, 'tambahJurnalPenutup'])->name('jurnal-penutup.create');
-        Route::get('/jurnal-penutup/aset-detail', [JurnalPenutupController::class, 'getAsetDetail'])->name('jurnal-penutup.aset-detail');
         Route::get('/jurnal-penutup/{jurnal}', [JurnalPenutupController::class, 'tampilkanDetailJurnalPenutup'])
             ->whereNumber('jurnal')->name('jurnal-penutup.show');
     });
@@ -462,8 +449,6 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
     Route::middleware('permission:CREATE_JURNAL_PENUTUP')->group(function () {
         Route::post('/jurnal-penutup', [JurnalPenutupController::class, 'simpanJurnalPenutup'])->name('jurnal-penutup.store');
         Route::post('/jurnal-penutup/post-draft', [JurnalPenutupController::class, 'postDraft'])->name('jurnal-penutup.post-draft');
-        Route::post('/jurnal-penutup/konfirmasi-tahap', [JurnalPenutupController::class, 'konfirmasiTahap'])->name('jurnal-penutup.konfirmasi-tahap');
-        Route::post('/jurnal-penutup/bulk-post', [JurnalPenutupController::class, 'bulkPost'])->name('jurnal-penutup.bulk-post');
     });
  
     Route::middleware('permission:DELETE_JURNAL_PENUTUP')->group(function () {
@@ -473,12 +458,12 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
 
     // ── Laporan Keuangan ───────────────────────────────────────────────────
     Route::prefix('laporan')->name('laporan.')->group(function () {
-        Route::get('/penghasilan-komprehensif', [LaporanKeuanganController::class, 'penghasilanKomprehensif'])->name('penghasilan-komprehensif');
-        Route::get('/posisi-keuangan', [LaporanKeuanganController::class, 'posisiKeuangan'])->name('posisi-keuangan');
-        Route::get('/perubahan-aset-neto', [LaporanKeuanganController::class, 'perubahanAsetNeto'])->name('perubahan-aset-neto');
-        Route::get('/arus-kas', [LaporanKeuanganController::class, 'arusKas'])->name('arus-kas');
-        Route::get('/calk', [LaporanKeuanganController::class, 'calk'])->name('calk');
-        Route::get('/{jenis}/unduh-pdf', [LaporanKeuanganController::class, 'downloadPdf'])
+        Route::get('/penghasilan-komprehensif', [LaporanKeuanganController::class, 'tampilkanLaporan'])->defaults('jenis', 'penghasilan-komprehensif')->name('penghasilan-komprehensif');
+        Route::get('/posisi-keuangan', [LaporanKeuanganController::class, 'tampilkanLaporan'])->defaults('jenis', 'posisi-keuangan')->name('posisi-keuangan');
+        Route::get('/perubahan-aset-neto', [LaporanKeuanganController::class, 'tampilkanLaporan'])->defaults('jenis', 'perubahan-aset-neto')->name('perubahan-aset-neto');
+        Route::get('/arus-kas', [LaporanKeuanganController::class, 'tampilkanLaporan'])->defaults('jenis', 'arus-kas')->name('arus-kas');
+        Route::get('/calk', [LaporanKeuanganController::class, 'tampilkanLaporan'])->defaults('jenis', 'calk')->name('calk');
+        Route::get('/{jenis}/unduh-pdf', [LaporanKeuanganController::class, 'unduhLaporanPdf'])
             ->where('jenis', 'posisi-keuangan|penghasilan-komprehensif|perubahan-aset-neto|arus-kas|calk')
             ->name('pdf');
     });
