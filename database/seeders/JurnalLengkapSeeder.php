@@ -36,7 +36,7 @@ class JurnalLengkapSeeder extends Seeder
             return;
         }
 
-        $this->buatJurnalPembuka($periode);
+        // $this->buatJurnalPembuka($periode);
         $this->buatJurnalPenyesuaian($periode);
         $this->buatJurnalKoreksi($periode);
         $this->buatJurnalKelengkapan($periode);

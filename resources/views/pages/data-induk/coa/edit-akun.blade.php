@@ -5,8 +5,7 @@
 
 <form method="POST" 
         action="{{ route('dashboard.coa.akun.update', $akun->id) }}" 
-        class="space-y-5"
-        onsubmit="return guardSubmit(this, {{ $canEditCoa ? 'true' : 'false' }}, 'Anda tidak memiliki akses untuk mengedit data akun.') && handleFormSubmit(this)">
+        class="space-y-5">
     @csrf
     @method('PUT')
     @if(($terpakai ?? false))

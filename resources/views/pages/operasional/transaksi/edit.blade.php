@@ -135,11 +135,6 @@
 <script>
 const akunListEdit = @json($akuns->map(fn($a) => ['id' => $a->id, 'label' => $a->kode_akun . ' – ' . $a->nama_akun]));
 
-// Flag hak akses — dipakai untuk menampilkan pesan yang sesuai saat pengguna
-// hanya memiliki akses view (bisa membuka modal, tapi tidak bisa menyimpan/menghapus).
-const CAN_EDIT_TRANSAKSI        = @json(auth()->user()->hasPermission('EDIT_TRANSAKSI'));
-const CAN_HAPUS_BUKTI_TRANSAKSI = @json(auth()->user()->hasPermission('DELETE_TRANSAKSI'));
-
 let fpEditTanggal;
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -210,11 +205,6 @@ function renderExistingBukti(items) {
 }
 
 async function hapusBuktiLama(buktiId, btn) {
-    if (!CAN_HAPUS_BUKTI_TRANSAKSI) {
-        alert('Anda tidak memiliki hak akses untuk menghapus bukti transaksi.');
-        return;
-    }
-
     if (!await confirmAsync('Hapus bukti transaksi ini? Tindakan ini tidak dapat dibatalkan.', { confirmLabel: 'Hapus' })) return;
 
     try {
@@ -226,8 +216,11 @@ async function hapusBuktiLama(buktiId, btn) {
             },
         });
 
-        if (res.status === 403) {
-            alert('Anda tidak memiliki hak akses untuk menghapus bukti transaksi.');
+        if (res.redirected) {
+            const errBox  = document.getElementById('editErrors');
+            const errList = document.getElementById('editErrorList');
+            errList.innerHTML = `<li>Anda tidak memiliki izin untuk melakukan aksi ini.</li>`;
+            errBox.classList.remove('hidden');
             return;
         }
 
@@ -255,12 +248,6 @@ async function submitEdit() {
 
     errBox.classList.add('hidden');
     errList.innerHTML = '';
-
-    if (!CAN_EDIT_TRANSAKSI) {
-        errList.insertAdjacentHTML('beforeend', `<li>Anda tidak memiliki hak akses untuk mengubah transaksi.</li>`);
-        errBox.classList.remove('hidden');
-        return;
-    }
 
     const { totalDebit, totalKredit } = hitungTotalJurnal('jurnalEditBody', 'jurnalEdit');
     if (totalDebit === 0 || totalDebit !== totalKredit) {
@@ -291,6 +278,15 @@ async function submitEdit() {
                 'Accept': 'application/json',
             },
         });
+        if (res.redirected) {
+            closeModal('modalEdit');
+            sessionStorage.setItem('alert', JSON.stringify({
+                type: 'error',
+                message: 'Anda tidak memiliki izin untuk melakukan aksi ini.'
+            }));
+            window.location.reload();
+            return;
+        }
         const data = await res.json();
         if (data.success) {
             closeModal('modalEdit');
@@ -307,6 +303,12 @@ async function submitEdit() {
         } else if (res.status === 403) {
             errList.insertAdjacentHTML('beforeend', `<li>Anda tidak memiliki hak akses untuk mengubah transaksi.</li>`);
             errBox.classList.remove('hidden');
+            closeModal('modalEdit');
+            sessionStorage.setItem('alert', JSON.stringify({
+                type: 'error',
+                message: 'Anda tidak memiliki izin untuk melakukan aksi ini.'
+            }));
+            window.location.reload();
         } else {
             sessionStorage.setItem('alert', JSON.stringify({
                 type: 'error',
