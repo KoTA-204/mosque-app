@@ -45,20 +45,20 @@ class JurnalPembukaSeeder extends Seeder
         // [kode_akun, tipe, nominal]
         $detail = [
             // ===== DEBIT (Aset) =====
-            ['1-101', 'DEBIT', 5000000],      // Kas Kecil
-            ['1-102', 'DEBIT', 25000000],     // Kas Infak
-            ['1-103', 'DEBIT', 15000000],     // Kas Zakat
-            ['1-106', 'DEBIT', 10000000],     // Perlengkapan Masjid
-            ['1-201', 'DEBIT', 800000000],    // Tanah Masjid
-            ['1-202', 'DEBIT', 1200000000],   // Bangunan Masjid
-            ['1-205', 'DEBIT', 50000000],     // Investasi Jangka Panjang
-            ['1-206', 'DEBIT', 60000000],     // Peralatan Masjid
+            ['1-1001', 'DEBIT', 5000000],      // Kas Kecil
+            ['1-1002', 'DEBIT', 25000000],     // Kas Infak
+            ['1-1003', 'DEBIT', 15000000],     // Kas Zakat
+            ['1-1006', 'DEBIT', 10000000],     // Perlengkapan Masjid
+            ['1-2001', 'DEBIT', 800000000],    // Tanah Masjid
+            ['1-2002', 'DEBIT', 1200000000],   // Bangunan Masjid
+            ['1-2005', 'DEBIT', 50000000],     // Investasi Jangka Panjang
+            ['1-2006', 'DEBIT', 60000000],     // Peralatan Masjid
             // ===== KREDIT (kontra-aset, Liabilitas, Aset Neto) =====
-            ['1-203', 'KREDIT', 150000000],   // Akumulasi Penyusutan Bangunan
-            ['1-207', 'KREDIT', 20000000],    // Akumulasi Penyusutan Peralatan
-            ['2-101', 'KREDIT', 5000000],     // Utang Operasional
-            ['3-201', 'KREDIT', 15000000],    // Saldo Awal Aset Neto Dengan Pembatasan (dana zakat)
-            ['3-101', 'KREDIT', 1975000000],  // Saldo Awal Aset Neto (tanpa pembatasan)
+            ['1-2003', 'KREDIT', 150000000],   // Akumulasi Penyusutan Bangunan
+            ['1-2007', 'KREDIT', 20000000],    // Akumulasi Penyusutan Peralatan
+            ['2-1001', 'KREDIT', 5000000],     // Utang Operasional
+            ['3-2101', 'KREDIT', 15000000],    // Saldo Awal Aset Neto Dengan Pembatasan (dana zakat)
+            ['3-1002', 'KREDIT', 1975000000],  // Saldo Awal Aset Neto (tanpa pembatasan)
         ];
 
         foreach ($detail as $d) {

@@ -62,7 +62,7 @@ class PerubahanAsetNetoService implements LaporanKeuanganInterface
         // Nilai ini MENAMBAH aset neto tanpa pembatasan dan MENGURANGI yang
         // dengan pembatasan (reklasifikasi) — sejalan dengan tahap penutupan
         // PELEPASAN_PEMBATASAN pada modul akuntansi.
-        $dibebaskan = $this->kalkulator->hitungSaldoKelompok('5-4', $periode->id, 'DEBIT');
+        $dibebaskan = $this->kalkulator->hitungSaldoKelompok('5-2', $periode->id, 'DEBIT');
         $pkl        = 0;
 
         $saldoAkhirTanpa  = $saldoAwalTanpa  + $surplusTanpa  + $dibebaskan;

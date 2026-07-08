@@ -30,16 +30,16 @@ class JurnalUmumSeeder extends Seeder
         $akun = Akun::pluck('id', 'kode_akun');
 
         // ── Peta dompet → akun Kas/Bank ──────────────────────────────
-        // CoA laporan hanya memiliki akun kas (1-101/1-102/1-103), tidak ada akun bank.
+        // CoA laporan hanya memiliki akun kas (1-1001/1-1002/1-1003), tidak ada akun bank.
         $dompetKeKodeAkun = [
-            'Kas Masjid'           => '1-101', // Kas Kecil
-            'Bank BSI Operasional' => '1-101', // Kas Kecil
-            'Bank BRI Operasional' => '1-101', // Kas Kecil
+            'Kas Masjid'           => '1-1001', // Kas Kecil
+            'Bank BSI Operasional' => '1-1001', // Kas Kecil
+            'Bank BRI Operasional' => '1-1001', // Kas Kecil
         ];
         $dompetAkun = [];
         foreach (Dompet::all() as $dompet) {
-            $kode = $dompetKeKodeAkun[$dompet->nama_dompet] ?? '1-101';
-            $dompetAkun[$dompet->id] = $akun[$kode] ?? $akun['1-101'];
+            $kode = $dompetKeKodeAkun[$dompet->nama_dompet] ?? '1-1001';
+            $dompetAkun[$dompet->id] = $akun[$kode] ?? $akun['1-1001'];
         }
 
         // ── Peta kategori transaksi → akun lawan ────────────────────────
@@ -47,23 +47,23 @@ class JurnalUmumSeeder extends Seeder
         // PENGELUARAN→ akun beban (5-xxxx) / aset (1-xxxx utk pembelian aset)
         $kategoriKeKodeAkun = [
             // Pendapatan
-            'Infak Jumat'         => '4-102', // Infak Kotak Amal
-            'Infak Harian'        => '4-101', // Infak Tunai
-            'Kencleng'            => '4-102', // Infak Kotak Amal
-            'Sedekah'             => '4-104', // Donasi Umum
-            'Wakaf'               => '4-210', // Wakaf Tunai
-            'Zakat'               => '4-202', // Zakat Maal Uang & Tabungan
-            'Donasi Kegiatan'     => '4-214', // Donasi Terikat Program
+            'Infak Jumat'         => '4-1002', // Infak Kotak Amal
+            'Infak Harian'        => '4-1001', // Infak Tunai
+            'Kencleng'            => '4-1002', // Infak Kotak Amal
+            'Sedekah'             => '4-1004', // Donasi Umum
+            'Wakaf'               => '4-2301', // Wakaf Tunai
+            'Zakat'               => '4-2102', // Zakat Maal Uang & Tabungan
+            'Donasi Kegiatan'     => '4-2601', // Donasi Terikat Program
             // Beban / Aset
-            'Operasional Masjid'  => '5-104', // Kebersihan
-            'Pembelian Aset'      => '1-206', // Peralatan Masjid (aset)
-            'Perawatan & Renovasi'=> '5-501', // Perawatan Bangunan
-            'Honorarium'          => '5-106', // Honor Imam
-            'Konsumsi'            => '5-204', // Konsumsi Kegiatan
-            'Perlengkapan Ibadah' => '5-105', // Perlengkapan Masjid
-            'Sosial & Santunan'   => '5-404', // Bantuan Sosial
-            'Kegiatan'            => '5-201', // Kajian
-            'Lainnya'             => '5-105', // Perlengkapan Masjid
+            'Operasional Masjid'  => '5-1104', // Kebersihan
+            'Pembelian Aset'      => '1-2006', // Peralatan Masjid (aset)
+            'Perawatan & Renovasi'=> '5-1301', // Perawatan Bangunan
+            'Honorarium'          => '5-1106', // Honor Imam
+            'Konsumsi'            => '5-1204', // Konsumsi Kegiatan
+            'Perlengkapan Ibadah' => '5-1105', // Perlengkapan Masjid
+            'Sosial & Santunan'   => '5-1501', // Bantuan Sosial
+            'Kegiatan'            => '5-1201', // Kajian
+            'Lainnya'             => '5-1105', // Perlengkapan Masjid
         ];
         $kategoriById = KategoriTransaksi::pluck('nama_kategori', 'id');
 

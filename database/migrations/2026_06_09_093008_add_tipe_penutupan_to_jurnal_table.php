@@ -12,6 +12,7 @@ return new class extends Migration
             $table->enum('tipe_penutupan', [
                 'TUTUP_PENDAPATAN',
                 'TUTUP_BEBAN',
+                'PELEPASAN_PEMBATASAN',
             ])->nullable()->after('tipe_penyesuaian');
         });
     }

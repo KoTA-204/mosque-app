@@ -4,7 +4,6 @@
 
 @section('content')
 <div class="p-6 space-y-6">
-
     {{-- Header --}}
     <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
         <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Proses Penutupan Periode</h1>
@@ -17,23 +16,20 @@
 
     <x-jurnal.stepper :steps="['Periode & Ringkasan', 'Preview Entri', 'Review & Posting']" />
 
-    {{-- ═══════════════════════════════════════════════════════════════════
-         FORM A — Simpan baru (DRAFT atau POSTING) dari Step 1–3
-    ════════════════════════════════════════════════════════════════════ --}}
+    {{-- FORM A — Simpan baru (DRAFT atau POSTING) dari Step 1–3 --}}
     <form action="{{ route('dashboard.jurnal-penutup.store') }}" method="POST" id="penutupForm">
         @csrf
         <input type="hidden" name="aksi" id="inputAksi" value="draft">
 
-        {{-- ═══ STEP 1 ═══ --}}
+        {{-- STEP 1 --}}
         <div id="step1" class="space-y-4">
-
             <div class="flex items-start gap-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl px-4 py-3 text-sm text-yellow-700 dark:text-yellow-400">
                 <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
                 <span>
-                    <strong>Jurnal penutup mencakup 2 tahap</strong>:
-                    (1) Tutup Pendapatan → (2) Tutup Beban.
+                    <strong>Jurnal penutup mencakup 3 tahap</strong>:
+                    (1) Tutup Pendapatan → (2) Tutup Beban → (3) Pelepasan Aset Neto dari Pembatasan.
                     Pastikan semua jurnal umum, penyesuaian, dan koreksi sudah diposting sebelum memulai.
                 </span>
             </div>
@@ -109,7 +105,7 @@
                     </div>
                 </div>
 
-                {{-- Banner status kesiapan periode (Opsi B) --}}
+                {{-- Banner status kesiapan periode --}}
                 @if($ringkasan['pesan_tidak_siap'])
                 <div class="flex items-start gap-2 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400 mb-4">
                     <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,9 +167,8 @@
             />
         </div>
 
-        {{-- ═══ STEP 2: Preview Entri (pure display) ═══ --}}
+        {{-- STEP 2: Preview Entri (pure display) --}}
         <div id="step2" class="hidden space-y-4">
-
             <div class="flex items-start gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3 text-sm text-blue-700 dark:text-blue-400">
                 <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -187,7 +182,7 @@
                     <span class="flex h-5 w-5 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold">1</span>
                     Tutup Pendapatan
                 </h3>
-                <p class="text-xs text-gray-400 mb-4">Akun pendapatan ditutup ke Aset Neto per klasifikasi dana sesuai ISAK 335.</p>
+                <p class="text-xs text-gray-400 mb-4">Akun pendapatan ditutup ke Aset Neto per klasifikasi dana (tanpa/dengan pembatasan) sesuai ISAK 35.</p>
                 <div id="previewPendapatanRows" class="space-y-1 mb-4"></div>
                 <x-jurnal.balance-bar prefix="prev1" />
             </div>
@@ -198,9 +193,20 @@
                     <span class="flex h-5 w-5 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold">2</span>
                     Tutup Beban
                 </h3>
-                <p class="text-xs text-gray-400 mb-4">Semua beban ditutup dari Aset Neto Tanpa Pembatasan sesuai ISAK 335.</p>
+                <p class="text-xs text-gray-400 mb-4">Seluruh beban ditutup ke Aset Neto Tanpa Pembatasan (Surplus/Defisit Tahun Berjalan) sesuai ISAK 35.</p>
                 <div id="previewBebanRows" class="space-y-1 mb-4"></div>
                 <x-jurnal.balance-bar prefix="prev2" />
+            </div>
+
+            {{-- Tahap 3 --}}
+            <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <span class="flex h-5 w-5 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold">3</span>
+                    Pelepasan Aset Neto dari Pembatasan
+                </h3>
+                <p class="text-xs text-gray-400 mb-4">Beban penyaluran dana terikat dilepaskan dari pembatasannya: nilai tersalur dipindahkan dari Aset Neto Dengan Pembatasan ke Tanpa Pembatasan sesuai ISAK 35. Bila tidak ada penyaluran dana terikat, tahap ini kosong.</p>
+                <div id="previewPelepasanRows" class="space-y-1 mb-4"></div>
+                <x-jurnal.balance-bar prefix="prev3" />
             </div>
 
             <x-jurnal.form-footer
@@ -211,9 +217,8 @@
             />
         </div>
 
-        {{-- ═══ STEP 3: Review & Posting ═══ --}}
+        {{-- STEP 3: Review & Posting --}}
         <div id="step3" class="hidden space-y-4">
-
             {{-- Banner: mode existing DRAFT --}}
             <div id="bannerDraftExisting" class="hidden flex items-start gap-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl px-4 py-3 text-sm text-yellow-700 dark:text-yellow-400">
                 <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,7 +259,6 @@
                         </svg>
                         Kembali
                     </button>
-
                     <div class="flex items-center gap-3">
                         <button type="button" id="btnDraft" onclick="submitAksi('draft')"
                                 class="inline-flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
@@ -263,7 +267,6 @@
                             </svg>
                             Simpan Draft
                         </button>
-
                         <button type="button" id="btnPosting" onclick="submitAksi('posting')"
                                 class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -275,15 +278,13 @@
                 </div>
             </div>
         </div>
-
     </form>
 
-    {{-- ═══ FORM B — Post existing DRAFT ═══ --}}
+    {{-- FORM B — Post existing DRAFT --}}
     <form action="{{ route('dashboard.jurnal-penutup.post-draft') }}" method="POST" id="postDraftForm" class="hidden">
         @csrf
         <input type="hidden" name="periode_id" value="{{ $periodeAktif?->id }}">
     </form>
-
 </div>
 @endsection
 
@@ -291,58 +292,106 @@
 <script type="module">
 import { formatRp, makeStepperController } from '/js/jurnal-helpers.js';
 
-// ── Data dari server ───────────────────────────────────────────────────────
+// Data dari server
 const ringkasan     = @json($ringkasan ?? []);
 const existingDraft = @json($existingDraft ?? []);
 
 // pesan_tidak_siap: string jika periode belum siap, null jika siap
 const pesanTidakSiap = ringkasan.pesan_tidak_siap ?? null;
 
-const TIPE_URUT = ['TUTUP_PENDAPATAN', 'TUTUP_BEBAN'];
+// Urutan & label 3 tahap penutupan (mengikuti JurnalPenutupService).
+const TIPE_URUT = ['TUTUP_PENDAPATAN', 'TUTUP_BEBAN', 'PELEPASAN_PEMBATASAN'];
 const TIPE_LABELS = {
-    TUTUP_PENDAPATAN: 'Tutup Pendapatan',
-    TUTUP_BEBAN:      'Tutup Beban',
+    TUTUP_PENDAPATAN:     'Tutup Pendapatan',
+    TUTUP_BEBAN:          'Tutup Beban',
+    PELEPASAN_PEMBATASAN: 'Pelepasan Aset Neto dari Pembatasan',
 };
 
-/**
- * Mode existing DRAFT:
- * true  → semua tahap sudah ada sebagai DRAFT di DB
- * false → belum ada, buat baru
- */
+// Klasifikasi dana K-CFUU (diturunkan dari kode, TANPA hardcode peta).
+// Kode akun berbentuk "K-CFUU": C = kelas pembatasan (1 Tanpa, 2 Dengan),
+// F = indeks dana terikat. Logika ini mencerminkan JurnalPenutupService.
+const KODE_DANA_UMUM = '3-1001'; // Aset Neto Tanpa Pembatasan (Surplus/Defisit)
+const NAMA_DANA = {
+    '3-1001': 'Surplus/Defisit Tahun Berjalan',
+    '3-2101': 'Dana Zakat Maal',
+    '3-2201': 'Dana Zakat Fitrah',
+    '3-2301': 'Dana Wakaf',
+    '3-2401': 'Dana Pembangunan',
+    '3-2501': 'Dana Qurban',
+    '3-2601': 'Dana Program Terikat',
+};
+
+function segmenKode(kode) {
+    const i = kode.indexOf('-');
+    return i < 0 ? kode : kode.slice(i + 1);
+}
+function kelasDana(kode)   { return segmenKode(kode).slice(0, 1); }
+function indeksDana(kode)  { return segmenKode(kode).slice(1, 2); }
+function isTanpaPembatasan(kode) { return kelasDana(kode) === '1'; }
+function kodeDanaTerikat(f) { return '3-2' + f + '01'; }
+function tentukanKodeDana(kode) {
+    return isTanpaPembatasan(kode) ? KODE_DANA_UMUM : kodeDanaTerikat(indeksDana(kode));
+}
+function namaDana(kode) { return NAMA_DANA[kode] ?? kode; }
+
+// Mode existing DRAFT: true jika ketiga tahap sudah ada sebagai DRAFT di DB.
 const adaDraftExisting = Object.keys(existingDraft).length > 0 &&
     TIPE_URUT.every(t => existingDraft[t]);
 
-// ── Generate entri dari ringkasan ──────────────────────────────────────────
+// Generate entri dari ringkasan
 function generateEntriTahap(tipe) {
-    const pendapatan = ringkasan.pendapatan ?? [];
-    const beban      = ringkasan.beban ?? [];
+    const pendapatan = (ringkasan.pendapatan ?? []).filter(i => i.saldo > 0);
+    const beban      = (ringkasan.beban ?? []).filter(i => i.saldo > 0);
     const detail     = [];
 
+    // Tahap 1: Tutup Pendapatan - grup per dana tujuan: DEBIT tiap pendapatan, KREDIT akun dana.
     if (tipe === 'TUTUP_PENDAPATAN') {
-        const tanpa  = pendapatan.filter(i => !i.akun.kode_akun.startsWith('4-2') && i.saldo > 0);
-        const dengan = pendapatan.filter(i =>  i.akun.kode_akun.startsWith('4-2') && i.saldo > 0);
-
-        tanpa.forEach(i => detail.push({ akun: i.akun.nama_akun, kode: i.akun.kode_akun, posisi: 'DEBIT', nominal: i.saldo }));
-        const totalTanpa = tanpa.reduce((s, i) => s + i.saldo, 0);
-        if (totalTanpa > 0) detail.push({ akun: 'Surplus/Defisit Tahun Berjalan', kode: '3-102', posisi: 'KREDIT', nominal: totalTanpa });
-
-        dengan.forEach(i => detail.push({ akun: i.akun.nama_akun, kode: i.akun.kode_akun, posisi: 'DEBIT', nominal: i.saldo }));
-        const totalDengan = dengan.reduce((s, i) => s + i.saldo, 0);
-        if (totalDengan > 0) detail.push({ akun: 'Aset Neto Dengan Pembatasan', kode: '3-200', posisi: 'KREDIT', nominal: totalDengan });
+        const groups = {};
+        pendapatan.forEach(i => {
+            const kodeDana = tentukanKodeDana(i.akun.kode_akun);
+            (groups[kodeDana] ??= []).push(i);
+        });
+        Object.entries(groups).forEach(([kodeDana, items]) => {
+            items.forEach(i => detail.push({
+                akun: i.akun.nama_akun, kode: i.akun.kode_akun, posisi: 'DEBIT', nominal: i.saldo,
+            }));
+            const total = items.reduce((s, i) => s + i.saldo, 0);
+            detail.push({ akun: namaDana(kodeDana), kode: kodeDana, posisi: 'KREDIT', nominal: total });
+        });
     }
 
+    // Tahap 2: Tutup Beban - DEBIT Dana Umum sebesar total beban, KREDIT tiap akun beban.
     if (tipe === 'TUTUP_BEBAN') {
         const totalB = beban.reduce((s, i) => s + i.saldo, 0);
-        if (totalB > 0) detail.push({ akun: 'Surplus/Defisit Tahun Berjalan', kode: '3-102', posisi: 'DEBIT', nominal: totalB });
-        beban.filter(i => i.saldo > 0).forEach(i => {
-            detail.push({ akun: i.akun.nama_akun, kode: i.akun.kode_akun, posisi: 'KREDIT', nominal: i.saldo });
+        if (totalB > 0) {
+            detail.push({ akun: namaDana(KODE_DANA_UMUM), kode: KODE_DANA_UMUM, posisi: 'DEBIT', nominal: totalB });
+            beban.forEach(i => detail.push({
+                akun: i.akun.nama_akun, kode: i.akun.kode_akun, posisi: 'KREDIT', nominal: i.saldo,
+            }));
+        }
+    }
+
+    // Tahap 3: Pelepasan Pembatasan - beban penyaluran TERIKAT dikelompokkan per dana;
+    // DEBIT dana terikat, KREDIT Dana Umum sebesar nilai tersalur.
+    if (tipe === 'PELEPASAN_PEMBATASAN') {
+        const groups = {};
+        beban.filter(i => !isTanpaPembatasan(i.akun.kode_akun)).forEach(i => {
+            const f = indeksDana(i.akun.kode_akun);
+            (groups[f] ??= []).push(i);
+        });
+        Object.entries(groups).forEach(([f, items]) => {
+            const total = items.reduce((s, i) => s + i.saldo, 0);
+            if (total <= 0) return;
+            const kodeDana = kodeDanaTerikat(f);
+            detail.push({ akun: namaDana(kodeDana),      kode: kodeDana,      posisi: 'DEBIT',  nominal: total });
+            detail.push({ akun: namaDana(KODE_DANA_UMUM), kode: KODE_DANA_UMUM, posisi: 'KREDIT', nominal: total });
         });
     }
 
     return detail;
 }
 
-// ── Render baris entri ─────────────────────────────────────────────────────
+// Render baris entri
 function renderEntriRows(detail, containerId, prefixBalance) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -357,6 +406,20 @@ function renderEntriRows(detail, containerId, prefixBalance) {
         <div class="col-span-2 text-right">Debit (Rp)</div>
         <div class="col-span-1 text-right">Kredit (Rp)</div>
     </div>`;
+
+    if (detail.length === 0) {
+        container.innerHTML = `<p class="text-sm text-gray-400 italic py-2">Tidak ada entri untuk tahap ini.</p>`;
+        const elD0 = document.getElementById(prefixBalance + 'TotalDebit');
+        const elK0 = document.getElementById(prefixBalance + 'TotalKredit');
+        if (elD0) elD0.textContent = formatRp(0);
+        if (elK0) elK0.textContent = formatRp(0);
+        const elStatus0 = document.getElementById(prefixBalance + 'BalanceStatus');
+        if (elStatus0) {
+            elStatus0.className = 'flex items-center gap-1.5 text-xs font-medium text-gray-400';
+            elStatus0.textContent = 'Tidak ada entri';
+        }
+        return;
+    }
 
     const rows = detail.map((d, i) => {
         const isD = d.posisi === 'DEBIT';
@@ -392,7 +455,7 @@ function renderEntriRows(detail, containerId, prefixBalance) {
     }
 }
 
-// ── Render review di Step 3 ────────────────────────────────────────────────
+// Render review di Step 3
 function renderReview() {
     const container = document.getElementById('reviewContent');
     container.innerHTML = TIPE_URUT.map(tipe => {
@@ -400,16 +463,18 @@ function renderReview() {
         const totalD = detail.filter(d => d.posisi === 'DEBIT').reduce((s, d) => s + d.nominal, 0);
         const totalK = detail.filter(d => d.posisi === 'KREDIT').reduce((s, d) => s + d.nominal, 0);
 
-        const rows = detail.map(d => {
-            const isD = d.posisi === 'DEBIT';
-            return `<tr class="border-b border-gray-50 dark:border-gray-800">
-                <td class="py-1.5 text-sm text-gray-700 dark:text-gray-300">
-                    <span class="text-xs text-gray-400 mr-1">${d.kode ?? ''}</span>${d.akun}
-                </td>
-                <td class="py-1.5 text-right text-sm ${isD  ? 'text-red-500 font-medium' : 'text-gray-300'}">${isD  ? formatRp(d.nominal) : '—'}</td>
-                <td class="py-1.5 text-right text-sm ${!isD ? 'text-green-600 font-medium' : 'text-gray-300'}">${!isD ? formatRp(d.nominal) : '—'}</td>
-            </tr>`;
-        }).join('');
+        const isiTabel = detail.length === 0
+            ? `<tr><td colspan="3" class="py-2 text-sm text-gray-400 italic">Tidak ada entri untuk tahap ini.</td></tr>`
+            : detail.map(d => {
+                const isD = d.posisi === 'DEBIT';
+                return `<tr class="border-b border-gray-50 dark:border-gray-800">
+                    <td class="py-1.5 text-sm text-gray-700 dark:text-gray-300">
+                        <span class="text-xs text-gray-400 mr-1">${d.kode ?? ''}</span>${d.akun}
+                    </td>
+                    <td class="py-1.5 text-right text-sm ${isD  ? 'text-red-500 font-medium' : 'text-gray-300'}">${isD  ? formatRp(d.nominal) : '—'}</td>
+                    <td class="py-1.5 text-right text-sm ${!isD ? 'text-green-600 font-medium' : 'text-gray-300'}">${!isD ? formatRp(d.nominal) : '—'}</td>
+                </tr>`;
+            }).join('');
 
         return `
         <div>
@@ -424,7 +489,7 @@ function renderReview() {
                         <th class="pb-1.5 text-right text-xs font-medium text-gray-400">Kredit</th>
                     </tr>
                 </thead>
-                <tbody>${rows}</tbody>
+                <tbody>${isiTabel}</tbody>
             </table>
             <div class="grid grid-cols-2 gap-3">
                 <div class="rounded-xl border border-gray-100 dark:border-gray-800 p-3 text-center">
@@ -440,7 +505,7 @@ function renderReview() {
     }).join('<hr class="border-gray-100 dark:border-gray-800">');
 }
 
-// ── Stepper ────────────────────────────────────────────────────────────────
+// Stepper
 const stepper = makeStepperController(3);
 window.goToStep = (n) => stepper.goToStep(n);
 
@@ -450,16 +515,15 @@ window.goToStep2 = function() {
         alert(pesanTidakSiap);
         return;
     }
-
     stepper.goToStep(2);
-    renderEntriRows(generateEntriTahap('TUTUP_PENDAPATAN'), 'previewPendapatanRows', 'prev1');
-    renderEntriRows(generateEntriTahap('TUTUP_BEBAN'),      'previewBebanRows',      'prev2');
+    renderEntriRows(generateEntriTahap('TUTUP_PENDAPATAN'),     'previewPendapatanRows', 'prev1');
+    renderEntriRows(generateEntriTahap('TUTUP_BEBAN'),          'previewBebanRows',      'prev2');
+    renderEntriRows(generateEntriTahap('PELEPASAN_PEMBATASAN'), 'previewPelepasanRows',  'prev3');
 };
 
 window.goToStep3 = function() {
     renderReview();
     stepper.goToStep(3);
-
     if (adaDraftExisting) {
         document.getElementById('bannerDraftExisting').classList.remove('hidden');
         document.getElementById('bannerBaru').classList.add('hidden');
@@ -467,18 +531,17 @@ window.goToStep3 = function() {
     }
 };
 
-// ── Submit ─────────────────────────────────────────────────────────────────
+// Submit
 window.submitAksi = function(aksi) {
     if (aksi === 'posting' && adaDraftExisting) {
         document.getElementById('postDraftForm').submit();
         return;
     }
-
     document.getElementById('inputAksi').value = aksi;
     document.getElementById('penutupForm').submit();
 };
 
-// ── Init ───────────────────────────────────────────────────────────────────
+// Init
 document.addEventListener('DOMContentLoaded', () => {
     if (adaDraftExisting) {
         renderReview();

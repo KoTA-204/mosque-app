@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
  * Seeder jurnal lengkap: PEMBUKA → PENYESUAIAN → KOREKSI → KELENGKAPAN → PENUTUP.
  *
  * Menggunakan Chart of Accounts sesuai Laporan Tugas Akhir (Tabel IV.7),
- * dengan rincian Aset Neto Dengan Pembatasan dipecah per dana (3-201..3-206).
+ * dengan rincian Aset Neto Dengan Pembatasan dipecah per dana (3-2101..3-2601).
  *
  * Dijalankan SETELAH AkunSeeder, PeriodeSeeder, dan JurnalUmumSeeder.
  */
@@ -40,7 +40,7 @@ class JurnalLengkapSeeder extends Seeder
         $this->buatJurnalPenyesuaian($periode);
         $this->buatJurnalKoreksi($periode);
         $this->buatJurnalKelengkapan($periode);
-        $this->buatJurnalPenutup($periode);
+        // $this->buatJurnalPenutup($periode);
 
         $this->command->info('✅ JurnalLengkapSeeder selesai — jurnal pembuka, penyesuaian, koreksi, kelengkapan & penutup dibuat.');
     }
@@ -86,40 +86,40 @@ class JurnalLengkapSeeder extends Seeder
 
         $detail = [
             // ASET LANCAR (debit)
-            ['kode' => '1-101', 'tipe' => 'DEBIT',  'nominal' => 20000000],   // Kas Kecil
-            ['kode' => '1-102', 'tipe' => 'DEBIT',  'nominal' => 15000000],   // Kas Infak
-            ['kode' => '1-103', 'tipe' => 'DEBIT',  'nominal' => 25000000],   // Kas Zakat
-            ['kode' => '1-104', 'tipe' => 'DEBIT',  'nominal' => 3000000],    // Piutang
-            ['kode' => '1-105', 'tipe' => 'DEBIT',  'nominal' => 2400000],    // Beban Dibayar Dimuka
-            ['kode' => '1-106', 'tipe' => 'DEBIT',  'nominal' => 5000000],    // Perlengkapan Masjid
+            ['kode' => '1-1001', 'tipe' => 'DEBIT',  'nominal' => 20000000],   // Kas Kecil
+            ['kode' => '1-1002', 'tipe' => 'DEBIT',  'nominal' => 15000000],   // Kas Infak
+            ['kode' => '1-1003', 'tipe' => 'DEBIT',  'nominal' => 25000000],   // Kas Zakat
+            ['kode' => '1-1004', 'tipe' => 'DEBIT',  'nominal' => 3000000],    // Piutang
+            ['kode' => '1-1005', 'tipe' => 'DEBIT',  'nominal' => 2400000],    // Beban Dibayar Dimuka
+            ['kode' => '1-1006', 'tipe' => 'DEBIT',  'nominal' => 5000000],    // Perlengkapan Masjid
             // ASET TETAP (debit)
-            ['kode' => '1-201', 'tipe' => 'DEBIT',  'nominal' => 500000000],  // Tanah Masjid
-            ['kode' => '1-202', 'tipe' => 'DEBIT',  'nominal' => 800000000],  // Bangunan Masjid
-            ['kode' => '1-204', 'tipe' => 'DEBIT',  'nominal' => 50000000],   // Aset Dalam Pembangunan
-            ['kode' => '1-205', 'tipe' => 'DEBIT',  'nominal' => 40000000],   // Investasi Jangka Panjang
-            ['kode' => '1-206', 'tipe' => 'DEBIT',  'nominal' => 100000000],  // Peralatan Masjid
+            ['kode' => '1-2001', 'tipe' => 'DEBIT',  'nominal' => 500000000],  // Tanah Masjid
+            ['kode' => '1-2002', 'tipe' => 'DEBIT',  'nominal' => 800000000],  // Bangunan Masjid
+            ['kode' => '1-2004', 'tipe' => 'DEBIT',  'nominal' => 50000000],   // Aset Dalam Pembangunan
+            ['kode' => '1-2005', 'tipe' => 'DEBIT',  'nominal' => 40000000],   // Investasi Jangka Panjang
+            ['kode' => '1-2006', 'tipe' => 'DEBIT',  'nominal' => 100000000],  // Peralatan Masjid
             // KONTRA-ASET (kredit)
-            ['kode' => '1-203', 'tipe' => 'KREDIT', 'nominal' => 80000000],   // Akum. Penyusutan Bangunan
-            ['kode' => '1-207', 'tipe' => 'KREDIT', 'nominal' => 30000000],   // Akum. Penyusutan Peralatan Masjid
+            ['kode' => '1-2003', 'tipe' => 'KREDIT', 'nominal' => 80000000],   // Akum. Penyusutan Bangunan
+            ['kode' => '1-2007', 'tipe' => 'KREDIT', 'nominal' => 30000000],   // Akum. Penyusutan Peralatan Masjid
             // LIABILITAS (kredit)
-            ['kode' => '2-101', 'tipe' => 'KREDIT', 'nominal' => 1000000],    // Utang Operasional
-            ['kode' => '2-102', 'tipe' => 'KREDIT', 'nominal' => 900000],     // Utang Listrik
-            ['kode' => '2-103', 'tipe' => 'KREDIT', 'nominal' => 500000],     // Utang Air
-            ['kode' => '2-104', 'tipe' => 'KREDIT', 'nominal' => 2000000],    // Utang Honorarium
-            ['kode' => '2-105', 'tipe' => 'KREDIT', 'nominal' => 1500000],    // Utang Kegiatan
-            ['kode' => '2-106', 'tipe' => 'KREDIT', 'nominal' => 5000000],    // Dana Titipan Zakat Maal
-            ['kode' => '2-107', 'tipe' => 'KREDIT', 'nominal' => 3000000],    // Dana Titipan Zakat Fitrah
-            ['kode' => '2-108', 'tipe' => 'KREDIT', 'nominal' => 4000000],    // Dana Titipan Qurban
-            ['kode' => '2-201', 'tipe' => 'KREDIT', 'nominal' => 20000000],   // Utang Jangka Panjang
+            ['kode' => '2-1001', 'tipe' => 'KREDIT', 'nominal' => 1000000],    // Utang Operasional
+            ['kode' => '2-1002', 'tipe' => 'KREDIT', 'nominal' => 900000],     // Utang Listrik
+            ['kode' => '2-1003', 'tipe' => 'KREDIT', 'nominal' => 500000],     // Utang Air
+            ['kode' => '2-1004', 'tipe' => 'KREDIT', 'nominal' => 2000000],    // Utang Honorarium
+            ['kode' => '2-1005', 'tipe' => 'KREDIT', 'nominal' => 1500000],    // Utang Kegiatan
+            ['kode' => '2-1006', 'tipe' => 'KREDIT', 'nominal' => 5000000],    // Dana Titipan Zakat Maal
+            ['kode' => '2-1007', 'tipe' => 'KREDIT', 'nominal' => 3000000],    // Dana Titipan Zakat Fitrah
+            ['kode' => '2-1008', 'tipe' => 'KREDIT', 'nominal' => 4000000],    // Dana Titipan Qurban
+            ['kode' => '2-2001', 'tipe' => 'KREDIT', 'nominal' => 20000000],   // Utang Jangka Panjang
             // ASET NETO DENGAN PEMBATASAN (kredit)
-            ['kode' => '3-201', 'tipe' => 'KREDIT', 'nominal' => 30000000],   // Dana Zakat Maal
-            ['kode' => '3-202', 'tipe' => 'KREDIT', 'nominal' => 10000000],   // Dana Zakat Fitrah
-            ['kode' => '3-203', 'tipe' => 'KREDIT', 'nominal' => 40000000],   // Dana Wakaf
-            ['kode' => '3-204', 'tipe' => 'KREDIT', 'nominal' => 60000000],   // Dana Pembangunan
-            ['kode' => '3-205', 'tipe' => 'KREDIT', 'nominal' => 8000000],    // Dana Qurban
-            ['kode' => '3-206', 'tipe' => 'KREDIT', 'nominal' => 12000000],   // Dana Program Terikat
+            ['kode' => '3-2101', 'tipe' => 'KREDIT', 'nominal' => 30000000],   // Dana Zakat Maal
+            ['kode' => '3-2201', 'tipe' => 'KREDIT', 'nominal' => 10000000],   // Dana Zakat Fitrah
+            ['kode' => '3-2301', 'tipe' => 'KREDIT', 'nominal' => 40000000],   // Dana Wakaf
+            ['kode' => '3-2401', 'tipe' => 'KREDIT', 'nominal' => 60000000],   // Dana Pembangunan
+            ['kode' => '3-2501', 'tipe' => 'KREDIT', 'nominal' => 8000000],    // Dana Qurban
+            ['kode' => '3-2601', 'tipe' => 'KREDIT', 'nominal' => 12000000],   // Dana Program Terikat
             // ASET NETO TANPA PEMBATASAN — penyeimbang (kredit)
-            ['kode' => '3-101', 'tipe' => 'KREDIT', 'nominal' => 1252500000], // Saldo Awal Aset Neto (penyeimbang)
+            ['kode' => '3-1002', 'tipe' => 'KREDIT', 'nominal' => 1252500000], // Saldo Awal Aset Neto (penyeimbang)
         ];
 
         $this->buatJurnal([
@@ -147,10 +147,10 @@ class JurnalLengkapSeeder extends Seeder
             'keterangan'       => 'Penyusutan aset tetap ' . $periode->nama_periode,
             'status'           => 'POSTED',
         ], [
-            ['kode' => '5-601', 'tipe' => 'DEBIT',  'nominal' => 5000000], // Penyusutan Bangunan
-            ['kode' => '5-602', 'tipe' => 'DEBIT',  'nominal' => 2000000], // Penyusutan Peralatan Masjid
-            ['kode' => '1-203', 'tipe' => 'KREDIT', 'nominal' => 5000000], // Akum. Penyusutan Bangunan
-            ['kode' => '1-207', 'tipe' => 'KREDIT', 'nominal' => 2000000], // Akum. Penyusutan Peralatan Masjid
+            ['kode' => '5-1401', 'tipe' => 'DEBIT',  'nominal' => 5000000], // Penyusutan Bangunan
+            ['kode' => '5-1402', 'tipe' => 'DEBIT',  'nominal' => 2000000], // Penyusutan Peralatan Masjid
+            ['kode' => '1-2003', 'tipe' => 'KREDIT', 'nominal' => 5000000], // Akum. Penyusutan Bangunan
+            ['kode' => '1-2007', 'tipe' => 'KREDIT', 'nominal' => 2000000], // Akum. Penyusutan Peralatan Masjid
         ]);
 
         // b) Beban yang masih harus dibayar (listrik akhir periode)
@@ -162,8 +162,8 @@ class JurnalLengkapSeeder extends Seeder
             'keterangan'       => 'Beban listrik yang masih harus dibayar',
             'status'           => 'POSTED',
         ], [
-            ['kode' => '5-101', 'tipe' => 'DEBIT',  'nominal' => 900000], // Listrik
-            ['kode' => '2-102', 'tipe' => 'KREDIT', 'nominal' => 900000], // Utang Listrik
+            ['kode' => '5-1101', 'tipe' => 'DEBIT',  'nominal' => 900000], // Listrik
+            ['kode' => '2-1002', 'tipe' => 'KREDIT', 'nominal' => 900000], // Utang Listrik
         ]);
     }
 
@@ -182,8 +182,8 @@ class JurnalLengkapSeeder extends Seeder
             'keterangan'   => 'Koreksi reklasifikasi beban kebersihan ke beban perlengkapan masjid',
             'status'       => 'POSTED',
         ], [
-            ['kode' => '5-105', 'tipe' => 'DEBIT',  'nominal' => 250000], // Perlengkapan Masjid
-            ['kode' => '5-104', 'tipe' => 'KREDIT', 'nominal' => 250000], // Kebersihan
+            ['kode' => '5-1105', 'tipe' => 'DEBIT',  'nominal' => 250000], // Perlengkapan Masjid
+            ['kode' => '5-1104', 'tipe' => 'KREDIT', 'nominal' => 250000], // Kebersihan
         ]);
     }
 
@@ -195,28 +195,28 @@ class JurnalLengkapSeeder extends Seeder
     {
         $nominalDefault = [
             // Pendapatan tanpa pembatasan
-            '4-101' => 8000000, '4-102' => 6000000, '4-103' => 3500000,
-            '4-104' => 5000000, '4-105' => 2000000, '4-106' => 1500000,
+            '4-1001' => 8000000, '4-1002' => 6000000, '4-1003' => 3500000,
+            '4-1004' => 5000000, '4-1005' => 2000000, '4-1006' => 1500000,
             // Pendapatan dengan pembatasan
-            '4-201' => 5000000, '4-202' => 8000000, '4-203' => 6000000, '4-204' => 3000000,
-            '4-205' => 10000000, '4-206' => 2500000, '4-207' => 4000000,
-            '4-208' => 7000000, '4-209' => 5000000,
-            '4-210' => 20000000, '4-211' => 15000000,
-            '4-212' => 25000000, '4-213' => 12000000, '4-214' => 6000000,
+            '4-2101' => 5000000, '4-2102' => 8000000, '4-2103' => 6000000, '4-2104' => 3000000,
+            '4-2105' => 10000000, '4-2106' => 2500000, '4-2107' => 4000000,
+            '4-2201' => 7000000, '4-2202' => 5000000,
+            '4-2301' => 20000000, '4-2302' => 15000000,
+            '4-2401' => 25000000, '4-2501' => 12000000, '4-2601' => 6000000,
             // Beban operasional
-            '5-101' => 1500000, '5-102' => 1200000, '5-103' => 900000, '5-104' => 2000000,
-            '5-105' => 1500000, '5-106' => 6000000, '5-107' => 3000000, '5-108' => 2500000,
+            '5-1101' => 1500000, '5-1102' => 1200000, '5-1103' => 900000, '5-1104' => 2000000,
+            '5-1105' => 1500000, '5-1106' => 6000000, '5-1107' => 3000000, '5-1108' => 2500000,
             // Beban kegiatan
-            '5-201' => 4000000, '5-202' => 3000000, '5-203' => 5000000, '5-204' => 3500000, '5-205' => 4000000,
+            '5-1201' => 4000000, '5-1202' => 3000000, '5-1203' => 5000000, '5-1204' => 3500000, '5-1205' => 4000000,
             // Beban penyaluran zakat (per asnaf + fitrah)
-            '5-301' => 5000000, '5-302' => 5000000, '5-303' => 2000000, '5-304' => 1500000,
-            '5-305' => 1000000, '5-306' => 1500000, '5-307' => 1000000, '5-308' => 3000000,
+            '5-2101' => 5000000, '5-2102' => 5000000, '5-2103' => 2000000, '5-2104' => 1500000,
+            '5-2105' => 1000000, '5-2106' => 1500000, '5-2107' => 1000000, '5-2201' => 3000000,
             // Beban lainnya
-            '5-401' => 4000000, '5-402' => 8000000, '5-403' => 5000000, '5-404' => 2000000, '5-405' => 1000000,
+            '5-2301' => 4000000, '5-2401' => 8000000, '5-2501' => 5000000, '5-1501' => 2000000, '5-1502' => 1000000,
             // Beban pemeliharaan
-            '5-501' => 3000000, '5-502' => 2000000, '5-503' => 1500000,
+            '5-1301' => 3000000, '5-1302' => 2000000, '5-1303' => 1500000,
             // Beban penyusutan
-            '5-601' => 5000000, '5-602' => 2000000,
+            '5-1401' => 5000000, '5-1402' => 2000000,
         ];
         $fallback = 2000000;
 
@@ -246,12 +246,12 @@ class JurnalLengkapSeeder extends Seeder
 
             $detail = $isPendapatan
                 ? [
-                    ['kode' => '1-101',          'tipe' => 'DEBIT',  'nominal' => $nominal], // Kas Kecil
+                    ['kode' => '1-1001',          'tipe' => 'DEBIT',  'nominal' => $nominal], // Kas Kecil
                     ['kode' => $akun->kode_akun, 'tipe' => 'KREDIT', 'nominal' => $nominal],
                 ]
                 : [
                     ['kode' => $akun->kode_akun, 'tipe' => 'DEBIT',  'nominal' => $nominal],
-                    ['kode' => '1-101',          'tipe' => 'KREDIT', 'nominal' => $nominal], // Kas Kecil
+                    ['kode' => '1-1001',          'tipe' => 'KREDIT', 'nominal' => $nominal], // Kas Kecil
                 ];
 
             $this->buatJurnal([
@@ -267,27 +267,19 @@ class JurnalLengkapSeeder extends Seeder
     // Peta akun pendapatan/beban -> akun aset neto (ekuitas) leaf tujuan penutupan.
     private function targetEkuitas(string $kode): string
     {
-        // Pendapatan tanpa pembatasan -> Surplus/Defisit Tahun Berjalan
-        if (str_starts_with($kode, '4-1')) return '3-102';
+        // Format kode K-CFUU. Digit-1 setelah tanda "-" = KELAS pembatasan
+        // (1=Tanpa Pembatasan, 2=Dengan Pembatasan). Digit-2 = INDEKS dana terikat.
+        $segmen = explode('-', $kode)[1] ?? '';
+        $kelas  = substr($segmen, 0, 1);
+        $indeks = substr($segmen, 1, 1);
 
-        // Pendapatan dengan pembatasan -> dana terikat sesuai jenis
-        if (in_array($kode, ['4-201','4-202','4-203','4-204','4-205','4-206','4-207'], true)) return '3-201'; // Zakat Maal
-        if (in_array($kode, ['4-208','4-209'], true)) return '3-202'; // Zakat Fitrah
-        if (in_array($kode, ['4-210','4-211'], true)) return '3-203'; // Wakaf
-        if ($kode === '4-212') return '3-204'; // Dana Pembangunan
-        if ($kode === '4-213') return '3-205'; // Dana Qurban
-        if ($kode === '4-214') return '3-206'; // Donasi Terikat Program
+        // Tanpa pembatasan -> Surplus/Defisit Tahun Berjalan
+        if ($kelas !== '2') {
+            return '3-1001';
+        }
 
-        // Beban yang mengurangi dana terikat
-        if (in_array($kode, ['5-301','5-302','5-303','5-304','5-305','5-306','5-307'], true)) return '3-201'; // Penyaluran Zakat Maal
-        if ($kode === '5-308') return '3-202'; // Penyaluran Zakat Fitrah
-        if ($kode === '5-401') return '3-203'; // Penyaluran Wakaf
-        if ($kode === '5-402') return '3-204'; // Beban Pembangunan Masjid
-        if ($kode === '5-403') return '3-205'; // Beban Qurban
-        if ($kode === '5-404') return '3-206'; // Bantuan Sosial (dana program terikat)
-
-        // Beban lain -> Surplus/Defisit Tahun Berjalan (tanpa pembatasan)
-        return '3-102';
+        // Dengan pembatasan -> akun aset neto dana terikat (3-2<indeks>01)
+        return '3-2' . $indeks . '01';
     }
 
     // ══ 4. JURNAL PENUTUP — tutup pendapatan & beban ═════════════════

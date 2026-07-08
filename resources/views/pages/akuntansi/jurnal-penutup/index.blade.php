@@ -15,7 +15,7 @@
             </p>
             @endif
         </div>
-        @if(!$periodeAktif || $tahapSelesai < 2)
+        @if(!$periodeAktif || $tahapSelesai < 3)
             <a href="{{ route('dashboard.jurnal-penutup.create') }}"
             class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
                 Mulai Penutupan
@@ -34,18 +34,19 @@
     {{-- Status Penutupan Periode Aktif --}}
     @if($periodeAktif)
     @php
-        $tipes = ['TUTUP_PENDAPATAN', 'TUTUP_BEBAN'];
+        $tipes = ['TUTUP_PENDAPATAN', 'TUTUP_BEBAN', 'PELEPASAN_PEMBATASAN'];
         $labelsTahap = [
             'TUTUP_PENDAPATAN' => 'Tutup Pendapatan',
             'TUTUP_BEBAN'      => 'Tutup Beban',
+            'PELEPASAN_PEMBATASAN' => 'Pelepasan Pembatasan',
         ];
 
-        $sisaTahap = 2 - $tahapSelesai;
-        $pct       = ($tahapSelesai / 2) * 100;
+        $sisaTahap = 3 - $tahapSelesai;
+        $pct       = ($tahapSelesai / 3) * 100;
 
-        $statusLabel = $tahapSelesai === 2
+        $statusLabel = $tahapSelesai === 3
             ? 'Selesai — semua tahap telah diposting'
-            : 'Belum selesai — ' . $tahapSelesai . ' dari 2 tahap selesai';
+            : 'Belum selesai — ' . $tahapSelesai . ' dari 3 tahap selesai';
 
         // Cek apakah ada DRAFT yang siap diposting (semua tahap ada sebagai DRAFT)
         $adaDraftSiapPosting = collect($tipes)->every(
@@ -188,6 +189,7 @@
                         $tipeLabels = [
                             'TUTUP_PENDAPATAN' => 'Tutup Pendapatan',
                             'TUTUP_BEBAN'      => 'Tutup Beban',
+                            'PELEPASAN_PEMBATASAN' => 'Pelepasan Pembatasan',
                         ];
                     @endphp
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors" id="row-{{ $item->id }}">

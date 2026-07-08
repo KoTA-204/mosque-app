@@ -473,12 +473,17 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
 
     // ── Laporan Keuangan ───────────────────────────────────────────────────
     Route::prefix('laporan')->name('laporan.')->group(function () {
-        Route::get('/penghasilan-komprehensif', [LaporanKeuanganController::class, 'penghasilanKomprehensif'])->name('penghasilan-komprehensif');
-        Route::get('/posisi-keuangan', [LaporanKeuanganController::class, 'posisiKeuangan'])->name('posisi-keuangan');
-        Route::get('/perubahan-aset-neto', [LaporanKeuanganController::class, 'perubahanAsetNeto'])->name('perubahan-aset-neto');
-        Route::get('/arus-kas', [LaporanKeuanganController::class, 'arusKas'])->name('arus-kas');
-        Route::get('/calk', [LaporanKeuanganController::class, 'calk'])->name('calk');
-        Route::get('/{jenis}/unduh-pdf', [LaporanKeuanganController::class, 'downloadPdf'])
+        Route::get('/penghasilan-komprehensif', [LaporanKeuanganController::class, 'tampilkanLaporan'])
+            ->defaults('jenis', 'penghasilan-komprehensif')->name('penghasilan-komprehensif');
+        Route::get('/posisi-keuangan', [LaporanKeuanganController::class, 'tampilkanLaporan'])
+            ->defaults('jenis', 'posisi-keuangan')->name('posisi-keuangan');
+        Route::get('/perubahan-aset-neto', [LaporanKeuanganController::class, 'tampilkanLaporan'])
+            ->defaults('jenis', 'perubahan-aset-neto')->name('perubahan-aset-neto');
+        Route::get('/arus-kas', [LaporanKeuanganController::class, 'tampilkanLaporan'])
+            ->defaults('jenis', 'arus-kas')->name('arus-kas');
+        Route::get('/calk', [LaporanKeuanganController::class, 'tampilkanLaporan'])
+            ->defaults('jenis', 'calk')->name('calk');
+        Route::get('/{jenis}/unduh-pdf', [LaporanKeuanganController::class, 'unduhLaporanPdf'])
             ->where('jenis', 'posisi-keuangan|penghasilan-komprehensif|perubahan-aset-neto|arus-kas|calk')
             ->name('pdf');
     });
