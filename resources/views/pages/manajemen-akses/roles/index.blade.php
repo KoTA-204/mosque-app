@@ -132,7 +132,6 @@
                         </svg>
                         Edit
                     </a>
-                    @if($role->users_count == 0)
                     <form action="{{ route('dashboard.roles.destroy', $role) }}" method="POST"
                           data-confirm="Yakin hapus role '{{ addslashes($role->role_name) }}'?" data-confirm-label="Hapus">
                         @csrf
@@ -149,7 +148,6 @@
                             Hapus
                         </button>
                     </form>
-                    @endif
 
                 </div>
                 <a href="{{ route('dashboard.roles.show', $role) }}"

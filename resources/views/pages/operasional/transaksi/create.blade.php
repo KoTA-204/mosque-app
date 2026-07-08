@@ -175,7 +175,6 @@
                     <select name="kondisi_aset"
                         class="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
                         <option value="">Pilih kondisi aset</option>
-                        <option value="BARU">Baru</option>
                         <option value="BAIK">Baik</option>
                         <option value="RUSAK_RINGAN">Rusak Ringan</option>
                         <option value="RUSAK_BERAT">Rusak Berat</option>
