@@ -92,14 +92,14 @@
             <div class="flex items-center gap-2 flex-wrap ml-auto">
                 <select id="bulkDebit"
                     class="h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500">
-                    <option value="">Akun debit...</option>
+                    <option value="">Akun debit</option>
                     @foreach($akuns as $a)
                         <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
                     @endforeach
                 </select>
                 <select id="bulkKredit"
                     class="h-8 px-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500">
-                    <option value="">Akun kredit...</option>
+                    <option value="">Akun kredit</option>
                     @foreach($akuns as $a)
                         <option value="{{ $a->id }}">{{ $a->kode_akun }} – {{ $a->nama_akun }}</option>
                     @endforeach
@@ -108,7 +108,7 @@
                     class="h-8 px-3 bg-green-700 text-white text-xs font-medium rounded-lg hover:bg-green-800 transition-colors">
                     Terapkan
                 </button>
-                <p class="text-xs text-gray-400 w-full sm:w-auto">Bulk hanya mengisi entri debit/kredit pertama tiap baris.</p>
+                <p class="text-xs text-gray-400 w-full sm:w-auto">Bulk hanya mengisi entri pertama tiap baris.</p>
                 <div class="w-px h-5 bg-gray-300"></div>
                 <button type="button" onclick="bulkHapus()"
                     class="h-8 px-3 bg-red-50 text-red-600 border border-red-200 text-xs font-medium rounded-lg hover:bg-red-100 transition-colors flex items-center gap-1.5">
@@ -448,8 +448,6 @@ function updateEntryCount() {
 
 // ── Simpan ──────────────────────────────────────────────────────
 
-const CAN_CREATE_TRANSAKSI = @json(auth()->user()->hasPermission('CREATE_TRANSAKSI'));
-
 async function simpanKlasifikasi() {
     const btn     = document.getElementById('btnSimpanKlasifikasi');
     const spinner = document.getElementById('spinnerKlasifikasi');
@@ -457,11 +455,6 @@ async function simpanKlasifikasi() {
     if (btn.disabled) return;
     hideAlert('success');
     hideAlert('error');
-
-    if (!CAN_CREATE_TRANSAKSI) {
-        showAlert('error', 'Anda tidak memiliki hak akses untuk menyimpan hasil impor transaksi.');
-        return;
-    }
 
     let valid = true;
     const klasifikasi = [];
@@ -536,8 +529,8 @@ async function simpanKlasifikasi() {
             credentials: 'same-origin',
         });
 
-        if (res.status === 403) {
-            showAlert('error', 'Anda tidak memiliki hak akses untuk menyimpan hasil impor transaksi.');
+        if (res.redirected) {
+            showAlert('error', 'Anda tidak memiliki izin untuk melakukan aksi ini.');
             btn.disabled = false;
             spinner.classList.add('hidden');
             return;

@@ -507,10 +507,6 @@ function closeModal(id) {
     modal.style.display = 'none';
 }
 
-// Flag hak akses — dipakai untuk menampilkan pesan yang sesuai saat pengguna
-// hanya memiliki akses view (bisa membuka modal, tapi tidak bisa menghapus).
-const CAN_HAPUS_TRANSAKSI = @json(auth()->user()->hasPermission('DELETE_TRANSAKSI'));
-
 function openDeleteModal(actionUrl) {
     const form = document.getElementById('deleteModalForm');
     form.action = actionUrl;
@@ -753,13 +749,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     },
                 });
 
-                if (res.status === 403) {
+                if (res.redirected || res.status === 403) {
                     closeModal('modalHapus');
                     sessionStorage.setItem('alert', JSON.stringify({
                         type: 'error',
-                        message: 'Anda tidak memiliki hak akses untuk menghapus transaksi.'
+                        message: 'Anda tidak memiliki izin untuk melakukan aksi ini.'
                     }));
-                    window.location.reload();
                     return;
                 }
 

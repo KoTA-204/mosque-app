@@ -1,12 +1,11 @@
 <x-modal id="createKategoriModal" title="Tambah Kategori">
-    <form method="POST" action="{{ route('dashboard.kategori-transaksi.store') }}" class="space-y-5"
-        onsubmit="return guardSubmit(this, {{ $canCreateKategoriTransaksi ? 'true' : 'false' }}, 'Anda tidak memiliki akses untuk menyimpan data kategori transaksi.')">
+    <form method="POST" action="{{ route('dashboard.kategori-transaksi.store') }}" class="space-y-5">
         @csrf
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Nama Kategori <span class="text-red-500">*</span>
             </label>
-            <input type="text" name="nama_kategori" value="{{ old('nama_kategori') }}"
+            <input type="text" name="nama_kategori" value="{{ old('nama_kategori') }}" required
                 placeholder="Masukan nama kategori"
                 class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
                     {{ $errors->createKategori->has('nama_kategori') ?
@@ -23,7 +22,7 @@
                 Status <span class="text-red-500">*</span>
             </label>
             <div class="relative">
-                <select name="status"
+                <select name="status" required
                     class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none appearance-none transition-colors
                         {{ $errors->createKategori->has('status')
                             ? 'border-red-400'

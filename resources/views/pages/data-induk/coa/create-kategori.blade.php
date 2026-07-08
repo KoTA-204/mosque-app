@@ -5,8 +5,7 @@
 
 <form method="POST"
         action="{{ route('dashboard.coa.kategori.store') }}"
-        class="space-y-5"
-        onsubmit="return guardSubmit(this, {{ $canCreateCoa ? 'true' : 'false' }}, 'Anda tidak memiliki akses untuk menyimpan data kategori akun.') && handleFormSubmit(this)">
+        class="space-y-5">
     @csrf
     <input type="hidden" name="_form" value="kategori">
 
@@ -20,7 +19,7 @@
             Kode Kategori <span class="text-red-500">*</span>
         </label>
 
-        <input type="text" name="kode_kategori" value="{{ $isTarget ? old('kode_kategori') : '' }}" placeholder="Contoh: 1, 2, 3" 
+        <input type="text" name="kode_kategori" value="{{ $isTarget ? old('kode_kategori') : '' }}" placeholder="Contoh: 1, 2, 3"
             class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
             {{ $errors->has('kode_kategori') 
                 ? 'border-red-400 focus:border-red-400'

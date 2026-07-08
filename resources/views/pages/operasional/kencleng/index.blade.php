@@ -16,7 +16,6 @@
                 Catat Kencleng Baru
             </a>
         </div>
-        @endif
     </div>
 
     {{-- Alert --}}
