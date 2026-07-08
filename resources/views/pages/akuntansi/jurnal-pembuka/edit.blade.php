@@ -1,23 +1,29 @@
 @extends('layouts.app')
-@section('title', 'Jurnal Pembuka')
+@section('title', 'Edit Jurnal Pembuka')
 @section('content')
 @php
-    $canCreateJurnalPembuka = auth()->user()->hasPermission('CREATE_JURNAL_PEMBUKA');
+    $canCreateJurnalPembuka = auth()->user()->hasPermission('EDIT_JURNAL_PEMBUKA');
+    $curTanggal    = old('tanggal_awal', optional($jurnalPembuka->tanggal)->format('Y-m-d'));
+    $curKeterangan = old('keterangan', $jurnalPembuka->keterangan);
+    $existingDetail = old('detail')
+        ? array_values(old('detail'))
+        : $jurnalPembuka->detailJurnal->map(fn ($d) => ['akun_id' => $d->akun_id, 'tipe' => $d->tipe, 'nominal' => (float) $d->nominal])->values();
 @endphp
 <div class="space-y-4 p-6">
 
     {{-- Header --}}
     <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
-        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Setup Saldo Awal (Jurnal Pembuka)</h1>
+        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Edit Saldo Awal (Jurnal Pembuka)</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Dilakukan sekali saat mulai pencatatan. Periode bulanan dibuat otomatis dari tanggal awal yang dipilih.
+            Hanya bisa diubah selama masih DRAFT dan belum ada transaksi turunan. Periode bulanan dihitung ulang dari tanggal awal.
         </p>
     </div>
 
     <x-jurnal.stepper :steps="['Informasi Umum', 'Entri Saldo Awal', 'Review & Simpan']"/>
 
-    <form id="formJurnalPembuka" action="{{ route('dashboard.jurnal-pembuka.store') }}" method="POST">
+    <form id="formJurnalPembuka" action="{{ route('dashboard.jurnal-pembuka.update', $jurnalPembuka) }}" method="POST">
         @csrf
+        @method('PUT')
 
         @error('balance') <x-jurnal.alert type="error" :message="$message"/> @enderror
 
@@ -47,7 +53,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Awal <span class="text-red-500">*</span></label>
-                        <input type="date" name="tanggal_awal" id="inputTanggalAwal" value="{{ old('tanggal_awal') }}" class="w-full h-10 px-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                        <input type="date" name="tanggal_awal" id="inputTanggalAwal" value="{{ $curTanggal }}" class="w-full h-10 px-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
                         @error('tanggal_awal') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
 
@@ -60,7 +66,7 @@
                     {{-- Catatan --}}
                     <div class="col-span-2">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan</label>
-                        <input type="text" name="keterangan" value="{{ old('keterangan') }}" placeholder="Opsional - catatan tambahan" class="w-full h-10 px-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                        <input type="text" name="keterangan" value="{{ $curKeterangan }}" placeholder="Opsional - catatan tambahan" class="w-full h-10 px-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
                     </div>
                 </div>
             </div>
@@ -74,7 +80,7 @@
             <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-base font-semibold text-gray-900 dark:text-white">Entri Saldo Awal</h2>
-                    <span class="text-xs text-gray-400">Masukkan saldo awal per akun</span>
+                    <span class="text-xs text-gray-400">Perbarui saldo awal per akun</span>
                 </div>
 
                 <div class="mb-4 px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl text-sm text-amber-700 dark:text-amber-400">
@@ -99,7 +105,7 @@
 
                 <button type="button" onclick="tambahBaris()" class="mt-3 w-full h-10 border border-dashed border-green-300 dark:border-green-800 text-green-700 dark:text-green-400 text-sm font-medium rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">+ Tambah Baris</button>
 
-                <x-jurnal.balance-bar prefix="create_"/>
+                <x-jurnal.balance-bar prefix="edit_"/>
             </div>
 
             <div id="alertContainerStep2"></div>
@@ -109,7 +115,7 @@
         {{-- STEP 3: Review --}}
         <div id="step3" class="hidden space-y-4">
             <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
-                <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-5">Review Jurnal</h2>
+                <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-5">Review Perubahan</h2>
 
                 <div class="grid grid-cols-2 gap-6">
                     <div>
@@ -134,8 +140,8 @@
             <div class="flex items-center justify-between gap-3 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
                 <button type="button" onclick="goToStep(2)" class="h-10 px-5 text-sm font-medium rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Kembali</button>
                 <div class="flex items-center gap-3">
-                    <button type="submit" name="submit_type" value="draft" class="h-10 px-5 text-sm font-medium rounded-xl border border-green-300 dark:border-green-800 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">Simpan sebagai Draft</button>
-                    <button type="submit" name="submit_type" value="posting" class="h-10 px-5 text-sm font-semibold rounded-xl bg-green-600 hover:bg-green-700 text-white transition-colors">Simpan &amp; Posting</button>
+                    <button type="submit" name="submit_type" value="draft" class="h-10 px-5 text-sm font-medium rounded-xl border border-green-300 dark:border-green-800 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">Simpan Perubahan (Draft)</button>
+                    <button type="submit" name="submit_type" value="posting" class="h-10 px-5 text-sm font-semibold rounded-xl bg-green-600 hover:bg-green-700 text-white transition-colors">Perbarui &amp; Posting</button>
                 </div>
             </div>
         </div>
@@ -150,14 +156,19 @@
 <script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
 <script>
 const AKUN_OPTIONS = @json($akuns);
+const EXISTING_DETAIL = @json($existingDetail);
 let barisCount = 0;
 const CAN_CREATE_JURNAL_PEMBUKA = @json($canCreateJurnalPembuka);
 
 document.addEventListener('DOMContentLoaded', function () {
-    tambahBaris();
-    tambahBaris();
-    updateBalanceBar();
+    if (EXISTING_DETAIL.length) {
+        EXISTING_DETAIL.forEach(function (d) { tambahBaris(d); });
+    } else {
+        tambahBaris();
+        tambahBaris();
+    }
     hitungTanggalAkhir();
+    updateBalanceBar();
     document.getElementById('inputTanggalAwal').addEventListener('change', hitungTanggalAkhir);
     if (window.flatpickr) {
         if (window.flatpickr.l10ns && window.flatpickr.l10ns.id) { flatpickr.localize(flatpickr.l10ns.id); }
@@ -220,7 +231,7 @@ function validasiStep2() {
     goToStep(3);
 }
 
-function tambahBaris() {
+function tambahBaris(data) {
     barisCount++;
     const idx  = barisCount;
     const opts = AKUN_OPTIONS.map(function (a) { return '<option value="' + a.id + '">' + a.kode + ' - ' + a.nama + '</option>'; }).join('');
@@ -236,7 +247,17 @@ function tambahBaris() {
         '<td class="px-3 py-2.5 text-center"><button type="button" onclick="hapusBaris(' + idx + ')" class="w-7 h-7 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500 hover:bg-red-100 transition-colors">x</button></td>' +
         '<input type="hidden" name="detail[' + idx + '][nominal]" id="nominal-' + idx + '" value="0">';
     document.getElementById('bodyEntri').appendChild(tr);
-    onTipeChange(idx);
+
+    if (data) {
+        tr.querySelector('select[name*="[akun_id]"]').value = data.akun_id;
+        tr.querySelector('select[name*="[tipe]"]').value   = data.tipe;
+        onTipeChange(idx);
+        if (data.tipe === 'DEBIT') document.getElementById('debit-' + idx).value  = data.nominal;
+        else                      document.getElementById('kredit-' + idx).value = data.nominal;
+        updateNominal(idx);
+    } else {
+        onTipeChange(idx);
+    }
     updateNomorBaris();
 }
 
@@ -278,7 +299,6 @@ function onTipeChange(idx) {
         kInput.disabled = false; kInput.classList.remove('bg-gray-50','dark:bg-gray-900','text-gray-400');
         dInput.disabled = true;  dInput.value = ''; dInput.classList.add('bg-gray-50','dark:bg-gray-900','text-gray-400');
     }
-    document.getElementById('nominal-' + idx).value = 0;
     updateBalanceBar();
 }
 
@@ -299,9 +319,9 @@ function updateBalanceBar() {
     const t = hitungTotal();
     const fmtRp = function (n) { return 'Rp ' + new Intl.NumberFormat('id-ID').format(n); };
     const seimbang = Math.round(t.debit*100) === Math.round(t.kredit*100);
-    document.getElementById('create_TotalDebit').textContent  = fmtRp(t.debit);
-    document.getElementById('create_TotalKredit').textContent = fmtRp(t.kredit);
-    const s = document.getElementById('create_BalanceStatus');
+    document.getElementById('edit_TotalDebit').textContent  = fmtRp(t.debit);
+    document.getElementById('edit_TotalKredit').textContent = fmtRp(t.kredit);
+    const s = document.getElementById('edit_BalanceStatus');
     if (seimbang && t.debit > 0) { s.className = 'flex items-center gap-1.5 text-xs font-medium text-green-600'; s.textContent = 'Seimbang'; }
     else { s.className = 'flex items-center gap-1.5 text-xs font-medium text-amber-600'; s.textContent = 'Belum seimbang'; }
 }
@@ -349,7 +369,7 @@ document.getElementById('formJurnalPembuka').addEventListener('submit', function
     e.preventDefault();
     if ((!_submitType || ['draft', 'posting'].indexOf(_submitType) === -1) && e.submitter && e.submitter.name === 'submit_type') _submitType = e.submitter.value;
     if (!_submitType || ['draft', 'posting'].indexOf(_submitType) === -1) return;
-    if (!CAN_CREATE_JURNAL_PEMBUKA) { showAlert('error', 'Anda tidak memiliki akses untuk menyimpan jurnal pembuka.', 'alertContainerStep3'); goToStep(3); _submitType = null; return; }
+    if (!CAN_CREATE_JURNAL_PEMBUKA) { showAlert('error', 'Anda tidak memiliki akses untuk mengubah jurnal pembuka.', 'alertContainerStep3'); goToStep(3); _submitType = null; return; }
     const t = hitungTotal();
     if (_submitType === 'posting' && Math.round(t.debit*100) !== Math.round(t.kredit*100)) { showAlert('error', 'Tidak dapat posting - total Debit dan Kredit belum seimbang.', 'alertContainerStep2'); goToStep(2); _submitType = null; return; }
     let hidden = document.getElementById('_submit_type');

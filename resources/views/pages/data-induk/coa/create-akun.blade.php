@@ -4,8 +4,7 @@
 >
 <form method="POST"
         action="{{ route('dashboard.coa.akun.store') }}"
-        class="space-y-5"
-        onsubmit="return guardSubmit(this, {{ $canCreateCoa ? 'true' : 'false' }}, 'Anda tidak memiliki akses untuk menyimpan data akun.') && handleFormSubmit(this)">
+        class="space-y-5">
     @csrf
     <input type="hidden" name="_form" value="akun">
 
@@ -20,7 +19,7 @@
                 Nomor Akun <span class="text-red-500">*</span>
             </label>
 
-            <input type="text" name="kode_akun" value="{{ ($isTarget ? old('kode_akun') : '') }}" placeholder="Masukkan nomor akun" class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
+            <input type="text" name="kode_akun" value="{{ ($isTarget ? old('kode_akun') : '') }}" placeholder="Contoh 1-1001" class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
                 {{ $errors->has('kode_akun')
                     ? 'border-red-400'
                     : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }}
@@ -37,7 +36,7 @@
                 Nama Akun <span class="text-red-500">*</span>
             </label>
 
-            <input type="text" name="nama_akun" value="{{ ($isTarget ? old('nama_akun') : '') }}" placeholder="Masukkan nama akun" 
+            <input type="text" name="nama_akun" value="{{ ($isTarget ? old('nama_akun') : '') }}" placeholder="Kas Kecil"
                 class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
                 {{ $errors->has('nama_akun')
                     ? 'border-red-400'
