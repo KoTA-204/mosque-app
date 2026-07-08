@@ -39,10 +39,10 @@ class DatabaseSeeder extends Seeder
             KategoriAkunSeeder::class,
             AkunSeeder::class,
             AsetSeeder::class,
-            PeriodeSeeder::class,
+            // PeriodeSeeder::class,
             TransaksiKegiatanSeeder::class,
-            JurnalUmumSeeder::class,
-            JurnalLengkapSeeder::class,
+            // JurnalUmumSeeder::class,
+            // JurnalLengkapSeeder::class,
         ]);
     }
 }
