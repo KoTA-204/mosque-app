@@ -13,7 +13,7 @@ class JurnalUmumService extends JurnalService
     /** Daftar jurnal umum terfilter. */
     public function daftar(array $filter): LengthAwarePaginator
     {
-        return Jurnal::with(['detailJurnal.akun', 'periode'])
+        return Jurnal::with(['detailJurnal.akun', 'periode', 'transaksi'])
             ->where('jenis_jurnal', self::JENIS)
             ->when($filter['bulan'] ?? null, function ($q) use ($filter) {
                 $q->whereYear('tanggal', substr($filter['bulan'], 0, 4))
@@ -22,6 +22,9 @@ class JurnalUmumService extends JurnalService
             ->when($filter['status'] ?? null, fn($q) => $q->where('status', strtoupper($filter['status'])))
             ->when($filter['search'] ?? null, fn($q) =>
                 $q->where('keterangan', 'like', "%{$filter['search']}%")
+                ->orWhereHas('transaksi', fn($q2) =>
+                    $q2->where('deskripsi', 'like', "%{$filter['search']}%")
+                )
             )
             ->orderByDesc('tanggal')
             ->orderByDesc('id')

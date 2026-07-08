@@ -53,9 +53,30 @@ class JurnalPenyesuaianService extends JurnalService
             ->withQueryString();
     }
 
-    public function getById(Jurnal $jurnal): Jurnal
+    public function getById(Jurnal $jurnal): array
     {
-        return $jurnal->load('periode', 'detailJurnal.akun', 'aset');
+        $jurnal->load('periode', 'detailJurnal.akun', 'aset');
+
+        return [
+            'id'               => $jurnal->id,
+            'nomor_jurnal'     => $jurnal->kode_jurnal,
+            'tanggal'          => $jurnal->tanggal->format('d M Y'),
+            'keterangan'       => $jurnal->keterangan ?? '—',
+            'tipe_penyesuaian' => $jurnal->tipe_penyesuaian,
+            'status'           => $jurnal->status,
+            'detail_jurnal' => $jurnal->detailJurnal->map(fn($d) => [
+                'akun'    => [
+                    'kode_akun' => $d->akun->kode_akun,
+                    'nama_akun' => $d->akun->nama_akun,
+                ],
+                'tipe'    => $d->tipe,
+                'nominal' => (float) $d->nominal,
+            ])->values(),
+            'aset' => $jurnal->aset->map(fn($a) => [
+                'nama_aset' => $a->nama_aset,
+                'pivot'     => ['nominal' => (float) $a->pivot->nominal],
+            ])->values(),
+        ];
     }
 
     public function getAkunList(string $tipe = ''): array

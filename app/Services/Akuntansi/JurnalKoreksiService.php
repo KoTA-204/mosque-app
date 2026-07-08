@@ -15,12 +15,15 @@ class JurnalKoreksiService extends JurnalService
 
     public function daftar(array $filter): LengthAwarePaginator
     {
-        return Jurnal::with(['periode', 'detailJurnal.akun'])
+        return Jurnal::with(['periode', 'detailJurnal.akun', 'transaksi'])
             ->koreksi()
             ->when($filter['periode_id'] ?? null, fn($q) => $q->where('periode_id', $filter['periode_id']))
             ->when($filter['status'] ?? null,    fn($q) => $q->where('status', strtoupper($filter['status'])))
             ->when($filter['search'] ?? null,    fn($q) =>
                 $q->where('keterangan', 'like', "%{$filter['search']}%")
+                ->orWhereHas('transaksi', fn($q2) =>
+                    $q2->where('deskripsi', 'like', "%{$filter['search']}%")
+                )
             )
             ->orderBy('tanggal', 'desc')
             ->paginate($filter['per_page'] ?? 10)
@@ -40,7 +43,7 @@ class JurnalKoreksiService extends JurnalService
 
     public function getJurnalData()
     {
-        return Jurnal::with(['periode', 'detailJurnal.akun', 'aset'])
+        return Jurnal::with(['periode', 'detailJurnal.akun', 'aset', 'transaksi'])
             ->where('status', 'POSTED')
             ->orderBy('tanggal', 'desc')
             ->get()
@@ -48,8 +51,8 @@ class JurnalKoreksiService extends JurnalService
                 'id'         => $jurnal->id,
                 'periode_id' => $jurnal->periode_id,
                 'nomor'      => $jurnal->kode_jurnal,
-                'tanggal'    => $jurnal->tanggal,
-                'keterangan' => $jurnal->keterangan,
+                'tanggal'    => $jurnal->tanggal->format('d M Y'),
+                'keterangan' => $jurnal->keterangan ?: $jurnal->transaksi?->deskripsi ?: '-',
                 'detail'     => $jurnal->detailJurnal->map(fn($detail) => [
                     'akun'   => $detail->akun->nama_akun,
                     'posisi' => $detail->tipe === 'DEBIT' ? 'D' : 'K',

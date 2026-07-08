@@ -105,10 +105,7 @@
                         $totalDebit  = $item->detailJurnal->where('tipe', 'DEBIT')->sum('nominal');
                         $totalKredit = $item->detailJurnal->where('tipe', 'KREDIT')->sum('nominal');
                         $isPosted    = $item->status === 'POSTED';
-                        $nomorJurnal = 'JP-'
-                            . $item->periode->tanggal_awal->format('Y') . '-'
-                            . $item->periode->tanggal_awal->format('m') . '-'
-                            . str_pad($jurnal->firstItem() + $loop->index, 4, '0', STR_PAD_LEFT);
+                        $nomorJurnal = $item->kode_jurnal;
                     @endphp
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors" id="row-{{ $item->id }}">
 
@@ -126,7 +123,7 @@
                         </td>
                         <td class="px-4 py-3.5 text-gray-500 dark:text-gray-400 cursor-pointer"
                             onclick="showDrawer('/dashboard/jurnal-penyesuaian/{{ $item->id }}')">
-                            {{ $item->tanggal->format('j M Y') }}
+                            {{ $item->tanggal->format('d M Y') }}
                         </td>
                         <td class="px-4 py-3.5 font-medium text-gray-800 dark:text-gray-200 cursor-pointer"
                             onclick="showDrawer('/dashboard/jurnal-penyesuaian/{{ $item->id }}')">
@@ -251,7 +248,7 @@ window.renderDrawerContent = function(data) {
         buildInfoBox('Informasi Jurnal', [
             { label: 'Jenis Penyesuaian', value: labels[j.tipe_penyesuaian] ?? j.tipe_penyesuaian },
             { label: 'Keterangan',        value: j.keterangan },
-            { label: 'Tanggal',           value: j.tanggal },
+            { label: 'Tanggal', value: new Date(j.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) },,
         ]) +
         buildDetailTable(details, 'Detail Debit & Kredit') +
         asetSection;
