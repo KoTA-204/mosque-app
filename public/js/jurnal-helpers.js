@@ -20,14 +20,23 @@
  * Aman untuk string kosong / undefined.
  */
 export function parseNominal(val) {
-    return parseFloat((String(val || '0')).replace(/\./g, '').replace(',', '.')) || 0;
+    if (typeof val === 'number') return Math.round(val * 100) / 100; 
+    const cleaned = String(val || '0')
+        .replace(/\./g, '')       
+        .replace(',', '.')       
+        .replace(/[^\d.]/g, '');   
+    const n = parseFloat(cleaned);
+    return isNaN(n) ? 0 : Math.round(n * 100) / 100;
 }
 
 /**
  * Format angka ke "Rp 1.500.000" (locale id-ID).
  */
 export function formatRp(n) {
-    return 'Rp ' + parseFloat(n || 0).toLocaleString('id-ID');
+    return 'Rp ' + parseNominal(n).toLocaleString('id-ID', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
 }
 
 /**
@@ -36,8 +45,19 @@ export function formatRp(n) {
  * Gunakan: oninput="formatInput(this)"
  */
 export function formatInput(input) {
-    const raw = input.value.replace(/\D/g, '');
-    input.value = raw ? parseInt(raw).toLocaleString('id-ID') : '';
+    let v = input.value.replace(/[^\d,]/g, ''); // hanya digit & koma
+
+    const i = v.indexOf(',');
+    if (i !== -1) {
+        v = v.slice(0, i + 1) + v.slice(i + 1).replace(/,/g, '');
+    }
+
+    let [intPart, decPart] = v.split(',');
+    const intFmt = intPart ? parseInt(intPart, 10).toLocaleString('id-ID') : '';
+
+    input.value = decPart !== undefined
+        ? intFmt + ',' + decPart.slice(0, 2)   // maks 2 desimal
+        : intFmt;
 }
 
 // ─────────────────────────────────────────────
@@ -135,18 +155,23 @@ export function makeBalanceController(getRowsFn, { prefix = '' } = {}) {
     const idStatus = prefix + 'BalanceStatus';
 
     function calcTotal() {
-        let debit = 0, kredit = 0;
+        let debitCents = 0, kreditCents = 0;
         for (const row of getRowsFn()) {
-            const n = parseNominal(row.nominal);
-            if (row.tipe === 'DEBIT')  debit  += n;
-            if (row.tipe === 'KREDIT') kredit += n;
+            const c = Math.round(parseNominal(row.nominal) * 100); // → sen
+            if (row.tipe === 'DEBIT')  debitCents  += c;
+            if (row.tipe === 'KREDIT') kreditCents += c;
         }
-        return { debit, kredit };
+        return {
+            debit:  debitCents / 100,
+            kredit: kreditCents / 100,
+            debitCents,
+            kreditCents,
+        };
     }
 
     function isBalanced() {
-        const { debit, kredit } = calcTotal();
-        return debit > 0 && Math.round(debit * 100) === Math.round(kredit * 100);
+        const { debitCents, kreditCents } = calcTotal();
+        return debitCents > 0 && debitCents === kreditCents; // perbandingan eksak
     }
 
     function recalc() {
@@ -199,15 +224,17 @@ export function renderReviewRows(rows, getAkunLabelFn, {
     totalKreditId = 'review_total_kredit',
     postingBtnId  = 'btnPosting',
 } = {}) {
-    let totalD = 0, totalK = 0;
+    let totalDCents = 0, totalKCents = 0;
 
     const tbody = document.getElementById(bodyId);
     if (!tbody) return;
 
     tbody.innerHTML = rows.map(row => {
-        const n = parseNominal(row.nominal);
-        if (row.tipe === 'DEBIT')  totalD += n;
-        if (row.tipe === 'KREDIT') totalK += n;
+        const n = parseNominal(row.nominal);      // number, sudah dibulatkan 2 desimal
+        const c = Math.round(n * 100);            // → sen
+        if (row.tipe === 'DEBIT')  totalDCents += c;
+        if (row.tipe === 'KREDIT') totalKCents += c;
+
         return `
             <tr class="border-b border-gray-50 dark:border-gray-800">
                 <td class="py-2 text-gray-700 dark:text-gray-300 text-sm">${getAkunLabelFn(row.akun_id)}</td>
@@ -220,7 +247,7 @@ export function renderReviewRows(rows, getAkunLabelFn, {
     const elK = document.getElementById(totalKreditId);
     const btn = document.getElementById(postingBtnId);
 
-    if (elD) elD.textContent = formatRp(totalD);
-    if (elK) elK.textContent = formatRp(totalK);
-    if (btn) btn.disabled = Math.round(totalD * 100) !== Math.round(totalK * 100);
+    if (elD) elD.textContent = formatRp(totalDCents / 100);
+    if (elK) elK.textContent = formatRp(totalKCents / 100);
+    if (btn) btn.disabled = totalDCents !== totalKCents;   // perbandingan eksak dalam sen
 }

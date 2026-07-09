@@ -17,14 +17,14 @@
                 <td class="px-4 py-3.5 text-gray-900 dark:text-white">{{ $akun->nama_akun }}</td>
                 <td class="px-4 py-3.5 text-right text-gray-900 dark:text-white">
                     @if($akun->total_debit > 0)
-                        Rp {{ number_format($akun->total_debit, 0, ',', '.') }}
+                        Rp {{ number_format($akun->total_debit, 2, ',', '.') }}
                     @else
                         <span class="text-gray-300 dark:text-gray-600">-</span>
                     @endif
                 </td>
                 <td class="px-4 py-3.5 text-right text-gray-900 dark:text-white">
                     @if($akun->total_kredit > 0)
-                        Rp {{ number_format($akun->total_kredit, 0, ',', '.') }}
+                        Rp {{ number_format($akun->total_kredit, 2, ',', '.') }}
                     @else
                         <span class="text-gray-300 dark:text-gray-600">-</span>
                     @endif
@@ -43,10 +43,10 @@
             <tr class="border-t-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
                 <td colspan="3" class="px-5 py-3.5 text-sm font-bold text-gray-900 dark:text-white">Total</td>
                 <td class="px-4 py-3.5 text-right text-sm font-bold text-gray-900 dark:text-white">
-                    Rp {{ number_format($grandTotalDebit, 0, ',', '.') }}
+                    Rp {{ number_format($grandTotalDebit, 2, ',', '.') }}
                 </td>
                 <td class="px-4 py-3.5 text-right text-sm font-bold text-gray-900 dark:text-white">
-                    Rp {{ number_format($grandTotalKredit, 0, ',', '.') }}
+                    Rp {{ number_format($grandTotalKredit, 2, ',', '.') }}
                 </td>
             </tr>
         </tfoot>

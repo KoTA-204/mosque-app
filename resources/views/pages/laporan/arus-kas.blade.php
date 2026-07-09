@@ -3,7 +3,7 @@
 
 @php
     if (!function_exists('fmtAk')) {
-        function fmtAk($val) { return number_format(abs($val), 0, ',', '.'); }
+        function fmtAk($val) { return number_format(abs($val), 2, ',', '.'); }
     }
     if (!function_exists('signedAk')) {
         function signedAk($val) {

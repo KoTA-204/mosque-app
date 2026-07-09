@@ -61,9 +61,9 @@
         <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5">
             <p class="text-sm text-gray-500 dark:text-gray-400">Total Debit / Kredit</p>
             <p class="text-lg font-semibold text-gray-900 dark:text-white mt-1">
-                Rp {{ number_format($jurnalPembuka->total_debit, 0, ',', '.') }}
+                Rp {{ number_format($jurnalPembuka->total_debit, 2, ',', '.') }}
                 <span class="text-gray-400">/</span>
-                Rp {{ number_format($jurnalPembuka->total_kredit, 0, ',', '.') }}
+                Rp {{ number_format($jurnalPembuka->total_kredit, 2, ',', '.') }}
             </p>
             <p class="text-xs mt-1 {{ $jurnalPembuka->is_balance ? 'text-green-600' : 'text-amber-600' }}">
                 {{ $jurnalPembuka->is_balance ? 'Seimbang' : 'Belum seimbang' }}
@@ -103,8 +103,8 @@
                         <td class="px-4 py-3 text-center">
                             <span class="inline-flex w-5 h-5 items-center justify-center rounded text-xs font-bold {{ $d->tipe === 'DEBIT' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700' }}">{{ $d->tipe === 'DEBIT' ? 'D' : 'K' }}</span>
                         </td>
-                        <td class="px-4 py-3 text-right text-red-600 dark:text-red-400">{{ $d->tipe === 'DEBIT' ? 'Rp ' . number_format($d->nominal, 0, ',', '.') : '-' }}</td>
-                        <td class="px-4 py-3 text-right text-green-700 dark:text-green-400">{{ $d->tipe === 'KREDIT' ? 'Rp ' . number_format($d->nominal, 0, ',', '.') : '-' }}</td>
+                        <td class="px-4 py-3 text-right text-red-600 dark:text-red-400">{{ $d->tipe === 'DEBIT' ? 'Rp ' . number_format($d->nominal, 2, ',', '.') : '-' }}</td>
+                        <td class="px-4 py-3 text-right text-green-700 dark:text-green-400">{{ $d->tipe === 'KREDIT' ? 'Rp ' . number_format($d->nominal, 2, ',', '.') : '-' }}</td>
                     </tr>
                 @endforeach
                 </tbody>

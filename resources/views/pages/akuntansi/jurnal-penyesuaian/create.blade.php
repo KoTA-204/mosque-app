@@ -401,11 +401,14 @@ window.onAsetChange = function(rowId, asetId, selectEl) {
     balance.recalc();
 };
 
-window.syncDebitFromAset = function(rowId) {
-    const row   = detailRows.find(r => r.id === rowId);
-    if (!row || !row.aset_rows) return;
-    const total = row.aset_rows.reduce((sum, a) => sum + parseNominal(a.nominal), 0);
-    row.nominal = total > 0 ? total.toLocaleString('id-ID') : '';
+window.syncDebitFromAset = function (rowId) {
+    const debitRow = detailRows.find(r => r.id === rowId);
+    if (!debitRow || !debitRow.aset_rows) return;
+
+    const opsi = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+    const totalCents = debitRow.aset_rows
+        .reduce((s, a) => s + Math.round(parseNominal(a.nominal) * 100), 0);
+    debitRow.nominal = totalCents > 0 ? (totalCents / 100).toLocaleString('id-ID', opsi) : '';
 };
 
 window.updateNominalHidden = function(rowId) {

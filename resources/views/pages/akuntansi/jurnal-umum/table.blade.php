@@ -51,14 +51,14 @@
                     </td>
                     <td class="px-4 py-3.5 text-right">
                         @if($detail->tipe === 'DEBIT')
-                            <span class="text-gray-900 dark:text-white">Rp {{ number_format($detail->nominal, 0, ',', '.') }}</span>
+                            <span class="text-gray-900 dark:text-white">Rp {{ number_format($detail->nominal, 2, ',', '.') }}</span>
                         @else
                             <span class="text-gray-300 dark:text-gray-600">-</span>
                         @endif
                     </td>
                     <td class="px-4 py-3.5 text-right">
                         @if($detail->tipe === 'KREDIT')
-                            <span class="text-gray-900 dark:text-white">Rp {{ number_format($detail->nominal, 0, ',', '.') }}</span>
+                            <span class="text-gray-900 dark:text-white">Rp {{ number_format($detail->nominal, 2, ',', '.') }}</span>
                         @else
                             <span class="text-gray-300 dark:text-gray-600">-</span>
                         @endif
