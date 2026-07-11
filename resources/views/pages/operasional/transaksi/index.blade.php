@@ -495,6 +495,11 @@
 </x-modal>
 
 <script>
+// Permission untuk aksi hapus transaksi (dipakai oleh konfirmasiHapus()).
+// Sebelumnya variabel ini tidak pernah didefinisikan sehingga setiap klik
+// tombol Hapus memicu ReferenceError dan tombol terlihat tidak berfungsi.
+const CAN_HAPUS_TRANSAKSI = @json(auth()->user()->hasPermission('DELETE_TRANSAKSI'));
+
 function openModal(id) {
     const modal = document.getElementById(id);
     modal.classList.remove('hidden');
@@ -528,6 +533,9 @@ function editTransaksi(id) {
     const btn = document.querySelector(`button[onclick="editTransaksi(${id})"]`);
     if (btn) btn.classList.add('opacity-50', 'pointer-events-none');
 
+    currentEditId = id;                                       
+    document.getElementById('editDraftNotice')?.classList.add('hidden'); 
+    
     fetch(`/dashboard/transaksi/${id}`, {
         headers: {
             'Accept': 'application/json',
@@ -563,8 +571,7 @@ function editTransaksi(id) {
         setVal('deskripsi',         data.deskripsi);
 
         renderExistingBukti(data.bukti_transaksi ?? []);
-        document.getElementById('listBuktiEdit').innerHTML = '';
-        document.getElementById('inputBuktiEdit').value = '';
+        if (typeof resetBuktiEdit === 'function') resetBuktiEdit();
 
         // Isi ulang tabel jurnal dari jurnal_entries (multi akun debit/kredit)
         const tbody = document.getElementById('jurnalEditBody');
@@ -582,6 +589,8 @@ function editTransaksi(id) {
             buatBarisJurnal('jurnalEditBody', 'jurnalEdit', akunListEdit, 'KREDIT', '', jumlahAwal);
         }
         hitungTotalJurnal('jurnalEditBody', 'jurnalEdit');
+
+        pulihkanDraftEdit(id);
 
         openModal('modalEdit');
     })

@@ -5,6 +5,10 @@
     @csrf
     <input type="hidden" name="force" id="forceSubmit" value="0">
 
+    <div id="tambahDraftNotice" class="hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700 flex items-center justify-between">
+        <span>Draft sebelumnya berhasil dipulihkan. Bukti transaksi perlu diunggah ulang.</span>
+        <button type="button" onclick="document.getElementById('tambahDraftNotice').classList.add('hidden')" class="text-blue-400 hover:text-blue-600">&times;</button>
+    </div>
     <div class="grid grid-cols-2 gap-4 mb-4">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -108,8 +112,9 @@
                 <span class="font-medium text-green-700 underline">Pilih File</span>
                 atau tarik file bukti transaksi untuk diunggah disini
             </p>
-            <p class="text-xs text-gray-400 mt-1">.PNG, .JPG, .PDF</p>
+            <p class="text-xs text-gray-400 mt-1">.PNG, .JPG, .PDF &middot; maks. {{ config('transaksi.bukti_max_files', 5) }} file, masing-masing maks. {{ config('transaksi.bukti_max_size_mb', 5) }} MB</p>
         </div>
+        <p id="buktiError" class="hidden mt-1.5 text-xs text-red-500"></p>
         <input type="file" id="inputBukti" name="bukti_transaksi[]"
             accept=".png,.jpg,.jpeg,.pdf" multiple class="hidden"
             onchange="previewBukti(this.files)">
@@ -288,7 +293,7 @@
     </div>
 
     <div class="flex items-center justify-end gap-3 pt-2">
-        <button type="button" onclick="closeModal('modalTambah')"
+        <button type="button" onclick="hapusDraftTambah(); closeModal('modalTambah')"
             class="h-9 px-4 text-sm border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors">
             Batal
         </button>
@@ -311,6 +316,90 @@ const akunListTambah = {!! json_encode($akuns->map(fn($a) => [
     'is_zakat' => str_contains(strtolower($a->nama_akun), 'zakat'),
 ])) !!};
 
+// ── Draft Auto-save ────────────────────────────────
+const DRAFT_KEY_TAMBAH = 'draft_transaksi_tambah';
+
+function debounce(fn, delay) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
+}
+
+function kumpulkanDraftTambah() {
+    const jurnalRows = [];
+    document.querySelectorAll('#jurnalTambahBody tr').forEach(tr => {
+        jurnalRows.push({
+            akun_id: tr.querySelector('.jurnalAkun')?.value ?? '',
+            tipe:    tr.querySelector('.jurnalTipe')?.value ?? 'DEBIT',
+            nominal: tr.querySelector('.jurnalNominal')?.value ?? '',
+        });
+    });
+
+    return {
+        tanggal_transaksi: document.getElementById('inputTanggalTambah')?.value ?? '',
+        dompet_id:         document.querySelector('[name="dompet_id"]')?.value ?? '',
+        jenis_transaksi:   document.querySelector('[name="jenis_transaksi"]')?.value ?? '',
+        deskripsi:         document.querySelector('[name="deskripsi"]')?.value ?? '',
+        is_aset:           document.getElementById('tambahIsAset')?.value ?? '0',
+        jurnal:            jurnalRows,
+        savedAt:           Date.now(),
+    };
+}
+
+function simpanDraftTambah() {
+    try {
+        sessionStorage.setItem(DRAFT_KEY_TAMBAH, JSON.stringify(kumpulkanDraftTambah()));
+    } catch (e) {
+        console.warn('Gagal menyimpan draft:', e);
+    }
+}
+const simpanDraftTambahDebounced = debounce(simpanDraftTambah, 500);
+
+function hapusDraftTambah() {
+    sessionStorage.removeItem(DRAFT_KEY_TAMBAH);
+    resetBuktiTambah();
+}
+
+function pulihkanDraftTambah() {
+    const raw = sessionStorage.getItem(DRAFT_KEY_TAMBAH);
+    if (!raw) return false;
+
+    let draft;
+    try { draft = JSON.parse(raw); } catch { hapusDraftTambah(); return false; }
+
+    // Draft basi (lebih dari 24 jam) tidak dipulihkan
+    if (!draft.savedAt || (Date.now() - draft.savedAt) > 24 * 60 * 60 * 1000) {
+        hapusDraftTambah();
+        return false;
+    }
+
+    const adaIsi = draft.tanggal_transaksi || draft.dompet_id || draft.deskripsi ||
+        draft.jurnal?.some(r => r.akun_id || r.nominal);
+    if (!adaIsi) return false;
+
+    if (draft.tanggal_transaksi) fpTambahTanggal.setDate(draft.tanggal_transaksi, true);
+    if (draft.dompet_id) document.querySelector('[name="dompet_id"]').value = draft.dompet_id;
+    if (draft.jenis_transaksi) document.querySelector('[name="jenis_transaksi"]').value = draft.jenis_transaksi;
+    if (draft.deskripsi) document.querySelector('[name="deskripsi"]').value = draft.deskripsi;
+
+    document.getElementById('jurnalTambahBody').innerHTML = '';
+    if (Array.isArray(draft.jurnal) && draft.jurnal.length >= 2) {
+        draft.jurnal.forEach(row => {
+            buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah, row.tipe, row.akun_id, row.nominal);
+        });
+    } else {
+        buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah, 'DEBIT');
+        buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah, 'KREDIT');
+    }
+
+    if (draft.is_aset === '1' && !tambahAsetOn) tambahToggleAset();
+
+    checkZakatWarning('jurnalTambahBody', 'jurnalTambah');
+    hitungTotalJurnal('jurnalTambahBody', 'jurnalTambah');
+
+    document.getElementById('tambahDraftNotice')?.classList.remove('hidden');
+    return true;
+}
+
 function buatOpsiAkunHTML(akunList, selected = '') {
     let html = '<option value="">Pilih akun</option>';
     akunList.forEach(a => {
@@ -320,7 +409,7 @@ function buatOpsiAkunHTML(akunList, selected = '') {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    flatpickr('#inputTanggalTambah', {
+    fpTambahTanggal = flatpickr('#inputTanggalTambah', {
         dateFormat: 'Y-m-d',
         altInput: true,
         altFormat: 'd M Y',
@@ -338,13 +427,42 @@ document.addEventListener('DOMContentLoaded', function () {
         },
     });
 
-    // Default 1 baris debit + 1 baris kredit
-    buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah, 'DEBIT');
-    buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah, 'KREDIT');
-    checkZakatWarning('jurnalTambahBody', 'jurnalTambah');
+    const dipulihkan = pulihkanDraftTambah();
+
+    if (!dipulihkan) {
+        buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah, 'DEBIT');
+        buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah, 'KREDIT');
+        checkZakatWarning('jurnalTambahBody', 'jurnalTambah');
+    }
+
+    // Auto-save tiap ada perubahan input di form
+        window.addEventListener('offline', () => {
+        simpanDraftTambah();
+    });
 });
 
 // ── Jurnal dinamis (dipakai bersama oleh form Tambah & Edit) ───────────────
+
+// Format angka menjadi "1.000.000" (pemisah ribuan ala Indonesia).
+// Hanya digit yang dipertahankan, sehingga aman dipanggil berulang kali
+// saat pengguna mengetik.
+function formatRibuan(value) {
+    const digits = String(value ?? '').replace(/\D/g, '');
+    if (!digits) return '';
+    return parseInt(digits, 10).toLocaleString('id-ID');
+}
+
+// Ambil kembali angka murni (tanpa titik pemisah ribuan) dari input nominal.
+function parseRibuan(value) {
+    const digits = String(value ?? '').replace(/\D/g, '');
+    return digits ? parseInt(digits, 10) : 0;
+}
+
+// Diikat ke event "input" pada field nominal: memformat ulang nilai sambil
+// mempertahankan posisi kursor secara wajar (kursor diletakkan di akhir).
+function formatInputNominal(input) {
+    input.value = formatRibuan(input.value);
+}
 
 function buatBarisJurnal(tbodyId, prefix, akunList, tipe = 'DEBIT', akunId = '', nominal = '') {
     const tbody = document.getElementById(tbodyId);
@@ -367,8 +485,8 @@ function buatBarisJurnal(tbodyId, prefix, akunList, tipe = 'DEBIT', akunId = '',
         <td class="px-3 py-2">
             <div class="relative">
                 <span class="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">Rp</span>
-                <input type="number" min="1" value="${nominal}"
-                    oninput="hitungTotalJurnal('${tbodyId}', '${prefix}')"
+                <input type="text" inputmode="numeric" value="${formatRibuan(nominal)}"
+                    oninput="formatInputNominal(this); hitungTotalJurnal('${tbodyId}', '${prefix}')"
                     class="jurnalNominal w-full h-9 pl-7 pr-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500">
             </div>
         </td>
@@ -400,7 +518,7 @@ function hitungTotalJurnal(tbodyId, prefix) {
     let totalDebit = 0, totalKredit = 0;
     tbody.querySelectorAll('tr').forEach(tr => {
         const tipe    = tr.querySelector('.jurnalTipe').value;
-        const nominal = parseFloat(tr.querySelector('.jurnalNominal').value) || 0;
+        const nominal = parseRibuan(tr.querySelector('.jurnalNominal').value);
         if (tipe === 'DEBIT') totalDebit += nominal; else totalKredit += nominal;
     });
 
@@ -471,10 +589,48 @@ function tambahToggleAset() {
     }
 }
 
-function previewBukti(files) {
+// Batas unggah bukti transaksi. Sesuaikan dengan aturan validasi di
+// StoreTransaksiRequest/UpdateTransaksiRequest agar pesan di UI konsisten
+// dengan yang benar-benar diterapkan di server.
+const BUKTI_MAX_FILES   = {{ config('transaksi.bukti_max_files', 5) }};
+const BUKTI_MAX_SIZE_MB = {{ config('transaksi.bukti_max_size_mb', 5) }};
+
+// Validasi jumlah & ukuran file bukti transaksi di sisi klien.
+// Mengembalikan pesan error (string) jika tidak valid, atau null jika valid.
+function validasiBukti(files) {
+    if (files.length > BUKTI_MAX_FILES) {
+        return `Maksimal ${BUKTI_MAX_FILES} file bukti transaksi yang dapat diunggah.`;
+    }
+    const tooBig = [...files].find(f => f.size > BUKTI_MAX_SIZE_MB * 1024 * 1024);
+    if (tooBig) {
+        return `Ukuran file "${tooBig.name}" melebihi maksimal ${BUKTI_MAX_SIZE_MB} MB.`;
+    }
+    return null;
+}
+
+// Menyimpan seluruh file bukti transaksi yang sudah dipilih (akumulatif),
+// karena memilih file baru lewat <input type=file> akan MENGGANTI seluruh
+// FileList sebelumnya, bukan menambahkannya. Array inilah sumber kebenaran,
+// lalu disinkronkan kembali ke input via DataTransfer sebelum submit.
+let buktiFilesTambah = [];
+
+function resetBuktiTambah() {
+    buktiFilesTambah = [];
+    document.getElementById('inputBukti').value = '';
+    document.getElementById('listBukti').innerHTML = '';
+    document.getElementById('buktiError').classList.add('hidden');
+}
+
+function sinkronInputBukti() {
+    const dt = new DataTransfer();
+    buktiFilesTambah.forEach(f => dt.items.add(f));
+    document.getElementById('inputBukti').files = dt.files;
+}
+
+function renderListBukti() {
     const list = document.getElementById('listBukti');
     list.innerHTML = '';
-    [...files].forEach(f => {
+    buktiFilesTambah.forEach((f, idx) => {
         list.insertAdjacentHTML('beforeend', `
             <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">
                 <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -483,17 +639,51 @@ function previewBukti(files) {
                 </svg>
                 <span class="flex-1 truncate">${f.name}</span>
                 <span class="text-xs text-gray-400">${(f.size/1024).toFixed(0)} KB</span>
+                <button type="button" onclick="hapusBuktiTambah(${idx})" title="Hapus file"
+                    class="text-gray-400 hover:text-red-500 flex-shrink-0">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
             </div>
         `);
     });
 }
 
+function hapusBuktiTambah(idx) {
+    buktiFilesTambah.splice(idx, 1);
+    sinkronInputBukti();
+    renderListBukti();
+}
+
+// Dipanggil saat file dipilih lewat dialog (input change) maupun drag & drop.
+// File baru DITAMBAHKAN ke seleksi yang sudah ada, bukan menggantinya.
+function tambahBuktiFiles(newFiles) {
+    const errEl = document.getElementById('buktiError');
+
+    const gabungan = [...buktiFilesTambah, ...newFiles];
+    const pesanError = validasiBukti(gabungan);
+    if (pesanError) {
+        errEl.textContent = pesanError;
+        errEl.classList.remove('hidden');
+        // Kembalikan input ke seleksi lama yang masih valid (jangan hapus semua).
+        sinkronInputBukti();
+        return;
+    }
+    errEl.classList.add('hidden');
+
+    buktiFilesTambah = gabungan;
+    sinkronInputBukti();
+    renderListBukti();
+}
+
+function previewBukti(files) {
+    tambahBuktiFiles([...files]);
+}
+
 function handleDropBukti(e) {
     e.preventDefault();
-    const dt = new DataTransfer();
-    [...e.dataTransfer.files].forEach(f => dt.items.add(f));
-    document.getElementById('inputBukti').files = dt.files;
-    previewBukti(dt.files);
+    tambahBuktiFiles([...e.dataTransfer.files]);
 }
 
 function previewDokumen(input) {
@@ -532,7 +722,7 @@ async function submitTambah(force = false) {
         document.querySelectorAll('#jurnalTambahBody tr').forEach(tr => {
             fd.append(`jurnal[${idx}][akun_id]`, tr.querySelector('.jurnalAkun').value);
             fd.append(`jurnal[${idx}][tipe]`,    tr.querySelector('.jurnalTipe').value);
-            fd.append(`jurnal[${idx}][nominal]`, tr.querySelector('.jurnalNominal').value);
+            fd.append(`jurnal[${idx}][nominal]`, parseRibuan(tr.querySelector('.jurnalNominal').value));
             idx++;
         });
 
@@ -556,6 +746,7 @@ async function submitTambah(force = false) {
         const data = await res.json();
 
         if (data.success) {
+            hapusDraftTambah();
             closeModal('modalTambah');
             sessionStorage.setItem('alert', JSON.stringify({
                 type: 'success',
@@ -582,6 +773,7 @@ async function submitTambah(force = false) {
         } else if (res.status === 403) {
             errList.insertAdjacentHTML('beforeend', `<li>Anda tidak memiliki hak akses untuk mencatat transaksi.</li>`);
             errBox.classList.remove('hidden');
+            hapusDraftTambah();
             closeModal('modalTambah');
             sessionStorage.setItem('alert', JSON.stringify({
                 type: 'error',
@@ -593,14 +785,9 @@ async function submitTambah(force = false) {
             errList.insertAdjacentHTML('beforeend', `<li>${data.message ?? 'Terjadi kesalahan.'}</li>`);
             errBox.classList.remove('hidden');
         }
-    }catch (error) {
-        console.error(error);
-
-        errList.insertAdjacentHTML(
-            'beforeend',
-            `<li>${error.message}</li>`
-        );
-
+    } catch (error) {
+        console.error('submitTambah error:', error);
+        errList.insertAdjacentHTML('beforeend', `<li>Gagal menghubungi server. Silakan coba lagi.</li>`);
         errBox.classList.remove('hidden');
     } finally {
         btn.disabled = false;

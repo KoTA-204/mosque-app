@@ -1,5 +1,9 @@
 <div id="imporState" data-state="upload">
     <div id="imporStateUpload">
+        <div id="imporDraftNotice" class="hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700 flex items-center justify-between">
+            <span>Pilihan sebelumnya berhasil dipulihkan. File perlu dipilih ulang.</span>
+            <button type="button" onclick="document.getElementById('imporDraftNotice').classList.add('hidden')" class="text-blue-400 hover:text-blue-600">&times;</button>
+        </div>
         <form id="formImpor" enctype="multipart/form-data">
             @csrf
 
@@ -53,9 +57,10 @@
                             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                     </svg>
                     <p class="text-sm text-gray-500">
-                        <span class="font-semibold text-green-700 underline">Pilih File Excel/CSV/PDF</span>
+                        <span class="font-semibold text-green-700 underline">Pilih File atau tarik file Excel/CSV/PDF mutasi bank </span>
                     </p>
-                    <p class="text-xs text-gray-400 mt-1">atau tarik file Excel/CSV/PDF mutasi bank untuk diunggah disini</p>
+                    <p class="text-xs text-gray-400 mt-1">Format file: .xlsx, .xls, .csv, .pdf</p>
+                    <p class="text-xs text-gray-400 mt-1">Maksimum ukuran file: 10MB</p>
                     <p id="namaFileImpor" class="text-xs text-green-700 font-medium mt-2 hidden"></p>
                 </div>
                 <input type="file" id="inputFileImpor" name="file"
@@ -129,6 +134,81 @@
 </div>
 
 <script>
+// ── Draft Auto-save (NFR Recoverability) ────────────────────────────────
+const DRAFT_KEY_IMPOR = 'draft_transaksi_impor';
+
+if (typeof debounce === 'undefined') {
+    function debounce(fn, delay) {
+        let t;
+        return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
+    }
+}
+
+function kumpulkanDraftImpor() {
+    const f = document.getElementById('formImpor');
+    return {
+        bank:             f.querySelector('[name="bank"]')?.value ?? '',
+        jenis_transaksi:  f.querySelector('[name="jenis_transaksi"]')?.value ?? '',
+        dompet_id:        f.querySelector('[name="dompet_id"]')?.value ?? '',
+        savedAt:          Date.now(),
+    };
+}
+
+function simpanDraftImpor() {
+    try {
+        sessionStorage.setItem(DRAFT_KEY_IMPOR, JSON.stringify(kumpulkanDraftImpor()));
+    } catch (e) {
+        console.warn('Gagal menyimpan draft impor:', e);
+    }
+}
+const simpanDraftImporDebounced = debounce(simpanDraftImpor, 500);
+
+function hapusDraftImpor() {
+    sessionStorage.removeItem(DRAFT_KEY_IMPOR);
+}
+
+function pulihkanDraftImpor() {
+    const raw = sessionStorage.getItem(DRAFT_KEY_IMPOR);
+    if (!raw) return false;
+
+    let draft;
+    try { draft = JSON.parse(raw); } catch { hapusDraftImpor(); return false; }
+
+    if (!draft.savedAt || (Date.now() - draft.savedAt) > 24 * 60 * 60 * 1000) {
+        hapusDraftImpor();
+        return false;
+    }
+
+    const adaIsi = draft.bank || draft.jenis_transaksi || draft.dompet_id;
+    if (!adaIsi) return false;
+
+    const f = document.getElementById('formImpor');
+    if (draft.bank)            f.querySelector('[name="bank"]').value = draft.bank;
+    if (draft.jenis_transaksi) f.querySelector('[name="jenis_transaksi"]').value = draft.jenis_transaksi;
+    if (draft.dompet_id)       f.querySelector('[name="dompet_id"]').value = draft.dompet_id;
+
+    document.getElementById('imporDraftNotice')?.classList.remove('hidden');
+    return true;
+}
+
+function bukaModalImpor() {
+    document.getElementById('imporStateSukses')?.classList.add('hidden');
+    document.getElementById('imporStateGagal')?.classList.add('hidden');
+    document.getElementById('imporStateUpload')?.classList.remove('hidden');
+    document.getElementById('imporErrorBox')?.classList.add('hidden');
+    document.getElementById('imporDraftNotice')?.classList.add('hidden');
+
+    const dipulihkan = pulihkanDraftImpor();
+    if (!dipulihkan) {
+        resetImpor();
+    }
+    openModal('modalImpor');
+}
+
+window.addEventListener('offline', () => {
+    simpanDraftImpor();
+});
+
 // Reset seluruh isian form impor + state tampilan ke kondisi awal.
 // Dipanggil saat modal dibuka dan saat tombol "Coba Lagi" ditekan,
 // agar data dari percobaan impor sebelumnya tidak tertinggal.
@@ -212,6 +292,7 @@ async function submitImpor() {
         const data = await res.json();
 
         if (data.success && data.type === 'parse_success') {
+            hapusDraftImpor();
             document.getElementById('statTotal').textContent    = data.stats.total;
             document.getElementById('statDuplikat').textContent = data.stats.duplikat;
             document.getElementById('statBersih').textContent   = data.stats.bersih;
@@ -223,6 +304,7 @@ async function submitImpor() {
             imporSetState('gagal');
         }
     } catch {
+        simpanDraftImpor();
         document.getElementById('pesanGagal').textContent = 'Gagal menghubungi server.';
         imporSetState('gagal');
     } finally {
