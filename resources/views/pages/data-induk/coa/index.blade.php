@@ -234,6 +234,7 @@
                                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                         </svg>
                                     </button>
+                                    @if($kat->akunKeuangan->isEmpty())
                                     <form method="POST" action="{{ route('dashboard.coa.kategori.destroy', $kat) }}"
                                             data-confirm="Hapus kategori {{ $kat->nama_kategori }}?" data-confirm-label="Hapus">
                                         @csrf @method('DELETE')
@@ -246,6 +247,7 @@
                                             </svg>
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </div>
                         </td>
@@ -282,6 +284,7 @@
                                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                         </svg>
                                     </button>
+                                    @if($subKat->children->isEmpty() && !in_array($subKat->id, $akunIdsTerpakai))
                                     <form method="POST" action="{{ route('dashboard.coa.sub-kategori.destroy', $subKat) }}"
                                             data-confirm="Hapus sub kategori {{ $subKat->nama_akun }}?" data-confirm-label="Hapus">
                                         @csrf @method('DELETE')
@@ -294,6 +297,7 @@
                                             </svg>
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -347,7 +351,8 @@
                                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                         </svg>
                                     </button>
-                                    <form method="POST" action="{{ route('dashboard.coa.akun.destroy', $akun) }}"
+                                    @if($akun->children->isEmpty() && !in_array($akun->id, $akunIdsTerpakai))
+                                    <form method="POST" action="{{ route('dashboard.coa.akun.destroy', $akun) }}" 
                                             data-confirm="Hapus akun {{ $akun->nama_akun }}?" data-confirm-label="Hapus">
                                         @csrf @method('DELETE')
                                         <button
@@ -359,6 +364,7 @@
                                             </svg>
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

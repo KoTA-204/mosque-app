@@ -48,18 +48,12 @@
 
     <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-            Kode Sub Kategori <span class="text-red-500">*</span>
+            Kode Sub Kategori
         </label>
 
-        <input type="text" name="kode_akun" value="{{ ($isTarget ? old('kode_akun') : '') }}" placeholder="Contoh: 1-1000" class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
-            {{ $errors->has('kode_akun')
-                ? 'border-red-400'
-                : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }}
-            bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400">
-
-        @error('kode_akun')
-        <p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>
-        @enderror
+        <input type="text" id="kodeSubKategoriPreview" value="" readonly disabled
+            placeholder="Pilih kategori terlebih dahulu"
+            class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed">
     </div>
 
     {{-- Nama Sub Kategori --}}
@@ -120,3 +114,20 @@
     </button>
 </form>
 </x-modal>
+
+<script>
+    (function () {
+        const nextKodeSubKategori = @json($nextKodeSubKategori);
+        const kategoriSelect = document.querySelector('#createSubKategoriModal select[name="kategori_akun_id"]');
+        const preview = document.getElementById('kodeSubKategoriPreview');
+
+        function updatePreview() {
+            preview.value = nextKodeSubKategori[kategoriSelect.value] || '';
+        }
+
+        if (kategoriSelect) {
+            kategoriSelect.addEventListener('change', updatePreview);
+            updatePreview();
+        }
+    })();
+</script>

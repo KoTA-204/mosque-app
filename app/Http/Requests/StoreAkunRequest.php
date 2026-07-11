@@ -23,7 +23,6 @@ class StoreAkunRequest extends FormRequest
     {
         return [
             'parent_id'    => 'required|exists:akun,id',
-            'kode_akun'    => 'required|string|max:20|unique:akun,kode_akun',
             'nama_akun'    => 'required|string|max:150',
             'saldo_normal' => 'required|in:DEBIT,KREDIT',
             'deskripsi'    => 'nullable|string',
@@ -35,8 +34,6 @@ class StoreAkunRequest extends FormRequest
     {
         return [
             'parent_id.required'    => 'Sub kategori wajib dipilih.',
-            'kode_akun.required'    => 'Nomor akun wajib diisi.',
-            'kode_akun.unique'      => 'Nomor akun sudah digunakan.',
             'nama_akun.required'    => 'Nama akun wajib diisi.',
             'saldo_normal.required' => 'Saldo normal wajib dipilih.',
             'deskripsi.string'      => 'Deskripsi harus berupa teks.',
