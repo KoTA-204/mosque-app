@@ -2,7 +2,7 @@
     id="createAkunModal"
     title="Tambah Akun"
 >
-<form method="POST"
+<form id="formCreateAkun" method="POST"
         action="{{ route('dashboard.coa.akun.store') }}"
         class="space-y-5">
     @csrf
@@ -12,42 +12,6 @@
         $isTarget = old('_form') === 'akun';
         $errors = $isTarget ? $errors : new \Illuminate\Support\ViewErrorBag;
     @endphp
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Nomor Akun <span class="text-red-500">*</span>
-            </label>
-
-            <input type="text" name="kode_akun" value="{{ ($isTarget ? old('kode_akun') : '') }}" placeholder="Contoh 1-1001" class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
-                {{ $errors->has('kode_akun')
-                    ? 'border-red-400'
-                    : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }}
-                bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
-            >
-
-            @error('kode_akun')
-            <p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>
-            @enderror
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Nama Akun <span class="text-red-500">*</span>
-            </label>
-
-            <input type="text" name="nama_akun" value="{{ ($isTarget ? old('nama_akun') : '') }}" placeholder="Kas Kecil"
-                class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
-                {{ $errors->has('nama_akun')
-                    ? 'border-red-400'
-                    : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }}
-                bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400">
-
-            @error('nama_akun')
-            <p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>
-            @enderror
-        </div>
-    </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -80,6 +44,35 @@
             </div>
 
             @error('parent_id')
+            <p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>
+            @enderror
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Nomor Akun
+            </label>
+
+            <input type="text" id="kodeAkunPreview" value="" readonly disabled
+                placeholder="Pilih sub kategori terlebih dahulu"
+                class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed">
+
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Nama Akun <span class="text-red-500">*</span>
+            </label>
+
+            <input type="text" name="nama_akun" value="{{ ($isTarget ? old('nama_akun') : '') }}" placeholder="Kas Kecil"
+                class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors
+                {{ $errors->has('nama_akun')
+                    ? 'border-red-400'
+                    : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }}
+                bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400">
+
+            @error('nama_akun')
             <p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>
             @enderror
         </div>
@@ -154,4 +147,21 @@
         </button>
     </div>
 </form>
+
+<script>
+    (function () {
+        const nextKodeAkun = @json($nextKodeAkun);
+        const parentSelect = document.querySelector('#createAkunModal select[name="parent_id"]');
+        const preview = document.getElementById('kodeAkunPreview');
+
+        function updatePreview() {
+            preview.value = nextKodeAkun[parentSelect.value] || '';
+        }
+
+        if (parentSelect) {
+            parentSelect.addEventListener('change', updatePreview);
+            updatePreview();
+        }
+    })();
+</script>
 </x-modal>

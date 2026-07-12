@@ -86,13 +86,34 @@ class ChartOfAccountController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        $akunIds = $kategori->getCollection()
+            ->flatMap(fn ($kat) => $kat->akunKeuangan)
+            ->flatMap(fn ($sub) => collect([$sub->id])->merge($sub->children->pluck('id')))
+            ->all();
+
+        $akunIdsTerpakai = DetailJurnal::whereIn('akun_id', $akunIds)
+            ->distinct()
+            ->pluck('akun_id')
+            ->all();
+
+        $nextKodeSubKategori = $allKategori->mapWithKeys(
+            fn ($kat) => [$kat->id => $this->generateKodeSubKategori($kat->id)]
+        );
+
+        $nextKodeAkun = $subKategoriList->mapWithKeys(
+            fn ($sub) => [$sub->id => $this->generateKodeAkun($sub)]
+        );
+
         return view('pages.data-induk.coa.index', compact(
             'totalKategori',
             'totalSubKategori',
             'totalAkun',
             'kategori',
             'subKategoriList',
-            'allKategori'
+            'allKategori',
+            'akunIdsTerpakai',
+            'nextKodeSubKategori',
+            'nextKodeAkun'
         ));
     }
 
@@ -119,9 +140,6 @@ class ChartOfAccountController extends Controller
 
     public function perbaruiKategoriAkun(UpdateKategoriRequest $request, KategoriAkun $kategori)
     {
-        // Kategori yang sudah memiliki sub kategori/akun turunan TIDAK boleh diubah
-        // sama sekali (seluruh field terkunci) demi menjaga integritas struktur &
-        // penomoran CoA. Aturan ini konsisten dengan larangan hapus saat masih punya anak.
         if ($kategori->akunKeuangan()->exists()) {
             return redirect()
                 ->route('dashboard.coa.index')
@@ -175,9 +193,12 @@ class ChartOfAccountController extends Controller
 
     public function simpanSubKategoriBaru(StoreSubKategoriRequest $request)
     {
+        $data = $request->validated();
+        $data['kode_akun'] = $this->generateKodeSubKategori($data['kategori_akun_id']);
+
         Akun::create([
-            ...$request->validated(),
-            'parent_id'    => null,
+            ...$data,
+            'parent_id' => null,
         ]);
 
         return redirect()
@@ -206,8 +227,6 @@ class ChartOfAccountController extends Controller
 
     public function perbaruiSubKategori(UpdateSubKategoriRequest $request, Akun $subKategori)
     {
-        // Sub kategori yang sudah memiliki akun turunan TIDAK boleh diubah sama
-        // sekali (seluruh field terkunci) demi menjaga integritas struktur CoA.
         if ($subKategori->children()->exists()) {
             return redirect()
                 ->route('dashboard.coa.index')
@@ -216,8 +235,6 @@ class ChartOfAccountController extends Controller
 
         $data = $request->validated();
 
-        // Sub kategori bukan akun postable (tidak pernah dipakai di pencatatan
-        // transaksi), sehingga tidak ada penguncian berbasis jurnal di sini.
         $subKategori->update($data);
 
         return redirect()
@@ -240,7 +257,7 @@ class ChartOfAccountController extends Controller
                 );
             }
 
-            // Tolak hapus bila sub kategori sudah dipakai pada transaksi (jurnal).
+            // Tolak hapus 
             if (DetailJurnal::where('akun_id', $subKategori->id)->exists()) {
                 return back()->with(
                     'error',
@@ -278,10 +295,13 @@ class ChartOfAccountController extends Controller
 
     public function simpanAkunBaru(StoreAkunRequest $request)
     {
-        $subKategori = Akun::findOrFail($request->parent_id);
+        $data = $request->validated();
+        $subKategori = Akun::findOrFail($data['parent_id']);
+
+        $data['kode_akun'] = $this->generateKodeAkun($subKategori);
 
         Akun::create([
-            ...$request->validated(),
+            ...$data,
             'kategori_akun_id' => $subKategori->kategori_akun_id,
         ]);
 
@@ -311,10 +331,7 @@ class ChartOfAccountController extends Controller
     public function perbaruiAkun(UpdateAkunRequest $request, Akun $akun)
     {
         $data = $request->validated();
-
-        // Akun yang sudah dipakai pada transaksi (jurnal) HANYA boleh mengubah status.
-        // Seluruh atribut identitas & struktur (kode, nama, saldo, induk, deskripsi)
-        // dikunci demi menjaga integritas jurnal yang sudah tercatat.
+        
         if (DetailJurnal::where('akun_id', $akun->id)->exists()) {
             $data = ['status' => $data['status']];
         } else {
@@ -336,7 +353,6 @@ class ChartOfAccountController extends Controller
         }
 
         try {
-            // Akun tidak boleh dihapus bila sudah dipakai pada transaksi (jurnal).
             if (DetailJurnal::where('akun_id', $akun->id)->exists()) {
                 return back()->with(
                     'error',
@@ -344,7 +360,6 @@ class ChartOfAccountController extends Controller
                 );
             }
 
-            // Akun yang masih memiliki sub akun juga tidak boleh dihapus.
             if ($akun->children()->exists()) {
                 return back()->with(
                     'error',
@@ -358,5 +373,37 @@ class ChartOfAccountController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Akun tidak dapat dihapus karena masih digunakan.');
         }
+    }
+
+    // Helper: generate kode otomatis 
+
+    private function generateKodeSubKategori(int $kategoriId): string
+    {
+        $kategori = KategoriAkun::findOrFail($kategoriId);
+
+        $last = Akun::whereNull('parent_id')
+            ->where('kategori_akun_id', $kategoriId)
+            ->get()
+            ->map(fn ($akun) => (int) substr($akun->kode_akun, strpos($akun->kode_akun, '-') + 1))
+            ->max();
+
+        $next = $last ? $last + 1000 : 1000;
+
+        return $kategori->kode_kategori . '-' . str_pad($next, 4, '0', STR_PAD_LEFT);
+    }
+
+    private function generateKodeAkun(Akun $subKategori): string
+    {
+        $last = Akun::where('parent_id', $subKategori->id)
+            ->get()
+            ->map(fn ($akun) => (int) substr($akun->kode_akun, strpos($akun->kode_akun, '-') + 1))
+            ->max();
+
+        $prefix = substr($subKategori->kode_akun, 0, strpos($subKategori->kode_akun, '-'));
+        $base   = (int) substr($subKategori->kode_akun, strpos($subKategori->kode_akun, '-') + 1);
+
+        $next = $last ? $last + 1 : $base + 1;
+
+        return $prefix . '-' . str_pad($next, 4, '0', STR_PAD_LEFT);
     }
 }

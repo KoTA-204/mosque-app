@@ -3,34 +3,37 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\NamaMiripRule;
 
 class UpdateSubKategoriRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
-        $subKategoriId = $this->route('subKategori')->id;
+        $subKategori   = $this->route('subKategori');
+        $subKategoriId = $subKategori->id;
+
+        $kategoriId = $this->input('kategori_akun_id', $subKategori->kategori_akun_id);
 
         return [
             'kategori_akun_id' => 'sometimes|required|exists:kategori_akun,id',
             'kode_akun'        => 'required|string|max:20|unique:akun,kode_akun,' . $subKategoriId,
-            'nama_akun'        => 'required|string|max:150',
+            'nama_akun'        => [
+                'required', 'string',
+                new NamaMiripRule(
+                    level: 'subkategori',
+                    scopeId: $kategoriId,
+                    exceptId: $subKategoriId,
+                ),
+            ],
             'saldo_normal'     => 'sometimes|required|in:DEBIT,KREDIT',
         ];
     }
- 
+
     public function messages(): array
     {
         return [
