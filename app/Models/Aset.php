@@ -142,7 +142,7 @@ class Aset extends Model
     public function hitungPenyusutanPerBulan(): float
     {
         if (! $this->umur_manfaat || $this->umur_manfaat <= 0) return 0;
-        return (float) $this->nilai_tercatat / ($this->umur_manfaat * 12);
+        return round((float) $this->nilai_tercatat / ($this->umur_manfaat * 12), 2);;
     }
 
     // akumulasi penyusutan real-time

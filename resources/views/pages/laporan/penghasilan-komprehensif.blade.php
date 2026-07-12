@@ -4,7 +4,7 @@
 
 @php
     if (!function_exists('fmt')) {
-        function fmt($val) { return number_format(abs($val), 0, ',', '.'); }
+        function fmt($val) { return number_format(abs($val), 2, ',', '.'); }
     }
     if (!function_exists('signed')) {
         function signed($val) {

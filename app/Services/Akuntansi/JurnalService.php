@@ -39,10 +39,9 @@ abstract class JurnalService
     protected function parseNominal(mixed $raw): float
     {
         if (is_string($raw)) {
-            return (float) str_replace(['.', ','], ['', '.'], $raw);
+            $raw = str_replace(['.', ','], ['', '.'], $raw);
         }
-
-        return (float) ($raw ?? 0);
+        return round((float) ($raw ?? 0), 2);
     }
 
     // ── Mencatat baris detail (Creator: Jurnal yang mencipta) ─────────────
@@ -65,10 +64,9 @@ abstract class JurnalService
 
     public function isBalanced(Jurnal $jurnal): bool
     {
-        $totalDebit  = $jurnal->detailJurnal->where('tipe', 'DEBIT')->sum('nominal');
-        $totalKredit = $jurnal->detailJurnal->where('tipe', 'KREDIT')->sum('nominal');
-
-        return abs($totalDebit - $totalKredit) < 0.01;
+        $debit  = (int) round($jurnal->detailJurnal->where('tipe', 'DEBIT')->sum('nominal')  * 100);
+        $kredit = (int) round($jurnal->detailJurnal->where('tipe', 'KREDIT')->sum('nominal') * 100);
+        return $debit > 0 && $debit === $kredit;
     }
 
     /**
@@ -78,15 +76,13 @@ abstract class JurnalService
      */
     public function isDetailSeimbang(array $detail): bool
     {
-        $totalDebit = $totalKredit = 0;
-
+        $debit = $kredit = 0;
         foreach ($detail as $row) {
-            $nominal = $this->parseNominal($row['nominal'] ?? 0);
-            if (($row['tipe'] ?? null) === 'DEBIT')  $totalDebit  += $nominal;
-            if (($row['tipe'] ?? null) === 'KREDIT') $totalKredit += $nominal;
+            $c = (int) round($this->parseNominal($row['nominal'] ?? 0) * 100);
+            if (($row['tipe'] ?? null) === 'DEBIT')  $debit  += $c;
+            if (($row['tipe'] ?? null) === 'KREDIT') $kredit += $c;
         }
-
-        return abs($totalDebit - $totalKredit) < 0.01;
+        return $debit > 0 && $debit === $kredit;
     }
 
     // ── Posting ke buku besar (Template Method) ──────────────────────

@@ -249,7 +249,6 @@ class JurnalPenyesuaianService extends JurnalService
 
             $nilaiBuku = max((float) $aset->nilai_tercatat - (float) ($aset->akumulasi_penyusutan ?? 0), 0);
 
-            // Jurnal sebagai Creator dari tautan aset (Creator).
             $jurnal->lampirkanAset((int) $aset->id, $nilaiBuku);
         }
     }

@@ -135,11 +135,11 @@
                         </td>
                         <td class="px-4 py-3.5 text-right font-medium text-gray-800 dark:text-gray-200 cursor-pointer"
                             onclick="showDrawer('/dashboard/jurnal-penyesuaian/{{ $item->id }}')">
-                            Rp {{ number_format($totalDebit, 0, ',', '.') }}
+                            Rp {{ number_format($totalDebit, 2, ',', '.') }}
                         </td>
                         <td class="px-4 py-3.5 text-right font-medium text-gray-800 dark:text-gray-200 cursor-pointer"
                             onclick="showDrawer('/dashboard/jurnal-penyesuaian/{{ $item->id }}')">
-                            Rp {{ number_format($totalKredit, 0, ',', '.') }}
+                            Rp {{ number_format($totalKredit, 2, ',', '.') }}
                         </td>
                         <td class="px-4 py-3.5 text-center cursor-pointer"
                             onclick="showDrawer('/dashboard/jurnal-penyesuaian/{{ $item->id }}')">
