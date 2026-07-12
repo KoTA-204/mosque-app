@@ -90,29 +90,17 @@ class JurnalPembukaController extends Controller
         ]);
     }
 
-    /** Form edit. Boleh diubah hanya jika belum diposting & belum ada transaksi turunan. */
+    // Boleh diubah hanya jika belum diposting & belum ada transaksi turunan.
     public function ubahJurnalPembuka(Jurnal $jurnalPembuka)
     {
         if (! $this->service->dapatDiubah($jurnalPembuka, $alasan)) {
-            return redirect()->route('dashboard.jurnal-pembuka.index')
-                ->with('error', $alasan);
+            return redirect()->route('dashboard.jurnal-pembuka.index')->with('error', $alasan);
         }
 
         $jurnalPembuka->load(['periode', 'detailJurnal.akun']);
         $akuns = $this->service->getAkunTransaksional();
 
-        // Periode yang sedang dipakai jurnal ini tetap boleh dipilih ulang
-        // walau bulannya sudah lewat, supaya user tidak terkunci dari datanya sendiri.
-        $periodeAktifSaatIni = optional($jurnalPembuka->tanggal)->format('Y-m');
-        $tahunTampil         = optional($jurnalPembuka->tanggal)->format('Y') ?: now()->year;
-
-        $opsiPeriode = $this->service->getOpsiPeriodeBulan(
-            (int) $tahunTampil,
-            blokirPeriodeLalu: true,
-            periodeAktifSaatIni: $periodeAktifSaatIni
-        );
-
-        return view('pages.akuntansi.jurnal-pembuka.edit', compact('jurnalPembuka', 'akuns', 'opsiPeriode'));
+        return view('pages.akuntansi.jurnal-pembuka.edit', compact('jurnalPembuka', 'akuns'));
     }
 
     /** Perbarui saldo awal. Periode dihitung ulang di service. */

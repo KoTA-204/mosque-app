@@ -146,6 +146,10 @@ let fpEditTanggal;
 // ── Draft Auto-save per transaksi ──────────────────
 let currentEditId = null;
 
+// Sama seperti di form Tambah: mencegah 'beforeunload' menuliskan ulang
+// draft yang baru saja sengaja dihapus (submit sukses atau X/Batal).
+let editDraftDibatalkan = false;
+
 if (typeof debounce === 'undefined') {
     function debounce(fn, delay) {
         let t;
@@ -174,7 +178,7 @@ function kumpulkanDraftEdit() {
 }
 
 function simpanDraftEdit() {
-    if (!currentEditId) return;
+    if (!currentEditId || editDraftDibatalkan) return;
     try {
         sessionStorage.setItem(`draft_transaksi_edit_${currentEditId}`, JSON.stringify(kumpulkanDraftEdit()));
     } catch (e) {
@@ -185,6 +189,7 @@ const simpanDraftEditDebounced = debounce(simpanDraftEdit, 500);
 
 function hapusDraftEdit(id) {
     if (id) sessionStorage.removeItem(`draft_transaksi_edit_${id}`);
+    editDraftDibatalkan = true;
 }
 
 function pulihkanDraftEdit(id) {
@@ -236,7 +241,20 @@ document.addEventListener('DOMContentLoaded', function () {
         },
     });
 
-        window.addEventListener('offline', () => {
+    // Auto-save setiap ada perubahan input di form (delegasi di level form,
+    // termasuk baris jurnal yang dibuat dinamis). simpanDraftEdit() sendiri
+    // sudah menjaga diri lewat guard `if (!currentEditId) return;` sehingga
+    // aman didaftarkan sekali di sini walau modal Edit belum dibuka.
+    // Sebelumnya draft hanya tersimpan saat event 'offline' terpicu, sehingga
+    // refresh halaman biasa membuat perubahan yang belum disimpan ikut hilang.
+    const formEditEl = document.getElementById('formEdit');
+    formEditEl?.addEventListener('input',  () => { editDraftDibatalkan = false; simpanDraftEditDebounced(); });
+    formEditEl?.addEventListener('change', () => { editDraftDibatalkan = false; simpanDraftEditDebounced(); });
+
+    window.addEventListener('beforeunload', () => {
+        simpanDraftEdit();
+    });
+    window.addEventListener('offline', () => {
         simpanDraftEdit();
     });
 });

@@ -16,7 +16,9 @@ class StoreJurnalPembukaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'periode_bulan'    => ['required', 'date_format:Y-m'],
+            'nama_periode'      => ['required', 'string', 'max:100'],
+            'tanggal_awal'      => ['required', 'date'],
+            'tanggal_akhir'     => ['required', 'date', 'after_or_equal:tanggal_awal'],
             'keterangan'       => ['nullable', 'string', 'max:500'],
             'submit_type'      => ['required', 'in:draft,posting'],
             'detail'           => ['required', 'array', 'min:2'],
@@ -29,8 +31,12 @@ class StoreJurnalPembukaRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'periode_bulan.required'    => 'Periode bulan wajib dipilih.',
-            'periode_bulan.date_format' => 'Format periode bulan tidak valid.',
+            'tanggal_awal.required'  => 'Tanggal awal periode wajib diisi.',
+            'tanggal_awal.date'      => 'Tanggal awal periode harus berupa tanggal yang valid.',
+            'tanggal_akhir.required' => 'Tanggal akhir periode wajib diisi.',
+            'tanggal_akhir.date'     => 'Tanggal akhir periode harus berupa tanggal yang valid.',
+            'tanggal_akhir.after_or_equal' => 'Tanggal akhir periode harus sama atau setelah tanggal awal periode.',
+            'detail.required'        => 'Detail jurnal pembuka wajib diisi.',
         ];
     }
 

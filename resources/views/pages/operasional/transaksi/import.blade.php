@@ -137,6 +137,10 @@
 // ── Draft Auto-save (NFR Recoverability) ────────────────────────────────
 const DRAFT_KEY_IMPOR = 'draft_transaksi_impor';
 
+// Sama seperti form Tambah/Edit: mencegah 'beforeunload' menuliskan ulang
+// draft yang baru saja sengaja dihapus (impor berhasil, atau X/Batal).
+let imporDraftDibatalkan = false;
+
 if (typeof debounce === 'undefined') {
     function debounce(fn, delay) {
         let t;
@@ -155,6 +159,7 @@ function kumpulkanDraftImpor() {
 }
 
 function simpanDraftImpor() {
+    if (imporDraftDibatalkan) return;
     try {
         sessionStorage.setItem(DRAFT_KEY_IMPOR, JSON.stringify(kumpulkanDraftImpor()));
     } catch (e) {
@@ -165,6 +170,7 @@ const simpanDraftImporDebounced = debounce(simpanDraftImpor, 500);
 
 function hapusDraftImpor() {
     sessionStorage.removeItem(DRAFT_KEY_IMPOR);
+    imporDraftDibatalkan = true;
 }
 
 function pulihkanDraftImpor() {
@@ -198,6 +204,7 @@ function bukaModalImpor() {
     document.getElementById('imporErrorBox')?.classList.add('hidden');
     document.getElementById('imporDraftNotice')?.classList.add('hidden');
 
+    imporDraftDibatalkan = false;
     const dipulihkan = pulihkanDraftImpor();
     if (!dipulihkan) {
         resetImpor();
@@ -205,6 +212,16 @@ function bukaModalImpor() {
     openModal('modalImpor');
 }
 
+// Auto-save setiap ada perubahan input di form. Sebelumnya draft hanya
+// tersimpan saat event 'offline' terpicu, sehingga refresh halaman biasa
+// membuat pilihan bank/jenis transaksi/dompet yang belum diunggah ikut hilang.
+const formImporEl = document.getElementById('formImpor');
+formImporEl?.addEventListener('input',  () => { imporDraftDibatalkan = false; simpanDraftImporDebounced(); });
+formImporEl?.addEventListener('change', () => { imporDraftDibatalkan = false; simpanDraftImporDebounced(); });
+
+window.addEventListener('beforeunload', () => {
+    simpanDraftImpor();
+});
 window.addEventListener('offline', () => {
     simpanDraftImpor();
 });

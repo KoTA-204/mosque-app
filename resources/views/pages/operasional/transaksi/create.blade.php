@@ -319,6 +319,13 @@ const akunListTambah = {!! json_encode($akuns->map(fn($a) => [
 // ── Draft Auto-save ────────────────────────────────
 const DRAFT_KEY_TAMBAH = 'draft_transaksi_tambah';
 
+// true = draft baru saja sengaja dihapus (submit sukses atau user membatalkan
+// lewat X/Batal). Selama flag ini true, autosave (termasuk yang dipicu oleh
+// 'beforeunload' saat reload/keluar halaman) tidak boleh menuliskan ulang
+// draft yang sudah sengaja dibuang. Flag direset begitu pengguna benar-benar
+// mengetik/memilih sesuatu lagi di form.
+let tambahDraftDibatalkan = false;
+
 function debounce(fn, delay) {
     let t;
     return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
@@ -346,6 +353,7 @@ function kumpulkanDraftTambah() {
 }
 
 function simpanDraftTambah() {
+    if (tambahDraftDibatalkan) return; // draft sengaja dihapus, jangan dihidupkan lagi
     try {
         sessionStorage.setItem(DRAFT_KEY_TAMBAH, JSON.stringify(kumpulkanDraftTambah()));
     } catch (e) {
@@ -356,7 +364,31 @@ const simpanDraftTambahDebounced = debounce(simpanDraftTambah, 500);
 
 function hapusDraftTambah() {
     sessionStorage.removeItem(DRAFT_KEY_TAMBAH);
+    tambahDraftDibatalkan = true;
     resetBuktiTambah();
+    resetFormTambahVisual();
+    tambahDraftDibatalkan = true; // pastikan tetap true walau reset di atas memicu event input/change sintetis
+}
+
+// Kembalikan form ke kondisi kosong/awal: dipakai saat draft dibuang lewat
+// tombol X/Batal (atau setelah submit sukses) supaya membuka form Tambah
+// lagi tidak menampilkan sisa isian yang sudah sengaja dibatalkan/tersimpan.
+function resetFormTambahVisual() {
+    const form = document.getElementById('formTambah');
+    if (!form) return;
+
+    form.reset();
+    fpTambahTanggal?.clear();
+
+    if (tambahAsetOn) tambahToggleAset();
+
+    document.getElementById('jurnalTambahBody').innerHTML = '';
+    buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah, 'DEBIT');
+    buatBarisJurnal('jurnalTambahBody', 'jurnalTambah', akunListTambah, 'KREDIT');
+    checkZakatWarning('jurnalTambahBody', 'jurnalTambah');
+    hitungTotalJurnal('jurnalTambahBody', 'jurnalTambah');
+
+    document.getElementById('tambahDraftNotice')?.classList.add('hidden');
 }
 
 function pulihkanDraftTambah() {
@@ -435,8 +467,21 @@ document.addEventListener('DOMContentLoaded', function () {
         checkZakatWarning('jurnalTambahBody', 'jurnalTambah');
     }
 
-    // Auto-save tiap ada perubahan input di form
-        window.addEventListener('offline', () => {
+    // Auto-save setiap ada perubahan input di form (delegasi di level form
+    // supaya baris jurnal yang dibuat secara dinamis ikut tercakup tanpa
+    // perlu didaftarkan satu-satu). Sebelumnya draft hanya tersimpan saat
+    // event 'offline' terpicu, sehingga refresh halaman biasa membuat isian
+    // form yang belum disimpan ke database ikut hilang.
+    const formTambahEl = document.getElementById('formTambah');
+    formTambahEl?.addEventListener('input',  () => { tambahDraftDibatalkan = false; simpanDraftTambahDebounced(); });
+    formTambahEl?.addEventListener('change', () => { tambahDraftDibatalkan = false; simpanDraftTambahDebounced(); });
+
+    // Simpan segera (tanpa debounce) sesaat sebelum halaman ditinggalkan/
+    // di-refresh, supaya perubahan dalam jendela debounce terakhir tidak hilang.
+    window.addEventListener('beforeunload', () => {
+        simpanDraftTambah();
+    });
+    window.addEventListener('offline', () => {
         simpanDraftTambah();
     });
 });

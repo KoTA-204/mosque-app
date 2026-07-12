@@ -510,6 +510,19 @@ function closeModal(id) {
     const modal = document.getElementById(id);
     modal.classList.add('hidden');
     modal.style.display = 'none';
+
+    // Menutup modal form (baik lewat tombol X bawaan modal maupun tombol
+    // "Batal") berarti pengguna sendiri yang memilih untuk membatalkan
+    // pengisian, sehingga draft yang belum tersimpan ke database ikut
+    // dihapus. Aman dipanggil berulang: draft yang sudah dihapus (mis.
+    // setelah submit berhasil) tidak menimbulkan efek apa pun di sini.
+    if (id === 'modalTambah' && typeof hapusDraftTambah === 'function') {
+        hapusDraftTambah();
+    } else if (id === 'modalEdit' && typeof hapusDraftEdit === 'function') {
+        hapusDraftEdit(typeof currentEditId !== 'undefined' ? currentEditId : null);
+    } else if (id === 'modalImpor' && typeof hapusDraftImpor === 'function') {
+        hapusDraftImpor();
+    }
 }
 
 function openDeleteModal(actionUrl) {
@@ -533,7 +546,8 @@ function editTransaksi(id) {
     const btn = document.querySelector(`button[onclick="editTransaksi(${id})"]`);
     if (btn) btn.classList.add('opacity-50', 'pointer-events-none');
 
-    currentEditId = id;                                       
+    currentEditId = id;
+    if (typeof editDraftDibatalkan !== 'undefined') editDraftDibatalkan = false;
     document.getElementById('editDraftNotice')?.classList.add('hidden'); 
     
     fetch(`/dashboard/transaksi/${id}`, {
