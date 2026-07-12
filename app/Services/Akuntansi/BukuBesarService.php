@@ -23,7 +23,6 @@ class BukuBesarService
     public function getMutasiQuery(?string $periodeId, ?string $akunId): Builder
     {
         $baseJurnalIds = Jurnal::where('status', 'POSTED')
-            ->where('jenis_jurnal', '!=', 'PEMBUKA')
             ->when($periodeId, fn($q) => $q->where('periode_id', $periodeId))
             ->pluck('id');
 

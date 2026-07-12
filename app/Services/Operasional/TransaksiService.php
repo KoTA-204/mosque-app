@@ -85,6 +85,7 @@ class TransaksiService
                 'jumlah'            => $jumlah,
                 'deskripsi'         => $request->deskripsi,
                 'catatan'           => $request->catatan,
+                'status_jurnal'       => 'MAPPED',
             ]);
 
             // Hapus jurnal & detail lama, ganti dengan yang baru

@@ -30,18 +30,25 @@ class NeracaSaldoController extends Controller
         $grandTotalDebit  = 0;
         $grandTotalKredit = 0;
         foreach ($allAkuns as $akun) {
-            $rows = $semuaSaldo->get($akun->id, collect());
-            $grandTotalDebit  += $rows->where('tipe', 'DEBIT')->sum('total');
-            $grandTotalKredit += $rows->where('tipe', 'KREDIT')->sum('total');
+            $rows   = $semuaSaldo->get($akun->id, collect());
+            $debit  = $rows->where('tipe', 'DEBIT')->sum('total');
+            $kredit = $rows->where('tipe', 'KREDIT')->sum('total');
+            $net    = $debit - $kredit;
+            if ($net > 0) { $grandTotalDebit  += $net; }
+            else          { $grandTotalKredit += abs($net); }
         }
         $selisih = $grandTotalDebit - $grandTotalKredit;
 
         $akuns = $akunQuery->paginate($perPage)->withQueryString();
 
         $akuns->getCollection()->transform(function ($akun) use ($semuaSaldo) {
-            $rows = $semuaSaldo->get($akun->id, collect());
-            $akun->total_debit  = $rows->where('tipe', 'DEBIT')->sum('total');
-            $akun->total_kredit = $rows->where('tipe', 'KREDIT')->sum('total');
+            $rows   = $semuaSaldo->get($akun->id, collect());
+            $debit  = $rows->where('tipe', 'DEBIT')->sum('total');
+            $kredit = $rows->where('tipe', 'KREDIT')->sum('total');
+            $net    = $debit - $kredit;
+            // Tampilkan saldo bersih hanya di satu kolom
+            $akun->total_debit  = $net > 0 ? $net : 0;
+            $akun->total_kredit = $net < 0 ? abs($net) : 0;
             return $akun;
         });
 

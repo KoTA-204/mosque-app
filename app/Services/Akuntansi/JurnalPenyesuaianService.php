@@ -32,12 +32,11 @@ class JurnalPenyesuaianService extends JurnalService
      * Akun yang dikecualikan dari semua tipe penyesuaian.
      * Kas & Bank tidak pernah disesuaikan lewat jurnal penyesuaian.
      */
-    // Kas tidak pernah disesuaikan lewat jurnal penyesuaian (CoA laporan).
-    const EXCLUDED_AKUN_KODE = ['1-101', '1-102', '1-103'];
+    const EXCLUDED_AKUN_KODE = ['1-1001', '1-1002', '1-1003'];
 
     public function __construct(private AkunQueryService $akunQuery) {}
 
-    // ── Query (getter — dipertahankan) ────────────────────────────
+    // ── Query ────────────────────────────
 
     public function daftar(array $filter): LengthAwarePaginator
     {
@@ -54,15 +53,32 @@ class JurnalPenyesuaianService extends JurnalService
             ->withQueryString();
     }
 
-    public function getById(Jurnal $jurnal): Jurnal
+    public function getById(Jurnal $jurnal): array
     {
-        return $jurnal->load('periode', 'detailJurnal.akun', 'aset');
+        $jurnal->load('periode', 'detailJurnal.akun', 'aset');
+
+        return [
+            'id'               => $jurnal->id,
+            'nomor_jurnal'     => $jurnal->kode_jurnal,
+            'tanggal'          => $jurnal->tanggal->format('d M Y'),
+            'keterangan'       => $jurnal->keterangan ?? '—',
+            'tipe_penyesuaian' => $jurnal->tipe_penyesuaian,
+            'status'           => $jurnal->status,
+            'detail_jurnal' => $jurnal->detailJurnal->map(fn($d) => [
+                'akun'    => [
+                    'kode_akun' => $d->akun->kode_akun,
+                    'nama_akun' => $d->akun->nama_akun,
+                ],
+                'tipe'    => $d->tipe,
+                'nominal' => (float) $d->nominal,
+            ])->values(),
+            'aset' => $jurnal->aset->map(fn($a) => [
+                'nama_aset' => $a->nama_aset,
+                'pivot'     => ['nominal' => (float) $a->pivot->nominal],
+            ])->values(),
+        ];
     }
 
-    /**
-     * Delegasi ke AkunQueryService (hapus duplikasi).
-     * Parameter $tipe dipertahankan demi kompatibilitas pemanggilan lama.
-     */
     public function getAkunList(string $tipe = ''): array
     {
         return $this->akunQuery->getGroupedAkun(self::EXCLUDED_AKUN_KODE);
@@ -70,12 +86,23 @@ class JurnalPenyesuaianService extends JurnalService
 
     public function getAsetAktif()
     {
+        $periodeAktif   = $this->getPeriodeAktif();
+        $periodeAktifId = $periodeAktif?->id;
+
         return Aset::aktif()
             ->whereNotNull('umur_manfaat')
             ->where('umur_manfaat', '>', 0)
+            ->belumDilepas()
+            ->when($periodeAktifId, fn ($q) => $q
+                ->whereDoesntHave('jurnalPenyesuaian', fn ($jq) => $jq
+                    ->where('tipe_penyesuaian', 'PENYUSUTAN_ASET')
+                    ->whereIn('status', ['POSTED', 'DRAFT'])
+                    ->where('periode_id', $periodeAktifId)
+                )
+            )
             ->orderBy('nama_aset')
             ->get()
-            ->map(fn($aset) => [
+            ->map(fn ($aset) => [
                 'id'                   => $aset->id,
                 'nama_aset'            => $aset->nama_aset,
                 'nilai_tercatat'       => (float) $aset->nilai_tercatat,
@@ -156,12 +183,11 @@ class JurnalPenyesuaianService extends JurnalService
                 $this->lampirkanAsetPelepasan($jurnal, $data);
             }
 
-            // Posting lewat satu jalur resmi → setelahPosting() menjalankan efek aset 1x.
             if ($status === 'POSTED') {
                 $hasil = $this->postingKeBukuBesar($jurnal);
                 if ($hasil !== true) {
                     throw new \RuntimeException($hasil);
-                }
+                } 
             }
 
             return $jurnal->load('detailJurnal.akun', 'aset');
@@ -187,7 +213,6 @@ class JurnalPenyesuaianService extends JurnalService
 
             if (!$asetId || $nominal <= 0) continue;
 
-            // Jurnal sebagai Creator dari tautan aset (Creator).
             $jurnal->lampirkanAset((int) $asetId, $nominal);
         }
     }
@@ -224,7 +249,6 @@ class JurnalPenyesuaianService extends JurnalService
 
             $nilaiBuku = max((float) $aset->nilai_tercatat - (float) ($aset->akumulasi_penyusutan ?? 0), 0);
 
-            // Jurnal sebagai Creator dari tautan aset (Creator).
             $jurnal->lampirkanAset((int) $aset->id, $nilaiBuku);
         }
     }
@@ -250,7 +274,7 @@ class JurnalPenyesuaianService extends JurnalService
         $aset->save();
     }
 
-    // ── Hook: setelah posting (SATU-SATUNYA tempat efek aset dijalankan) ─────────
+    // ── Hook: setelah posting ─────────
 
     protected function setelahPosting(Jurnal $jurnal): void
     {

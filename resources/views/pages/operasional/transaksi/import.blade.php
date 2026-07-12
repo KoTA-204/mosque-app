@@ -129,10 +129,6 @@
 </div>
 
 <script>
-// Flag hak akses — dipakai untuk menampilkan pesan yang sesuai saat pengguna
-// hanya memiliki akses view (bisa membuka modal, tapi tidak bisa mengunggah).
-const CAN_IMPOR_TRANSAKSI = @json(auth()->user()->hasPermission('CREATE_TRANSAKSI'));
-
 // Reset seluruh isian form impor + state tampilan ke kondisi awal.
 // Dipanggil saat modal dibuka dan saat tombol "Coba Lagi" ditekan,
 // agar data dari percobaan impor sebelumnya tidak tertinggal.
@@ -184,12 +180,6 @@ async function submitImpor() {
     const form = document.getElementById('formImpor');
     const fd   = new FormData(form);
 
-    if (!CAN_IMPOR_TRANSAKSI) {
-        document.getElementById('imporErrorMsg').textContent = 'Anda tidak memiliki hak akses untuk mengimpor transaksi.';
-        document.getElementById('imporErrorBox').classList.remove('hidden');
-        return;
-    }
-
     if (!fd.get('bank') || !fd.get('jenis_transaksi') || !fd.get('file')?.name) {
         document.getElementById('imporErrorMsg').textContent = 'Lengkapi semua field sebelum mengunggah.';
         document.getElementById('imporErrorBox').classList.remove('hidden');
@@ -209,10 +199,13 @@ async function submitImpor() {
                 'Accept': 'application/json',
             },
         });
-        if (res.status === 403) {
-            document.getElementById('pesanGagal').textContent =
-                'Anda tidak memiliki hak akses untuk mengimpor transaksi.';
-            imporSetState('gagal');
+        if (res.redirected) {
+            closeModal('modalImpor');
+            sessionStorage.setItem('alert', JSON.stringify({
+                type: 'error',
+                message: 'Anda tidak memiliki izin untuk melakukan aksi ini.'
+            }));
+            window.location.reload();
             return;
         }
 

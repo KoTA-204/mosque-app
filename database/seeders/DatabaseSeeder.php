@@ -32,17 +32,17 @@ class DatabaseSeeder extends Seeder
             KategoriTransaksiSeeder::class,
             DompetSeeder::class,
             KegiatanSeeder::class,
-            TransaksiSeeder::class,
-            KenclengSeeder::class,
+            // TransaksiSeeder::class,
+            // KenclengSeeder::class,
             KenclengDetailSeeder::class,
             BuktiTransaksiSeeder::class,
             KategoriAkunSeeder::class,
             AkunSeeder::class,
             AsetSeeder::class,
-            PeriodeSeeder::class,
-            TransaksiKegiatanSeeder::class,
-            JurnalUmumSeeder::class,
-            JurnalLengkapSeeder::class,
+            // PeriodeSeeder::class,
+            // TransaksiKegiatanSeeder::class,
+            // JurnalUmumSeeder::class,
+            // JurnalLengkapSeeder::class,
         ]);
     }
 }

@@ -4,7 +4,7 @@
 
 @php
     if (!function_exists('fmtC')) {
-        function fmtC($val) { return number_format(abs((float)$val), 0, ',', '.'); }
+        function fmtC($val) { return number_format(abs((float)$val), 2, ',', '.'); }
     }
     if (!function_exists('signedC')) {
         function signedC($val) {

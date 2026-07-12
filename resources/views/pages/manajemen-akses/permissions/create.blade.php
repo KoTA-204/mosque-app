@@ -90,7 +90,7 @@
                                     {{ $errors->has('action') ? 'border-red-400' : 'border-gray-200 dark:border-gray-700 focus:border-blue-400' }}
                                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                                 <option value="">-- Pilih Action --</option>
-                                @foreach(['view', 'create', 'update', 'delete', 'manage'] as $act)
+                                @foreach(['view', 'create', 'update', 'delete'] as $act)
                                 <option value="{{ $act }}" {{ old('action') == $act ? 'selected' : '' }}>
                                     {{ ucfirst($act) }}
                                 </option>
