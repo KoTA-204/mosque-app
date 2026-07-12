@@ -141,9 +141,11 @@ class JurnalPembukaService extends JurnalService
 
     public function catatSaldoAwal(array $data): Jurnal
     {
+        // Jurnal pembuka baru tidak boleh memakai periode yang sudah berlalu.
+        $this->pastikanPeriodeTidakBerlalu($data['periode_bulan']);
+
         return DB::transaction(function () use ($data) {
-            $tanggal = Carbon::parse($data['tanggal_awal']);
-            $periode = $this->derivePeriode($tanggal);
+            $periode = $this->derivePeriodeDariBulan($data['periode_bulan']);
 
             // Selalu dibuat sebagai DRAFT dulu; posting dilakukan lewat parent.
             $jurnal = Jurnal::create([
@@ -167,9 +169,13 @@ class JurnalPembukaService extends JurnalService
 
     public function perbaruiSaldoAwal(Jurnal $jurnal, array $data): Jurnal
     {
+        // Periode milik jurnal ini sendiri tetap boleh dipilih ulang walau sudah
+        // lewat; hanya periode LAIN yang sudah lewat yang ditolak.
+        $periodeAktifSaatIni = optional($jurnal->tanggal)->format('Y-m');
+        $this->pastikanPeriodeTidakBerlalu($data['periode_bulan'], $periodeAktifSaatIni);
+
         return DB::transaction(function () use ($jurnal, $data) {
-            $tanggal = Carbon::parse($data['tanggal_awal']);
-            $periode = $this->derivePeriode($tanggal);
+            $periode = $this->derivePeriodeDariBulan($data['periode_bulan']);
 
             $jurnal->update([
                 'periode_id' => $periode->id,
@@ -256,13 +262,14 @@ class JurnalPembukaService extends JurnalService
     }
 
     /**
-     * Hitung periode dari (tanggal awal + jenis periode) yang dipilih user.
-     * Tanggal akhir dihitung sistem agar periode konsisten & tidak tumpang tindih.
+     * Hitung periode dari nilai "periode_bulan" (format Y-m, contoh: "2026-07")
+     * yang dipilih user lewat dropdown. Tanggal akhir dihitung sistem agar
+     * periode konsisten & tidak tumpang tindih.
      */
-    protected function derivePeriode(Carbon $tanggal): Periode
+    protected function derivePeriodeDariBulan(string $periodeBulan): Periode
     {
         // Aplikasi hanya menggunakan periode bulanan.
-        $awal  = $tanggal->copy()->startOfMonth();
+        $awal  = Carbon::createFromFormat('Y-m', $periodeBulan)->startOfMonth();
         $akhir = $awal->copy()->endOfMonth();
         $nama  = $awal->translatedFormat('F Y');   // contoh: "Maret 2025"
 
@@ -277,5 +284,65 @@ class JurnalPembukaService extends JurnalService
                 'status'       => true,
             ]
         );
+    }
+
+    /**
+     * Pastikan periode yang dipilih tidak berada sebelum bulan berjalan.
+     * Dipakai sebagai pengaman lapis kedua di server (selain disable di HTML),
+     * karena atribut "disabled" pada <option> dapat dilewati lewat DevTools.
+     *
+     * @param  string       $periodeBulan          Format Y-m, contoh "2026-07".
+     * @param  string|null  $periodeAktifSaatIni   Value periode milik jurnal yang
+     *         sedang diedit (format Y-m). Jika sama dengan $periodeBulan, validasi
+     *         dilewati — supaya user tetap bisa menyimpan ulang periode lama miliknya.
+     */
+    protected function pastikanPeriodeTidakBerlalu(string $periodeBulan, ?string $periodeAktifSaatIni = null): void
+    {
+        if ($periodeAktifSaatIni !== null && $periodeBulan === $periodeAktifSaatIni) {
+            return;
+        }
+
+        $awal     = Carbon::createFromFormat('Y-m', $periodeBulan)->startOfMonth();
+        $bulanIni = Carbon::now()->startOfMonth();
+
+        if ($awal->lt($bulanIni)) {
+            throw new RuntimeException('Periode yang sudah berlalu tidak dapat dipilih untuk jurnal pembuka.');
+        }
+    }
+
+    /**
+     * Bangun daftar opsi periode bulanan (Januari s.d. Desember) untuk satu
+     * tahun tertentu, lengkap dengan rentang tanggal & status "sudah berlalu".
+     *
+     * @param  int          $tahun                Tahun yang ditampilkan (12 bulan penuh).
+     * @param  bool         $blokirPeriodeLalu    Jika true, bulan sebelum bulan berjalan ditandai disabled.
+     * @param  string|null  $periodeAktifSaatIni  Value (Y-m) periode milik jurnal yang sedang
+     *         diedit, agar tetap bisa dipilih meski bulannya sudah lewat.
+     * @return array<int, array{value:string,label:string,tanggal_awal:string,tanggal_akhir:string,disabled:bool}>
+     */
+    public function getOpsiPeriodeBulan(int $tahun, bool $blokirPeriodeLalu = true, ?string $periodeAktifSaatIni = null): array
+    {
+        $bulanIni = Carbon::now()->startOfMonth();
+        $opsi     = [];
+
+        for ($bulan = 1; $bulan <= 12; $bulan++) {
+            $awal  = Carbon::create($tahun, $bulan, 1)->startOfMonth();
+            $akhir = $awal->copy()->endOfMonth();
+            $value = $awal->format('Y-m');
+
+            $sudahLewat = $blokirPeriodeLalu
+                && $awal->lt($bulanIni)
+                && $value !== $periodeAktifSaatIni;
+
+            $opsi[] = [
+                'value'         => $value,
+                'label'         => $awal->translatedFormat('F Y'),          // contoh: "Juli 2026"
+                'tanggal_awal'  => $awal->translatedFormat('d F Y'),
+                'tanggal_akhir' => $akhir->translatedFormat('d F Y'),
+                'disabled'      => $sudahLewat,
+            ];
+        }
+
+        return $opsi;
     }
 }

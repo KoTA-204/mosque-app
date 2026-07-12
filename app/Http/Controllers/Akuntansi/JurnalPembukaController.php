@@ -50,7 +50,10 @@ class JurnalPembukaController extends Controller
 
         $akuns = $this->service->getAkunTransaksional();
 
-        return view('pages.akuntansi.jurnal-pembuka.create', compact('akuns'));
+        // Jurnal pembuka baru: periode bulan yang sudah berlalu tidak boleh dipilih.
+        $opsiPeriode = $this->service->getOpsiPeriodeBulan(now()->year);
+
+        return view('pages.akuntansi.jurnal-pembuka.create', compact('akuns', 'opsiPeriode'));
     }
 
     /** Simpan saldo awal. */
@@ -63,6 +66,8 @@ class JurnalPembukaController extends Controller
 
         try {
             $jurnal = $this->service->catatSaldoAwal($request->validated());
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->withErrors(['periode_bulan' => $e->getMessage()]);
         } catch (\Throwable $e) {
             return back()->withInput()
                 ->with('error', 'Gagal menyimpan jurnal pembuka: ' . $e->getMessage());
@@ -75,7 +80,6 @@ class JurnalPembukaController extends Controller
         return redirect()->route('dashboard.jurnal-pembuka.index')->with('success', $pesan);
     }
 
-    /** Detail (JSON) untuk drawer/preview. */
     public function tampilkanDetailJurnalPembuka(Jurnal $jurnalPembuka)
     {
         $jurnalPembuka->load(['periode', 'detailJurnal.akun']);
@@ -97,7 +101,18 @@ class JurnalPembukaController extends Controller
         $jurnalPembuka->load(['periode', 'detailJurnal.akun']);
         $akuns = $this->service->getAkunTransaksional();
 
-        return view('pages.akuntansi.jurnal-pembuka.edit', compact('jurnalPembuka', 'akuns'));
+        // Periode yang sedang dipakai jurnal ini tetap boleh dipilih ulang
+        // walau bulannya sudah lewat, supaya user tidak terkunci dari datanya sendiri.
+        $periodeAktifSaatIni = optional($jurnalPembuka->tanggal)->format('Y-m');
+        $tahunTampil         = optional($jurnalPembuka->tanggal)->format('Y') ?: now()->year;
+
+        $opsiPeriode = $this->service->getOpsiPeriodeBulan(
+            (int) $tahunTampil,
+            blokirPeriodeLalu: true,
+            periodeAktifSaatIni: $periodeAktifSaatIni
+        );
+
+        return view('pages.akuntansi.jurnal-pembuka.edit', compact('jurnalPembuka', 'akuns', 'opsiPeriode'));
     }
 
     /** Perbarui saldo awal. Periode dihitung ulang di service. */
@@ -109,6 +124,8 @@ class JurnalPembukaController extends Controller
 
         try {
             $jurnal = $this->service->perbaruiSaldoAwal($jurnalPembuka, $request->validated());
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->withErrors(['periode_bulan' => $e->getMessage()]);
         } catch (\Throwable $e) {
             return back()->withInput()
                 ->with('error', 'Gagal memperbarui jurnal pembuka: ' . $e->getMessage());
