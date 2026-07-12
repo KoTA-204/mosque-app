@@ -1,6 +1,6 @@
 <x-modal id="createAsetModal" title="Tambah Aset">
 
-    <form id="createAsetForm" enctype="multipart/form-data">
+    <form id="createAsetForm" enctype="multipart/form-data" data-autosave-key="aset-create">
         @csrf
 
         <div class="px-6 py-5 space-y-6">
@@ -170,10 +170,16 @@
                 class="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 Batal
             </button>
-            @if(auth()->user()?->hasPermission('CREATE_ASET'))
+            @php $canCreateAset = auth()->user()?->hasPermission('CREATE_ASET'); @endphp
+            @if($canCreateAset)
             <button type="button"
                 onclick="submitAsetForm('createAsetForm', 'POST', '{{ route('dashboard.aset.store') }}')"
                 class="px-5 py-2 text-sm font-medium text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors">
+                Simpan
+            </button>
+            @else
+            <button type="button" disabled aria-disabled="true" title="Anda tidak memiliki izin untuk menyimpan aset"
+                class="px-5 py-2 text-sm font-medium text-white bg-green-600/40 rounded-xl opacity-60 cursor-not-allowed">
                 Simpan
             </button>
             @endif

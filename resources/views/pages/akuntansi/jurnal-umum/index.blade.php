@@ -209,4 +209,50 @@ function showAlert(msg, type = 'success') {
     setTimeout(() => { area.innerHTML = ''; }, 4000);
 }
 </script>
+
+<script>
+/* Auto-save driven: menjaga pilihan filter Jurnal Umum agar tidak hilang saat refresh/crash. */
+(function () {
+    var KEY = 'mosque:autosave:jurnal-umum-filter';
+    var IDS = ['perPage', 'filterBulan', 'filterStatus', 'filterSearch'];
+
+    function elements() {
+        return IDS.map(function (id) { return document.getElementById(id); });
+    }
+
+    function save() {
+        var data = {};
+        elements().forEach(function (el) { if (el) data[el.id] = el.value; });
+        try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
+    }
+
+    function restore() {
+        var raw;
+        try { raw = localStorage.getItem(KEY); } catch (e) { return false; }
+        if (!raw) return false;
+        var data;
+        try { data = JSON.parse(raw); } catch (e) { return false; }
+        var changed = false;
+        elements().forEach(function (el) {
+            if (el && typeof data[el.id] !== 'undefined' && data[el.id] !== '') {
+                el.value = data[el.id];
+                changed = true;
+            }
+        });
+        return changed;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var restored = restore();
+        IDS.forEach(function (id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('change', save);
+            el.addEventListener('input', save);
+        });
+        if (restored && typeof applyFilters === 'function') applyFilters();
+    });
+})();
+</script>
+
 @endsection

@@ -1,7 +1,7 @@
 <x-modal id="editAsetModal" title="Edit Aset">
     @php $isDisusutkan = !is_null($aset->umur_manfaat); @endphp
 
-    <form id="editAsetForm" enctype="multipart/form-data">
+    <form id="editAsetForm" enctype="multipart/form-data" data-autosave-key="aset-edit-<?php echo e($aset->id); ?>">
         @csrf
         @method('PUT')
 
@@ -190,10 +190,16 @@
                 class="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 Batal
             </button>
-            @if(auth()->user()?->hasPermission('EDIT_ASET'))
+            @php $canEditAset = auth()->user()?->hasPermission('EDIT_ASET'); @endphp
+            @if($canEditAset)
             <button type="button"
                 onclick="submitAsetForm('editAsetForm', 'PUT', '{{ route('dashboard.aset.update', $aset) }}')"
                 class="px-5 py-2 text-sm font-medium text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors">
+                Simpan Perubahan
+            </button>
+            @else
+            <button type="button" disabled aria-disabled="true" title="Anda tidak memiliki izin untuk mengubah aset"
+                class="px-5 py-2 text-sm font-medium text-white bg-green-600/40 rounded-xl opacity-60 cursor-not-allowed">
                 Simpan Perubahan
             </button>
             @endif
