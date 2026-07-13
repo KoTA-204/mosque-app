@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use App\Models\Akun;
 use App\Models\KategoriAkun;
+use App\Models\KategoriTransaksi;
 
 class NamaMiripRule implements ValidationRule
 {
@@ -21,7 +22,6 @@ class NamaMiripRule implements ValidationRule
         protected ?int $exceptId = null,
         protected float $threshold = 85.0,
     ) {}
-
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
@@ -55,6 +55,7 @@ class NamaMiripRule implements ValidationRule
             'akun'        => Akun::whereNotNull('parent_id')
                 ->when($this->scopeId, fn ($q) => $q->where('parent_id', $this->scopeId))
                 ->pluck('nama_akun', 'id'),
+            'kategori-transaksi' => KategoriTransaksi::pluck('nama_kategori', 'id'),
             default       => collect(),
         };
     }

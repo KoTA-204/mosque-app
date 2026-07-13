@@ -5,6 +5,7 @@ namespace App\Http\Controllers\DataInduk;
 use App\Http\Controllers\Controller;
 use App\Models\KategoriTransaksi;
 use Illuminate\Http\Request;
+use App\Rules\NamaMiripRule;
 use Illuminate\Support\Facades\Validator;
 
 class KategoriTransaksiController extends Controller
@@ -39,18 +40,16 @@ class KategoriTransaksiController extends Controller
     public function simpanKategoriTransaksiBaru(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nama_kategori'   => 'required|string|max:100|unique:kategori_transaksi,nama_kategori',
-            'status'          => 'required|in:aktif,tidak_aktif',
-            'deskripsi'       => 'nullable|string|max:500',
+            'nama_kategori' => ['required', 'string', 'max:150', new NamaMiripRule('kategori-transaksi')],
+            'status'        => 'required|in:aktif,tidak_aktif',
+            'deskripsi'     => 'nullable|string|max:500',
         ], [
-            'nama_kategori.required'   => 'Nama kategori wajib diisi.',
-            'nama_kategori.unique'     => 'Nama kategori sudah digunakan.',
-            'status.required'          => 'Status wajib dipilih.',
+            'nama_kategori.required' => 'Nama kategori wajib diisi.',
+            'status.required'        => 'Status wajib dipilih.',
         ]);
 
         if ($validator->fails()) {
             return back()
-                ->withErrors($validator)
                 ->withErrors($validator, 'createKategori')
                 ->withInput();
         }
@@ -80,19 +79,22 @@ class KategoriTransaksiController extends Controller
         ];
 
         if (! $terpakai) {
-            $rules['nama_kategori'] = 'required|string|max:100|unique:kategori_transaksi,nama_kategori,' . $kategoriTransaksi->id;
-            $rules['deskripsi']     = 'nullable|string|max:500';
+            $rules['nama_kategori'] = [
+                'required',
+                'string',
+                'max:150',
+                new NamaMiripRule('kategori-transaksi', exceptId: $kategoriTransaksi->id),
+            ];
+            $rules['deskripsi'] = 'nullable|string|max:500';
         }
 
         $validator = Validator::make($request->all(), $rules, [
-            'nama_kategori.required'   => 'Nama kategori wajib diisi.',
-            'nama_kategori.unique'     => 'Nama kategori sudah digunakan.',
-            'status.required'          => 'Status wajib dipilih.',
+            'nama_kategori.required' => 'Nama kategori wajib diisi.',
+            'status.required'        => 'Status wajib dipilih.',
         ]);
 
         if ($validator->fails()) {
             return back()
-                ->withErrors($validator)
                 ->withErrors($validator, 'editKategori')
                 ->withInput()
                 ->with('edit_error_id', $kategoriTransaksi->id);
@@ -104,9 +106,9 @@ class KategoriTransaksiController extends Controller
             ]);
         } else {
             $kategoriTransaksi->update([
-                'nama_kategori'   => $request->nama_kategori,
-                'status'          => $request->status,
-                'deskripsi'       => $request->deskripsi,
+                'nama_kategori' => $request->nama_kategori,
+                'status'        => $request->status,
+                'deskripsi'     => $request->deskripsi,
             ]);
         }
 
