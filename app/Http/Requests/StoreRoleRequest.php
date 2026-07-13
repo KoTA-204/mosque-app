@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\NamaMiripRule;
 
 class StoreRoleRequest extends FormRequest
 {
@@ -22,9 +23,15 @@ class StoreRoleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'role_name' => 'required|string|max:255|unique:roles,role_name',
-            'description' => 'nullable|string|max:255',
-            'is_active' => 'nullable|boolean',
+            'role_name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:roles,role_name',
+                new NamaMiripRule('role'),
+            ],
+            'description'      => 'nullable|string|max:255',
+            'is_active'        => 'nullable|boolean',
             'permission_ids'   => 'nullable|array',
             'permission_ids.*' => 'integer|exists:permissions,id',
         ];

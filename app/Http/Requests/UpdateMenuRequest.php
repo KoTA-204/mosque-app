@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Rules\NamaMiripRule;
 
 class UpdateMenuRequest extends FormRequest
 {
@@ -25,7 +26,14 @@ class UpdateMenuRequest extends FormRequest
         $menuId = is_object($menu) ? $menu->id : $menu;
 
         return [
-            'menu_name'     => ['required', 'string', 'max:255', Rule::unique('menus', 'menu_name')->ignore($menuId)],
+            'menu_name' => [
+                'bail',
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('menus', 'menu_name')->ignore($menuId),
+                new NamaMiripRule('menu', exceptId: $menuId),
+            ],
             // Tidak boleh menjadi parent dari dirinya sendiri.
             'parent_id'     => ['nullable', 'exists:menus,id', Rule::notIn([$menuId])],
             'route_name'    => ['nullable', 'required_with:parent_id', 'string', 'max:255'],

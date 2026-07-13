@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\NamaMiripRule;
 
 class UpdatePermissionRequest extends FormRequest
 {
@@ -24,8 +25,14 @@ class UpdatePermissionRequest extends FormRequest
         $permissionId = $this->route('permission')->id;
 
         return [
-            'permission_code' => 'sometimes|string|max:100|unique:permissions,permission_code,' . $permissionId,
-            'permission_name' => 'sometimes|string|max:100',
+            'permission_code' => 'bail|sometimes|string|max:100|unique:permissions,permission_code,' . $permissionId,
+            'permission_name' => [
+                'bail',
+                'sometimes',
+                'string',
+                'max:100',
+                new NamaMiripRule('permission', exceptId: $permissionId),
+            ],
             'module'          => 'sometimes|string|max:100',
             'action'          => 'sometimes|string|max:100',
             'description'     => 'nullable|string|max:255',

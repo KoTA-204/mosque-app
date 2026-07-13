@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\NamaMiripRule;
 
 class UpdateRoleRequest extends FormRequest
 {
@@ -24,9 +25,17 @@ class UpdateRoleRequest extends FormRequest
         $roleId = $this->route('role')->id;
 
         return [
-            'role_name' => 'sometimes|required|string|max:255|unique:roles,role_name,' . $roleId,
-            'description' => 'sometimes|nullable|string|max:255',
-            'is_active' => 'sometimes|nullable|boolean',
+            'role_name' => [
+                'bail',
+                'sometimes',
+                'required',
+                'string',
+                'max:255',
+                'unique:roles,role_name,' . $roleId,
+                new NamaMiripRule('role', exceptId: $roleId),
+            ],
+            'description'      => 'sometimes|nullable|string|max:255',
+            'is_active'        => 'sometimes|nullable|boolean',
             'permission_ids'   => 'nullable|array',
             'permission_ids.*' => 'integer|exists:permissions,id',
         ];
