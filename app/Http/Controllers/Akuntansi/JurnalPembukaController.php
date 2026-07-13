@@ -50,10 +50,7 @@ class JurnalPembukaController extends Controller
 
         $akuns = $this->service->getAkunTransaksional();
 
-        // Jurnal pembuka baru: periode bulan yang sudah berlalu tidak boleh dipilih.
-        $opsiPeriode = $this->service->getOpsiPeriodeBulan(now()->year);
-
-        return view('pages.akuntansi.jurnal-pembuka.create', compact('akuns', 'opsiPeriode'));
+        return view('pages.akuntansi.jurnal-pembuka.create', compact('akuns'));
     }
 
     /** Simpan saldo awal. */
@@ -67,7 +64,7 @@ class JurnalPembukaController extends Controller
         try {
             $jurnal = $this->service->catatSaldoAwal($request->validated());
         } catch (\RuntimeException $e) {
-            return back()->withInput()->withErrors(['periode_bulan' => $e->getMessage()]);
+            return back()->withInput()->withErrors(['tanggal_awal' => $e->getMessage()]);
         } catch (\Throwable $e) {
             return back()->withInput()
                 ->with('error', 'Gagal menyimpan jurnal pembuka: ' . $e->getMessage());
