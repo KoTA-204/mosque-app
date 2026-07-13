@@ -250,6 +250,12 @@
         }
     }
 
+    function formatRupiahEdit(el) {
+        let angka = el.value.replace(/[^\d]/g, '');
+        document.getElementById('edit-jumlah').value = angka ? parseInt(angka, 10) : 0;
+        el.value = angka ? parseInt(angka, 10).toLocaleString('id-ID') : '';
+    }
+
     function openEditModal(el) {
         const data = JSON.parse(el.dataset.transaksi);
 
@@ -257,14 +263,14 @@
         document.getElementById('edit-kode').textContent     = data.kode_transaksi;
         document.getElementById('edit-pencatat').textContent = data.pencatat;
 
-        // set jenis + filter kategori DULU, baru isi value kategori
         const radio = document.querySelector('#form-edit-transaksi input[name="jenis_transaksi"][value="' + data.jenis_transaksi + '"]');
         if (radio) radio.checked = true;
         updateEditToggleStyle(data.jenis_transaksi);
 
         document.getElementById('edit-tanggal').value   = data.tanggal_transaksi;
-        document.getElementById('edit-jumlah').value    = data.jumlah;
-        document.getElementById('edit-deskripsi').value = data.deskripsi || '';
+        const jumlahEdit = parseInt(data.jumlah, 10) || 0;
+        document.getElementById('edit-jumlah').value         = jumlahEdit;                                  
+        document.getElementById('edit-jumlah-display').value = jumlahEdit ? jumlahEdit.toLocaleString('id-ID') : '';          document.getElementById('edit-deskripsi').value = data.deskripsi || '';
         document.getElementById('edit-dompet').value    = data.dompet_id;
         document.getElementById('edit-kategori').value  = data.kategori_transaksi_id;
 
@@ -275,8 +281,9 @@
             dateFormat: 'Y-m-d',
             allowInput: true,
             defaultDate: data.tanggal_transaksi || null,
+            maxDate: 'today',
         });
-        // Bukti lama
+   
         const buktiList = document.getElementById('edit-bukti-list');
         const buktiHint = document.getElementById('edit-bukti-hint');
         buktiList.innerHTML = '';

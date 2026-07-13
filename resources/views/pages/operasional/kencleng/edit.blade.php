@@ -9,10 +9,10 @@
     </div>
 
     {{-- Catatan Revisi --}}
-    @if($kencleng->transaksi->catatan_revisi)
+    @if($kencleng->transaksi->catatan)
     <div class="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-5 dark:border-blue-900/50 dark:bg-blue-900/20">
         <p class="mb-1 text-sm font-medium text-blue-800 dark:text-blue-200">Catatan dari Bendahara:</p>
-        <p class="text-sm text-blue-700 dark:text-blue-300">{{ $kencleng->transaksi->catatan_revisi }}</p>
+        <p class="text-sm text-blue-700 dark:text-blue-300">{{ $kencleng->transaksi->catatan }}</p>
     </div>
     @endif
 

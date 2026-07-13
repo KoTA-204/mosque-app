@@ -44,21 +44,21 @@
                         {{ $detail->akun->nama_akun ?? '-' }}
                     </td>
                     <td class="px-4 py-3.5 text-gray-600 dark:text-gray-400 max-w-xs truncate">
-                        {{ $j === 0 ? ($jurnal->keterangan ?? '-') : '' }}
+                        {{ $j === 0 ? ($jurnal->keterangan ?: $jurnal->transaksi?->deskripsi ?: '-') : '' }}
                     </td>
                     <td class="px-4 py-3.5 text-gray-600 dark:text-gray-400 font-mono text-xs">
                         {{ $detail->akun->kode_akun ?? '-' }}
                     </td>
                     <td class="px-4 py-3.5 text-right">
                         @if($detail->tipe === 'DEBIT')
-                            <span class="text-gray-900 dark:text-white">Rp {{ number_format($detail->nominal, 0, ',', '.') }}</span>
+                            <span class="text-gray-900 dark:text-white">Rp {{ number_format($detail->nominal, 2, ',', '.') }}</span>
                         @else
                             <span class="text-gray-300 dark:text-gray-600">-</span>
                         @endif
                     </td>
                     <td class="px-4 py-3.5 text-right">
                         @if($detail->tipe === 'KREDIT')
-                            <span class="text-gray-900 dark:text-white">Rp {{ number_format($detail->nominal, 0, ',', '.') }}</span>
+                            <span class="text-gray-900 dark:text-white">Rp {{ number_format($detail->nominal, 2, ',', '.') }}</span>
                         @else
                             <span class="text-gray-300 dark:text-gray-600">-</span>
                         @endif

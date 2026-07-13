@@ -39,13 +39,18 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Tanggal <span class="text-red-500">*</span></label>
                 <input type="date" name="tanggal_transaksi" id="edit-tanggal"
-                       class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 focus:border-green-400 rounded-xl outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                    max="{{ now()->format('Y-m-d') }}"
+                    class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 focus:border-green-400 rounded-xl outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                 <p id="edit-tanggal-error" class="hidden mt-1.5 text-xs text-red-500">Tanggal wajib diisi.</p>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Jumlah (Rp) <span class="text-red-500">*</span></label>
-                <input type="number" name="jumlah" id="edit-jumlah" min="1"
-                       class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 focus:border-green-400 rounded-xl outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+
+                <input type="text" inputmode="numeric" id="edit-jumlah-display"
+                    placeholder="0" oninput="formatRupiahEdit(this)"
+                    class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 focus:border-green-400 rounded-xl outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+
+                <input type="hidden" name="jumlah" id="edit-jumlah">
             </div>
         </div>
 

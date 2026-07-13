@@ -64,7 +64,7 @@ class RoleService
                 if ($permissionIds !== null) {
                     $role->permissions()->sync($permissionIds);
                 }
-
+                
                 return $role->fresh()->load('permissions');
             } catch (\Exception $e) {
                 Log::error('RoleService@update failed', [
@@ -73,7 +73,6 @@ class RoleService
                     'message' => $e->getMessage(),
                     'trace'   => $e->getTraceAsString(),
                 ]);
-
                 throw $e;
             }
         });

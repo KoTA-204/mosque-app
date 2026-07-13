@@ -100,11 +100,7 @@
 <div id="modalContainer"></div>
 
 {{-- Delete Modal --}}
-<x-confirm-modal
-    id="deleteKegiatanModal"
-    title="Hapus Kegiatan"
-    message="Yakin ingin menghapus kegiatan ini? Tindakan ini tidak dapat dibatalkan."
-/>
+-- Modal hapus dimuat dinamis via AJAX (openDeleteModal) --
 
 <script>
 const modalContainer = document.getElementById('modalContainer');
@@ -177,10 +173,30 @@ function openShowModal(id)  { loadModal(`${baseUrl}/${id}`); }
 function openEditModal(id)  { loadModal(`${baseUrl}/${id}/edit`); }
 
 function openDeleteModal(id) {
-    const modal = document.getElementById('deleteKegiatanModal');
-    const form  = document.getElementById('deleteKegiatanModalForm');
-    form.action = `${baseUrl}/${id}`;
-    modal.style.display = 'flex';
+    loadModal(`${baseUrl}/${id}/delete`);
+}
+
+function submitDeleteKegiatan(url) {
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+        },
+        body: (() => { const f = new FormData(); f.append('_method', 'DELETE'); return f; })(),
+    })
+    .then(r => r.json())
+    .then(res => {
+        closeModal('deleteKegiatanModal');
+        if (res.success) {
+            showAlert(res.message ?? 'Kegiatan berhasil dihapus.', 'success');
+            applyFilters();
+        } else {
+            showAlert(res.message ?? 'Gagal menghapus kegiatan.', 'error');
+        }
+    })
+    .catch(() => showAlert('Terjadi kesalahan saat menghapus.', 'error'));
 }
 
 function showAlert(msg, type = 'success') {
@@ -294,11 +310,6 @@ document.getElementById('filterSearch').addEventListener('input', () => {
     filterDebounce = setTimeout(applyFilters, 400);
 });
 
-// Setelah delete berhasil, reload tabel
-document.getElementById('deleteKegiatanModalForm').addEventListener('submit', function() {
-    const modal = document.getElementById('deleteKegiatanModal');
-    modal.style.display = 'none';
-    setTimeout(() => applyFilters(), 300);
-});
+// Delete ditangani via submitDeleteKegiatan() (AJAX)
 </script>
 @endsection

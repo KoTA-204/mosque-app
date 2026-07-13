@@ -91,6 +91,14 @@ class AsetController extends Controller
     // form edit
     public function tampilkanFormUbahAset(Aset $aset)
     {
+        // Aset tidak aktif tidak dapat diedit
+        if ($aset->status_aset === 'TIDAK AKTIF') {
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Aset tidak aktif tidak dapat diedit.'], 422);
+            }
+            return redirect()->route('dashboard.aset.index')->with('error', 'Aset tidak aktif tidak dapat diedit.');
+        }
+
         $keuanganTerkunci = $aset->jurnalPenyesuaian()->exists();
 
         if (request()->ajax()) {
@@ -104,6 +112,14 @@ class AsetController extends Controller
     // update aset
     public function perbaruiAset(UpdateAsetRequest $request, Aset $aset)
     {
+        // Blokir update aset tidak aktif
+        if ($aset->status_aset === 'TIDAK AKTIF') {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Aset tidak aktif tidak dapat diperbarui.'], 422);
+            }
+            return redirect()->back()->with('error', 'Aset tidak aktif tidak dapat diperbarui.');
+        }
+
         $this->asetService->perbaruiAset(
             $aset,
             $request->validated(),

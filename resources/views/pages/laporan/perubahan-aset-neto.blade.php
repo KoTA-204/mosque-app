@@ -4,7 +4,7 @@
 
 @php
     if (!function_exists('fmtPan')) {
-        function fmtPan($val) { return number_format(abs($val), 0, ',', '.'); }
+        function fmtPan($val) { return number_format(abs($val), 2, ',', '.'); }
     }
     if (!function_exists('signedPan')) {
         function signedPan($val) {
