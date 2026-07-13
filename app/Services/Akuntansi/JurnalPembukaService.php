@@ -16,33 +16,17 @@ use RuntimeException;
  *
  * Aturan bisnis "saldo awal" (opening balance).
  *  - Singleton: hanya boleh ada satu jurnal pembuka.
- *  - Periode dihitung dari (jenis periode + tanggal awal).
+ *  - Periode ditentukan langsung dari (nama_periode, tanggal_awal, tanggal_akhir)
+ *    yang diinput user; tanggal_akhir sudah dihitung di sisi client (akhir bulan
+ *    dari tanggal_awal) dan divalidasi ulang di sini sebagai pengaman lapis dua.
  *  - Terkunci setelah diposting / ada transaksi turunan.
- *
- * Mewarisi JurnalService (parent) yang SUDAH menyediakan:
- *  - protected catatDetailJurnal(Jurnal, array): void
- *  - public isDetailSeimbang(array): bool  &  isBalanced(Jurnal): bool
- *  - public postingKeBukuBesar(Jurnal): bool|string   (Template Method + hook setelahPosting)
- *  - public hapusJurnal(Jurnal): bool|string          (Template Method + hook sebelumPenghapusan)
- *  - abstract daftar(array): LengthAwarePaginator      (WAJIB diimplementasikan di sini)
- *
- * Catatan penting soal kompatibilitas:
- *  Method posting & hapus milik parent BUKAN untuk di-override dengan return type
- *  berbeda (itu memicu FatalError). Di sini kita PANGGIL parent-nya lalu bungkus
- *  hasilnya (bool|string) menjadi array ['ok','status','message'] via method sendiri
- *  bernama postingSaldoAwal() & hapusSaldoAwal().
  */
 class JurnalPembukaService extends JurnalService
 {
     private const JENIS = 'PEMBUKA';
 
-    // -- KONTRAK PARENT --------------------------------------------
+    // -- KONTRAK PARENT -------------------------------------------- (tidak berubah)
 
-    /**
-     * Implementasi wajib dari JurnalService::daftar().
-     * Jurnal pembuka bersifat singleton, tetapi tetap dikembalikan sebagai
-     * paginator agar kompatibel dengan kontrak induk.
-     */
     public function daftar(array $filter): LengthAwarePaginator
     {
         return Jurnal::with(['periode', 'detailJurnal.akun'])
@@ -51,7 +35,7 @@ class JurnalPembukaService extends JurnalService
             ->paginate($filter['per_page'] ?? 15);
     }
 
-    // -- READ ------------------------------------------------------
+    // -- READ ------------------------------------------------------ (tidak berubah)
 
     public function getJurnalPembuka(): ?Jurnal
     {
@@ -113,7 +97,7 @@ class JurnalPembukaService extends JurnalService
         ];
     }
 
-    // -- GUARD -----------------------------------------------------
+    // -- GUARD ----------------------------------------------------- (tidak berubah)
 
     public function dapatDiubah(Jurnal $jurnal, ?string &$alasan = null): bool
     {
@@ -138,12 +122,18 @@ class JurnalPembukaService extends JurnalService
     }
 
     // -- WRITE -----------------------------------------------------
-
+    
     public function catatSaldoAwal(array $data): Jurnal
     {
+        // Jurnal pembuka baru tidak boleh memakai tanggal awal yang sudah berlalu.
+        $this->pastikanTanggalTidakBerlalu($data['tanggal_awal']);
+
         return DB::transaction(function () use ($data) {
-            $tanggal = Carbon::parse($data['tanggal_awal']);
-            $periode = $this->derivePeriode($tanggal);
+            $periode = $this->derivePeriodeDariTanggal(
+                $data['nama_periode'],
+                $data['tanggal_awal'],
+                $data['tanggal_akhir']
+            );
 
             // Selalu dibuat sebagai DRAFT dulu; posting dilakukan lewat parent.
             $jurnal = Jurnal::create([
@@ -167,9 +157,17 @@ class JurnalPembukaService extends JurnalService
 
     public function perbaruiSaldoAwal(Jurnal $jurnal, array $data): Jurnal
     {
+        $tanggalAwalSaatIni = optional($jurnal->periode)->tanggal_awal?->format('Y-m-d')
+            ?? optional($jurnal->tanggal)->format('Y-m-d');
+
+        $this->pastikanTanggalTidakBerlalu($data['tanggal_awal'], $tanggalAwalSaatIni);
+
         return DB::transaction(function () use ($jurnal, $data) {
-            $tanggal = Carbon::parse($data['tanggal_awal']);
-            $periode = $this->derivePeriode($tanggal);
+            $periode = $this->derivePeriodeDariTanggal(
+                $data['nama_periode'],
+                $data['tanggal_awal'],
+                $data['tanggal_akhir']
+            );
 
             $jurnal->update([
                 'periode_id' => $periode->id,
@@ -189,13 +187,8 @@ class JurnalPembukaService extends JurnalService
         });
     }
 
-    // -- POSTING / HAPUS (bungkus Template Method milik parent) ----
+    // -- POSTING / HAPUS --------------------------------------------- (tidak berubah)
 
-    /**
-     * Posting jurnal pembuka ke buku besar.
-     * Memanggil parent::postingKeBukuBesar() (bool|string) lalu membungkus
-     * hasilnya menjadi array ['ok','status','message'] untuk controller.
-     */
     public function postingSaldoAwal(Jurnal $jurnal): array
     {
         if ($jurnal->jenis_jurnal !== self::JENIS) {
@@ -209,11 +202,6 @@ class JurnalPembukaService extends JurnalService
             : $this->gagal((string) $hasil, 422);
     }
 
-    /**
-     * Hapus jurnal pembuka.
-     * Guard domain (dapatDiubah) diperiksa dulu, lalu didelegasikan ke
-     * parent::hapusJurnal() (bool|string).
-     */
     public function hapusSaldoAwal(Jurnal $jurnal): array
     {
         if (! $this->dapatDiubah($jurnal, $alasan)) {
@@ -227,11 +215,6 @@ class JurnalPembukaService extends JurnalService
             : $this->gagal((string) $hasil, 422);
     }
 
-    /**
-     * Dipakai internal oleh catat/perbarui saat submit_type = posting.
-     * Melempar RuntimeException bila gagal agar transaksi di-rollback
-     * (validasi keseimbangan sudah dijamin FormRequest, ini pengaman lapis dua).
-     */
     private function postingLewatParent(Jurnal $jurnal): void
     {
         $hasil = parent::postingKeBukuBesar($jurnal);
@@ -243,7 +226,7 @@ class JurnalPembukaService extends JurnalService
         }
     }
 
-    // -- HELPER ----------------------------------------------------
+    // -- HELPER ------------------------------------------------------ (tidak berubah)
 
     protected function sukses(string $message = 'Berhasil.'): array
     {
@@ -255,16 +238,14 @@ class JurnalPembukaService extends JurnalService
         return ['ok' => false, 'status' => $status, 'message' => $message];
     }
 
-    /**
-     * Hitung periode dari (tanggal awal + jenis periode) yang dipilih user.
-     * Tanggal akhir dihitung sistem agar periode konsisten & tidak tumpang tindih.
-     */
-    protected function derivePeriode(Carbon $tanggal): Periode
+    protected function derivePeriodeDariTanggal(string $namaPeriode, string $tanggalAwal, string $tanggalAkhir): Periode
     {
-        // Aplikasi hanya menggunakan periode bulanan.
-        $awal  = $tanggal->copy()->startOfMonth();
-        $akhir = $awal->copy()->endOfMonth();
-        $nama  = $awal->translatedFormat('F Y');   // contoh: "Maret 2025"
+        $awal  = Carbon::parse($tanggalAwal)->startOfDay();
+        $akhir = Carbon::parse($tanggalAkhir)->startOfDay();
+
+        if ($akhir->lt($awal)) {
+            throw new RuntimeException('Tanggal akhir periode tidak boleh sebelum tanggal awal.');
+        }
 
         return Periode::firstOrCreate(
             [
@@ -272,10 +253,28 @@ class JurnalPembukaService extends JurnalService
                 'tanggal_akhir' => $akhir->toDateString(),
             ],
             [
-                'nama_periode' => $nama,
+                'nama_periode' => $namaPeriode,
                 'tipe'         => 'bulanan',
                 'status'       => true,
             ]
         );
+    }
+
+    /**
+     *
+     * @param  string       $tanggalAwal          Format Y-m-d, contoh "2026-07-15".
+     * @param  string|null  $tanggalAwalSaatIni   Tanggal awal milik jurnal yang sedang
+     *         diedit (Y-m-d). Jika sama dengan $tanggalAwal, validasi dilewati — supaya
+     *         user tetap bisa menyimpan ulang tanggal lama miliknya.
+     */
+    protected function pastikanTanggalTidakBerlalu(string $tanggalAwal, ?string $tanggalAwalSaatIni = null): void
+    {
+        if ($tanggalAwalSaatIni !== null && $tanggalAwal === $tanggalAwalSaatIni) {
+            return;
+        }
+
+        if (Carbon::parse($tanggalAwal)->startOfDay()->lt(Carbon::today())) {
+            throw new RuntimeException('Tanggal awal saldo yang sudah berlalu tidak dapat dipilih untuk jurnal pembuka.');
+        }
     }
 }

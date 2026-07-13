@@ -44,6 +44,23 @@ class TransaksiController extends Controller
     }
 
     /**
+     * TransaksiService melempar RuntimeException dengan pesan yang memang
+     * sudah ditujukan untuk pengguna ketika sebuah aturan bisnis dilanggar
+     */
+    private function pesanErrorTransaksi(\Throwable $e, string $pesanGenerik): string
+    {
+        if ($this->isUniqueViolation($e)) {
+            return 'Transaksi ini sudah pernah tersimpan sebelumnya (nomor referensi sama). Silakan periksa kembali daftar transaksi.';
+        }
+
+        if ($e instanceof \RuntimeException) {
+            return $e->getMessage();
+        }
+
+        return $pesanGenerik;
+    }
+
+    /**
      * Bangun pesan peringatan saat sebagian/seluruh baris file mutasi
      * tidak sesuai dengan jenis_transaksi yang dipilih pengguna saat import.
      */
@@ -161,10 +178,11 @@ class TransaksiController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => $this->isUniqueViolation($e)
-                    ? 'Transaksi ini sudah pernah tersimpan sebelumnya (nomor referensi sama). Silakan periksa kembali daftar transaksi.'
-                    : 'Gagal menyimpan transaksi. Silakan coba lagi atau hubungi admin jika masalah berlanjut.',
-            ], 500);
+                'message' => $this->pesanErrorTransaksi(
+                    $e,
+                    'Gagal menyimpan transaksi. Silakan coba lagi atau hubungi admin jika masalah berlanjut.'
+                ),
+            ], $e instanceof \RuntimeException && !$this->isUniqueViolation($e) ? 422 : 500);
         }
     }
 

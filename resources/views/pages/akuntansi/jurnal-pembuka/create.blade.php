@@ -8,10 +8,8 @@
 
     {{-- Header --}}
     <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
-        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Setup Saldo Awal (Jurnal Pembuka)</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Dilakukan sekali saat mulai pencatatan. Periode bulanan dibuat otomatis dari tanggal awal yang dipilih.
-        </p>
+        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Jurnal Pembuka</h1>
+        <p>Entri saldo awal untuk periode baru</p>
     </div>
 
     <x-jurnal.stepper :steps="['Informasi Umum', 'Entri Saldo Awal', 'Review & Simpan']"/>
@@ -46,19 +44,37 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Awal <span class="text-red-500">*</span></label>
-                        <input type="date" name="tanggal_awal" id="inputTanggalAwal" value="{{ old('tanggal_awal') }}" class="w-full h-10 px-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Periode <span class="text-red-500">*</span></label>
+                        <input type="text" name="nama_periode" id="inputNamaPeriode" required value="{{ old('nama_periode') }}"
+                            placeholder="Contoh: Juli 2026"
+                            class="w-full h-10 px-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                        <p class="text-xs text-gray-400 mt-1">Terisi otomatis, boleh diubah manual.</p>
+                        @error('nama_periode') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Awal Saldo <span class="text-red-500">*</span></label>
+                        <input type="text" name="tanggal_awal" id="inputTanggalAwal" required value="{{ old('tanggal_awal') }}"
+                            autocomplete="off" placeholder="Pilih tanggal"
+                            class="w-full h-10 px-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                        <p class="text-xs text-gray-400 mt-1">Pilih tanggal saldo awal ini berlaku (mis. tanggal masjid mulai pencatatan).</p>
+                        <p class="text-xs text-amber-600 dark:text-amber-500 mt-1">
+                            Catatan: khusus jurnal pembuka ini boleh dimulai dari tanggal berapa pun. Periode-periode berikutnya akan otomatis dimulai dari tanggal 1 setiap bulan saat dibuka lewat Jurnal Penutup.
+                        </p>
                         @error('tanggal_awal') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
 
-                    {{-- Tanggal Akhir (otomatis) --}}
+                    {{-- Tanggal akhir: otomatis akhir bulan dari tanggal awal --}}
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Akhir (otomatis)</label>
-                        <input type="text" id="previewTanggalAkhir" readonly placeholder="-" class="w-full h-10 px-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-900 text-gray-500">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Akhir Periode</label>
+                        <input type="text" id="previewTanggalAkhir" readonly placeholder="-"
+                            class="w-full h-10 px-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-900 text-gray-500">
+                        <input type="hidden" name="tanggal_akhir" id="inputTanggalAkhirHidden">
+                        <p class="text-xs text-gray-400 mt-1">Otomatis ke akhir bulan dari tanggal awal.</p>
                     </div>
 
                     {{-- Catatan --}}
-                    <div class="col-span-2">
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan</label>
                         <input type="text" name="keterangan" value="{{ old('keterangan') }}" placeholder="Opsional - catatan tambahan" class="w-full h-10 px-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
                     </div>
@@ -115,7 +131,7 @@
                     <div>
                         <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Informasi Umum</p>
                         <div class="space-y-2">
-                            <div class="flex justify-between text-sm py-1.5 border-b border-gray-50 dark:border-gray-800"><span class="text-gray-500">Jenis Periode</span><span id="reviewTipePeriode" class="font-medium text-gray-800 dark:text-gray-200">-</span></div>
+                            <div class="flex justify-between text-sm py-1.5 border-b border-gray-50 dark:border-gray-800"><span class="text-gray-500">Periode</span><span id="reviewTipePeriode" class="font-medium text-gray-800 dark:text-gray-200">-</span></div>
                             <div class="flex justify-between text-sm py-1.5 border-b border-gray-50 dark:border-gray-800"><span class="text-gray-500">Tanggal Awal</span><span id="reviewTanggalAwal" class="font-medium text-gray-800 dark:text-gray-200">-</span></div>
                             <div class="flex justify-between text-sm py-1.5 border-b border-gray-50 dark:border-gray-800"><span class="text-gray-500">Tanggal Akhir</span><span id="reviewTanggalAkhir" class="font-medium text-gray-800 dark:text-gray-200">-</span></div>
                             <div class="flex justify-between text-sm py-1.5 border-b border-gray-50 dark:border-gray-800"><span class="text-gray-500">Keseimbangan</span><span id="reviewStatus" class="font-medium text-gray-800 dark:text-gray-200">-</span></div>
@@ -145,9 +161,6 @@
 @endsection
 
 @push('scripts')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
 <script>
 const AKUN_OPTIONS = @json($akuns);
 let barisCount = 0;
@@ -157,24 +170,53 @@ document.addEventListener('DOMContentLoaded', function () {
     tambahBaris();
     tambahBaris();
     updateBalanceBar();
-    hitungTanggalAkhir();
-    document.getElementById('inputTanggalAwal').addEventListener('change', hitungTanggalAkhir);
-    if (window.flatpickr) {
-        if (window.flatpickr.l10ns && window.flatpickr.l10ns.id) { flatpickr.localize(flatpickr.l10ns.id); }
-        flatpickr('#inputTanggalAwal', { dateFormat: 'Y-m-d', altInput: true, altFormat: 'j F Y', allowInput: true, onChange: hitungTanggalAkhir });
-    }
+
+    flatpickr('#inputTanggalAwal', {
+        dateFormat: 'Y-m-d',   
+        altInput: true,        
+        altFormat: 'd F Y',    
+        locale: 'id',
+        maxDate: 'today',      
+        disableMobile: true,   
+        onChange: function () {
+            hitungTanggalAkhirDanNama();
+        }
+    });
+
+    hitungTanggalAkhirDanNama();
     @if($errors->any()) goToStep(2); @endif
 });
+const NAMA_BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
-function hitungTanggalAkhir() {
-    // Periode selalu bulanan: tanggal akhir = akhir bulan dari tanggal awal.
-    const val = document.getElementById('inputTanggalAwal').value;
-    const out = document.getElementById('previewTanggalAkhir');
-    if (!val) { out.value = '-'; return; }
-    const d = new Date(val);
-    const akhir = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-    out.value = akhir.toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' });
+/**
+ * Hitung tanggal akhir bulan dari tanggal awal yang dipilih user,
+ */
+function hitungTanggalAkhirDanNama() {
+    const val = document.getElementById('inputTanggalAwal').value; // format: yyyy-mm-dd
+    const outAkhir  = document.getElementById('previewTanggalAkhir');
+    const hidAkhir  = document.getElementById('inputTanggalAkhirHidden');
+    const namaInput = document.getElementById('inputNamaPeriode');
+
+    if (!val) { outAkhir.value = '-'; hidAkhir.value = ''; return; }
+
+    const [y, m, d] = val.split('-').map(Number);
+    const akhirBulan = new Date(y, m, 0); // hari ke-0 bulan berikutnya = hari terakhir bulan ini
+
+    const pad = (n) => String(n).padStart(2, '0');
+    const isoAkhir = akhirBulan.getFullYear() + '-' + pad(akhirBulan.getMonth() + 1) + '-' + pad(akhirBulan.getDate());
+
+    outAkhir.value = pad(akhirBulan.getDate()) + ' ' + NAMA_BULAN[akhirBulan.getMonth()] + ' ' + akhirBulan.getFullYear();
+    hidAkhir.value = isoAkhir;
+
+    // Auto-isi nama periode
+    if (!namaInput.dataset.userEdited) {
+        namaInput.value = NAMA_BULAN[m - 1] + ' ' + y;
+    }
 }
+
+document.getElementById('inputNamaPeriode').addEventListener('input', function () {
+    this.dataset.userEdited = 'true';
+});
 
 function goToStep(n) {
     if (n === 2 && !validasiStep1()) return;
@@ -204,8 +246,10 @@ function goToStep(n) {
 }
 
 function validasiStep1() {
+    const nama = document.getElementById('inputNamaPeriode').value.trim();
     const awal = document.getElementById('inputTanggalAwal').value;
-    if (!awal) { showAlert('error', 'Tanggal awal wajib diisi.', 'alertContainer'); return false; }
+    if (!nama) { showAlert('error', 'Nama periode wajib diisi.', 'alertContainer'); return false; }
+    if (!awal) { showAlert('error', 'Tanggal awal wajib dipilih.', 'alertContainer'); return false; }
     hideAlert('alertContainer');
     return true;
 }
@@ -307,12 +351,13 @@ function updateBalanceBar() {
 }
 
 function isiReview() {
-    const tipe = 'Bulanan';
-    const awal = document.getElementById('inputTanggalAwal').value;
-    const ket  = (document.querySelector('[name=keterangan]') || {}).value || '-';
-    document.getElementById('reviewTipePeriode').textContent  = tipe;
-    document.getElementById('reviewTanggalAwal').textContent  = awal ? new Date(awal).toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' }) : '-';
-    document.getElementById('reviewTanggalAkhir').textContent = document.getElementById('previewTanggalAkhir').value || '-';
+    const nama  = document.getElementById('inputNamaPeriode').value || '-';
+    const awal  = document.getElementById('inputTanggalAwal').value || '-';
+    const akhir = document.getElementById('previewTanggalAkhir').value || '-';
+    const ket   = (document.querySelector('[name=keterangan]') || {}).value || '-';
+    document.getElementById('reviewTipePeriode').textContent  = nama;
+    document.getElementById('reviewTanggalAwal').textContent  = awal;
+    document.getElementById('reviewTanggalAkhir').textContent = akhir;
     document.getElementById('reviewKeterangan').textContent   = ket;
     const t = hitungTotal();
     const seimbang = Math.round(t.debit*100) === Math.round(t.kredit*100);

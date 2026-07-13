@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\NamaMiripRule;
 
 class StoreAkunRequest extends FormRequest
 {
@@ -23,7 +24,10 @@ class StoreAkunRequest extends FormRequest
     {
         return [
             'parent_id'    => 'required|exists:akun,id',
-            'nama_akun'    => 'required|string|max:150',
+            'nama_akun'    => [
+                'required', 'string',
+                new NamaMiripRule(level: 'akun', scopeId: $this->input('parent_id')),
+            ],
             'saldo_normal' => 'required|in:DEBIT,KREDIT',
             'deskripsi'    => 'nullable|string',
             'status'       => 'required|in:aktif,tidak_aktif',

@@ -2,7 +2,7 @@
     id="createSubKategoriModal"
     title="Tambah Sub Kategori Akun"
 >
-<form method="POST" 
+<form id="formCreateSubKategori" method="POST" 
         action="{{ route('dashboard.coa.sub-kategori.store') }}" 
         class="space-y-5">
     @csrf
@@ -54,6 +54,8 @@
         <input type="text" id="kodeSubKategoriPreview" value="" readonly disabled
             placeholder="Pilih kategori terlebih dahulu"
             class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed">
+
+        <p class="mt-1.5 text-xs text-gray-400">Kode ini akan digunakan otomatis oleh sistem saat disimpan.</p>
     </div>
 
     {{-- Nama Sub Kategori --}}
@@ -113,6 +115,23 @@
         Simpan
     </button>
 </form>
+
+<script>
+    (function () {
+        const nextKodeSubKategori = @json($nextKodeSubKategori);
+        const kategoriSelect = document.querySelector('#createSubKategoriModal select[name="kategori_akun_id"]');
+        const preview = document.getElementById('kodeSubKategoriPreview');
+
+        function updatePreview() {
+            preview.value = nextKodeSubKategori[kategoriSelect.value] || '';
+        }
+
+        if (kategoriSelect) {
+            kategoriSelect.addEventListener('change', updatePreview);
+            updatePreview();
+        }
+    })();
+</script>
 </x-modal>
 
 <script>

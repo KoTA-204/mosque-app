@@ -94,14 +94,14 @@
         {{-- Donut Pemasukan --}}
         <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden">
             <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Sumber Pemasukan</p>
-            <p class="text-xs text-gray-400 mb-4">{{ $periodeAktif->nama_periode }}</p>
+            <p class="text-xs text-gray-400 mb-4">{{ $periodeAktif->nama_periode ?? '-' }}</p>
             <div id="donutPemasukan" class="w-full"></div>
         </div>
 
         {{-- Donut Pengeluaran --}}
         <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden">
             <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Distribusi Pengeluaran</p>
-            <p class="text-xs text-gray-400 mb-4">{{ $periodeAktif->nama_periode }}</p>
+            <p class="text-xs text-gray-400 mb-4">{{ $periodeAktif->nama_periode ?? '-' }}</p>
             <div id="donutPengeluaran" class="w-full"></div>
         </div>
 

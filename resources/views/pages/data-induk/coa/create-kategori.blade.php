@@ -3,9 +3,7 @@
     title="Tambah Kategori Akun"
 >
 
-<form method="POST"
-        action="{{ route('dashboard.coa.kategori.store') }}"
-        class="space-y-5">
+<form id="formCreateKategori" method="POST" action="{{ route('dashboard.coa.kategori.store') }}" class="space-y-5">
     @csrf
     <input type="hidden" name="_form" value="kategori">
 

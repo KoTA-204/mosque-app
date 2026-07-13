@@ -85,7 +85,7 @@ class ChartOfAccountController extends Controller
             ->orderBy('kode_kategori')
             ->paginate(10)
             ->withQueryString();
-        
+
         $akunIds = $kategori->getCollection()
             ->flatMap(fn ($kat) => $kat->akunKeuangan)
             ->flatMap(fn ($sub) => collect([$sub->id])->merge($sub->children->pluck('id')))
@@ -96,7 +96,6 @@ class ChartOfAccountController extends Controller
             ->pluck('akun_id')
             ->all();
 
-        // Preview kode sub kategori & akun berikutnya
         $nextKodeSubKategori = $allKategori->mapWithKeys(
             fn ($kat) => [$kat->id => $this->generateKodeSubKategori($kat->id)]
         );
@@ -141,9 +140,6 @@ class ChartOfAccountController extends Controller
 
     public function perbaruiKategoriAkun(UpdateKategoriRequest $request, KategoriAkun $kategori)
     {
-        // Kategori yang sudah memiliki sub kategori/akun turunan TIDAK boleh diubah
-        // sama sekali (seluruh field terkunci) demi menjaga integritas struktur &
-        // penomoran CoA. Aturan ini konsisten dengan larangan hapus saat masih punya anak.
         if ($kategori->akunKeuangan()->exists()) {
             return redirect()
                 ->route('dashboard.coa.index')
@@ -230,7 +226,6 @@ class ChartOfAccountController extends Controller
 
     public function perbaruiSubKategori(UpdateSubKategoriRequest $request, Akun $subKategori)
     {
-        // Sub kategori yang sudah memiliki akun turunan TIDAK boleh diubah sama
         if ($subKategori->children()->exists()) {
             return redirect()
                 ->route('dashboard.coa.index')
@@ -261,7 +256,7 @@ class ChartOfAccountController extends Controller
                 );
             }
 
-            // Tolak hapus bila sub kategori sudah dipakai pada transaksi (jurnal).
+            // Tolak hapus 
             if (DetailJurnal::where('akun_id', $subKategori->id)->exists()) {
                 return back()->with(
                     'error',
@@ -335,8 +330,7 @@ class ChartOfAccountController extends Controller
     public function perbaruiAkun(UpdateAkunRequest $request, Akun $akun)
     {
         $data = $request->validated();
-
-        // Akun yang sudah dipakai pada transaksi (jurnal) HANYA boleh mengubah status.
+        
         if (DetailJurnal::where('akun_id', $akun->id)->exists()) {
             $data = ['status' => $data['status']];
         } else {
@@ -358,7 +352,6 @@ class ChartOfAccountController extends Controller
         }
 
         try {
-            // Akun tidak boleh dihapus bila sudah dipakai pada transaksi (jurnal).
             if (DetailJurnal::where('akun_id', $akun->id)->exists()) {
                 return back()->with(
                     'error',
@@ -366,7 +359,6 @@ class ChartOfAccountController extends Controller
                 );
             }
 
-            // Akun yang masih memiliki sub akun juga tidak boleh dihapus.
             if ($akun->children()->exists()) {
                 return back()->with(
                     'error',
@@ -381,6 +373,8 @@ class ChartOfAccountController extends Controller
             return back()->with('error', 'Akun tidak dapat dihapus karena masih digunakan.');
         }
     }
+
+    // Helper: generate kode otomatis 
 
     private function generateKodeSubKategori(int $kategoriId): string
     {

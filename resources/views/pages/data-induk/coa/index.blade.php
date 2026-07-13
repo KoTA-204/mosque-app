@@ -446,13 +446,12 @@
 />
 
 @push('scripts') 
+<script src="{{ asset('js/form-draft.js') }}"></script>
 <script>
-    // ── Permission flags (dari route store/update/destroy) ─────────────────
     const CAN_CREATE_COA = @json($canCreateCoa);
     const CAN_EDIT_COA   = @json($canEditCoa);
     const CAN_DELETE_COA = @json($canDeleteCoa);
 
-    // Tampilkan alert peringatan akses di dalam sebuah modal/form tertentu
     function showModalAlert(form, message) {
         if (!form) return;
         let alertEl = form.querySelector('.permission-alert-notice');
@@ -464,8 +463,6 @@
         alertEl.textContent = message;
     }
 
-    // Cek hak akses sebelum form (create/edit) dikirim ke server.
-    // Jika tidak memiliki akses, submit dibatalkan dan alert ditampilkan di dalam modal.
     function guardSubmit(form, allowed, message) {
         if (!allowed) {
             showModalAlert(form, message);
@@ -496,8 +493,38 @@
         modal.classList.remove('hidden');
     }
 
+    // ── Draft autosave ────────────────
+    const coaDraftKategori    = FormDraft.init({ formId: 'formCreateKategori',    storageKey: 'coa_draft_kategori' });
+    const coaDraftSubKategori = FormDraft.init({ formId: 'formCreateSubKategori', storageKey: 'coa_draft_subkategori' });
+    const coaDraftAkun        = FormDraft.init({ formId: 'formCreateAkun',        storageKey: 'coa_draft_akun' });
+
+    document.getElementById('formCreateKategori')?.removeEventListener('submit', coaDraftKategori.clear);
+    document.getElementById('formCreateSubKategori')?.removeEventListener('submit', coaDraftSubKategori.clear);
+    document.getElementById('formCreateAkun')?.removeEventListener('submit', coaDraftAkun.clear);
+
+    // Clear draft HANYA saat submit benar-benar berhasil tersimpan (dideteksi dari flash message)
+    @if(session('success'))
+        (function () {
+            const msg = @json(session('success'));
+            if (msg.includes('Kategori akun berhasil ditambahkan'))     coaDraftKategori.clear();
+            if (msg.includes('Sub kategori akun berhasil ditambahkan')) coaDraftSubKategori.clear();
+            if (msg.includes('Akun berhasil ditambahkan'))              coaDraftAkun.clear();
+        })();
+    @endif
+
     function closeModal(id) {
         const modal = document.getElementById(id);
+
+        modal.querySelectorAll('form').forEach(form => {
+            form.reset();
+
+            const alertEl = form.querySelector('.permission-alert-notice');
+            if (alertEl) alertEl.remove();
+
+            form.querySelectorAll('select').forEach(select => {
+                select.dispatchEvent(new Event('change'));
+            });
+        });
 
         modal.style.display = 'none';
         modal.classList.add('hidden');
@@ -512,12 +539,6 @@
 
         modal.style.display = 'flex';
     }
-
-    // Catatan: submit form hapus (confirm modal) SENGAJA tidak dicegat di
-    // sisi client lagi. Biarkan request sampai ke server — kalau pengguna
-    // tidak punya akses DELETE_COA, backend akan redirect balik dengan
-    // session('error'), dan pesannya tampil lewat alert #error-alert di atas
-    // halaman (bukan di dalam modal konfirmasi).
 
     function clearSearch() {
         const input = document.getElementById('search-input');

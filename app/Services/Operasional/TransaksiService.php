@@ -259,7 +259,7 @@ class TransaksiService
 
         if (!$periode) {
             throw new \RuntimeException(
-                'Tidak ada periode aktif untuk tanggal ' . $transaksi->tanggal_transaksi
+                'Tidak ada periode aktif untuk tanggal ' . $transaksi->tanggal_transaksi->translatedFormat('d F Y')
             );
         }
 

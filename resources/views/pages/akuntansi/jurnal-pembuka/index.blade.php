@@ -15,6 +15,10 @@
             @if($jurnalPembuka->periode)
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                     Periode: <span class="font-medium">{{ $jurnalPembuka->periode->nama_periode }}</span>
+                    <span class="text-gray-300 dark:text-gray-600">&middot;</span>
+                    {{ optional($jurnalPembuka->periode->tanggal_awal)->translatedFormat('d F Y') }}
+                    s.d.
+                    {{ optional($jurnalPembuka->periode->tanggal_akhir)->translatedFormat('d F Y') }}
                 </p>
             @endif
         </div>

@@ -143,20 +143,26 @@
                     </thead>
                     <tbody class="divide-y divide-gray-50">
                     @foreach($rows as $i => $row)
+                        @php $dilewati = $row['is_duplikat'] || ($row['is_jenis_mismatch'] ?? false); @endphp
                         <tr @class([
                             'transition-colors',
                             'bg-amber-50/60 opacity-60' => $row['is_duplikat'],
-                            'hover:bg-gray-50'          => !$row['is_duplikat'],
+                            'bg-rose-50/60 opacity-60'  => !$row['is_duplikat'] && ($row['is_jenis_mismatch'] ?? false),
+                            'hover:bg-gray-50'          => !$dilewati,
                         ])>
                             <td class="px-4 py-3">
-                                @if(!$row['is_duplikat'])
+                                @if(!$dilewati)
                                     <input type="checkbox"
                                         class="rowCheck rounded border-gray-300"
                                         data-idx="{{ $i }}">
                                     <input type="hidden" name="klasifikasi[{{ $i }}][no_referensi]"
                                         value="{{ $row['no_referensi'] }}">
-                                @else
+                                @elseif($row['is_duplikat'])
                                     <svg class="w-4 h-4 text-amber-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    </svg>
+                                @else
+                                    <svg class="w-4 h-4 text-rose-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
                                     </svg>
                                 @endif
@@ -165,6 +171,8 @@
                                 {{ Str::limit($row['no_referensi'], 14) }}
                                 @if($row['is_duplikat'])
                                     <span class="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-xs">Duplikat</span>
+                                @elseif($row['is_jenis_mismatch'] ?? false)
+                                    <span class="ml-1 px-1.5 py-0.5 bg-rose-100 text-rose-700 rounded text-xs">Tidak Sesuai</span>
                                 @endif
                             </td>
                             <td class="px-3 py-3 text-xs text-gray-600 whitespace-nowrap">
@@ -182,7 +190,7 @@
                                 @endif
                             </td>
                             <td class="px-3 py-3">
-                                @if(!$row['is_duplikat'])
+                                @if(!$dilewati)
                                     <div id="entriesRow{{ $i }}" class="space-y-1.5"></div>
                                     <div class="flex items-center justify-between mt-1.5">
                                         <button type="button" onclick="tambahEntriReview({{ $i }})"
@@ -194,11 +202,11 @@
                                         </span>
                                     </div>
                                 @else
-                                    <span class="text-xs text-gray-400">-</span>
+                                    <span class="text-xs text-gray-400">Baris ini akan dilewati, tidak perlu diklasifikasikan.</span>
                                 @endif
                             </td>
                             <td class="px-3 py-3 text-center">
-                                @if(!$row['is_duplikat'])
+                                @if(!$dilewati)
                                     <button type="button"
                                         onclick="hapusRow(this)"
                                         class="text-gray-400 hover:text-red-500 transition-colors"
@@ -346,7 +354,7 @@ function hitungSelisihReview(rowIndex) {
 
 document.addEventListener('DOMContentLoaded', function () {
     ROWS_DATA.forEach((row, i) => {
-        if (row.is_duplikat) return;
+        if (row.is_duplikat || row.is_jenis_mismatch) return;
         // Default: 1 baris debit + 1 baris kredit, nominal otomatis = nominal mutasi
         buatBarisEntriReview(i, 'DEBIT',  '', row.jumlah);
         buatBarisEntriReview(i, 'KREDIT', '', row.jumlah);
@@ -434,7 +442,7 @@ function hapusRow(btn) {
 
 function updateEntryCount() {
     const totalRows  = document.querySelectorAll('tbody tr').length;
-    const aktifRows  = document.querySelectorAll('tbody tr:not(.bg-amber-50\\/60)').length;
+    const aktifRows  = document.querySelectorAll('tbody tr:not(.bg-amber-50\\/60):not(.bg-rose-50\\/60)').length;
 
     const countEl = document.querySelector('[data-entry-count]');
     if (countEl) countEl.textContent = `Showing 1 to ${totalRows} of ${totalRows} entries`;
@@ -462,8 +470,7 @@ async function simpanKlasifikasi() {
     document.querySelectorAll('tbody tr').forEach(row => {
         const noRefInput = row.querySelector('input[name^="klasifikasi"][name$="[no_referensi]"]');
         if (!noRefInput) {
-            showAlert('error', 'Tidak dapat menemukan input no_referensi pada baris.');
-            return; // baris duplikat, dilewati
+            return; // baris duplikat/tidak sesuai jenis, dilewati — tidak perlu diklasifikasikan
         }
 
         const idxMatch = noRefInput.name.match(/klasifikasi\[(\d+)\]/);

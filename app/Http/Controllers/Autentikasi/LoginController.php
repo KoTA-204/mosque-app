@@ -4,12 +4,25 @@ namespace App\Http\Controllers\Autentikasi;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class LoginController extends Controller
 {
+    /**
+     * Batas maksimal percobaan login gagal sebelum akun di-throttle sementara.
+     */
+    private const MAX_LOGIN_ATTEMPTS = 5;
+
+    /**
+     * Lama waktu (dalam detik) akun di-throttle setelah mencapai batas gagal.
+     * 3600 detik = 1 jam.
+     */
+    private const LOGIN_DECAY_SECONDS = 3600;
+
     public function tampilkanFormLogin(Request $request): View|RedirectResponse
     {
         if (Auth::check()) {
@@ -30,10 +43,34 @@ class LoginController extends Controller
             'password.required' => 'Password wajib diisi.',
         ]);
 
-        if (!Auth::attempt($credentials)) {
+        $throttleKey = $this->throttleKey($request);
+
+        // Jika sudah melebihi batas percobaan, tolak sebelum cek kredensial
+        if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_LOGIN_ATTEMPTS)) {
+            $detikTersisa = RateLimiter::availableIn($throttleKey);
+
             return back()->withErrors([
-                'email' => 'Email atau password salah.',
-            ]);
+                'email' => $this->pesanTerkunci($detikTersisa),
+            ])->onlyInput('email');
+        }
+
+        if (!Auth::attempt($credentials)) {
+            RateLimiter::hit($throttleKey, self::LOGIN_DECAY_SECONDS);
+
+            $sisaPercobaan = $this->sisaPercobaan($throttleKey);
+
+            // Jika hit ini yang membuat batas tercapai, langsung tampilkan pesan terkunci
+            if ($sisaPercobaan <= 0) {
+                $detikTersisa = RateLimiter::availableIn($throttleKey);
+
+                return back()->withErrors([
+                    'email' => $this->pesanTerkunci($detikTersisa),
+                ])->onlyInput('email');
+            }
+
+            return back()->withErrors([
+                'email' => "Email atau password salah. Sisa percobaan: {$sisaPercobaan} kali lagi.",
+            ])->onlyInput('email');
         }
 
         // Tolak login jika akun dinonaktifkan
@@ -47,9 +84,43 @@ class LoginController extends Controller
             ]);
         }
 
+        // Login berhasil → reset penghitung percobaan gagal
+        RateLimiter::clear($throttleKey);
+
         $request->session()->regenerate();
 
         return redirect()->intended(route($this->redirectRouteUntukRole(Auth::user())));
+    }
+
+    /**
+     * Bangun key unik untuk rate limiter berdasarkan email (case-insensitive)
+     */
+    private function throttleKey(Request $request): string
+    {
+        return Str::lower((string) $request->input('email')) . '|' . $request->ip();
+    }
+
+    /**
+     * Hitung sisa percobaan login yang masih tersedia untuk key tertentu.
+     */
+    private function sisaPercobaan(string $throttleKey): int
+    {
+        return max(0, self::MAX_LOGIN_ATTEMPTS - RateLimiter::attempts($throttleKey));
+    }
+
+    /**
+     * Format pesan lockout dalam Bahasa Indonesia, dengan estimasi waktu
+     * dalam menit jika lebih dari 60 detik, atau detik jika kurang.
+     */
+    private function pesanTerkunci(int $detikTersisa): string
+    {
+        if ($detikTersisa > 60) {
+            $menit = (int) ceil($detikTersisa / 60);
+
+            return "Terlalu banyak percobaan login gagal. Silakan coba lagi dalam {$menit} menit.";
+        }
+
+        return "Terlalu banyak percobaan login gagal. Silakan coba lagi dalam {$detikTersisa} detik.";
     }
 
     public function prosesLogout(Request $request): RedirectResponse

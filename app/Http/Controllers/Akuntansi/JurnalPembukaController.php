@@ -50,7 +50,10 @@ class JurnalPembukaController extends Controller
 
         $akuns = $this->service->getAkunTransaksional();
 
-        return view('pages.akuntansi.jurnal-pembuka.create', compact('akuns'));
+        // Jurnal pembuka baru: periode bulan yang sudah berlalu tidak boleh dipilih.
+        $opsiPeriode = $this->service->getOpsiPeriodeBulan(now()->year);
+
+        return view('pages.akuntansi.jurnal-pembuka.create', compact('akuns', 'opsiPeriode'));
     }
 
     /** Simpan saldo awal. */
@@ -63,6 +66,8 @@ class JurnalPembukaController extends Controller
 
         try {
             $jurnal = $this->service->catatSaldoAwal($request->validated());
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->withErrors(['periode_bulan' => $e->getMessage()]);
         } catch (\Throwable $e) {
             return back()->withInput()
                 ->with('error', 'Gagal menyimpan jurnal pembuka: ' . $e->getMessage());
@@ -75,7 +80,6 @@ class JurnalPembukaController extends Controller
         return redirect()->route('dashboard.jurnal-pembuka.index')->with('success', $pesan);
     }
 
-    /** Detail (JSON) untuk drawer/preview. */
     public function tampilkanDetailJurnalPembuka(Jurnal $jurnalPembuka)
     {
         $jurnalPembuka->load(['periode', 'detailJurnal.akun']);
@@ -86,12 +90,11 @@ class JurnalPembukaController extends Controller
         ]);
     }
 
-    /** Form edit. Boleh diubah hanya jika belum diposting & belum ada transaksi turunan. */
+    // Boleh diubah hanya jika belum diposting & belum ada transaksi turunan.
     public function ubahJurnalPembuka(Jurnal $jurnalPembuka)
     {
         if (! $this->service->dapatDiubah($jurnalPembuka, $alasan)) {
-            return redirect()->route('dashboard.jurnal-pembuka.index')
-                ->with('error', $alasan);
+            return redirect()->route('dashboard.jurnal-pembuka.index')->with('error', $alasan);
         }
 
         $jurnalPembuka->load(['periode', 'detailJurnal.akun']);
@@ -109,6 +112,8 @@ class JurnalPembukaController extends Controller
 
         try {
             $jurnal = $this->service->perbaruiSaldoAwal($jurnalPembuka, $request->validated());
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->withErrors(['periode_bulan' => $e->getMessage()]);
         } catch (\Throwable $e) {
             return back()->withInput()
                 ->with('error', 'Gagal memperbarui jurnal pembuka: ' . $e->getMessage());

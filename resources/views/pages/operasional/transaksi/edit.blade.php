@@ -5,6 +5,11 @@
     @csrf
     @method('PUT')
 
+    <div id="editDraftNotice" class="hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700 flex items-center justify-between">
+        <span>Draft perubahan sebelumnya berhasil dipulihkan.</span>
+        <button type="button" onclick="document.getElementById('editDraftNotice').classList.add('hidden')" class="text-blue-400 hover:text-blue-600">&times;</button>
+    </div>
+
     <div class="grid grid-cols-2 gap-4 mb-4">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -104,8 +109,9 @@
                 <span class="font-medium text-green-700 underline">Pilih File</span>
                 atau tarik file bukti transaksi
             </p>
-            <p class="text-xs text-gray-400 mt-0.5">.PNG, .JPG, .PDF</p>
+            <p class="text-xs text-gray-400 mt-0.5">.PNG, .JPG, .PDF &middot; maks. {{ config('transaksi.bukti_max_files', 5) }} file, masing-masing maks. {{ config('transaksi.bukti_max_size_mb', 5) }} MB</p>
         </div>
+        <p id="buktiErrorEdit" class="hidden mt-1.5 text-xs text-red-500"></p>
         <input type="file" id="inputBuktiEdit" name="bukti_transaksi[]"
             accept=".png,.jpg,.jpeg,.pdf" multiple class="hidden"
             onchange="previewBuktiEdit(this.files)">
@@ -117,7 +123,7 @@
     </div>
 
     <div class="flex items-center justify-end gap-3 pt-2">
-        <button type="button" onclick="closeModal('modalEdit')"
+        <button type="button" onclick="hapusDraftEdit(currentEditId); closeModal('modalEdit')"
             class="h-9 px-4 text-sm border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors">
             Batal
         </button>
@@ -137,6 +143,85 @@ const akunListEdit = @json($akuns->map(fn($a) => ['id' => $a->id, 'label' => $a-
 
 let fpEditTanggal;
 
+// ── Draft Auto-save per transaksi ──────────────────
+let currentEditId = null;
+
+// Sama seperti di form Tambah: mencegah 'beforeunload' menuliskan ulang
+// draft yang baru saja sengaja dihapus (submit sukses atau X/Batal).
+let editDraftDibatalkan = false;
+
+if (typeof debounce === 'undefined') {
+    function debounce(fn, delay) {
+        let t;
+        return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
+    }
+}
+
+function kumpulkanDraftEdit() {
+    const jurnalRows = [];
+    document.querySelectorAll('#jurnalEditBody tr').forEach(tr => {
+        jurnalRows.push({
+            akun_id: tr.querySelector('.jurnalAkun')?.value ?? '',
+            tipe:    tr.querySelector('.jurnalTipe')?.value ?? 'DEBIT',
+            nominal: tr.querySelector('.jurnalNominal')?.value ?? '',
+        });
+    });
+
+    return {
+        tanggal_transaksi: document.getElementById('inputTanggalEdit')?.value ?? '',
+        dompet_id:         document.querySelector('#formEdit [name="dompet_id"]')?.value ?? '',
+        jenis_transaksi:   document.querySelector('#formEdit [name="jenis_transaksi"]')?.value ?? '',
+        deskripsi:         document.querySelector('#formEdit [name="deskripsi"]')?.value ?? '',
+        jurnal:            jurnalRows,
+        savedAt:           Date.now(),
+    };
+}
+
+function simpanDraftEdit() {
+    if (!currentEditId || editDraftDibatalkan) return;
+    try {
+        sessionStorage.setItem(`draft_transaksi_edit_${currentEditId}`, JSON.stringify(kumpulkanDraftEdit()));
+    } catch (e) {
+        console.warn('Gagal menyimpan draft edit:', e);
+    }
+}
+const simpanDraftEditDebounced = debounce(simpanDraftEdit, 500);
+
+function hapusDraftEdit(id) {
+    if (id) sessionStorage.removeItem(`draft_transaksi_edit_${id}`);
+    editDraftDibatalkan = true;
+}
+
+function pulihkanDraftEdit(id) {
+    const raw = sessionStorage.getItem(`draft_transaksi_edit_${id}`);
+    if (!raw) return false;
+
+    let draft;
+    try { draft = JSON.parse(raw); } catch { hapusDraftEdit(id); return false; }
+
+    // Draft basi (>24 jam) tidak dipulihkan
+    if (!draft.savedAt || (Date.now() - draft.savedAt) > 24 * 60 * 60 * 1000) {
+        hapusDraftEdit(id);
+        return false;
+    }
+
+    if (draft.tanggal_transaksi) fpEditTanggal.setDate(draft.tanggal_transaksi, true);
+    if (draft.dompet_id) document.querySelector('#formEdit [name="dompet_id"]').value = draft.dompet_id;
+    if (draft.jenis_transaksi) document.querySelector('#formEdit [name="jenis_transaksi"]').value = draft.jenis_transaksi;
+    if (draft.deskripsi) document.querySelector('#formEdit [name="deskripsi"]').value = draft.deskripsi;
+
+    if (Array.isArray(draft.jurnal) && draft.jurnal.length >= 2) {
+        document.getElementById('jurnalEditBody').innerHTML = '';
+        draft.jurnal.forEach(row => {
+            buatBarisJurnal('jurnalEditBody', 'jurnalEdit', akunListEdit, row.tipe, row.akun_id, row.nominal);
+        });
+        hitungTotalJurnal('jurnalEditBody', 'jurnalEdit');
+    }
+
+    document.getElementById('editDraftNotice')?.classList.remove('hidden');
+    return true;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     fpEditTanggal = flatpickr('#inputTanggalEdit', {
         dateFormat: 'Y-m-d',
@@ -155,12 +240,52 @@ document.addEventListener('DOMContentLoaded', function () {
             },
         },
     });
+
+    // Auto-save setiap ada perubahan input di form (delegasi di level form,
+    // termasuk baris jurnal yang dibuat dinamis). simpanDraftEdit() sendiri
+    // sudah menjaga diri lewat guard `if (!currentEditId) return;` sehingga
+    // aman didaftarkan sekali di sini walau modal Edit belum dibuka.
+    // Sebelumnya draft hanya tersimpan saat event 'offline' terpicu, sehingga
+    // refresh halaman biasa membuat perubahan yang belum disimpan ikut hilang.
+    const formEditEl = document.getElementById('formEdit');
+    formEditEl?.addEventListener('input',  () => { editDraftDibatalkan = false; simpanDraftEditDebounced(); });
+    formEditEl?.addEventListener('change', () => { editDraftDibatalkan = false; simpanDraftEditDebounced(); });
+
+    window.addEventListener('beforeunload', () => {
+        simpanDraftEdit();
+    });
+    window.addEventListener('offline', () => {
+        simpanDraftEdit();
+    });
 });
 
-function previewBuktiEdit(files) {
+// Sama seperti di form Tambah: memilih file lagi lewat <input type=file>
+// akan MENGGANTI seleksi sebelumnya, jadi kita kelola sendiri secara akumulatif.
+let buktiFilesEdit = [];
+
+function resetBuktiEdit() {
+    buktiFilesEdit = [];
+    document.getElementById('inputBuktiEdit').value = '';
+    document.getElementById('listBuktiEdit').innerHTML = '';
+    document.getElementById('buktiErrorEdit')?.classList.add('hidden');
+}
+
+function sinkronInputBuktiEdit() {
+    const dt = new DataTransfer();
+    buktiFilesEdit.forEach(f => dt.items.add(f));
+    document.getElementById('inputBuktiEdit').files = dt.files;
+}
+
+function hapusBuktiEditBaru(idx) {
+    buktiFilesEdit.splice(idx, 1);
+    sinkronInputBuktiEdit();
+    renderListBuktiEdit();
+}
+
+function renderListBuktiEdit() {
     const list = document.getElementById('listBuktiEdit');
     list.innerHTML = '';
-    [...files].forEach(f => {
+    buktiFilesEdit.forEach((f, idx) => {
         list.insertAdjacentHTML('beforeend', `
             <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">
                 <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,9 +294,35 @@ function previewBuktiEdit(files) {
                 </svg>
                 <span class="flex-1 truncate">${f.name}</span>
                 <span class="text-xs text-gray-400">${(f.size/1024).toFixed(0)} KB</span>
+                <button type="button" onclick="hapusBuktiEditBaru(${idx})" title="Hapus file"
+                    class="text-gray-400 hover:text-red-500 flex-shrink-0">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
             </div>
         `);
     });
+}
+
+function previewBuktiEdit(files) {
+    const errEl = document.getElementById('buktiErrorEdit');
+
+    const gabungan = [...buktiFilesEdit, ...files];
+    // validasiBukti() didefinisikan bersama di script form Tambah (create_blade.php)
+    // yang dirender di halaman yang sama, sehingga bisa dipakai ulang di sini.
+    const pesanError = typeof validasiBukti === 'function' ? validasiBukti(gabungan) : null;
+    if (pesanError) {
+        errEl.textContent = pesanError;
+        errEl.classList.remove('hidden');
+        sinkronInputBuktiEdit(); // kembalikan ke seleksi lama yang masih valid
+        return;
+    }
+    errEl.classList.add('hidden');
+
+    buktiFilesEdit = gabungan;
+    sinkronInputBuktiEdit();
+    renderListBuktiEdit();
 }
 
 function renderExistingBukti(items) {
@@ -226,6 +377,7 @@ async function hapusBuktiLama(buktiId, btn) {
 
         const data = await res.json();
         if (data.success) {
+            hapusDraftEdit(currentEditId);
             btn.closest('[data-bukti-id]').remove();
             const container = document.getElementById('existingBuktiList');
             if (container && container.children.length === 0) {
@@ -266,7 +418,7 @@ async function submitEdit() {
         document.querySelectorAll('#jurnalEditBody tr').forEach(tr => {
             fd.append(`jurnal[${idx}][akun_id]`, tr.querySelector('.jurnalAkun').value);
             fd.append(`jurnal[${idx}][tipe]`,    tr.querySelector('.jurnalTipe').value);
-            fd.append(`jurnal[${idx}][nominal]`, tr.querySelector('.jurnalNominal').value);
+            fd.append(`jurnal[${idx}][nominal]`, parseRibuan(tr.querySelector('.jurnalNominal').value));
             idx++;
         });
 
@@ -289,6 +441,7 @@ async function submitEdit() {
         }
         const data = await res.json();
         if (data.success) {
+            hapusDraftEdit(currentEditId);
             closeModal('modalEdit');
             sessionStorage.setItem('alert', JSON.stringify({
                 type: 'success',
@@ -317,6 +470,7 @@ async function submitEdit() {
             window.location.reload();
         }
     } catch {
+        simpanDraftEdit();
         alert('Gagal menghubungi server.');
     } finally {
         btn.disabled = false;
