@@ -2,7 +2,7 @@
 
 <x-modal id="createKegiatanModal" title="Tambah Kegiatan">
 
-    <form id="createKegiatanForm">
+    <form id="createKegiatanForm" data-autosave-key="kegiatan-create">
         @csrf
 
         <div class="px-6 py-5 space-y-4">

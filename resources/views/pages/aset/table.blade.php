@@ -80,7 +80,10 @@
                         </span>
                     </button>
                     @else
-                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400"><?php echo e($statusLabel); ?></span>
+                    <span title="Anda tidak memiliki izin untuk mengubah status aset"
+                        class="relative inline-flex h-5 w-9 shrink-0 cursor-not-allowed rounded-full border-2 border-transparent opacity-50 <?php echo $aset->status_aset === 'AKTIF' ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'; ?>">
+                        <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 <?php echo $aset->status_aset === 'AKTIF' ? 'translate-x-4' : 'translate-x-0'; ?>"></span>
+                    </span>
                     @endif
                 </td>
 

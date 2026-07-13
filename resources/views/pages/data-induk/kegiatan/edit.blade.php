@@ -2,7 +2,7 @@
 
 <x-modal id="editKegiatanModal" title="Edit Kegiatan">
 
-    <form id="editKegiatanForm">
+    <form id="editKegiatanForm" data-autosave-key="kegiatan-edit-<?php echo e($kegiatan->id); ?>">
         @csrf
 
         <div class="px-6 py-5 space-y-4">
