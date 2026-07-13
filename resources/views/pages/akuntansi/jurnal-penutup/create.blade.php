@@ -29,12 +29,12 @@
                 </svg>
                 <span>
                     <strong>Jurnal penutup mencakup 3 tahap</strong>:
-                    (1) Tutup Pendapatan → (2) Tutup Beban → (3) Pelepasan Aset Neto dari Pembatasan.
+                    (1) Tutup Pendapatan, (2) Tutup Beban, (3) Pelepasan Aset Neto dari Pembatasan.
                     Pastikan semua jurnal umum, penyesuaian, dan koreksi sudah diposting sebelum memulai.
                 </span>
             </div>
 
-            {{-- Informasi Periode --}}
+            {{-- Informasi Periode }}
             <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
                 <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                     <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,11 +107,8 @@
 
                 {{-- Banner status kesiapan periode --}}
                 @if($ringkasan['pesan_tidak_siap'])
-                <div class="flex items-start gap-2 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400 mb-4">
-                    <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                    {{ $ringkasan['pesan_tidak_siap'] }}
+                <div id="alertTidakSiap" class="mb-4">
+                    <x-ui.alert variant="error" title="Periode belum siap ditutup" :message="$ringkasan['pesan_tidak_siap']" />
                 </div>
                 @else
                 <div class="flex items-center gap-2 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-sm text-green-700 dark:text-green-400 mb-4">
@@ -119,6 +116,22 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
                     Semua jurnal periode {{ $periodeAktif->nama_periode }} sudah diposting. Siap untuk proses penutupan.
+                </div>
+                @endif
+
+                @if(!empty($ringkasan['peringatan']))
+                <div class="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 text-sm text-amber-700 dark:text-amber-400 mb-4">
+                    <div class="flex items-center gap-2 font-medium mb-1">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        Perlu diperhatikan sebelum menutup periode
+                    </div>
+                    <ul class="list-disc list-inside space-y-1">
+                        @foreach($ringkasan['peringatan'] as $catatan)
+                        <li><?php echo e($catatan); ?></li>
+                        @endforeach
+                    </ul>
                 </div>
                 @endif
 
@@ -512,7 +525,12 @@ window.goToStep = (n) => stepper.goToStep(n);
 window.goToStep2 = function() {
     // Guard client-side: periode belum siap
     if (pesanTidakSiap) {
-        alert(pesanTidakSiap);
+        const alertEl = document.getElementById('alertTidakSiap');
+        if (alertEl) {
+            alertEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            alertEl.classList.add('ring-2', 'ring-red-400', 'ring-offset-2', 'rounded-xl');
+            setTimeout(() => alertEl.classList.remove('ring-2', 'ring-red-400', 'ring-offset-2'), 1500);
+        }
         return;
     }
     stepper.goToStep(2);

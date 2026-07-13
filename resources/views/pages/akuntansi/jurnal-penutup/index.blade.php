@@ -182,10 +182,7 @@
                         $totalDebit  = $item->detailJurnal->where('tipe', 'DEBIT')->sum('nominal');
                         $totalKredit = $item->detailJurnal->where('tipe', 'KREDIT')->sum('nominal');
                         $isPosted    = $item->status === 'POSTED';
-                        $nomorJurnal = 'JPT-'
-                            . $item->periode->tanggal_awal->format('Y') . '-'
-                            . $item->periode->tanggal_awal->format('m') . '-'
-                            . str_pad($jurnal->firstItem() + $loop->index, 3, '0', STR_PAD_LEFT);
+                        $nomorJurnal = $item->kode_jurnal ?? '—';
                         $tipeLabels = [
                             'TUTUP_PENDAPATAN' => 'Tutup Pendapatan',
                             'TUTUP_BEBAN'      => 'Tutup Beban',

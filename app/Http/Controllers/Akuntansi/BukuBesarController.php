@@ -26,8 +26,13 @@ class BukuBesarController extends Controller
         $totalKredit = $allDetails->where('tipe', 'KREDIT')->sum('nominal');
 
         $akun       = $akunId ? Akun::find($akunId) : null;
-        $saldoAwal  = $this->service->hitungSaldoAwal($akun);
-        $saldoAkhir = $saldoAwal + $totalDebit - $totalKredit;
+        // Cara 2: PEMBUKA ditampilkan sebagai baris pertama di daftar mutasi,
+        // sehingga saldo awal bawaan = 0 (tidak dihitung terpisah) agar tidak dobel.
+        $saldoAwal  = 0;
+        $mutasiNet  = ($akun && $akun->saldo_normal === 'KREDIT')
+            ? $totalKredit - $totalDebit
+            : $totalDebit - $totalKredit;
+        $saldoAkhir = $saldoAwal + $mutasiNet;
 
         $badge      = $this->service->tentukanBadge($akun, $saldoAkhir);
         $badgeAkun  = $badge['akun'];

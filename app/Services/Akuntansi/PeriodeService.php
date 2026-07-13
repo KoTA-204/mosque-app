@@ -4,27 +4,18 @@ namespace App\Services\Akuntansi;
 
 use App\Models\Periode;
 
-/**
- * Service khusus siklus hidup & transisi periode akuntansi.
- *
- * Dipisahkan dari JurnalPenutupService demi High Cohesion:
- * class ini HANYA mengurus status dan transisi periode.
- */
 class PeriodeService
 {
-    /** Periode dianggap CLOSED jika tidak aktif. */
     public function isPeriodeClosed(Periode $periode): bool
     {
         return !$periode->status;
     }
 
-    /** Tutup periode saat ini. */
     public function tutupPeriode(Periode $periode): void
     {
         $periode->update(['status' => false]);
     }
 
-    /** Ambil periode berikutnya berdasarkan tanggal awal. */
     public function getNextPeriode(Periode $periode): ?Periode
     {
         return Periode::where('tanggal_awal', '>', $periode->tanggal_awal)
@@ -32,38 +23,35 @@ class PeriodeService
             ->first();
     }
 
-    /** Aktifkan periode berikutnya (menonaktifkan semua periode lain). */
     public function aktifkanPeriodeBerikutnya(Periode $periode): void
     {
-        $next = $this->getNextPeriode($periode);
-
-        if (!$next) {
-            throw new \RuntimeException('Periode berikutnya belum tersedia.');
-        }
+        $next = $this->getNextPeriode($periode) ?? $this->buatPeriodeBerikutnya($periode);
 
         Periode::query()->update(['status' => false]);
         $next->update(['status' => true]);
     }
 
-    /**
-     * Finalisasi penutupan:
-     * - tutup periode sekarang
-     * - aktifkan periode berikutnya
-     */
+    public function buatPeriodeBerikutnya(Periode $periode): Periode
+    {
+        $awal  = $periode->tanggal_akhir->copy()->addDay()->startOfMonth();
+        $akhir = $awal->copy()->endOfMonth();
+
+        return Periode::firstOrCreate(
+            [
+                'tanggal_awal'  => $awal->toDateString(),
+                'tanggal_akhir' => $akhir->toDateString(),
+            ],
+            [
+                'nama_periode' => $awal->translatedFormat('F Y'),
+                'tipe'         => 'bulanan',
+                'status'       => false,
+            ]
+        );
+    }
+
     public function finalisasiPenutupan(Periode $periode): void
     {
         $this->tutupPeriode($periode);
         $this->aktifkanPeriodeBerikutnya($periode);
-    }
-
-    /** Guard: periode berikutnya harus sudah ada sebelum closing. */
-    public function validasiPeriodeBerikutnya(Periode $periode): ?string
-    {
-        if (!$this->getNextPeriode($periode)) {
-            return 'Periode berikutnya belum tersedia. '
-                 . 'Buat periode berikutnya terlebih dahulu sebelum menutup periode ini.';
-        }
-
-        return null;
     }
 }

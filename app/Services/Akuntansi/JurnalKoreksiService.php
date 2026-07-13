@@ -11,8 +11,6 @@ class JurnalKoreksiService extends JurnalService
 {
     public function __construct(private AkunQueryService $akunQuery) {}
 
-    // ── Query (getter — dipertahankan) ────────────────────────────
-
     public function daftar(array $filter): LengthAwarePaginator
     {
         return Jurnal::with(['periode', 'detailJurnal.akun', 'transaksi'])
@@ -35,7 +33,6 @@ class JurnalKoreksiService extends JurnalService
         return $jurnal->load('periode', 'detailJurnal.akun', 'aset');
     }
 
-    /** Delegasi ke AkunQueryService (hapus duplikasi). */
     public function getAkunList(): array
     {
         return $this->akunQuery->getGroupedAkun();
@@ -65,11 +62,17 @@ class JurnalKoreksiService extends JurnalService
 
     // ── Aksi ─────────────────────────────────────────────
 
-    /** Mencatat jurnal koreksi. */
     public function catatKoreksi(array $data, string $status = 'DRAFT'): Jurnal
     {
         return DB::transaction(function () use ($data, $status) {
             $periode = Periode::findOrFail($data['periode_id']);
+
+            if (!$periode->status) {
+                throw new \RuntimeException(
+                    "Periode {$periode->nama_periode} sudah ditutup. "
+                    . 'Jurnal koreksi tidak dapat dicatat pada periode yang telah ditutup.'
+                );
+            }
 
             $jurnal = Jurnal::create([
                 'periode_id'       => $periode->id,
@@ -87,8 +90,6 @@ class JurnalKoreksiService extends JurnalService
             return $jurnal->load('detailJurnal.akun');
         });
     }
-
-    // ── Hook: sebelum hapus ────────────────────────────────────
 
     protected function sebelumPenghapusan(Jurnal $jurnal): void
     {

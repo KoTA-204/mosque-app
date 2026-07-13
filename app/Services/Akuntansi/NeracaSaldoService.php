@@ -7,14 +7,8 @@ use App\Models\DetailJurnal;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
-/**
- * Service neraca saldo (Pure Fabrication).
- *
- * Mengeluarkan logika query akun & agregasi saldo dari NeracaSaldoController.
- */
 class NeracaSaldoService
 {
-    /** Query akun (level detail) dengan filter kategori & pengurutan. */
     public function getAkunQuery(?string $akunFilter, string $sortBy): Builder
     {
         $query = Akun::with('kategoriAkun')
@@ -32,10 +26,6 @@ class NeracaSaldoService
         return $query;
     }
 
-    /**
-     * Agregasi total debit & kredit per akun (hanya jurnal POSTED).
-     * Hasil dikelompokkan berdasarkan akun_id.
-     */
     public function hitungSaldo(array $akunIds, ?string $periodeId): Collection
     {
         return DetailJurnal::whereIn('akun_id', $akunIds)

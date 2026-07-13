@@ -97,10 +97,7 @@
                         $totalDebit  = $item->detailJurnal->where('tipe', 'DEBIT')->sum('nominal');
                         $totalKredit = $item->detailJurnal->where('tipe', 'KREDIT')->sum('nominal');
                         $isPosted    = $item->status === 'POSTED';
-                        $nomorJurnal = 'JK-'
-                            . $item->periode->tanggal_awal->format('Y') . '-'
-                            . $item->periode->tanggal_awal->format('m') . '-'
-                            . str_pad($jurnal->firstItem() + $loop->index, 4, '0', STR_PAD_LEFT);
+                        $nomorJurnal = $item->kode_jurnal ?? '—';
                         $nomorRef    = $item->jurnal_ref_id
                             ? 'JP-' . str_pad($item->jurnal_ref_id, 5, '0', STR_PAD_LEFT)
                             : '—';
