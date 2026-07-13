@@ -62,7 +62,7 @@
                 @endforeach
             </select>
             @error('route_name')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
-            <p class="mt-1 text-xs text-gray-400">Pilih route Laravel yang akan dituju menu ini.</p>
+            <p class="mt-1 text-xs text-gray-400">Pilih route yang akan dituju menu ini.</p>
         </div>
 
         {{-- Urutan + Status --}}
