@@ -121,12 +121,11 @@ class KenclengService
 
                 return $kencleng->load('transaksi', 'detail');
             } catch (\Throwable $e) {
-                // Hapus file yang sudah ter-upload jika DB gagal
                 if ($pathBA) {
                     Storage::delete($pathBA);
                 }
                 Log::error('KenclengService::store gagal', ['error' => $e->getMessage()]);
-                throw $e; // re-throw supaya DB::transaction melakukan rollback
+                throw $e; 
             }
         });
     }
