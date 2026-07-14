@@ -20,8 +20,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Build & push image ke ACR
         run: |
-          az acr build --registry $ACR_NAME \
-            --no-cache \
+          az acr build --registry $ACR_NAME --no-cache \
             --image $IMAGE:${{ github.sha }}  --image $IMAGE:latest .
 
   deploy-dev:
