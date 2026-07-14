@@ -28,7 +28,7 @@ jobs:
           docker build \
             -t $ACR_NAME.azurecr.io/$IMAGE:${{ github.sha }}  \
             -t $ACR_NAME.azurecr.io/$IMAGE:latest .
-          docker push $ACR_NAME.azurecr.io/$IMAGE:${{ github.sha }}  \
+          docker push $ACR_NAME.azurecr.io/$IMAGE:${{ github.sha }}  
           docker push $ACR_NAME.azurecr.io/$IMAGE:latest
 
   deploy-dev:
