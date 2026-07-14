@@ -85,7 +85,7 @@ class KenclengService
             // jika DB gagal, file yang ter-upload bisa kita track & hapus
             $pathBA = null;
             if (!empty($data['berita_acara'])) {
-                $pathBA = $data['berita_acara']->store('berita_acara', 'public');
+                $pathBA = $data['berita_acara']->store('berita_acara');
             }
 
             try {
@@ -123,7 +123,7 @@ class KenclengService
             } catch (\Throwable $e) {
                 // Hapus file yang sudah ter-upload jika DB gagal
                 if ($pathBA) {
-                    Storage::disk('public')->delete($pathBA);
+                    Storage::delete($pathBA);
                 }
                 Log::error('KenclengService::store gagal', ['error' => $e->getMessage()]);
                 throw $e; // re-throw supaya DB::transaction melakukan rollback
