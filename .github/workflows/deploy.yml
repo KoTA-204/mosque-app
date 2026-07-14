@@ -18,7 +18,7 @@ jobs:
       - name: Login ke Azure
         uses: azure/login@v2
         with:
-          creds: $ secrets.AZURE_CREDENTIALS 
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Login ke ACR
         run: az acr login --name $ACR_NAME
@@ -26,9 +26,9 @@ jobs:
       - name: Build & push image ke ACR
         run: |
           docker build \
-            -t $ACR_NAME.azurecr.io/$IMAGE:$ github.sha  \
+            -t $ACR_NAME.azurecr.io/$IMAGE:${{ github.sha }}  \
             -t $ACR_NAME.azurecr.io/$IMAGE:latest .
-          docker push $ACR_NAME.azurecr.io/$IMAGE:$ github.sha 
+          docker push $ACR_NAME.azurecr.io/$IMAGE:${{ github.sha }}  \
           docker push $ACR_NAME.azurecr.io/$IMAGE:latest
 
   deploy-dev:
@@ -40,13 +40,13 @@ jobs:
       - name: Login ke Azure
         uses: azure/login@v2
         with:
-          creds: $ secrets.AZURE_CREDENTIALS 
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy ke dev
         run: |
           az containerapp update \
             --name mosque-app-dev --resource-group $RESOURCE_GROUP \
-            --image $ACR_NAME.azurecr.io/$IMAGE:$ github.sha 
+            --image $ACR_NAME.azurecr.io/$IMAGE:${{ github.sha }} 
 
   deploy-prod:
     needs: build
@@ -57,10 +57,10 @@ jobs:
       - name: Login ke Azure
         uses: azure/login@v2
         with:
-          creds: $ secrets.AZURE_CREDENTIALS 
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy ke prod
         run: |
           az containerapp update \
             --name mosque-app --resource-group $RESOURCE_GROUP \
-            --image $ACR_NAME.azurecr.io/$IMAGE:$ github.sha 
+            --image $ACR_NAME.azurecr.io/$IMAGE:${{ github.sha }} 
