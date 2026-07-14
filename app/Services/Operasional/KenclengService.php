@@ -81,8 +81,6 @@ class KenclengService
                 $totalFisik += $pecahan * $jumlah;
             }
 
-            // Upload berita acara — dilakukan di dalam transaksi supaya
-            // jika DB gagal, file yang ter-upload bisa kita track & hapus
             $pathBA = null;
             if (!empty($data['berita_acara'])) {
                 $pathBA = $data['berita_acara']->store('berita_acara');
@@ -150,7 +148,7 @@ class KenclengService
             $newPathBA = null;
 
             if (!empty($data['berita_acara'])) {
-                $newPathBA = $data['berita_acara']->store('berita_acara', 'public');
+                $newPathBA = $data['berita_acara']->store('berita_acara');
                 $pathBA    = $newPathBA;
             }
 
@@ -180,7 +178,7 @@ class KenclengService
 
                 // Hapus file lama hanya setelah DB berhasil
                 if ($newPathBA && $oldPathBA) {
-                    Storage::disk('public')->delete($oldPathBA);
+                    Storage::delete($oldPathBA);
                 }
 
                 return $kencleng->fresh()->load('transaksi', 'detail');
