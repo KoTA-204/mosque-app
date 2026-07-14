@@ -6,3 +6,4 @@ storage/logs/*
 tests
 bootstrap/cache/*.php
 public/hot
+public/storage
