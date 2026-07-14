@@ -22,7 +22,7 @@
         ],
         'calk' => [
             'dashboard' => 'dashboard.laporan.calk',
-            'publik'    => 'laporan.catatan-atas-laporan',
+            'publik'    => 'laporan.calk',
             'label'     => 'CALK',
         ],
     ];
