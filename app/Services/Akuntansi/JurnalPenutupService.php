@@ -82,6 +82,7 @@ class JurnalPenutupService extends JurnalService
         }
 
         $adaDraft = Jurnal::where('periode_id', $periode->id)
+            ->where('jenis_jurnal', '!=', 'PENUTUP')
             ->where('status', 'DRAFT')
             ->exists();
 
