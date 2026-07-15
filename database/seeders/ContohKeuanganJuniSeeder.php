@@ -36,7 +36,7 @@ use Illuminate\Support\Facades\DB;
  *     karena periode Juni yang sudah tutup tidak boleh dicatati lagi.
  *
  * Semua jurnal POSTED & seimbang.
- * Posisi Keuangan akhir Juni balance: Total Aset = Aset Neto = Rp 69.650.000
+ * Posisi Keuangan akhir Juni balance: Total Aset = Aset Neto = Rp 49.150.000
  *
  * PRASYARAT: RoleSeeder, UserSeeder, KategoriTransaksiSeeder,
  *            KategoriAkunSeeder, AkunSeeder
@@ -181,9 +181,11 @@ class ContohKeuanganJuniSeeder extends Seeder
                 'nama_pemberi'             => 'Panitia Pembangunan',
                 'jumlah_unit'              => 1,
                 'status_aset'              => 'AKTIF',
-                // akumulasi awal (s/d 31 Mei) 3.000.000 + penyusutan Juni 100.000 = 3.100.000
-                'akumulasi_penyusutan'     => 3100000,
-                'nilai_buku'               => 26900000,
+                // Konsisten dgn tgl mulai penyusutan 2015-02-01 (100.000/bln):
+                // s/d 31 Mei 2026 = 136 bln x 100.000 = 13.600.000, + Juni 100.000 = 13.700.000.
+                // Umur 300 bln, baru terpakai 137 bln -> BELUM habis, masih disusutkan.
+                'akumulasi_penyusutan'     => 13700000,
+                'nilai_buku'               => 16300000,
             ],
             [
                 'kode_aset'                => 'ASET-2022-001',
@@ -198,9 +200,11 @@ class ContohKeuanganJuniSeeder extends Seeder
                 'nama_pemberi'             => null,
                 'jumlah_unit'              => 1,
                 'status_aset'              => 'AKTIF',
-                // akumulasi awal (s/d 31 Mei) 2.000.000 + penyusutan Juni 200.000 = 2.200.000
-                'akumulasi_penyusutan'     => 2200000,
-                'nilai_buku'               => 9800000,
+                // Konsisten dgn tgl mulai penyusutan 2022-02-01 (200.000/bln):
+                // s/d 31 Mei 2026 = 52 bln x 200.000 = 10.400.000, + Juni 200.000 = 10.600.000.
+                // Umur 60 bln, baru terpakai 53 bln -> BELUM habis (nilai buku 1.400.000).
+                'akumulasi_penyusutan'     => 10600000,
+                'nilai_buku'               => 1400000,
             ],
         ];
 
@@ -296,11 +300,11 @@ class ContohKeuanganJuniSeeder extends Seeder
             ['1-2002', 'DEBIT', 30000000],   // Bangunan Masjid
             ['1-2006', 'DEBIT', 12000000],   // Peralatan Masjid (Sound System)
             // KONTRA-ASET (kredit) - akumulasi penyusutan s/d 31 Mei 2026
-            ['1-2003', 'KREDIT', 3000000],   // Akum. Penyusutan Bangunan
-            ['1-2007', 'KREDIT', 2000000],   // Akum. Penyusutan Peralatan
+            ['1-2003', 'KREDIT', 13600000],  // Akum. Penyusutan Bangunan (136 bln x 100.000)
+            ['1-2007', 'KREDIT', 10400000],  // Akum. Penyusutan Peralatan (52 bln x 200.000)
             // ASET NETO (kredit)
             ['3-2101', 'KREDIT', 3000000],   // Dana Zakat Maal (terikat) = saldo Kas Zakat
-            ['3-1002', 'KREDIT', 64000000],  // Saldo Awal Aset Neto (tanpa pembatasan) - penyeimbang
+            ['3-1002', 'KREDIT', 45000000],  // Saldo Awal Aset Neto (tanpa pembatasan) - penyeimbang
         ]);
     }
 
@@ -501,8 +505,8 @@ class ContohKeuanganJuniSeeder extends Seeder
             'keterangan'    => 'Koreksi periode lalu: infak tunai Juni kurang dicatat Rp50.000',
             'status'        => 'POSTED',
         ], [
-            ['1-1001', 'DEBIT', 50000],    
-            ['3-1001', 'KREDIT', 50000],   
+            ['1-1001', 'DEBIT', 50000],    // Kas Kecil bertambah
+            ['3-1001', 'KREDIT', 50000],   // Aset Neto Tanpa Pembatasan bertambah
         ]);
     }
 }
