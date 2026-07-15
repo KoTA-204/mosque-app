@@ -74,15 +74,18 @@ class KenclengService
         return DB::transaction(function () use ($data) {
             $kategori = $this->getKategoriKencleng();
 
+            // Hitung total fisik = jumlah disetor
             $totalFisik = 0;
             foreach (self::PECAHAN as $pecahan) {
                 $jumlah      = (int) ($data['pecahan'][$pecahan] ?? 0);
                 $totalFisik += $pecahan * $jumlah;
             }
 
+            // Upload berita acara — dilakukan di dalam transaksi supaya
+            // jika DB gagal, file yang ter-upload bisa kita track & hapus
             $pathBA = null;
             if (!empty($data['berita_acara'])) {
-                $pathBA = $data['berita_acara']->store('berita_acara');
+                $pathBA = $data['berita_acara']->store('berita_acara', 'public');
             }
 
             try {
@@ -118,11 +121,12 @@ class KenclengService
 
                 return $kencleng->load('transaksi', 'detail');
             } catch (\Throwable $e) {
+                // Hapus file yang sudah ter-upload jika DB gagal
                 if ($pathBA) {
-                    Storage::delete($pathBA);
+                    Storage::disk('public')->delete($pathBA);
                 }
                 Log::error('KenclengService::store gagal', ['error' => $e->getMessage()]);
-                throw $e; 
+                throw $e; // re-throw supaya DB::transaction melakukan rollback
             }
         });
     }
@@ -135,6 +139,7 @@ class KenclengService
         return DB::transaction(function () use ($kencleng, $data) {
             $transaksi = $kencleng->transaksi;
 
+            // Hitung ulang total fisik = jumlah disetor
             $totalFisik = 0;
             foreach (self::PECAHAN as $pecahan) {
                 $jumlah      = (int) ($data['pecahan'][$pecahan] ?? 0);
@@ -146,7 +151,7 @@ class KenclengService
             $newPathBA = null;
 
             if (!empty($data['berita_acara'])) {
-                $newPathBA = $data['berita_acara']->store('berita_acara');
+                $newPathBA = $data['berita_acara']->store('berita_acara', 'public');
                 $pathBA    = $newPathBA;
             }
 
@@ -161,6 +166,7 @@ class KenclengService
 
                 $kencleng->update(['berita_acara' => $pathBA]);
 
+                // Hapus detail lama & buat ulang
                 $kencleng->detail()->delete();
                 foreach (self::PECAHAN as $pecahan) {
                     $jumlah = (int) ($data['pecahan'][$pecahan] ?? 0);
@@ -173,14 +179,16 @@ class KenclengService
                     }
                 }
 
+                // Hapus file lama hanya setelah DB berhasil
                 if ($newPathBA && $oldPathBA) {
-                    Storage::delete($oldPathBA);
+                    Storage::disk('public')->delete($oldPathBA);
                 }
 
                 return $kencleng->fresh()->load('transaksi', 'detail');
             } catch (\Throwable $e) {
+                // Hapus file baru yang sudah ter-upload jika DB gagal
                 if ($newPathBA) {
-                    Storage::delete($newPathBA);
+                    Storage::disk('public')->delete($newPathBA);
                 }
                 Log::error('KenclengService::update gagal', ['id' => $kencleng->id, 'error' => $e->getMessage()]);
                 throw $e;
@@ -206,12 +214,14 @@ class KenclengService
         DB::transaction(function () use ($kencleng) {
             $pathBA = $kencleng->berita_acara;
 
+            // Hapus data DB dulu — jika gagal, rollback & file tetap aman
             $kencleng->detail()->delete();
             $kencleng->delete();
             $kencleng->transaksi()->delete();
 
+            // Hapus file hanya setelah DB berhasil
             if ($pathBA) {
-                Storage::delete($pathBA);
+                Storage::disk('public')->delete($pathBA);
             }
         });
 

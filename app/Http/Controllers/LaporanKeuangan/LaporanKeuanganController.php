@@ -15,14 +15,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class LaporanKeuanganController extends Controller
 {
-    /**
-     * Tampilkan halaman laporan sesuai jenis.
-     *
-     * $jenis diinjeksikan lewat ->defaults('jenis', ...) pada definisi route,
-     * sehingga nama & path route lama tetap dipertahankan (kompatibel dengan
-     * pemanggilan route() di Blade), namun cukup satu method di sini
-     * menggantikan 5 method yang sebelumnya nyaris identik.
-     */
     public function tampilkanLaporan(Request $request, string $jenis)
     {
         $laporan = $this->pilihLaporanByJenis($jenis);
@@ -34,7 +26,6 @@ class LaporanKeuanganController extends Controller
             ? $laporan->susunLaporan($periodeSebelumnya, $periodeSebelumnya->periodeSebelumnya())
             : null;
 
-        // Nama variabel view dipertahankan (periodePrev) agar Blade lama tetap jalan.
         $periodePrev = $periodeSebelumnya;
 
         return view($laporan->namaViewHalaman(), compact(
@@ -42,12 +33,8 @@ class LaporanKeuanganController extends Controller
         ))->with('selectedPeriodeId', $selectedId);
     }
 
-    /** Unduh laporan sebagai PDF (nama file otomatis dari server). */
     public function unduhLaporanPdf(Request $request, string $jenis)
     {
-        // Helper format angka untuk template PDF. Didefinisikan di file TANPA
-        // namespace (app/Helpers/pdf_helpers.php) agar fungsi terdaftar di
-        // namespace global, sehingga bisa dipanggil dari view Blade ter-compile.
         require_once app_path('Helpers/pdf_helpers.php');
 
         $laporan = $this->pilihLaporanByJenis($jenis);
@@ -78,10 +65,6 @@ class LaporanKeuanganController extends Controller
         return $pdf->download($namaFile);
     }
 
-    /**
-     * Pilih objek laporan berdasarkan jenis.
-     * Menggantikan switch besar; penambahan laporan baru cukup 1 baris di sini.
-     */
     private function pilihLaporanByJenis(string $jenis): LaporanKeuanganInterface
     {
         return match ($jenis) {
@@ -94,7 +77,6 @@ class LaporanKeuanganController extends Controller
         };
     }
 
-    /** Tentukan periode aktif & periode sebelumnya dari request. */
     private function tentukanPeriodeAktif(Request $request): array
     {
         $periodeList  = Periode::orderByDesc('tanggal_akhir')->get();

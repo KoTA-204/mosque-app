@@ -123,18 +123,6 @@ class JurnalPembukaController extends Controller
         return redirect()->route('dashboard.jurnal-pembuka.index')->with('success', $pesan);
     }
 
-    /** Posting ke buku besar. */
-    public function posting(Jurnal $jurnalPembuka)
-    {
-        $result = $this->service->postingSaldoAwal($jurnalPembuka);
-
-        return response()->json(
-            ['success' => $result['ok'], 'message' => $result['message']],
-            $result['status']
-        );
-    }
-
-    /** Hapus saldo awal. */
     public function hapusJurnalPembuka(Jurnal $jurnalPembuka)
     {
         $result = $this->service->hapusSaldoAwal($jurnalPembuka);
