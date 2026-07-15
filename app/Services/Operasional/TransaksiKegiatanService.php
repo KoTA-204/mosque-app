@@ -138,7 +138,7 @@ class TransaksiKegiatanService
             foreach ($data['hapus_bukti'] ?? [] as $buktiId) {
                 $bukti = BuktiTransaksi::where('transaksi_id', $transaksi->id)->find($buktiId);
                 if ($bukti) {
-                    Storage::disk('public')->delete($bukti->path_file);
+                    Storage::delete($bukti->path_file);
                     $bukti->delete();
                 }
             }
@@ -160,7 +160,7 @@ class TransaksiKegiatanService
 
         DB::transaction(function () use ($transaksi) {
             foreach ($transaksi->buktiTransaksi as $bukti) {
-                Storage::disk('public')->delete($bukti->path_file);
+                Storage::delete($bukti->path_file);
                 $bukti->delete();
             }
             $transaksi->delete();
@@ -173,7 +173,7 @@ class TransaksiKegiatanService
     private function simpanBuktiTransaksi(Transaksi $transaksi, array $files): void
     {
         foreach ($files as $file) {
-            $path = $file->store('bukti_transaksi', 'public');
+            $path = $file->store('bukti_transaksi');
             BuktiTransaksi::create([
                 'transaksi_id' => $transaksi->id,
                 'nama_file'    => $file->getClientOriginalName(),

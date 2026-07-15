@@ -43,7 +43,7 @@ class AsetService
         $dokumenPath = $aset->dokumen_pendukung;
         if ($dokumen) {
             if ($dokumenPath) {
-                Storage::disk('public')->delete($dokumenPath);
+                Storage::delete($dokumenPath);
             }
             $dokumenPath = $this->simpanDokumen($dokumen);
         }
@@ -178,7 +178,7 @@ class AsetService
         }
 
         if ($aset->dokumen_pendukung) {
-            Storage::disk('public')->delete($aset->dokumen_pendukung);
+            Storage::delete($aset->dokumen_pendukung);
         }
 
         $aset->delete();
@@ -190,6 +190,6 @@ class AsetService
         if (! $dokumen) {
             return null;
         }
-        return $dokumen->store('aset/dokumen', 'public');
+        return $dokumen->store('aset/dokumen');
     }
 }
