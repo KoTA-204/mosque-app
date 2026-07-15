@@ -393,13 +393,6 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
             Route::post('/jurnal-pembuka', [JurnalPembukaController::class, 'simpanJurnalPembuka'])->name('jurnal-pembuka.store');
         });
 
-        // POSTING (write) -- konsisten dgn modul jurnal lain: di bawah CREATE_*. Admin: ditolak (403).
-        Route::middleware('permission:CREATE_JURNAL_PEMBUKA')->group(function () {
-            Route::patch('/jurnal-pembuka/{jurnalPembuka}/posting', [JurnalPembukaController::class, 'posting'])
-                ->name('jurnal-pembuka.posting')
-                ->whereNumber('jurnalPembuka');
-        });
-
         Route::middleware('permission:EDIT_JURNAL_PEMBUKA')->group(function () {
             Route::put('/jurnal-pembuka/{jurnalPembuka}', [JurnalPembukaController::class, 'perbaruiJurnalPembuka'])
                 ->name('jurnal-pembuka.update')
