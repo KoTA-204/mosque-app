@@ -27,8 +27,8 @@ class TransaksiSeeder extends Seeder
 {
     /**
      * Transaksi NON-kegiatan:
-     *  (A) Infak kencleng  -> lewat approval (status_approval = APPROVED), punya record kencleng.
-     *  (B) Pencatatan bendahara langsung -> status_approval = null (tidak butuh approval).
+     *  (A) Infak kencleng  -> lewat persetujuan (status_persetujuan = APPROVED), punya record kencleng.
+     *  (B) Pencatatan bendahara langsung -> status_persetujuan = null (tidak butuh persetujuan).
      *
      * Kondisi mapping akun:
      *  - status_jurnal = MAPPED   -> sudah dipetakan, ada jurnal umum (lihat JurnalUmumSeeder).
@@ -66,7 +66,7 @@ class TransaksiSeeder extends Seeder
         $kegSosial = Kegiatan::where('nama_kegiatan', 'Bakti Sosial Idul Adha 1447 H')->first();
 
         // ══════════════════════════════════════════════════════════════════
-        // TRANSAKSI TERCATAT (status_approval APPROVED, status_jurnal MAPPED)
+        // TRANSAKSI TERCATAT (status_persetujuan APPROVED, status_jurnal MAPPED)
         // ══════════════════════════════════════════════════════════════════
         $transaksi = [
             // ─── KAS MASJID · PEMASUKAN (infak & kencleng tunai) ───
@@ -145,24 +145,24 @@ class TransaksiSeeder extends Seeder
             Transaksi::create(array_merge([
                 'user_id'         => $user->id,
                 'catatan'         => null,
-                'status_approval' => 'APPROVED',
+                'status_persetujuan' => 'APPROVED',
                 'status_jurnal'   => 'MAPPED',
             ], $item));
         }
 
         // ══════════════════════════════════════════════════════════════════
-        // TRANSAKSI UNTUK FITUR APPROVAL (PENDING/REVISION/REJECTED)
+        // TRANSAKSI UNTUK FITUR PERSETUJUAN (PENDING/REVISION/REJECTED)
         // Tidak memengaruhi saldo dompet (dashboard hanya menghitung APPROVED/null).
         // ══════════════════════════════════════════════════════════════════
-        $transaksiApproval = [
-            ['dompet_id' => $kas->id, 'kegiatan_id' => $kegQurban->id, 'kategori_transaksi_id' => $katKegiatan->id, 'tanggal_transaksi' => '2026-06-10', 'jenis_transaksi' => 'PENGELUARAN', 'jumlah' => 5000000, 'deskripsi' => 'Sewa tenda dan kursi acara qurban',         'catatan' => 'Menunggu persetujuan bendahara', 'status_approval' => 'PENDING',  'status_jurnal' => 'UNMAPPED'],
-            ['dompet_id' => $kas->id, 'kegiatan_id' => $kegQurban->id, 'kategori_transaksi_id' => $katKegiatan->id, 'tanggal_transaksi' => '2026-06-10', 'jenis_transaksi' => 'PENGELUARAN', 'jumlah' => 800000,  'deskripsi' => 'Pembelian bumbu dan peralatan masak qurban', 'catatan' => null,                            'status_approval' => 'PENDING',  'status_jurnal' => 'UNMAPPED'],
-            ['dompet_id' => $bsi->id, 'kegiatan_id' => $kegKajian->id, 'kategori_transaksi_id' => $katHonor->id,    'tanggal_transaksi' => '2026-05-05', 'jenis_transaksi' => 'PENGELUARAN', 'jumlah' => 1500000, 'deskripsi' => 'Honor ustadz kajian spesial Idul Fitri',    'catatan' => 'Direvisi: nominal terlalu besar', 'status_approval' => 'REVISION', 'status_jurnal' => 'UNMAPPED'],
-            ['dompet_id' => $kas->id, 'kegiatan_id' => $kegZakat->id,  'kategori_transaksi_id' => $katKegiatan->id, 'tanggal_transaksi' => '2026-04-05', 'jenis_transaksi' => 'PENGELUARAN', 'jumlah' => 500000,  'deskripsi' => 'Pembelian kantong plastik distribusi zakat', 'catatan' => 'Ditolak: sudah ada stok',        'status_approval' => 'REJECTED', 'status_jurnal' => 'UNMAPPED'],
-            ['dompet_id' => $bsi->id, 'kegiatan_id' => $kegQurban->id, 'kategori_transaksi_id' => $katKegiatan->id, 'tanggal_transaksi' => '2026-06-12', 'jenis_transaksi' => 'PEMASUKAN',  'jumlah' => 3000000, 'deskripsi' => 'Donasi tambahan untuk qurban dari donatur',  'catatan' => null,                            'status_approval' => 'PENDING',  'status_jurnal' => 'UNMAPPED'],
+        $transaksiPersetujuan = [
+            ['dompet_id' => $kas->id, 'kegiatan_id' => $kegQurban->id, 'kategori_transaksi_id' => $katKegiatan->id, 'tanggal_transaksi' => '2026-06-10', 'jenis_transaksi' => 'PENGELUARAN', 'jumlah' => 5000000, 'deskripsi' => 'Sewa tenda dan kursi acara qurban',         'catatan' => 'Menunggu persetujuan bendahara', 'status_persetujuan' => 'PENDING',  'status_jurnal' => 'UNMAPPED'],
+            ['dompet_id' => $kas->id, 'kegiatan_id' => $kegQurban->id, 'kategori_transaksi_id' => $katKegiatan->id, 'tanggal_transaksi' => '2026-06-10', 'jenis_transaksi' => 'PENGELUARAN', 'jumlah' => 800000,  'deskripsi' => 'Pembelian bumbu dan peralatan masak qurban', 'catatan' => null,                            'status_persetujuan' => 'PENDING',  'status_jurnal' => 'UNMAPPED'],
+            ['dompet_id' => $bsi->id, 'kegiatan_id' => $kegKajian->id, 'kategori_transaksi_id' => $katHonor->id,    'tanggal_transaksi' => '2026-05-05', 'jenis_transaksi' => 'PENGELUARAN', 'jumlah' => 1500000, 'deskripsi' => 'Honor ustadz kajian spesial Idul Fitri',    'catatan' => 'Direvisi: nominal terlalu besar', 'status_persetujuan' => 'REVISION', 'status_jurnal' => 'UNMAPPED'],
+            ['dompet_id' => $kas->id, 'kegiatan_id' => $kegZakat->id,  'kategori_transaksi_id' => $katKegiatan->id, 'tanggal_transaksi' => '2026-04-05', 'jenis_transaksi' => 'PENGELUARAN', 'jumlah' => 500000,  'deskripsi' => 'Pembelian kantong plastik distribusi zakat', 'catatan' => 'Ditolak: sudah ada stok',        'status_persetujuan' => 'REJECTED', 'status_jurnal' => 'UNMAPPED'],
+            ['dompet_id' => $bsi->id, 'kegiatan_id' => $kegQurban->id, 'kategori_transaksi_id' => $katKegiatan->id, 'tanggal_transaksi' => '2026-06-12', 'jenis_transaksi' => 'PEMASUKAN',  'jumlah' => 3000000, 'deskripsi' => 'Donasi tambahan untuk qurban dari donatur',  'catatan' => null,                            'status_persetujuan' => 'PENDING',  'status_jurnal' => 'UNMAPPED'],
         ];
 
-        foreach ($transaksiApproval as $row) {
+        foreach ($transaksiPersetujuan as $row) {
             Transaksi::create($row + ['user_id' => $user->id]);
         }
     }

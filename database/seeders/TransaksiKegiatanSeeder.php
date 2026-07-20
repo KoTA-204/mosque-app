@@ -148,7 +148,7 @@ class TransaksiKegiatanSeeder extends Seeder
     // ── Helper: buat 1 transaksi ─────────────────────────────────────────
     private function buat(
         Kegiatan $kegiatan,
-        string   $statusApproval,
+        string   $statusPersetujuan,
         string   $jenis,
         int      $jumlah,
         string   $deskripsi
@@ -162,7 +162,7 @@ class TransaksiKegiatanSeeder extends Seeder
             'jenis_transaksi'       => $jenis,
             'jumlah'                => $jumlah,
             'deskripsi'             => $deskripsi,
-            'status_approval'       => $statusApproval,
+            'status_persetujuan'       => $statusPersetujuan,
             'status_jurnal'         => 'UNMAPPED',
         ]);
     }

@@ -83,7 +83,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                    Status kegiatan dikelola otomatis berdasarkan approval transaksi.
+                    Status kegiatan dikelola otomatis berdasarkan persetujuan transaksi.
                     Saat ini:
                     @if($kegiatan->status === 'AKTIF')
                         <span class="font-medium text-green-600">Aktif</span>

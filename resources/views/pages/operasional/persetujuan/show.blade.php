@@ -32,7 +32,7 @@
     <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
         <div class="mb-5 flex items-center justify-between">
             <h2 class="text-base font-semibold text-gray-900 dark:text-white">Informasi transaksi</h2>
-            <x-approval.status-badge :status="$transaksi->status_approval" />
+            <x-approval.status-badge :status="$transaksi->status_persetujuan" />
         </div>
         <div class="grid grid-cols-2 gap-x-8 gap-y-5 md:grid-cols-3">
             <div>
@@ -84,10 +84,10 @@
         </div>
         @endif
 
-        @if(in_array($transaksi->status_approval, ['REJECTED', 'REVISION']) && $transaksi->catatan)
+        @if(in_array($transaksi->status_persetujuan, ['REJECTED', 'REVISION']) && $transaksi->catatan)
         <div class="mt-5 border-t border-gray-100 dark:border-gray-800 pt-5">
             <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">
-                {{ $transaksi->status_approval === 'REJECTED' ? 'Alasan penolakan' : 'Catatan revisi' }}
+                {{ $transaksi->status_persetujuan === 'REJECTED' ? 'Alasan penolakan' : 'Catatan revisi' }}
             </p>
             <p class="text-sm text-gray-800 dark:text-gray-200">{{ $transaksi->catatan }}</p>
         </div>

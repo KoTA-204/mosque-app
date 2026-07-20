@@ -125,16 +125,16 @@ class MenuSeeder extends Seeder
             'route_name'    => null,
             'icon'          => 'checks',
             'sort_order'    => 30,
-            'permission_id' => $perm('VIEW_APPROVAL'),
+            'permission_id' => $perm('VIEW_PERSETUJUAN'),
         ]);
 
         Menu::create([
             'menu_name'     => 'Persetujuan Transaksi',
-            'route_name'    => 'dashboard.approval.index',
+            'route_name'    => 'dashboard.persetujuan.index',
             'icon'          => 'checks',
             'parent_id'     => $persetujuan->id,
             'sort_order'    => 31,
-            'permission_id' => $perm('VIEW_APPROVAL'),
+            'permission_id' => $perm('VIEW_PERSETUJUAN'),
         ]);
 
         // ── Akuntansi ────────────────────────────────────────────────────────

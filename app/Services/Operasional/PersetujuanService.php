@@ -6,10 +6,10 @@ use App\Models\Kegiatan;
 use App\Models\Transaksi;
 use Illuminate\Support\Facades\DB;
 
-class ApprovalService
+class PersetujuanService
 {
     // ── Query Dasar ───────────────────────────────────────────────────────
-    private function queryDasarApproval()
+    private function queryDasarPersetujuan()
     {
         return Transaksi::query()
             ->where(function ($q) {
@@ -18,15 +18,15 @@ class ApprovalService
             });
     }
 
-    public function hitungStatistikApproval(): array
+    public function hitungStatistikPersetujuan(): array
     {
         return [
-            'kencleng' => $this->queryDasarApproval()->whereHas('kencleng')->count(),
-            'kegiatan' => $this->queryDasarApproval()->whereNotNull('kegiatan_id')->whereDoesntHave('kencleng')->count(),
-            'pending'  => $this->queryDasarApproval()->where('status_approval', 'PENDING')->count(),
-            'approved' => $this->queryDasarApproval()->where('status_approval', 'APPROVED')->count(),
-            'rejected' => $this->queryDasarApproval()->where('status_approval', 'REJECTED')->count(),
-            'revision' => $this->queryDasarApproval()->where('status_approval', 'REVISION')->count(),
+            'kencleng' => $this->queryDasarPersetujuan()->whereHas('kencleng')->count(),
+            'kegiatan' => $this->queryDasarPersetujuan()->whereNotNull('kegiatan_id')->whereDoesntHave('kencleng')->count(),
+            'pending'  => $this->queryDasarPersetujuan()->where('status_persetujuan', 'PENDING')->count(),
+            'approved' => $this->queryDasarPersetujuan()->where('status_persetujuan', 'APPROVED')->count(),
+            'rejected' => $this->queryDasarPersetujuan()->where('status_persetujuan', 'REJECTED')->count(),
+            'revision' => $this->queryDasarPersetujuan()->where('status_persetujuan', 'REVISION')->count(),
         ];
     }
 
@@ -40,9 +40,9 @@ class ApprovalService
         string $urut    = 'asc',
         int    $perPage = 10
     ) {
-        return $this->queryDasarApproval()
+        return $this->queryDasarPersetujuan()
             ->with(['dompet', 'kategoriTransaksi', 'user', 'kegiatan', 'buktiTransaksi', 'kencleng.detail'])
-            ->where('status_approval', $status)
+            ->where('status_persetujuan', $status)
             ->when($sumber === 'kegiatan', fn($q) => $q->whereNotNull('kegiatan_id')->whereDoesntHave('kencleng'))
             ->when($sumber === 'kencleng', fn($q) => $q->whereHas('kencleng'))
             ->when($dari,   fn($q) => $q->whereDate('tanggal_transaksi', '>=', $dari))
@@ -63,13 +63,13 @@ class ApprovalService
     }
 
     // ── Core ──────────────────────────────────────────────────────────────
-    private function ubahStatusApproval(Transaksi $transaksi, string $status, ?string $catatan = null): true|string
+    private function ubahStatusPersetujuan(Transaksi $transaksi, string $status, ?string $catatan = null): true|string
     {
-        if ($transaksi->status_approval !== 'PENDING') {
+        if ($transaksi->status_persetujuan !== 'PENDING') {
             return 'Transaksi tidak dalam status PENDING';
         }
 
-        $transaksi->update(['status_approval' => $status, 'catatan' => $catatan]);
+        $transaksi->update(['status_persetujuan' => $status, 'catatan' => $catatan]);
 
         return true;
     }
@@ -78,7 +78,7 @@ class ApprovalService
     public function setujuiTransaksi(Transaksi $transaksi): true|string
     {
         return DB::transaction(function () use ($transaksi) {
-            $result = $this->ubahStatusApproval($transaksi, 'APPROVED');
+            $result = $this->ubahStatusPersetujuan($transaksi, 'APPROVED');
 
             if ($result === true && $transaksi->kegiatan_id) {
                 $transaksi->kegiatan->tutupJikaSelesai();
@@ -90,16 +90,16 @@ class ApprovalService
 
     public function tolakTransaksi(Transaksi $transaksi, string $catatan = ''): true|string
     {
-        return $this->ubahStatusApproval($transaksi, 'REJECTED', $catatan ?: null);
+        return $this->ubahStatusPersetujuan($transaksi, 'REJECTED', $catatan ?: null);
     }
 
     public function revisiTransaksi(Transaksi $transaksi, string $catatan): true|string
     {
-        return $this->ubahStatusApproval($transaksi, 'REVISION', $catatan);
+        return $this->ubahStatusPersetujuan($transaksi, 'REVISION', $catatan);
     }
 
     // ── Bulk Actions ──────────────────────────────────────────────────────
-    private function ubahStatusApprovalMassal(array $catatanMap, string $status): array
+    private function ubahStatusPersetujuanMassal(array $catatanMap, string $status): array
     {
         $done    = 0;
         $skipped = 0;
@@ -109,7 +109,7 @@ class ApprovalService
 
             Transaksi::whereIn('id', array_keys($catatanMap))->get()
                 ->each(function ($t) use ($catatanMap, $status, &$done, &$skipped, &$kegiatanIds) {
-                    $result = $this->ubahStatusApproval($t, $status, $catatanMap[$t->id] ?? null);
+                    $result = $this->ubahStatusPersetujuan($t, $status, $catatanMap[$t->id] ?? null);
 
                     if ($result !== true) {
                         $skipped++;
@@ -133,16 +133,16 @@ class ApprovalService
 
     public function setujuiTransaksiMassal(array $ids): array
     {
-        return $this->ubahStatusApprovalMassal(array_fill_keys($ids, null), 'APPROVED');
+        return $this->ubahStatusPersetujuanMassal(array_fill_keys($ids, null), 'APPROVED');
     }
 
     public function tolakTransaksiMassal(array $catatanMap): array
     {
-        return $this->ubahStatusApprovalMassal($catatanMap, 'REJECTED');
+        return $this->ubahStatusPersetujuanMassal($catatanMap, 'REJECTED');
     }
 
     public function revisiTransaksiMassal(array $catatanMap): array
     {
-        return $this->ubahStatusApprovalMassal($catatanMap, 'REVISION');
+        return $this->ubahStatusPersetujuanMassal($catatanMap, 'REVISION');
     }
 }

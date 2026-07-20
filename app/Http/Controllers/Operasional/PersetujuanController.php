@@ -4,18 +4,18 @@ namespace App\Http\Controllers\Operasional;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaksi;
-use App\Services\Operasional\ApprovalService;
+use App\Services\Operasional\PersetujuanService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
-class ApprovalController extends Controller
+class PersetujuanController extends Controller
 {
     public function __construct(
-        protected ApprovalService $approvalService
+        protected PersetujuanService $persetujuanService
     ) {}
 
     // ── Index & Show ──────────────────────────────────────────────────────
-    public function tampilkanDaftarApproval(Request $request)
+    public function tampilkanDaftarPersetujuan(Request $request)
     {
         $search  = $request->get('search', '') ?? '';
         $sumber  = $request->get('sumber', '') ?? '';
@@ -29,55 +29,55 @@ class ApprovalController extends Controller
             $tab = 'PENDING';
         }
 
-        $stats     = $this->approvalService->hitungStatistikApproval();
-        $transaksi = $this->approvalService->getTransaksiBerdasarkanStatus(
+        $stats     = $this->persetujuanService->hitungStatistikPersetujuan();
+        $transaksi = $this->persetujuanService->getTransaksiBerdasarkanStatus(
             $tab, $search, $sumber, $dari, $sampai, $urut, $perPage
         );
 
-        return view('pages.operasional.approval.index', compact(
+        return view('pages.operasional.persetujuan.index', compact(
             'transaksi', 'stats', 'tab', 'search', 'sumber', 'dari', 'sampai', 'urut', 'perPage'
         ));
     }
 
-    public function tampilkanDetailApproval(Transaksi $transaksi)
+    public function tampilkanDetailPersetujuan(Transaksi $transaksi)
     {
-        $transaksi = $this->approvalService->getDetailTransaksi($transaksi);
+        $transaksi = $this->persetujuanService->getDetailTransaksi($transaksi);
 
         return $transaksi->kencleng !== null
-            ? view('pages.operasional.approval.show-kencleng', compact('transaksi'))
-            : view('pages.operasional.approval.show', compact('transaksi'));
+            ? view('pages.operasional.persetujuan.show-kencleng', compact('transaksi'))
+            : view('pages.operasional.persetujuan.show', compact('transaksi'));
     }
 
     // ── Single Actions ────────────────────────────────────────────────────
     public function setujuiTransaksi(Transaksi $transaksi): RedirectResponse
     {
-        $result = $this->approvalService->setujuiTransaksi($transaksi);
+        $result = $this->persetujuanService->setujuiTransaksi($transaksi);
 
         return $result !== true
             ? redirect()->back()->with('error', $result)
-            : redirect()->route('dashboard.approval.index')->with('success', 'Transaksi berhasil disetujui');
+            : redirect()->route('dashboard.persetujuan.index')->with('success', 'Transaksi berhasil disetujui');
     }
 
     public function tolakTransaksi(Request $request, Transaksi $transaksi): RedirectResponse
     {
         $request->validate(['catatan' => 'nullable|string|max:500']);
 
-        $result = $this->approvalService->tolakTransaksi($transaksi, $request->catatan ?? '');
+        $result = $this->persetujuanService->tolakTransaksi($transaksi, $request->catatan ?? '');
 
         return $result !== true
             ? redirect()->back()->with('error', $result)
-            : redirect()->route('dashboard.approval.index')->with('success', 'Transaksi berhasil ditolak');
+            : redirect()->route('dashboard.persetujuan.index')->with('success', 'Transaksi berhasil ditolak');
     }
 
     public function revisiTransaksi(Request $request, Transaksi $transaksi): RedirectResponse
     {
         $request->validate(['catatan' => 'required|string|max:500']);
 
-        $result = $this->approvalService->revisiTransaksi($transaksi, $request->catatan);
+        $result = $this->persetujuanService->revisiTransaksi($transaksi, $request->catatan);
 
         return $result !== true
             ? redirect()->back()->with('error', $result)
-            : redirect()->route('dashboard.approval.index')->with('success', 'Transaksi dikembalikan untuk revisi');
+            : redirect()->route('dashboard.persetujuan.index')->with('success', 'Transaksi dikembalikan untuk revisi');
     }
 
     // ── Bulk Actions ──────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ class ApprovalController extends Controller
                 return redirect()->back()->with('error', 'Tidak ada transaksi yang dipilih');
             }
 
-            $result = $this->approvalService->setujuiTransaksiMassal($ids);
+            $result = $this->persetujuanService->setujuiTransaksiMassal($ids);
         } else {
             $request->validate([
                 'ids'       => 'required|array|min:1',
@@ -110,8 +110,8 @@ class ApprovalController extends Controller
                 ->all();
 
             $result = $action === 'reject'
-                ? $this->approvalService->tolakTransaksiMassal($catatanMap)
-                : $this->approvalService->revisiTransaksiMassal($catatanMap);
+                ? $this->persetujuanService->tolakTransaksiMassal($catatanMap)
+                : $this->persetujuanService->revisiTransaksiMassal($catatanMap);
         }
 
         $msg = "{$result['done']} transaksi berhasil {$labels[$action]}";
@@ -119,7 +119,7 @@ class ApprovalController extends Controller
             $msg .= ", {$result['skipped']} dilewati (bukan PENDING)";
         }
 
-        return redirect()->route('dashboard.approval.index')->with('success', $msg);
+        return redirect()->route('dashboard.persetujuan.index')->with('success', $msg);
     }
 
     public function setujuiTransaksiMassal(Request $request): RedirectResponse

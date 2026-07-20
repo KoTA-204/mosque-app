@@ -70,7 +70,7 @@ class KenclengController extends Controller
             abort(403);
         }
 
-        if (!in_array($kencleng->transaksi->status_approval, ['PENDING', 'REVISION', 'DRAFT'])) {
+        if (!in_array($kencleng->transaksi->status_persetujuan, ['PENDING', 'REVISION', 'DRAFT'])) {
             return redirect()->back()
                 ->with('error', 'Kencleng yang sudah diapprove tidak bisa diedit');
         }
@@ -89,7 +89,7 @@ class KenclengController extends Controller
             abort(403);
         }
 
-        if (!in_array($kencleng->transaksi->status_approval, ['PENDING', 'REVISION', 'DRAFT'])) {
+        if (!in_array($kencleng->transaksi->status_persetujuan, ['PENDING', 'REVISION', 'DRAFT'])) {
             return redirect()->back()
                 ->with('error', 'Kencleng yang sudah diapprove tidak bisa diedit');
         }

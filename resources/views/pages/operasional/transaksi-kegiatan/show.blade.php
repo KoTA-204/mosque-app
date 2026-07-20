@@ -102,19 +102,19 @@
                     @php
                         $jenis = $item->jenis_transaksi;
                         $kode  = 'TRX-' . $item->created_at->year . '-' . str_pad($item->id, 3, '0', STR_PAD_LEFT);
-                        $statusBadge = match($item->status_approval) {
+                        $statusBadge = match($item->status_persetujuan) {
                             'PENDING'  => 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400',
                             'APPROVED' => 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
                             'REJECTED' => 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400',
                             'REVISION' => 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
                             default    => 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
                         };
-                        $statusLabel = match($item->status_approval) {
+                        $statusLabel = match($item->status_persetujuan) {
                             'PENDING'  => 'Menunggu',
                             'APPROVED' => 'Disetujui',
                             'REJECTED' => 'Ditolak',
                             'REVISION' => 'Revisi',
-                            default    => $item->status_approval,
+                            default    => $item->status_persetujuan,
                         };
                         $bisaUbah = $item->bisaDiedit() && $item->user_id === auth()->id();
                     @endphp

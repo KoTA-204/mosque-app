@@ -87,7 +87,7 @@ class Kegiatan extends Model
         public function totalRealisasi(): float
     {
         return (float) $this->transaksi()
-            ->where('status_approval', 'APPROVED')
+            ->where('status_persetujuan', 'APPROVED')
             ->sum('jumlah');
     }
 
@@ -121,8 +121,8 @@ class Kegiatan extends Model
 
         // Syarat 1: tidak ada transaksi yang belum APPROVED
         $adaBelumApproved = $this->transaksi()
-            ->whereNotNull('status_approval')        
-            ->whereNotIn('status_approval', ['APPROVED'])
+            ->whereNotNull('status_persetujuan')        
+            ->whereNotIn('status_persetujuan', ['APPROVED'])
             ->exists();
 
         if ($adaBelumApproved) return;
@@ -148,7 +148,7 @@ class Kegiatan extends Model
     {
         return (float) $this->transaksi()
             ->where('jenis_transaksi', 'PENGELUARAN')
-            ->whereIn('status_approval', ['PENDING', 'REVISION', 'APPROVED'])
+            ->whereIn('status_persetujuan', ['PENDING', 'REVISION', 'APPROVED'])
             ->when($kecualiId, fn ($q) => $q->where('id', '!=', $kecualiId))
             ->sum('jumlah');
     }
@@ -179,7 +179,7 @@ class Kegiatan extends Model
     {
         return (float) $this->transaksi()
             ->where('jenis_transaksi', 'PEMASUKAN')
-            ->where('status_approval', 'APPROVED')
+            ->where('status_persetujuan', 'APPROVED')
             ->sum('jumlah');
     }
 

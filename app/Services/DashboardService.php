@@ -257,7 +257,7 @@ class DashboardService
         [$periodeAktif, ] = $this->resolvePeriodeAktif();
 
         $approved = fn() => \App\Models\Transaksi::where(fn($q) =>
-            $q->whereNull('status_approval')->orWhere('status_approval', 'APPROVED')
+            $q->whereNull('status_persetujuan')->orWhere('status_persetujuan', 'APPROVED')
         );
 
         $dompetList = \App\Models\Dompet::all();
