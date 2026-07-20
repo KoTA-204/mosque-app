@@ -89,6 +89,7 @@ class JurnalPenyesuaianService extends JurnalService
             ->whereNotNull('umur_manfaat')
             ->where('umur_manfaat', '>', 0)
             ->belumDilepas()
+            ->whereColumn('akumulasi_penyusutan', '<', 'nilai_tercatat')
             ->when($periodeAktifId, fn ($q) => $q
                 ->whereDoesntHave('jurnalPenyesuaian', fn ($jq) => $jq
                     ->where('tipe_penyesuaian', 'PENYUSUTAN_ASET')
@@ -133,7 +134,10 @@ class JurnalPenyesuaianService extends JurnalService
     {
         if (!$aset->umur_manfaat || $aset->umur_manfaat <= 0) return 0;
 
-        return round($aset->nilai_tercatat / ($aset->umur_manfaat * 12), 2);
+        $perBulan = round($aset->nilai_tercatat / ($aset->umur_manfaat * 12), 2);
+        $sisaBuku = (float) $aset->nilai_tercatat - (float) ($aset->akumulasi_penyusutan ?? 0);
+
+        return max(min($perBulan, $sisaBuku), 0);
     }
 
     // ── Aksi ────────────────────────────────────────────
@@ -199,8 +203,9 @@ class JurnalPenyesuaianService extends JurnalService
         $aset = Aset::find($asetId);
         if (!$aset) return;
 
-        $aset->akumulasi_penyusutan = ($aset->akumulasi_penyusutan ?? 0) + $nominal;
-        $aset->nilai_buku           = $aset->nilai_tercatat - $aset->akumulasi_penyusutan;
+        $akum = ($aset->akumulasi_penyusutan ?? 0) + $nominal;
+        $aset->akumulasi_penyusutan = min($akum, (float) $aset->nilai_tercatat); // cap
+        $aset->nilai_buku           = max($aset->nilai_tercatat - $aset->akumulasi_penyusutan, 0);
         $aset->save();
     }
 

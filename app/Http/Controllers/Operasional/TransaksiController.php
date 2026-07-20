@@ -274,7 +274,7 @@ class TransaksiController extends Controller
 
     public function hapusBuktiTransaksi(BuktiTransaksi $bukti)
     {
-        Storage::disk('public')->delete($bukti->path_file);
+        Storage::delete($bukti->path_file);
         $bukti->delete();
 
         return response()->json(['success' => true, 'message' => 'Bukti dihapus.']);
