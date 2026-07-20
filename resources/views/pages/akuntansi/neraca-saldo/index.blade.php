@@ -19,7 +19,7 @@
             </div>
             <div>
                 <p class="text-xs text-gray-500 dark:text-gray-400">Total Debit</p>
-                <p class="text-sm font-bold text-gray-900 dark:text-white">Rp. {{ number_format($grandTotalDebit, 0, ',', '.') }}</p>
+                <p class="text-sm font-bold text-gray-900 dark:text-white">Rp. {{ number_format($grandTotalDebit, 2, ',', '.') }}</p>
             </div>
         </div>
         {{-- Total Kredit --}}
@@ -31,7 +31,7 @@
             </div>
             <div>
                 <p class="text-xs text-gray-500 dark:text-gray-400">Total Kredit</p>
-                <p class="text-sm font-bold text-gray-900 dark:text-white">Rp. {{ number_format($grandTotalKredit, 0, ',', '.') }}</p>
+                <p class="text-sm font-bold text-gray-900 dark:text-white">Rp. {{ number_format($grandTotalKredit, 2, ',', '.') }}</p>
             </div>
         </div>
         {{-- Selisih --}}
@@ -44,7 +44,7 @@
             <div>
                 <p class="text-xs text-gray-500 dark:text-gray-400">Selisih</p>
                 <p class="text-sm font-bold {{ $selisih == 0 ? 'text-green-600' : 'text-red-500' }}">
-                    Rp. {{ number_format(abs($selisih), 0, ',', '.') }}
+                    Rp. {{ number_format(abs($selisih), 2, ',', '.') }}
                 </p>
             </div>
         </div>

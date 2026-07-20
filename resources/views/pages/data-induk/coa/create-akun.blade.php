@@ -165,3 +165,20 @@
     })();
 </script>
 </x-modal>
+
+<script>
+    (function () {
+        const nextKodeAkun = @json($nextKodeAkun);
+        const parentSelect = document.querySelector('#createAkunModal select[name="parent_id"]');
+        const preview = document.getElementById('kodeAkunPreview');
+
+        function updatePreview() {
+            preview.value = nextKodeAkun[parentSelect.value] || '';
+        }
+
+        if (parentSelect) {
+            parentSelect.addEventListener('change', updatePreview);
+            updatePreview();
+        }
+    })();
+</script>

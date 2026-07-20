@@ -202,7 +202,6 @@
     </div>
 </div>
 
--- Modal alasan penonaktifan aset --
 <div id="nonaktifAsetModal" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);">
     <div class="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-xl mx-4 p-6 shadow-xl">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Nonaktifkan Aset</h3>
@@ -615,13 +614,49 @@ document.getElementById('filterSearch').addEventListener('input', () => {
 });
 
 // ── Submit form ───────────────────────────────────────────────
-function submitAsetForm(formId, method, url) {
+function renderAsetDuplikatWarning(form, formId, method, url, res) {
+    var existing = form.querySelector('.duplikat-warning-box');
+    if (existing) existing.remove();
+
+    var items = '';
+    (res.matches || []).forEach(function (m) {
+        var nilai = (typeof m.nilai_tercatat !== 'undefined') ? Number(m.nilai_tercatat).toLocaleString('id-ID') : '';
+        var kode = m.kode_aset ? (m.kode_aset + ' — ') : '';
+        items += '<li class="flex items-start gap-2"><span class="mt-0.5">•</span><span>' + kode + '<strong>' + m.nama_aset + '</strong> — ' + m.tanggal_perolehan + ' — Rp ' + nilai + '</span></li>';
+    });
+
+    var box = document.createElement('div');
+    box.className = 'duplikat-warning-box mb-4 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-800 dark:text-amber-300';
+    box.innerHTML =
+        '<div class="font-semibold mb-1">Kemungkinan input ganda</div>' +
+        '<div class="mb-2">' + (res.message || 'Aset dengan nama, tanggal, dan nilai yang sama sudah tercatat.') + '</div>' +
+        '<ul class="space-y-1 mb-3">' + items + '</ul>' +
+        '<div class="text-xs mb-3">Kalau ini memang unit/aset yang berbeda, silakan tetap simpan.</div>' +
+        '<div class="flex items-center gap-2">' +
+            '<button type="button" class="duplikat-batal px-3 py-1.5 rounded-lg text-xs font-medium border border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-800/40">Batal, periksa lagi</button>' +
+            '<button type="button" class="duplikat-lanjut px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-amber-600 hover:bg-amber-700">Ya, tetap simpan</button>' +
+        '</div>';
+
+    form.insertBefore(box, form.firstChild);
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    box.querySelector('.duplikat-batal').addEventListener('click', function () {
+        box.remove();
+    });
+    box.querySelector('.duplikat-lanjut').addEventListener('click', function () {
+        box.remove();
+        submitAsetForm(formId, method, url, true);
+    });
+}
+
+function submitAsetForm(formId, method, url, force = false) {
     const form = document.getElementById(formId);
     form.querySelectorAll('[id^="err-"]').forEach(el => el.textContent = '');
     form.querySelectorAll('input,select,textarea').forEach(el => el.classList.remove('border-red-400'));
 
     const data = new FormData(form);
     if (method === 'PUT') data.append('_method', 'PUT');
+    if (force) data.append('abaikan_duplikat', '1');
 
     fetch(url, {
         method: 'POST',
@@ -645,6 +680,8 @@ function submitAsetForm(formId, method, url) {
 
             applyFilters();
             fetchStats();
+        } else if (res.duplicate_warning) {
+            renderAsetDuplikatWarning(form, formId, method, url, res);
         } else if (res.errors) {
             Object.entries(res.errors).forEach(([field, messages]) => {
                 const el    = form.querySelector(`[name="${field}"]`);
@@ -696,4 +733,119 @@ document.getElementById('nonaktifConfirmBtn')?.addEventListener('click', functio
 });
 </script>
 @endpush
+
+<script>
+/* Auto-save driven: menjaga isian form modal (Aset/Kegiatan) agar tidak hilang saat refresh atau crash. */
+(function () {
+    var PREFIX = 'mosque:autosave:';
+
+    function keyFor(form) {
+        return PREFIX + (form.getAttribute('data-autosave-key') || form.id || 'form');
+    }
+
+    function fieldNodes(form) {
+        return Array.prototype.filter.call(
+            form.querySelectorAll('input, select, textarea'),
+            function (el) {
+                var t = (el.type || '').toLowerCase();
+                if (t === 'file' || t === 'submit' || t === 'button' || t === 'reset') return false;
+                if (el.name === '_token' || el.name === '_method') return false;
+                return true;
+            }
+        );
+    }
+
+    function nodeId(el, idx) {
+        return el.id || el.name || ('field_' + idx);
+    }
+
+    function snapshot(form) {
+        var data = {};
+        fieldNodes(form).forEach(function (el, idx) {
+            var id = nodeId(el, idx);
+            var t = (el.type || '').toLowerCase();
+            if (t === 'checkbox' || t === 'radio') {
+                data[id] = { checked: el.checked };
+            } else {
+                data[id] = { value: el.value };
+            }
+        });
+        return data;
+    }
+
+    function save(form) {
+        try { localStorage.setItem(keyFor(form), JSON.stringify(snapshot(form))); } catch (e) {}
+    }
+
+    function restore(form) {
+        var raw;
+        try { raw = localStorage.getItem(keyFor(form)); } catch (e) { return; }
+        if (!raw) return;
+        var data;
+        try { data = JSON.parse(raw); } catch (e) { return; }
+        fieldNodes(form).forEach(function (el, idx) {
+            var id = nodeId(el, idx);
+            var saved = data[id];
+            if (!saved) return;
+            var t = (el.type || '').toLowerCase();
+            if (t === 'checkbox' || t === 'radio') {
+                if (typeof saved.checked === 'boolean') el.checked = saved.checked;
+            } else if (typeof saved.value !== 'undefined') {
+                el.value = saved.value;
+            }
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    }
+
+    function clearKey(key) {
+        try { localStorage.removeItem(key); } catch (e) {}
+    }
+
+    function bind(form) {
+        if (form.__autosaveBound) return;
+        form.__autosaveBound = true;
+        var timer;
+        form.addEventListener('input', function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () { save(form); }, 250);
+        });
+        form.addEventListener('change', function () { save(form); });
+    }
+
+    function attach(root) {
+        if (!root || !root.querySelectorAll) return;
+        Array.prototype.forEach.call(root.querySelectorAll('form[data-autosave-key]'), function (form) {
+            restore(form);
+            bind(form);
+        });
+    }
+
+    var observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (m) {
+            Array.prototype.forEach.call(m.addedNodes, function (n) {
+                if (n.nodeType !== 1) return;
+                if (n.matches && n.matches('form[data-autosave-key]')) {
+                    restore(n);
+                    bind(n);
+                } else {
+                    attach(n);
+                }
+            });
+            Array.prototype.forEach.call(m.removedNodes, function (n) {
+                if (n.nodeType !== 1) return;
+                var forms = (n.matches && n.matches('form[data-autosave-key]'))
+                    ? [n]
+                    : (n.querySelectorAll ? Array.prototype.slice.call(n.querySelectorAll('form[data-autosave-key]')) : []);
+                forms.forEach(function (form) { clearKey(keyFor(form)); });
+            });
+        });
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+    document.addEventListener('DOMContentLoaded', function () { attach(document); });
+    attach(document);
+})();
+</script>
+
 @endsection

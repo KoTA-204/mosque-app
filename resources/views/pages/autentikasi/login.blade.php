@@ -3,13 +3,21 @@
 @section('content')
 
 <div class="relative flex w-screen min-h-screen">
-    <div class="flex flex-col flex-1 items-center justify-center px-6 py-12 lg:px-16">
-        <a href="{{ route('landing') }}" class="inline-flex items-center gap-2 mb-8">
-            <img src="{{ asset('images/logo.png') }}"
-                alt="Masjid Luqmanul Hakim"
-                class="h-14 w-auto"
-                onerror="this.style.display='none'">
+        {{-- Tombol Back ke Landing Page --}}
+        <a href="{{ route('landing') }}"
+            class="absolute top-6 left-6 z-10 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 text-sm font-sans font-medium text-gray-600 hover:text-gray-800 hover:bg-white shadow-sm transition dark:bg-gray-800/80 dark:border-gray-700 dark:text-gray-300 dark:hover:text-white">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
         </a>
+
+        <div class="flex flex-col flex-1 items-center justify-center px-6 py-12 lg:px-16">
+            <a href="{{ route('landing') }}" class="inline-flex items-center gap-2 mb-8">
+                <img src="{{ asset('images/logo.png') }}"
+                    alt="Masjid Luqmanul Hakim"
+                    class="h-24 w-auto"
+                    onerror="this.style.display='none'">
+            </a>
 
         <div class="w-full max-w-sm">
 

@@ -59,7 +59,7 @@
                     <option value="{{ $routeName }}">{{ $routeName }}</option>
                 @endforeach
             </select>
-            <p class="mt-1 text-xs text-gray-400">Pilih route Laravel yang akan dituju menu ini.</p>
+            <p class="mt-1 text-xs text-gray-400">Pilih route yang akan dituju menu ini.</p>
         </div>
 
         {{-- Urutan + Status --}}

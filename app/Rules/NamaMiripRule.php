@@ -7,15 +7,12 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use App\Models\Akun;
 use App\Models\KategoriAkun;
 use App\Models\KategoriTransaksi;
+use App\Models\Menu;
+use App\Models\Role;
+use App\Models\Permission;
 
 class NamaMiripRule implements ValidationRule
 {
-    /**
-     * Run the validation rule.
-     *
-     * @param  \Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
-     */
-
     public function __construct(
         protected string $level,
         protected ?int $scopeId = null,
@@ -56,6 +53,12 @@ class NamaMiripRule implements ValidationRule
                 ->when($this->scopeId, fn ($q) => $q->where('parent_id', $this->scopeId))
                 ->pluck('nama_akun', 'id'),
             'kategori-transaksi' => KategoriTransaksi::pluck('nama_kategori', 'id'),
+
+            // Modul akses
+            'menu'       => Menu::pluck('menu_name', 'id'),
+            'role'       => Role::pluck('role_name', 'id'),
+            'permission' => Permission::pluck('permission_name', 'id'),
+
             default       => collect(),
         };
     }

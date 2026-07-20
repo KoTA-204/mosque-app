@@ -139,7 +139,7 @@
 
     @include('layouts.confirm-global')
 </body>
-
+<script src="{{ asset('js/form-draft.js') }}"></script>
 @stack('scripts')
 
 </html>

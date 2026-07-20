@@ -7,16 +7,6 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Password;
 
-/**
- * Satu-satunya notifikasi email akun.
- *
- * - Bila $plainPassword DIBERIKAN (dikirim admin lewat ikon email di tabel user,
- *   setelah admin memverifikasi permission): email berisi kredensial lengkap
- *   (email + password awal) plus tautan "Ganti Password Saya" yang mengarah ke
- *   alur reset password. User tetap bisa login memakai password awal.
- * - Bila $plainPassword NULL: email hanya berisi tautan atur password (kompatibel
- *   dengan pemakaian lama).
- */
 class AkunDibuatNotification extends Notification
 {
     use Queueable;
@@ -33,7 +23,6 @@ class AkunDibuatNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        // Token untuk tautan ganti password (mengarah ke alur reset password).
         $token = Password::createToken($notifiable);
 
         $resetUrl = route('password.reset', [

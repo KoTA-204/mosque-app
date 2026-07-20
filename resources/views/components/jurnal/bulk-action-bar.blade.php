@@ -26,15 +26,14 @@
             Batal pilih
         </button>
 
-        @if(!$permission || auth()->user()->hasPermission($permission))
-        <button type="button" onclick="submitBulkPost()"
-                class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700
-                       text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors">
+        @php $canBulkPost = !$permission || auth()->user()->hasPermission($permission); @endphp
+        <button type="button" <?php echo $canBulkPost ? 'onclick="submitBulkPost()"' : 'disabled aria-disabled="true" title="Anda tidak memiliki izin untuk posting jurnal"'; ?>
+                class="inline-flex items-center gap-2
+                       text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors <?php echo $canBulkPost ? 'bg-green-600 hover:bg-green-700' : 'bg-green-600/40 opacity-60 cursor-not-allowed'; ?>">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
             {{ $postLabel }}
         </button>
-        @endif
     </div>
 </div>

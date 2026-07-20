@@ -17,7 +17,7 @@
     <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4">
         <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Edit Jurnal Pembuka</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Hanya bisa diubah selama masih DRAFT dan belum ada transaksi turunan. Periode bulanan dihitung ulang dari tanggal awal.
+            Hanya bisa diubah selama masih Draft dan belum ada transaksi turunan.
         </p>
     </div>
 

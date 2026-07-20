@@ -133,3 +133,20 @@
     })();
 </script>
 </x-modal>
+
+<script>
+    (function () {
+        const nextKodeSubKategori = @json($nextKodeSubKategori);
+        const kategoriSelect = document.querySelector('#createSubKategoriModal select[name="kategori_akun_id"]');
+        const preview = document.getElementById('kodeSubKategoriPreview');
+
+        function updatePreview() {
+            preview.value = nextKodeSubKategori[kategoriSelect.value] || '';
+        }
+
+        if (kategoriSelect) {
+            kategoriSelect.addEventListener('change', updatePreview);
+            updatePreview();
+        }
+    })();
+</script>

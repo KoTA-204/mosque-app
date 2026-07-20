@@ -28,16 +28,11 @@ class JurnalPenyesuaianService extends JurnalService
         'PELEPASAN_ASET'           => 'Mengeluarkan aset dari pembukuan (dijual/dibuang/dihibahkan) dan mengakui laba/rugi pelepasan.',
     ];
 
-    /**
-     * Akun yang dikecualikan dari semua tipe penyesuaian.
-     * Kas & Bank tidak pernah disesuaikan lewat jurnal penyesuaian.
-     */
-    // Kas tidak pernah disesuaikan lewat jurnal penyesuaian (CoA laporan).
-    const EXCLUDED_AKUN_KODE = ['1-101', '1-102', '1-103'];
+    const EXCLUDED_AKUN_KODE = ['1-1001', '1-1002', '1-1003'];
 
     public function __construct(private AkunQueryService $akunQuery) {}
 
-    // ── Query (getter — dipertahankan) ────────────────────────────
+    // ── Query ────────────────────────────
 
     public function daftar(array $filter): LengthAwarePaginator
     {
@@ -54,15 +49,32 @@ class JurnalPenyesuaianService extends JurnalService
             ->withQueryString();
     }
 
-    public function getById(Jurnal $jurnal): Jurnal
+    public function getById(Jurnal $jurnal): array
     {
-        return $jurnal->load('periode', 'detailJurnal.akun', 'aset');
+        $jurnal->load('periode', 'detailJurnal.akun', 'aset');
+
+        return [
+            'id'               => $jurnal->id,
+            'nomor_jurnal'     => $jurnal->kode_jurnal,
+            'tanggal'          => $jurnal->tanggal->format('d M Y'),
+            'keterangan'       => $jurnal->keterangan ?? '—',
+            'tipe_penyesuaian' => $jurnal->tipe_penyesuaian,
+            'status'           => $jurnal->status,
+            'detail_jurnal' => $jurnal->detailJurnal->map(fn($d) => [
+                'akun'    => [
+                    'kode_akun' => $d->akun->kode_akun,
+                    'nama_akun' => $d->akun->nama_akun,
+                ],
+                'tipe'    => $d->tipe,
+                'nominal' => (float) $d->nominal,
+            ])->values(),
+            'aset' => $jurnal->aset->map(fn($a) => [
+                'nama_aset' => $a->nama_aset,
+                'pivot'     => ['nominal' => (float) $a->pivot->nominal],
+            ])->values(),
+        ];
     }
 
-    /**
-     * Delegasi ke AkunQueryService (hapus duplikasi).
-     * Parameter $tipe dipertahankan demi kompatibilitas pemanggilan lama.
-     */
     public function getAkunList(string $tipe = ''): array
     {
         return $this->akunQuery->getGroupedAkun(self::EXCLUDED_AKUN_KODE);
@@ -70,12 +82,24 @@ class JurnalPenyesuaianService extends JurnalService
 
     public function getAsetAktif()
     {
+        $periodeAktif   = $this->getPeriodeAktif();
+        $periodeAktifId = $periodeAktif?->id;
+
         return Aset::aktif()
             ->whereNotNull('umur_manfaat')
             ->where('umur_manfaat', '>', 0)
+            ->belumDilepas()
+            ->whereColumn('akumulasi_penyusutan', '<', 'nilai_tercatat')
+            ->when($periodeAktifId, fn ($q) => $q
+                ->whereDoesntHave('jurnalPenyesuaian', fn ($jq) => $jq
+                    ->where('tipe_penyesuaian', 'PENYUSUTAN_ASET')
+                    ->whereIn('status', ['POSTED', 'DRAFT'])
+                    ->where('periode_id', $periodeAktifId)
+                )
+            )
             ->orderBy('nama_aset')
             ->get()
-            ->map(fn($aset) => [
+            ->map(fn ($aset) => [
                 'id'                   => $aset->id,
                 'nama_aset'            => $aset->nama_aset,
                 'nilai_tercatat'       => (float) $aset->nilai_tercatat,
@@ -86,10 +110,6 @@ class JurnalPenyesuaianService extends JurnalService
             ]);
     }
 
-    /**
-     * Daftar aset yang sudah ditandai untuk dilepas (TIDAK AKTIF + alasan
-     * AKAN_DILEPAS) dan belum pernah benar-benar dilepas. Dipakai tipe PELEPASAN_ASET.
-     */
     public function getAsetUntukPelepasan()
     {
         return Aset::query()
@@ -110,32 +130,28 @@ class JurnalPenyesuaianService extends JurnalService
     }
 
     // ── Kalkulasi ─────────────────────────────────────────
-
-    /**
-     * Penyusutan garis lurus per bulan.
-     * = nilai_tercatat / (umur_manfaat * 12)
-     */
     public function hitungPenyusutan(Aset $aset): float
     {
         if (!$aset->umur_manfaat || $aset->umur_manfaat <= 0) return 0;
 
-        return round($aset->nilai_tercatat / ($aset->umur_manfaat * 12), 2);
+        $perBulan = round($aset->nilai_tercatat / ($aset->umur_manfaat * 12), 2);
+        $sisaBuku = (float) $aset->nilai_tercatat - (float) ($aset->akumulasi_penyusutan ?? 0);
+
+        return max(min($perBulan, $sisaBuku), 0);
     }
 
     // ── Aksi ────────────────────────────────────────────
-
-    /**
-     * Mencatat jurnal penyesuaian.
-     *
-     * Alur satu jalur (menghindari double-update akumulasi):
-     * 1. selalu dibuat sebagai DRAFT + catat detail + tautkan aset (tanpa update akumulasi),
-     * 2. bila diminta POSTED, posting lewat Template Method postingKeBukuBesar()
-     *    sehingga hook setelahPosting() yang meng-update akumulasi hanya berjalan SEKALI.
-     */
     public function catatPenyesuaian(array $data, string $status = 'DRAFT'): Jurnal
     {
         return DB::transaction(function () use ($data, $status) {
             $periode = Periode::findOrFail($data['periode_id']);
+
+            if (!$periode->status) {
+                throw new \RuntimeException(
+                    "Periode {$periode->nama_periode} sudah ditutup. "
+                    . 'Jurnal penyesuaian tidak dapat dicatat pada periode yang telah ditutup.'
+                );
+            }
 
             $jurnal = Jurnal::create([
                 'periode_id'       => $periode->id,
@@ -156,26 +172,17 @@ class JurnalPenyesuaianService extends JurnalService
                 $this->lampirkanAsetPelepasan($jurnal, $data);
             }
 
-            // Posting lewat satu jalur resmi → setelahPosting() menjalankan efek aset 1x.
             if ($status === 'POSTED') {
                 $hasil = $this->postingKeBukuBesar($jurnal);
                 if ($hasil !== true) {
                     throw new \RuntimeException($hasil);
-                }
+                } 
             }
 
             return $jurnal->load('detailJurnal.akun', 'aset');
         });
     }
 
-    /**
-     * Menautkan aset ke jurnal (TANPA menyentuh akumulasi).
-     * Pembaruan akumulasi ditangani terpusat di hook setelahPosting().
-     *
-     * Format dari form:
-     *   detail[0][aset_rows][0][aset_id] = 1
-     *   detail[0][aset_rows][0][nominal] = "46.875"
-     */
     private function lampirkanAsetPenyusutan(Jurnal $jurnal, array $data): void
     {
         $debitRow = collect($data['detail'] ?? [])->firstWhere('tipe', 'DEBIT');
@@ -187,30 +194,21 @@ class JurnalPenyesuaianService extends JurnalService
 
             if (!$asetId || $nominal <= 0) continue;
 
-            // Jurnal sebagai Creator dari tautan aset (Creator).
             $jurnal->lampirkanAset((int) $asetId, $nominal);
         }
     }
 
-    /** Memperbarui akumulasi penyusutan dan nilai buku aset. */
     private function perbaruiAkumulasiAset(int $asetId, float $nominal): void
     {
         $aset = Aset::find($asetId);
         if (!$aset) return;
 
-        $aset->akumulasi_penyusutan = ($aset->akumulasi_penyusutan ?? 0) + $nominal;
-        $aset->nilai_buku           = $aset->nilai_tercatat - $aset->akumulasi_penyusutan;
+        $akum = ($aset->akumulasi_penyusutan ?? 0) + $nominal;
+        $aset->akumulasi_penyusutan = min($akum, (float) $aset->nilai_tercatat); // cap
+        $aset->nilai_buku           = max($aset->nilai_tercatat - $aset->akumulasi_penyusutan, 0);
         $aset->save();
     }
 
-    /**
-     * Menautkan aset yang akan dilepas ke jurnal (TANPA menghentikan pengakuan).
-     * Nilai buku saat pelepasan disimpan di pivot 'nominal' untuk keperluan audit.
-     * Derecognition sesungguhnya ditangani terpusat di hook setelahPosting()
-     * lewat lepasAset(), sehingga efeknya hanya terjadi SEKALI saat posting.
-     *
-     * Field form: aset_dilepas[] berisi id aset.
-     */
     private function lampirkanAsetPelepasan(Jurnal $jurnal, array $data): void
     {
         $asetIds = collect($data['aset_dilepas'] ?? [])
@@ -224,18 +222,10 @@ class JurnalPenyesuaianService extends JurnalService
 
             $nilaiBuku = max((float) $aset->nilai_tercatat - (float) ($aset->akumulasi_penyusutan ?? 0), 0);
 
-            // Jurnal sebagai Creator dari tautan aset (Creator).
             $jurnal->lampirkanAset((int) $aset->id, $nilaiBuku);
         }
     }
 
-    /**
-     * Menghentikan pengakuan (derecognition) aset saat jurnal pelepasan diposting.
-     *   akumulasi_penyusutan := nilai_tercatat  (akumulasi penuh)
-     *   nilai_buku           := 0               (aset keluar dari pembukuan)
-     *   status_aset          := 'TIDAK AKTIF' dengan alasan AKAN_DILEPAS
-     * Penanda sudah-dilepas = adanya jurnal PELEPASAN_ASET berstatus POSTED terkait.
-     */
     private function lepasAset(Aset $aset, $tanggal = null): void
     {
         $aset->akumulasi_penyusutan = $aset->nilai_tercatat;
@@ -250,8 +240,6 @@ class JurnalPenyesuaianService extends JurnalService
         $aset->save();
     }
 
-    // ── Hook: setelah posting (SATU-SATUNYA tempat efek aset dijalankan) ─────────
-
     protected function setelahPosting(Jurnal $jurnal): void
     {
         if (!in_array($jurnal->tipe_penyesuaian, ['PENYUSUTAN_ASET', 'PELEPASAN_ASET'], true)) {
@@ -260,7 +248,6 @@ class JurnalPenyesuaianService extends JurnalService
 
         $jurnal->loadMissing('aset');
 
-        // Penyusutan: menambah akumulasi penyusutan (nilai buku turun bertahap).
         if ($jurnal->tipe_penyesuaian === 'PENYUSUTAN_ASET') {
             foreach ($jurnal->aset as $aset) {
                 $this->perbaruiAkumulasiAset($aset->id, (float) $aset->pivot->nominal);
@@ -268,13 +255,10 @@ class JurnalPenyesuaianService extends JurnalService
             return;
         }
 
-        // Pelepasan: derecognition — aset dikeluarkan dari pembukuan.
         foreach ($jurnal->aset as $aset) {
             $this->lepasAset($aset, $jurnal->tanggal);
         }
     }
-
-    // ── Hook: sebelum hapus ────────────────────────────────────
 
     protected function sebelumPenghapusan(Jurnal $jurnal): void
     {

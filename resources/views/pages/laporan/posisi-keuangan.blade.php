@@ -4,7 +4,7 @@
 
 @php
     if (!function_exists('fmt2')) {
-        function fmt2($val) { return number_format(abs($val), 0, ',', '.'); }
+        function fmt2($val) { return number_format(abs($val), 2, ',', '.'); }
     }
     if (!function_exists('signed2')) {
         function signed2($val) {

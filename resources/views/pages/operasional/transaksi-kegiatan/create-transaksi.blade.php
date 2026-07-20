@@ -49,16 +49,21 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Tanggal <span class="text-red-500">*</span></label>
                 <input type="date" name="tanggal_transaksi" id="create-tanggal"
-                       value="{{ old('tanggal_transaksi', now()->format('Y-m-d')) }}"
-                       class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors {{ $errors->has('tanggal_transaksi') ? 'border-red-400' : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }} bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                    value="{{ old('tanggal_transaksi', now()->format('Y-m-d')) }}"
+                    max="{{ now()->format('Y-m-d') }}"
+                    class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors {{ $errors->has('tanggal_transaksi') ? 'border-red-400' : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }} bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                 <p id="create-tanggal-error" class="hidden mt-1.5 text-xs text-red-500">Tanggal wajib diisi.</p>
                 @error('tanggal_transaksi', 'createTransaksi')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Jumlah (Rp) <span class="text-red-500">*</span></label>
-                <input type="number" name="jumlah" value="{{ old('jumlah', 0) }}" min="1"
-                       class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors {{ $errors->has('jumlah') ? 'border-red-400' : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }} bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                @error('jumlah', 'createTransaksi'))<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                <input type="text" inputmode="numeric" id="create-jumlah-display"
+                    value="{{ old('jumlah') ? number_format((int) old('jumlah'), 0, ',', '.') : '' }}"
+                    placeholder="0" oninput="formatRupiahCreate(this)"
+                    class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none transition-colors {{ $errors->has('jumlah') ? 'border-red-400' : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }} bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                <input type="hidden" name="jumlah" id="create-jumlah" value="{{ old('jumlah', 0) }}">
+
+                @error('jumlah', 'createTransaksi')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                 <p id="create-over-warning" class="hidden mt-1.5 text-xs text-amber-600"></p>
             </div>
         </div>
@@ -68,7 +73,7 @@
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Dompet <span class="text-red-500">*</span></label>
             <select name="dompet_id" id="create-dompet"
                     class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none appearance-none transition-colors {{ $errors->has('dompet_id') ? 'border-red-400' : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }} bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                <option value="">-- Pilih Dompet --</option>
+                <option value="">Pilih Dompet</option>
                 @foreach($dompetList as $dompet)
                     <option value="{{ $dompet->id }}" {{ old('dompet_id') == $dompet->id ? 'selected' : '' }}>{{ $dompet->nama_dompet }}</option>
                 @endforeach
@@ -82,7 +87,7 @@
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Kategori <span class="text-red-500">*</span></label>
             <select name="kategori_transaksi_id" id="create-kategori"
                     class="w-full px-4 py-2.5 text-sm border rounded-xl outline-none appearance-none transition-colors {{ $errors->has('kategori_transaksi_id') ? 'border-red-400' : 'border-gray-200 dark:border-gray-700 focus:border-green-400' }} bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                <option value="">-- Pilih Kategori --</option>
+                <option value="">Pilih Kategori</option>
                 @foreach($kategoriList as $kategori)
                     <option value="{{ $kategori->id }}"
                         {{ old('kategori_transaksi_id') == $kategori->id ? 'selected' : '' }}>
@@ -133,6 +138,7 @@
 
 @push('scripts')
 <script>
+    let transaksiDraft;
     document.addEventListener('DOMContentLoaded', function () {
         const checked = document.querySelector('#modal-catat-transaksi input[name="jenis_transaksi"]:checked');
         updateToggleStyle(checked ? checked.value : 'PEMASUKAN');
@@ -141,11 +147,26 @@
             dateFormat: 'Y-m-d',
             allowInput: true,
             defaultDate: '{{ now()->format('Y-m-d') }}',
+            maxDate: 'today',
         });
 
         @if($errors->createTransaksi->isNotEmpty() || $errors->has('permission'))
             openModal('modal-catat-transaksi');
         @endif
+
+        transaksiDraft = FormDraft.init({
+            formId: 'form-create-transaksi',
+            storageKey: 'draft_transaksi_{{ $kegiatan->id }}',
+            onRestore: function (data) {
+                const checkedNow = document.querySelector('#modal-catat-transaksi input[name="jenis_transaksi"]:checked');
+                updateToggleStyle(checkedNow ? checkedNow.value : 'PEMASUKAN');
+                if (data.jumlah) {
+                    document.getElementById('create-jumlah-display').value =
+                        parseInt(data.jumlah, 10).toLocaleString('id-ID');
+                }
+                cekAnggaranCreate();
+            },
+        });
     });
 
     function updateToggleStyle(jenis) {
@@ -175,16 +196,24 @@
         const anggaran = parseFloat(form.dataset.anggaran || '0');
         const terpakai = parseFloat(form.dataset.pengeluaran || '0');
         const jenisEl  = form.querySelector('input[name="jenis_transaksi"]:checked');
-        const jumlahEl = form.querySelector('input[name="jumlah"]');
+        const jumlahEl = document.getElementById('create-jumlah');
         const jumlah   = parseFloat(jumlahEl ? jumlahEl.value : '0') || 0;
 
         if (anggaran > 0 && jenisEl && jenisEl.value === 'PENGELUARAN' && (terpakai + jumlah) > anggaran) {
             const lebih = (terpakai + jumlah) - anggaran;
-            warn.textContent = '⚠️ Melebihi anggaran sebesar Rp ' + lebih.toLocaleString('id-ID') + ' — transaksi tetap bisa disimpan.';
+            warn.textContent = 'Melebihi anggaran sebesar Rp ' + lebih.toLocaleString('id-ID') + ' — transaksi tetap bisa disimpan.';
             warn.classList.remove('hidden');
         } else {
             warn.classList.add('hidden');
         }
+    }
+
+    function formatRupiahCreate(el) {
+        let angka = el.value.replace(/[^\d]/g, '');
+        const hidden = document.getElementById('create-jumlah');
+        hidden.value = angka ? parseInt(angka, 10) : 0;
+        el.value = angka ? parseInt(angka, 10).toLocaleString('id-ID') : '';
+        cekAnggaranCreate();
     }
 
     function showFileNames(input) {
@@ -238,6 +267,7 @@
         }
 
         if (valid) {
+            if (transaksiDraft) transaksiDraft.clear();
             document.getElementById('form-create-transaksi').submit();
         }
     }

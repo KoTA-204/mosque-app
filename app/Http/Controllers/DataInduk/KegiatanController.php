@@ -28,7 +28,7 @@ class KegiatanController extends Controller
             return response()->json(['stats' => $stats]);
         }
 
-        $query = Kegiatan::with('panitia');
+        $query = Kegiatan::withCount('transaksi')->with('panitia');
 
         if ($request->filled('search')) {
             $query->whereRaw('LOWER(nama_kegiatan) LIKE ?', ['%'.strtolower($request->search).'%']);
@@ -81,6 +81,25 @@ class KegiatanController extends Controller
             'panitia_id'      => 'required|exists:users,id',
         ]);
 
+        if (! $request->boolean('abaikan_duplikat')) {
+            $mirip = $this->cariKegiatanMirip($validated);
+
+            if (! empty($mirip)) {
+                $msg = 'Ada kegiatan lain dengan nama yang hampir mirip. Pastikan ini memang kegiatan yang berbeda sebelum menyimpan.';
+
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success'           => false,
+                        'duplicate_warning' => true,
+                        'message'           => $msg,
+                        'matches'           => $mirip,
+                    ]);
+                }
+
+                return redirect()->back()->withInput()->with('warning', $msg);
+            }
+        }
+
         $validated['status'] = Kegiatan::STATUS_AKTIF;
 
         Kegiatan::create($validated);
@@ -126,6 +145,16 @@ class KegiatanController extends Controller
 
     public function perbaruiKegiatan(Request $request, Kegiatan $kegiatan)
     {
+        // Kegiatan yang sudah memiliki transaksi tidak boleh diubah (konsisten dengan aturan hapus).
+        if ($kegiatan->transaksi()->count() > 0) {
+            $msg = 'Kegiatan tidak dapat diedit karena sudah memiliki transaksi.';
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+
+            return redirect()->route('dashboard.kegiatan.index')->with('error', $msg);
+        }
         $validated = $request->validate([
             'nama_kegiatan'   => 'required|string|max:255',
             'deskripsi'       => 'nullable|string|max:2000',
@@ -135,6 +164,25 @@ class KegiatanController extends Controller
             'anggaran'        => 'required|numeric|min:0',
             'panitia_id'      => 'required|exists:users,id',
         ]);
+
+        if (! $request->boolean('abaikan_duplikat')) {
+            $mirip = $this->cariKegiatanMirip($validated, $kegiatan->id);
+
+            if (! empty($mirip)) {
+                $msg = 'Ada kegiatan lain dengan nama yang hampir mirip. Pastikan ini memang kegiatan yang berbeda sebelum menyimpan.';
+
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success'           => false,
+                        'duplicate_warning' => true,
+                        'message'           => $msg,
+                        'matches'           => $mirip,
+                    ]);
+                }
+
+                return redirect()->back()->withInput()->with('warning', $msg);
+            }
+        }
 
         $kegiatan->update($validated);
 
@@ -204,5 +252,87 @@ class KegiatanController extends Controller
 
         return redirect()->route('dashboard.kegiatan.index')
             ->with('success', 'Kegiatan berhasil dihapus.');
+    }
+
+    /**
+     * Normalisasi nama kegiatan agar perbandingan tahan terhadap beda huruf besar/kecil,
+     * spasi berlebih, dan tanda baca.
+     */
+    private function normalisasiNamaKegiatan(string $nama): string
+    {
+        $n = mb_strtolower(trim($nama));
+        $n = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $n);
+        $n = preg_replace('/\s+/', ' ', $n);
+
+        return trim($n ?? '');
+    }
+
+    /**
+     * Anggap dua nama "mirip" bila sama persis setelah normalisasi, salah satu memuat
+     * yang lain, atau kemiripannya tinggi (>= 85%).
+     */
+    private function namaKegiatanMirip(string $a, string $b): bool
+    {
+        if ($a === '' || $b === '') {
+            return false;
+        }
+
+        if ($a === $b) {
+            return true;
+        }
+
+        if (str_contains($a, $b) || str_contains($b, $a)) {
+            return true;
+        }
+
+        similar_text($a, $b, $persen);
+        if ($persen >= 85) {
+            return true;
+        }
+
+        $maxLen = max(mb_strlen($a), mb_strlen($b));
+        if ($maxLen > 0) {
+            $kemiripan = (1 - (levenshtein($a, $b) / $maxLen)) * 100;
+            if ($kemiripan >= 85) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Cari kegiatan lain yang namanya mirip dengan data baru (tanpa memandang tanggal).
+     */
+    private function cariKegiatanMirip(array $data, ?int $excludeId = null): array
+    {
+        $namaBaru = $this->normalisasiNamaKegiatan($data['nama_kegiatan']);
+
+        $kandidat = Kegiatan::query()
+            ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
+            ->get(['id', 'nama_kegiatan', 'tanggal_mulai', 'tanggal_selesai']);
+
+        $mirip = [];
+
+        foreach ($kandidat as $k) {
+            if (! $this->namaKegiatanMirip($namaBaru, $this->normalisasiNamaKegiatan($k->nama_kegiatan))) {
+                continue;
+            }
+
+            $mulaiLama = \Illuminate\Support\Carbon::parse($k->tanggal_mulai)->startOfDay();
+            $akhirLama = \Illuminate\Support\Carbon::parse($k->tanggal_selesai ?: $k->tanggal_mulai)->startOfDay();
+            $periode   = $mulaiLama->format('d M Y');
+            if ($k->tanggal_selesai && ! $akhirLama->equalTo($mulaiLama)) {
+                $periode .= ' – ' . $akhirLama->format('d M Y');
+            }
+
+            $mirip[] = [
+                'id'            => $k->id,
+                'nama_kegiatan' => $k->nama_kegiatan,
+                'periode'       => $periode,
+            ];
+        }
+
+        return $mirip;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreKategoriRequest extends FormRequest
 {
@@ -21,18 +22,29 @@ class StoreKategoriRequest extends FormRequest
      */
     public function rules(): array
     {
-         return [
-            'kode_kategori' => 'required|string|max:10|unique:kategori_akun,kode_kategori',
-            'nama_kategori' => 'required|string|max:100',
+        return [
+            'kode_kategori' => [
+                'required',
+                'string',
+                Rule::in(['1', '2', '3', '4', '5']),
+                'unique:kategori_akun,kode_kategori',
+            ],
+            'nama_kategori' => [
+                'required',
+                'string',
+                Rule::in(['Aset', 'Liabilitas', 'Aset Neto', 'Pendapatan', 'Beban']),
+                'unique:kategori_akun,nama_kategori',
+            ],
         ];
     }
  
     public function messages(): array
     {
         return [
-            'kode_kategori.required' => 'Kode kategori wajib diisi.',
-            'kode_kategori.unique'   => 'Kode kategori sudah digunakan.',
-            'nama_kategori.required' => 'Nama kategori wajib diisi.',
+            'kode_kategori.in'   => 'Kode kategori harus salah satu dari 1–5 sesuai 5 unsur laporan keuangan ISAK 35.',
+            'nama_kategori.in'   => 'Nama kategori harus salah satu dari: Aset, Liabilitas, Aset Neto, Pendapatan, atau Beban sesuai ISAK 35.',
+            'kode_kategori.unique' => 'Kategori dengan kode ini sudah ada.',
+            'nama_kategori.unique' => 'Kategori dengan nama ini sudah ada.',
         ];
     }
 }

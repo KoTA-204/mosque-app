@@ -204,7 +204,6 @@ class ChartOfAccountController extends Controller
         return redirect()
             ->route('dashboard.coa.index')
             ->with('success', 'Sub kategori akun berhasil ditambahkan.');
-
     }
 
     public function tampilkanFormUbahSubKategori(Akun $subKategori)

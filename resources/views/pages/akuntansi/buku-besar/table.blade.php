@@ -52,14 +52,14 @@
                 </td>
                 <td class="px-4 py-3.5 text-right">
                     @if($isDebit)
-                        <span class="text-green-600 dark:text-green-400 font-medium">Rp {{ number_format($detail->nominal, 0, ',', '.') }}</span>
+                        <span class="text-green-600 dark:text-green-400 font-medium">Rp {{ number_format($detail->nominal, 2, ',', '.') }}</span>
                     @else
                         <span class="text-gray-300 dark:text-gray-600">-</span>
                     @endif
                 </td>
                 <td class="px-4 py-3.5 text-right">
                     @if(!$isDebit)
-                        <span class="text-red-500 dark:text-red-400 font-medium">Rp {{ number_format($detail->nominal, 0, ',', '.') }}</span>
+                        <span class="text-red-500 dark:text-red-400 font-medium">Rp {{ number_format($detail->nominal, 2, ',', '.') }}</span>
                     @else
                         <span class="text-gray-300 dark:text-gray-600">-</span>
                     @endif
@@ -67,7 +67,7 @@
                 <td class="px-4 py-3.5 text-right font-semibold">
                     @if($saldoPositif)
                         <span class="text-gray-900 dark:text-white">
-                            Rp {{ number_format(abs($runningBalance), 0, ',', '.') }}
+                            Rp {{ number_format(abs($runningBalance), 2, ',', '.') }}
                         </span>
                         @if(!$loop->first)
                         <span class="text-xs font-normal {{ $saldoNormal === 'DEBIT' ? 'text-green-400' : 'text-red-500' }}">
@@ -76,7 +76,7 @@
                         @endif
                     @else
                         <span class="text-red-500 dark:text-red-400">
-                            Rp {{ number_format(abs($runningBalance), 0, ',', '.') }}
+                            Rp {{ number_format(abs($runningBalance), 2, ',', '.') }}
                         </span>
                         <span class="text-xs font-normal text-red-400">
                             ({{ $saldoNormal === 'DEBIT' ? 'K' : 'D' }})
@@ -104,13 +104,13 @@
                     Total Keseluruhan
                 </td>
                 <td class="px-4 py-3 text-right font-bold text-green-600 dark:text-green-400">
-                    Rp {{ number_format($totalDebit, 0, ',', '.') }}
+                    Rp {{ number_format($totalDebit, 2, ',', '.') }}
                 </td>
                 <td class="px-4 py-3 text-right font-bold text-red-500 dark:text-red-400">
-                    Rp {{ number_format($totalKredit, 0, ',', '.') }}
+                    Rp {{ number_format($totalKredit, 2, ',', '.') }}
                 </td>
                 <td class="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">
-                    Rp {{ number_format(abs($saldoAkhir), 0, ',', '.') }}
+                    Rp {{ number_format(abs($saldoAkhir), 2, ',', '.') }}
                     @if($saldoAkhir < 0)
                         <span class="text-xs font-normal text-red-400">(K)</span>
                     @endif

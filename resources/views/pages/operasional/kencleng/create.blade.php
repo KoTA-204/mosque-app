@@ -35,21 +35,22 @@
             </div>
 
             <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="mb-2 block text-sm font-medium text-black dark:text-white">
-                        Tanggal Hitung <span class="text-red-500">*</span>
-                    </label>
-                    <input type="date" name="tanggal_hitung"
-                           value="{{ old('tanggal_hitung', now()->format('Y-m-d')) }}"
-                           class="w-full rounded-lg border border-stroke px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white @error('tanggal_hitung') border-red-500 @enderror">
-                </div>
+            <div>
+                <label class="mb-2 block text-sm font-medium text-black dark:text-white">
+                    Tanggal Hitung <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="tanggal_hitung" id="tanggal-hitung"
+                    value="{{ old('tanggal_hitung', now()->format('Y-m-d')) }}"
+                    autocomplete="off"
+                    class="w-full rounded-lg border border-stroke px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white @error('tanggal_hitung') border-red-500 @enderror">
+            </div>
                 <div>
                     <label class="mb-2 block text-sm font-medium text-black dark:text-white">
                         Dompet <span class="text-red-500">*</span>
                     </label>
                     <select name="dompet_id"
                             class="w-full rounded-lg border border-stroke px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white @error('dompet_id') border-red-500 @enderror">
-                        <option value="">-- Pilih Dompet --</option>
+                        <option value="">Pilih Dompet</option>
                         @foreach($dompetList as $dompet)
                             <option value="{{ $dompet->id }}" {{ old('dompet_id') == $dompet->id ? 'selected' : '' }}>
                                 {{ $dompet->nama_dompet }}
@@ -188,6 +189,13 @@ function updateSubtotal(p, count) {
         'Rp ' + (p * count).toLocaleString('id-ID');
 }
 
+flatpickr('#tanggal-hitung', {
+    dateFormat: 'Y-m-d',
+    allowInput: true,
+    defaultDate: '{{ old('tanggal_hitung', now()->format('Y-m-d')) }}',
+    maxDate: 'today',
+});
+
 function recalcTotal() {
     let total = 0;
     pecahan.forEach(p => {
@@ -198,7 +206,6 @@ function recalcTotal() {
     document.getElementById('totalFisik').textContent =
         'Rp ' + total.toLocaleString('id-ID');
 
-    // Sinkronkan hidden input jumlah_disetor dengan total fisik
     document.getElementById('jumlahDisetor').value = total;
 }
 
@@ -210,5 +217,19 @@ function showBAName(input) {
 }
 
 recalcTotal();
+
+document.addEventListener('DOMContentLoaded', function () {
+    FormDraft.init({
+        formId: 'kenclengForm',
+        storageKey: 'draft_kencleng_create',
+        onRestore: function (data) {
+            const tanggalInput = document.getElementById('tanggal-hitung');
+            if (tanggalInput && tanggalInput._flatpickr && data.tanggal_hitung) {
+                tanggalInput._flatpickr.setDate(data.tanggal_hitung, false);
+            }
+            recalcTotal();
+        },
+    });
+});
 </script>
 @endpush

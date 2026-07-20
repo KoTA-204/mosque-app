@@ -30,6 +30,12 @@
     <x-jurnal.stepper :steps="['Informasi & Detail', 'Review & Simpan']" />
 
     <form action="{{ route('dashboard.jurnal-penyesuaian.store') }}" method="POST" id="jurnalForm">
+        <div id="formAlertBox" class="hidden mb-4">
+            <x-ui.alert variant="error" title="Tidak dapat melanjutkan">
+                <span id="formAlertMsg" class="text-sm text-gray-500 dark:text-gray-400"></span>
+            </x-ui.alert>
+        </div>
+
         @csrf
 
         {{-- ═══ STEP 1 ═══ --}}
@@ -51,9 +57,8 @@
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                             Tanggal Jurnal <span class="text-red-500">*</span>
                         </label>
-                        <input type="date" name="tanggal"
-                               value="{{ old('tanggal', now()->format('Y-m-d')) }}"
-                               class="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500">
+                        <input type="hidden" name="tanggal" value="<?php echo e(now()->format('Y-m-d')); ?>">
+                        <div class="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-700/40 text-gray-500 dark:text-gray-400 cursor-not-allowed"><?php echo e(now()->translatedFormat('d F Y')); ?></div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -263,7 +268,7 @@ const stepper = makeStepperController(2);
 const balance = makeBalanceController(() => detailRows);
 
 // Expose goToStep untuk onclick di form-footer
-window.goToStep = (n) => stepper.goToStep(n);
+window.goToStep = (n) => { hideFormAlert(); stepper.goToStep(n); };
 
 // ── Helpers lokal ──────────────────────────────────────────────────────────
 function currentTipe() {
@@ -296,20 +301,35 @@ function getAkunLabel(akunId) {
 }
 
 // ── Step 1 → 2 ─────────────────────────────────────────────────────────────
+function hideFormAlert() {
+    var b = document.getElementById('formAlertBox');
+    if (b) b.classList.add("hidden");
+}
+function showFormAlert(msg) {
+    var b = document.getElementById('formAlertBox');
+    var m = document.getElementById('formAlertMsg');
+    if (m) m.textContent = msg;
+    if (b) {
+        b.classList.remove("hidden");
+        b.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        b.classList.add("ring-2", "ring-red-400", "ring-offset-2", "rounded-xl");
+        setTimeout(function () { b.classList.remove("ring-2", "ring-red-400", "ring-offset-2", "rounded-xl"); }, 1500);
+    }
+}
+
 window.goToStep2 = function() {
-    if (!currentTipe())       { alert('Pilih jenis penyesuaian terlebih dahulu.'); return; }
+    hideFormAlert();
+    if (!currentTipe())       { showFormAlert('Pilih jenis penyesuaian terlebih dahulu.'); return; }
     if (!document.querySelector('textarea[name="keterangan"]').value.trim())
-                              { alert('Keterangan jurnal wajib diisi.'); return; }
-    if (detailRows.length < 2){ alert('Minimal harus ada 2 baris detail jurnal.'); return; }
-    if (!balance.isBalanced()){ alert('Total debit dan kredit harus sama sebelum melanjutkan.'); return; }
+                              { showFormAlert('Keterangan jurnal wajib diisi.'); return; }
+    if (detailRows.length < 2){ showFormAlert('Minimal harus ada 2 baris detail jurnal.'); return; }
+    if (!balance.isBalanced()){ showFormAlert('Total debit dan kredit harus sama sebelum melanjutkan.'); return; }
     renderReview();
     stepper.goToStep(2);
 };
 
 // ── Tipe Penyesuaian ────────────────────────────────────────────────────────
-window.selectTipe = function(key) {
-    document.getElementById('tipe_penyesuaian').value = key;
-
+function applyTipeButtonStyle(key) {
     document.querySelectorAll('.tipe-btn').forEach(btn => {
         btn.classList.remove('border-green-600', 'bg-green-50', 'dark:bg-green-900/20');
         btn.classList.add('border-gray-200', 'dark:border-gray-700');
@@ -324,12 +344,18 @@ window.selectTipe = function(key) {
     if (btn)  { btn.classList.remove('border-gray-200', 'dark:border-gray-700'); btn.classList.add('border-green-600', 'bg-green-50', 'dark:bg-green-900/20'); }
     if (icon) { icon.classList.remove('text-gray-400'); icon.classList.add('text-green-600'); }
 
+    const pelCard = document.getElementById('asetPelepasanCard');
+    if (pelCard) pelCard.classList.toggle('hidden', key !== 'PELEPASAN_ASET');
+}
+
+window.selectTipe = function(key) {
+    document.getElementById('tipe_penyesuaian').value = key;
+    applyTipeButtonStyle(key);
+
     detailRows = [];
     rowCounter = 0;
     renderDetailRows();
 
-    const pelCard = document.getElementById('asetPelepasanCard');
-    if (pelCard) pelCard.classList.toggle('hidden', key !== 'PELEPASAN_ASET');
     if (key === 'PELEPASAN_ASET' && asetDilepas.length === 0) addAsetDilepas();
     renderAsetDilepas();
 };
@@ -401,11 +427,14 @@ window.onAsetChange = function(rowId, asetId, selectEl) {
     balance.recalc();
 };
 
-window.syncDebitFromAset = function(rowId) {
-    const row   = detailRows.find(r => r.id === rowId);
-    if (!row || !row.aset_rows) return;
-    const total = row.aset_rows.reduce((sum, a) => sum + parseNominal(a.nominal), 0);
-    row.nominal = total > 0 ? total.toLocaleString('id-ID') : '';
+window.syncDebitFromAset = function (rowId) {
+    const debitRow = detailRows.find(r => r.id === rowId);
+    if (!debitRow || !debitRow.aset_rows) return;
+
+    const opsi = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+    const totalCents = debitRow.aset_rows
+        .reduce((s, a) => s + Math.round(parseNominal(a.nominal) * 100), 0);
+    debitRow.nominal = totalCents > 0 ? (totalCents / 100).toLocaleString('id-ID', opsi) : '';
 };
 
 window.updateNominalHidden = function(rowId) {
@@ -582,10 +611,32 @@ function renderReview() {
 
 // ── Init ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    const oldTipe = '{{ old('tipe_penyesuaian', '') }}';
-    if (oldTipe) selectTipe(oldTipe);
-    addDetailRow();
-    addDetailRow();
+    FormDraft.init({
+        formId: 'jurnalForm',
+        storageKey: 'draft_jurnal_penyesuaian',
+        getExtraData: () => ({
+            detailRows, rowCounter, asetCounter, asetDilepas, asetDilepasCounter,
+        }),
+        setExtraData: (extra) => {
+            detailRows         = extra.detailRows         || [];
+            rowCounter          = extra.rowCounter         || 0;
+            asetCounter          = extra.asetCounter        || 0;
+            asetDilepas          = extra.asetDilepas        || [];
+            asetDilepasCounter   = extra.asetDilepasCounter || 0;
+        },
+        onRestore: (data) => {
+            if (data.tipe_penyesuaian) applyTipeButtonStyle(data.tipe_penyesuaian);
+            renderDetailRows();
+            renderAsetDilepas();
+        },
+    });
+
+    if (detailRows.length === 0) {
+        const oldTipe = '{{ old('tipe_penyesuaian', '') }}';
+        if (oldTipe) selectTipe(oldTipe);
+        addDetailRow();
+        addDetailRow();
+    }
 });
 </script>
 @endpush

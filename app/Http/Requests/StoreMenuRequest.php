@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\NamaMiripRule;
 
 class StoreMenuRequest extends FormRequest
 {
@@ -22,7 +23,7 @@ class StoreMenuRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'menu_name'     => ['required', 'string', 'max:255', 'unique:menus,menu_name'],
+            'menu_name'     => ['required', 'string', 'max:255', 'unique:menus,menu_name', new NamaMiripRule('menu'),],
             'parent_id'     => ['nullable', 'exists:menus,id'],
             // Route hanya wajib untuk sub-menu (yang punya parent).
             'route_name'    => ['nullable', 'required_with:parent_id', 'string', 'max:255'],

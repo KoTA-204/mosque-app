@@ -7,23 +7,8 @@ use App\Models\Periode;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Kelas induk abstrak untuk seluruh service jurnal.
- *
- * Menampung logika bersama semua jenis jurnal:
- * - referensi periode (getter)
- * - penulisan baris detail (didelegasikan ke model Jurnal — GRASP Creator)
- * - validasi keseimbangan debit/kredit (getter/pengecek)
- * - posting & penghapusan (Template Method + hook)
- * - posting massal (DRY)
- *
- * Kontrak: setiap turunan WAJIB menyediakan daftar().
- * Cukup 1 abstract class — tidak memerlukan interface terpisah.
- */
 abstract class JurnalService
 {
-    // ── Referensi periode (getter — dipertahankan) ─────────────────────
-
     public function getPeriodeAktif(): ?Periode
     {
         return Periode::aktif()->where('tipe', 'bulanan')->latest('tanggal_awal')->first();
@@ -34,18 +19,18 @@ abstract class JurnalService
         return Periode::orderBy('tanggal_awal', 'desc')->get();
     }
 
-    // ── Util nominal ────────────────────────────────────────
+    public function getPeriodeOpenList()
+    {
+        return Periode::aktif()->orderBy('tanggal_awal', 'desc')->get();
+    }
 
     protected function parseNominal(mixed $raw): float
     {
         if (is_string($raw)) {
-            return (float) str_replace(['.', ','], ['', '.'], $raw);
+            $raw = str_replace(['.', ','], ['', '.'], $raw);
         }
-
-        return (float) ($raw ?? 0);
+        return round((float) ($raw ?? 0), 2);
     }
-
-    // ── Mencatat baris detail (Creator: Jurnal yang mencipta) ─────────────
 
     protected function catatDetailJurnal(Jurnal $jurnal, array $detail): void
     {
@@ -56,7 +41,6 @@ abstract class JurnalService
                 continue;
             }
 
-            // Jurnal sebagai Creator dari DetailJurnal miliknya.
             $jurnal->tambahDetail($row['akun_id'], $row['tipe'], $nominal);
         }
     }
@@ -65,10 +49,9 @@ abstract class JurnalService
 
     public function isBalanced(Jurnal $jurnal): bool
     {
-        $totalDebit  = $jurnal->detailJurnal->where('tipe', 'DEBIT')->sum('nominal');
-        $totalKredit = $jurnal->detailJurnal->where('tipe', 'KREDIT')->sum('nominal');
-
-        return abs($totalDebit - $totalKredit) < 0.01;
+        $debit  = (int) round($jurnal->detailJurnal->where('tipe', 'DEBIT')->sum('nominal')  * 100);
+        $kredit = (int) round($jurnal->detailJurnal->where('tipe', 'KREDIT')->sum('nominal') * 100);
+        return $debit > 0 && $debit === $kredit;
     }
 
     /**
@@ -78,15 +61,13 @@ abstract class JurnalService
      */
     public function isDetailSeimbang(array $detail): bool
     {
-        $totalDebit = $totalKredit = 0;
-
+        $debit = $kredit = 0;
         foreach ($detail as $row) {
-            $nominal = $this->parseNominal($row['nominal'] ?? 0);
-            if (($row['tipe'] ?? null) === 'DEBIT')  $totalDebit  += $nominal;
-            if (($row['tipe'] ?? null) === 'KREDIT') $totalKredit += $nominal;
+            $c = (int) round($this->parseNominal($row['nominal'] ?? 0) * 100);
+            if (($row['tipe'] ?? null) === 'DEBIT')  $debit  += $c;
+            if (($row['tipe'] ?? null) === 'KREDIT') $kredit += $c;
         }
-
-        return abs($totalDebit - $totalKredit) < 0.01;
+        return $debit > 0 && $debit === $kredit;
     }
 
     // ── Posting ke buku besar (Template Method) ──────────────────────
@@ -115,11 +96,6 @@ abstract class JurnalService
         return true;
     }
 
-    /**
-     * Posting massal beberapa jurnal DRAFT sekaligus.
-     * Terpusat di induk (DRY) dan memakai Template Method postingKeBukuBesar()
-     * sehingga hook setelahPosting() tetap dijalankan tiap jurnal.
-     */
     public function postingMassalKeBukuBesar(array $ids): array
     {
         $jurnals = Jurnal::whereIn('id', $ids)
@@ -153,10 +129,7 @@ abstract class JurnalService
         ];
     }
 
-    /** Hook: dijalankan setelah jurnal diposting. */
     protected function setelahPosting(Jurnal $jurnal): void {}
-
-    // ── Menghapus jurnal (Template Method) ──────────────────────────
 
     public function hapusJurnal(Jurnal $jurnal): bool|string
     {
@@ -173,11 +146,7 @@ abstract class JurnalService
         return true;
     }
 
-    /** Hook: dijalankan sebelum jurnal dihapus. */
     protected function sebelumPenghapusan(Jurnal $jurnal): void {}
 
-    // ── Kontrak (pengganti interface) ─────────────────────────────
-
-    /** Setiap jenis jurnal wajib menyediakan daftar terfilter. */
     abstract public function daftar(array $filter): LengthAwarePaginator;
 }

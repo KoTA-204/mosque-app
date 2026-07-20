@@ -17,10 +17,10 @@
     </div>
 
     {{-- Catatan Revisi --}}
-    @if($kencleng->transaksi->catatan_revisi && $kencleng->transaksi->status_approval === 'REVISION')
+    @if($kencleng->transaksi->catatan && $kencleng->transaksi->status_approval === 'REVISION')
     <div class="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-5 dark:border-blue-900/50 dark:bg-blue-900/20">
         <p class="mb-1 text-sm font-medium text-blue-800 dark:text-blue-200">Catatan revisi dari Bendahara:</p>
-        <p class="text-sm text-blue-700 dark:text-blue-300">{{ $kencleng->transaksi->catatan_revisi }}</p>
+        <p class="text-sm text-blue-700 dark:text-blue-300">{{ $kencleng->transaksi->catatan }}</p>
         <div class="mt-3">
             <a href="{{ route('dashboard.kencleng.edit', $kencleng) }}"
                class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">

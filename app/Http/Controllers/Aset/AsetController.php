@@ -62,6 +62,25 @@ class AsetController extends Controller
     // simpan aset baru
     public function simpanAsetBaru(StoreAsetRequest $request)
     {
+        if (! $request->boolean('abaikan_duplikat')) {
+            $duplikat = $this->cariAsetDuplikat($request->validated());
+
+            if (! empty($duplikat)) {
+                $msg = 'Sepertinya aset ini sudah pernah dicatat (nama dan tanggal perolehan sama). Pastikan ini bukan input ganda.';
+
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success'           => false,
+                        'duplicate_warning' => true,
+                        'message'           => $msg,
+                        'matches'           => $duplikat,
+                    ]);
+                }
+
+                return redirect()->back()->withInput()->with('warning', $msg);
+            }
+        }
+
         $this->asetService->simpanAset(
             $request->validated(),
             $request->file('dokumen_pendukung'),
@@ -91,6 +110,14 @@ class AsetController extends Controller
     // form edit
     public function tampilkanFormUbahAset(Aset $aset)
     {
+        // Aset tidak aktif tidak dapat diedit
+        if ($aset->status_aset === 'TIDAK AKTIF') {
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Aset tidak aktif tidak dapat diedit.'], 422);
+            }
+            return redirect()->route('dashboard.aset.index')->with('error', 'Aset tidak aktif tidak dapat diedit.');
+        }
+
         $keuanganTerkunci = $aset->jurnalPenyesuaian()->exists();
 
         if (request()->ajax()) {
@@ -104,6 +131,33 @@ class AsetController extends Controller
     // update aset
     public function perbaruiAset(UpdateAsetRequest $request, Aset $aset)
     {
+        // Blokir update aset tidak aktif
+        if ($aset->status_aset === 'TIDAK AKTIF') {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Aset tidak aktif tidak dapat diperbarui.'], 422);
+            }
+            return redirect()->back()->with('error', 'Aset tidak aktif tidak dapat diperbarui.');
+        }
+
+        if (! $request->boolean('abaikan_duplikat')) {
+            $duplikat = $this->cariAsetDuplikat($request->validated(), $aset->id);
+
+            if (! empty($duplikat)) {
+                $msg = 'Sepertinya aset ini sudah pernah dicatat (nama dan tanggal perolehan sama). Pastikan ini bukan input ganda.';
+
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success'           => false,
+                        'duplicate_warning' => true,
+                        'message'           => $msg,
+                        'matches'           => $duplikat,
+                    ]);
+                }
+
+                return redirect()->back()->withInput()->with('warning', $msg);
+            }
+        }
+
         $this->asetService->perbaruiAset(
             $aset,
             $request->validated(),
@@ -191,5 +245,57 @@ class AsetController extends Controller
             'aktif'       => Aset::where('status_aset', 'AKTIF')->count(),
             'tidak_aktif' => Aset::where('status_aset', 'TIDAK AKTIF')->count(),
         ];
+    }
+
+    /**
+     * Normalisasi nama aset agar perbandingan tahan terhadap beda huruf besar/kecil,
+     * spasi berlebih, dan tanda baca.
+     */
+    private function normalisasiNamaAset(string $nama): string
+    {
+        $n = mb_strtolower(trim($nama));
+        $n = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $n);
+        $n = preg_replace('/\s+/', ' ', $n);
+
+        return trim($n ?? '');
+    }
+
+    /**
+     * Deteksi kemungkinan INPUT GANDA aset (bukan sekadar nama mirip): nama sama persis
+     * setelah normalisasi DAN tanggal perolehan sama.
+     * Nilai tidak lagi diperhitungkan; duplikasi nama di tanggal berbeda tetap dibiarkan
+     * karena aset identik bisa sah berjumlah banyak.
+     */
+    private function cariAsetDuplikat(array $data, ?int $excludeId = null): array
+    {
+        $namaBaru = $this->normalisasiNamaAset((string) ($data['nama_aset'] ?? ''));
+        if ($namaBaru === '') {
+            return [];
+        }
+
+        $tanggal = \Illuminate\Support\Carbon::parse($data['tanggal_perolehan'])->toDateString();
+
+        $kandidat = Aset::query()
+            ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
+            ->whereDate('tanggal_perolehan', $tanggal)
+            ->get(['id', 'kode_aset', 'nama_aset', 'tanggal_perolehan', 'nilai_tercatat']);
+
+        $duplikat = [];
+
+        foreach ($kandidat as $a) {
+            if ($this->normalisasiNamaAset((string) $a->nama_aset) !== $namaBaru) {
+                continue;
+            }
+
+            $duplikat[] = [
+                'id'                => $a->id,
+                'kode_aset'         => $a->kode_aset,
+                'nama_aset'         => $a->nama_aset,
+                'tanggal_perolehan' => \Illuminate\Support\Carbon::parse($a->tanggal_perolehan)->format('d M Y'),
+                'nilai_tercatat'    => (float) $a->nilai_tercatat,
+            ];
+        }
+
+        return $duplikat;
     }
 }

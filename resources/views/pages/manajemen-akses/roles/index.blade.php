@@ -132,11 +132,11 @@
                         </svg>
                         Edit
                     </a>
-                    @if($role->users_count == 0)
                     <form action="{{ route('dashboard.roles.destroy', $role) }}" method="POST"
                           data-confirm="Yakin hapus role '{{ addslashes($role->role_name) }}'?" data-confirm-label="Hapus">
                         @csrf
                         @method('DELETE')
+                        
                         <button type="submit"
                                 class="flex items-center gap-1.5 rounded-lg border border-red-200 dark:border-red-800 px-3 py-1.5 text-xs font-medium text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -149,7 +149,6 @@
                             Hapus
                         </button>
                     </form>
-                    @endif
 
                 </div>
                 <a href="{{ route('dashboard.roles.show', $role) }}"

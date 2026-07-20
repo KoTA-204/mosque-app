@@ -85,6 +85,7 @@ class TransaksiService
                 'jumlah'            => $jumlah,
                 'deskripsi'         => $request->deskripsi,
                 'catatan'           => $request->catatan,
+                'status_jurnal'       => 'MAPPED',
             ]);
 
             // Hapus jurnal & detail lama, ganti dengan yang baru
@@ -106,7 +107,7 @@ class TransaksiService
     {
         DB::transaction(function () use ($transaksi) {
             foreach ($transaksi->buktiTransaksi as $bukti) {
-                Storage::disk('public')->delete($bukti->path_file);
+                Storage::delete($bukti->path_file);
             }
             foreach ($transaksi->jurnal as $jurnal) {
                 $jurnal->detailJurnal()->delete();
@@ -301,7 +302,7 @@ class TransaksiService
         foreach ($files as $file) {
             if (!$file) continue;
 
-            $path = $file->store("bukti-transaksi/{$transaksi->id}", 'public');
+            $path = $file->store("bukti-transaksi/{$transaksi->id}");
 
             BuktiTransaksi::create([
                 'transaksi_id' => $transaksi->id,
@@ -336,7 +337,7 @@ class TransaksiService
         ]);
 
         if (!empty($data['dokumen_aset']) && $data['dokumen_aset'] instanceof \Illuminate\Http\UploadedFile) {
-            $path = $data['dokumen_aset']->store("aset-dokumen/{$aset->id}", 'public');
+            $path = $data['dokumen_aset']->store("aset-dokumen/{$aset->id}");
             $aset->update([
                 'dokumen_path' => $path,
                 'dokumen_nama' => $data['dokumen_aset']->getClientOriginalName(),

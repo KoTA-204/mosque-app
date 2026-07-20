@@ -57,9 +57,9 @@
                         <input type="text" name="tanggal_awal" id="inputTanggalAwal" required value="{{ old('tanggal_awal') }}"
                             autocomplete="off" placeholder="Pilih tanggal"
                             class="w-full h-10 px-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
-                        <p class="text-xs text-gray-400 mt-1">Pilih tanggal saldo awal ini berlaku (mis. tanggal masjid mulai pencatatan).</p>
+                        <p class="text-xs text-gray-400 mt-1">Tanggal awal pencatatan akuntansi.</p>
                         <p class="text-xs text-amber-600 dark:text-amber-500 mt-1">
-                            Catatan: khusus jurnal pembuka ini boleh dimulai dari tanggal berapa pun. Periode-periode berikutnya akan otomatis dimulai dari tanggal 1 setiap bulan saat dibuka lewat Jurnal Penutup.
+                            Catatan: Periode berikutnya akan otomatis dimulai dari tanggal 1 setiap bulan saat dibuka lewat Jurnal Penutup.
                         </p>
                         @error('tanggal_awal') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
