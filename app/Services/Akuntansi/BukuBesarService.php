@@ -9,17 +9,9 @@ use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Service buku besar (Pure Fabrication).
- *
- * Mengeluarkan logika query & perhitungan saldo dari BukuBesarController
- * sehingga controller cukup mengorkestrasi request/response.
  */
 class BukuBesarService
 {
-    /**
-     * Query mutasi periode: seluruh jurnal POSTED (termasuk PEMBUKA).
-     * PEMBUKA sengaja DISERTAKAN dan diurutkan paling awal agar tampil sebagai
-     * baris saldo awal pertama. Saldo awal bawaan di controller diset 0 — mencegah double-count pada saldo akhir.
-     */
     public function getMutasiQuery(?string $periodeId, ?string $akunId): Builder
     {
         $baseJurnalIds = Jurnal::where('status', 'POSTED')
@@ -29,7 +21,6 @@ class BukuBesarService
         return DetailJurnal::with(['jurnal', 'akun', 'jurnal.transaksi.dompet'])
             ->whereIn('jurnal_id', $baseJurnalIds)
             ->when($akunId, fn($q) => $q->where('akun_id', $akunId))
-            // Jurnal PEMBUKA (saldo awal) selalu tampil sebagai baris pertama.
             ->orderByRaw("(SELECT CASE WHEN jenis_jurnal = 'PEMBUKA' THEN 0 ELSE 1 END FROM jurnal WHERE jurnal.id = detail_jurnal.jurnal_id LIMIT 1) ASC")
             ->orderBy(
                 Jurnal::select('tanggal')
