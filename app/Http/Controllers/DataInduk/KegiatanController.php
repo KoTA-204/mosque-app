@@ -4,15 +4,15 @@ namespace App\Http\Controllers\DataInduk;
 
 use App\Http\Controllers\Controller;
 use App\Models\Kegiatan;
-use App\Models\User;
+use App\Models\Pengguna;
 use Illuminate\Http\Request;
 
 class KegiatanController extends Controller
 {
     private function ambilDaftarPanitia()
     {
-        return User::whereHas('roles', fn($q) =>
-            $q->where('role_name', 'Panitia Kegiatan Khusus')
+        return Pengguna::whereHas('peran', fn($q) =>
+            $q->where('nama_peran', 'Panitia Kegiatan Khusus')
         )->get();
     }
 
@@ -78,7 +78,7 @@ class KegiatanController extends Controller
             'tanggal_mulai'   => 'required|date',
             'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
             'anggaran'        => 'required|numeric|min:0',
-            'panitia_id'      => 'required|exists:users,id',
+            'panitia_id'      => 'required|exists:pengguna,id',
         ]);
 
         if (! $request->boolean('abaikan_duplikat')) {
@@ -162,7 +162,7 @@ class KegiatanController extends Controller
             'tanggal_mulai'   => 'required|date',
             'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
             'anggaran'        => 'required|numeric|min:0',
-            'panitia_id'      => 'required|exists:users,id',
+            'panitia_id'      => 'required|exists:pengguna,id',
         ]);
 
         if (! $request->boolean('abaikan_duplikat')) {

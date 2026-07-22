@@ -26,7 +26,7 @@ class LoginController extends Controller
     public function tampilkanFormLogin(Request $request): View|RedirectResponse
     {
         if (Auth::check()) {
-            return redirect()->route($this->redirectRouteUntukRole(Auth::user()));
+            return redirect()->route($this->redirectRouteUntukPeran(Auth::user()));
         }
 
         return view('pages.autentikasi.login');
@@ -89,7 +89,7 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route($this->redirectRouteUntukRole(Auth::user())));
+        return redirect()->intended(route($this->redirectRouteUntukPeran(Auth::user())));
     }
 
     /**
@@ -134,9 +134,9 @@ class LoginController extends Controller
 
     /**
      * Tentukan halaman pertama yang ditampilkan setelah login
-     * berdasarkan role pengguna.
+     * berdasarkan peran pengguna.
      *
-     * Mapping slug role → route tujuan:
+     * Mapping slug peran → route tujuan:
      *   admin                       → Manajemen Pengguna
      *   bendahara-1 / bendahara-2   → Dashboard Operasional
      *   ketua-dkm                   → Dashboard Operasional
@@ -145,13 +145,13 @@ class LoginController extends Controller
      *   sekretaris                  → Aset
      *   default                     → Dashboard Operasional
      */
-    private function redirectRouteUntukRole($user): string
+    private function redirectRouteUntukPeran($pengguna): string
     {
-        $slug = optional($user->roles)->slug;
+        $slug = optional($pengguna->peran)->slug;
 
         $map = [
             // Admin — akses penuh, langsung ke manajemen pengguna
-            'administrator'            => 'dashboard.users.index',
+            'administrator'            => 'dashboard.pengguna.index',
 
             // Bendahara & Ketua DKM — landing di dashboard utama
             'bendahara-1'              => 'dashboard.index',

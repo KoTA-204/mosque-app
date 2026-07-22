@@ -10,7 +10,7 @@ class UpdateTransaksiRequest extends FormRequest
     protected $errorBag = 'editTransaksi'; 
     
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine if the pengguna is authorized to make this request.
      */
     public function authorize(): bool
     {

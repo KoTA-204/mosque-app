@@ -7,7 +7,7 @@
         </div>
         <div>
             <p class="text-xs text-gray-500 dark:text-gray-400">Dicatat oleh</p>
-            <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ auth()->user()->name }}</p>
+            <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ auth()->user()->nama }}</p>
         </div>
         <div>
             <p class="text-xs text-gray-500 dark:text-gray-400">Kode transaksi</p>
@@ -150,7 +150,7 @@
             maxDate: 'today',
         });
 
-        @if($errors->createTransaksi->isNotEmpty() || $errors->has('permission'))
+        @if($errors->createTransaksi->isNotEmpty() || $errors->has('hak_akses'))
             openModal('modal-catat-transaksi');
         @endif
 

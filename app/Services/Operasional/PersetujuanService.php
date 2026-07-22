@@ -41,7 +41,7 @@ class PersetujuanService
         int    $perPage = 10
     ) {
         return $this->queryDasarPersetujuan()
-            ->with(['dompet', 'kategoriTransaksi', 'user', 'kegiatan', 'buktiTransaksi', 'kencleng.detail'])
+            ->with(['dompet', 'kategoriTransaksi', 'pengguna', 'kegiatan', 'buktiTransaksi', 'kencleng.detail'])
             ->where('status_persetujuan', $status)
             ->when($sumber === 'kegiatan', fn($q) => $q->whereNotNull('kegiatan_id')->whereDoesntHave('kencleng'))
             ->when($sumber === 'kencleng', fn($q) => $q->whereHas('kencleng'))
@@ -49,7 +49,7 @@ class PersetujuanService
             ->when($sampai, fn($q) => $q->whereDate('tanggal_transaksi', '<=', $sampai))
             ->when($search, fn($q) => $q->where(function ($inner) use ($search) {
                 $inner->whereHas('kegiatan', fn($k) => $k->where('nama_kegiatan', 'ilike', "%{$search}%"))
-                      ->orWhereHas('user',    fn($u) => $u->where('name', 'ilike', "%{$search}%"))
+                      ->orWhereHas('pengguna',    fn($u) => $u->where('nama', 'ilike', "%{$search}%"))
                       ->orWhere('deskripsi', 'ilike', "%{$search}%");
             }))
             ->orderBy('tanggal_transaksi', in_array($urut, ['asc', 'desc']) ? $urut : 'asc')
@@ -59,7 +59,7 @@ class PersetujuanService
 
     public function getDetailTransaksi(Transaksi $transaksi): Transaksi
     {
-        return $transaksi->load('dompet', 'kategoriTransaksi', 'user', 'kegiatan', 'buktiTransaksi');
+        return $transaksi->load('dompet', 'kategoriTransaksi', 'pengguna', 'kegiatan', 'buktiTransaksi');
     }
 
     // ── Core ──────────────────────────────────────────────────────────────

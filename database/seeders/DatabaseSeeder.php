@@ -11,24 +11,24 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Urutan dijaga sesuai dependensi:
-     * 1) Autentikasi & otorisasi  -> Role, Permission, Menu, User, PermissionRole
+     * 1) Autentikasi & otorisasi  -> Peran, HakAkses, Menu, Pengguna, HakAksesPeran
      * 2) Master data keuangan     -> KategoriAkun, Akun, Dompet, KategoriTransaksi, Periode, Aset
      * 3) Saldo awal               -> JurnalPembuka (butuh Periode + Akun)
-     * 4) Data transaksional       -> Kegiatan, Transaksi, Kencleng, dst (butuh User)
+     * 4) Data transaksional       -> Kegiatan, Transaksi, Kencleng, dst (butuh Pengguna)
      * 5) Jurnal umum              -> JurnalUmumSeeder (butuh semua transaksi + Akun + Periode)
      *
-     * RoleUserSeeder & MenuPermissionSeeder DIHAPUS (tabel role_user / menu_permission
-     * tidak ada; relasi via users.role_id & menus.permission_id).
+     * PeranPenggunaSeeder & MenuHakAksesSeeder DIHAPUS (tabel peran_pengguna / menu_hak_akses
+     * tidak ada; relasi via pengguna.peran_id & menus.hak_akses_id).
      */
     public function run(): void
     {
         $this->call([
             // 1) Autentikasi & otorisasi
-            RoleSeeder::class,
-            PermissionSeeder::class,
+            PeranSeeder::class,
+            HakAksesSeeder::class,
             MenuSeeder::class,
-            UserSeeder::class,
-            PermissionRoleSeeder::class,
+            PenggunaSeeder::class,
+            HakAksesPeranSeeder::class,
             KategoriTransaksiSeeder::class,
             // DompetSeeder::class,
             KegiatanSeeder::class,

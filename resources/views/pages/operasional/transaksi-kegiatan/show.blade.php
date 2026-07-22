@@ -116,7 +116,7 @@
                             'REVISION' => 'Revisi',
                             default    => $item->status_persetujuan,
                         };
-                        $bisaUbah = $item->bisaDiedit() && $item->user_id === auth()->id();
+                        $bisaUbah = $item->bisaDiedit() && $item->pengguna_id === auth()->id();
                     @endphp
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                         <td class="px-5 py-3.5 text-center text-gray-500">{{ $transaksi->firstItem() + $index }}</td>
@@ -147,7 +147,7 @@
                                             'dompet_id'             => $item->dompet_id,
                                             'kategori_transaksi_id' => $item->kategori_transaksi_id,
                                             'deskripsi'             => $item->deskripsi,
-                                            'pencatat'              => $item->user->name,
+                                            'pencatat'              => $item->pengguna->nama,
                                             'bukti'                 => $item->buktiTransaksi->map(fn($b) => [
                                                 'id'        => $b->id,
                                                 'nama_file' => $b->nama_file ?? basename($b->path_file),

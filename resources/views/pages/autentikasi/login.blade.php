@@ -22,7 +22,6 @@
         <div class="w-full max-w-sm">
 
             <h1 class="w-full max-w-md flex flex-col items-center text-center mb-2 text-3xl font-sans font-bold text-gray-800 dark:text-white">Log in</h1>
-            <p class="w-full max-w-md flex flex-col items-center text-center mb-8 text-sm text-gray-500 dark:text-gray-400">Gunakan kredensial yang diberikan oleh Admin.</p>
 
             @if(session('status') === 'session-expired' || request()->has('expired'))
             <div class="mb-5 flex items-center gap-3 bg-gray-100 border border-gray-300 rounded-xl px-4 py-3" id="alert-session">

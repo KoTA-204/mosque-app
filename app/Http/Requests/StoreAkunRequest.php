@@ -8,7 +8,7 @@ use App\Rules\NamaMiripRule;
 class StoreAkunRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine if the pengguna is authorized to make this request.
      */
     public function authorize(): bool
     {

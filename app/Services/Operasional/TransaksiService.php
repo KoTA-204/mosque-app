@@ -94,7 +94,7 @@ class TransaksiService
             $transaksi = Transaksi::create([
                 'dompet_id'             => $request->dompet_id,
                 'kegiatan_id'           => null,
-                'user_id'               => Auth::id(),
+                'pengguna_id'               => Auth::id(),
                 'kategori_transaksi_id' => $request->kategori_transaksi_id,
                 'tanggal_transaksi'     => $request->tanggal_transaksi,
                 'jenis_transaksi'       => $request->jenis_transaksi,
@@ -159,7 +159,7 @@ class TransaksiService
 
         DB::transaction(function () use ($transaksi) {
             foreach ($transaksi->buktiTransaksi as $bukti) {
-                Storage::delete($bukti->path_file);
+                Storage::disk('public')->delete($bukti->path_file);
             }
             foreach ($transaksi->jurnal as $jurnal) {
                 $jurnal->detailJurnal()->delete();
@@ -239,7 +239,7 @@ class TransaksiService
             DB::transaction(function () use ($row, $klas, $jenis, $tanggal, $sessionData, $periode) {
                 $transaksi = Transaksi::create([
                     'dompet_id'             => $sessionData['dompet_id'],
-                    'user_id'               => Auth::id(),
+                    'pengguna_id'               => Auth::id(),
                     'kategori_transaksi_id' => null,
                     'tanggal_transaksi'     => $tanggal,
                     'jenis_transaksi'       => $jenis,
@@ -354,7 +354,7 @@ class TransaksiService
         foreach ($files as $file) {
             if (!$file) continue;
 
-            $path = $file->store("bukti-transaksi/{$transaksi->id}");
+            $path = $file->store("bukti-transaksi/{$transaksi->id}", 'public');
 
             BuktiTransaksi::create([
                 'transaksi_id' => $transaksi->id,
@@ -389,7 +389,7 @@ class TransaksiService
         ]);
 
         if (!empty($data['dokumen_aset']) && $data['dokumen_aset'] instanceof \Illuminate\Http\UploadedFile) {
-            $path = $data['dokumen_aset']->store("aset-dokumen/{$aset->id}");
+            $path = $data['dokumen_aset']->store("aset-dokumen/{$aset->id}", 'public');
             $aset->update([
                 'dokumen_path' => $path,
                 'dokumen_nama' => $data['dokumen_aset']->getClientOriginalName(),

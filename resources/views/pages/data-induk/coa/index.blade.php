@@ -3,9 +3,9 @@
 @section('content')
 
 @php
-    $canCreateCoa = auth()->user()->hasPermission('CREATE_COA');
-    $canEditCoa   = auth()->user()->hasPermission('EDIT_COA');
-    $canDeleteCoa = auth()->user()->hasPermission('DELETE_COA');
+    $canCreateCoa = auth()->user()->hasHakAkses('CREATE_COA');
+    $canEditCoa   = auth()->user()->hasHakAkses('EDIT_COA');
+    $canDeleteCoa = auth()->user()->hasHakAkses('DELETE_COA');
 @endphp
 
 <div class="p-6 space-y-6">
@@ -31,13 +31,13 @@
     </div>
     @endif
 
-    @if(session('error') || $errors->has('permission'))
+    @if(session('error') || $errors->has('hak_akses'))
     <div id="error-alert"
         class="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400">
         <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
         </svg>
-        {{ session('error') ?: $errors->first('permission') }}
+        {{ session('error') ?: $errors->first('hak_akses') }}
     </div>
     @endif
 
@@ -472,17 +472,17 @@
     }
 
     @php $formSource = old('_form', ''); @endphp
-    @if($errors->any() && !$errors->has('permission') && $formSource === 'kategori')
+    @if($errors->any() && !$errors->has('hak_akses') && $formSource === 'kategori')
         openModal('createKategoriModal');
-    @elseif($errors->any() && !$errors->has('permission') && $formSource === 'akun')
+    @elseif($errors->any() && !$errors->has('hak_akses') && $formSource === 'akun')
         openModal('createAkunModal');
-    @elseif($errors->any() && !$errors->has('permission') && $formSource === 'subkategori')
+    @elseif($errors->any() && !$errors->has('hak_akses') && $formSource === 'subkategori')
         openModal('createSubKategoriModal');
-    @elseif($errors->any() && !$errors->has('permission') && $formSource === 'edit-kategori')
+    @elseif($errors->any() && !$errors->has('hak_akses') && $formSource === 'edit-kategori')
         openModal('editKategoriModal<?php echo e(old('_id')); ?>');
-    @elseif($errors->any() && !$errors->has('permission') && $formSource === 'edit-subkategori')
+    @elseif($errors->any() && !$errors->has('hak_akses') && $formSource === 'edit-subkategori')
         openModal('editSubKategoriModal<?php echo e(old('_id')); ?>');
-    @elseif($errors->any() && !$errors->has('permission') && $formSource === 'edit-akun')
+    @elseif($errors->any() && !$errors->has('hak_akses') && $formSource === 'edit-akun')
         openModal('editAkunModal<?php echo e(old('_id')); ?>');
     @endif
 

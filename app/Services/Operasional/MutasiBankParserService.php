@@ -287,7 +287,7 @@ class MutasiBankParserService
         $teller = '';
         if (!empty($token)) {
             $tokenAkhir = end($token);
-            // Heuristik: teller/user ID berupa digit (≥4 angka) atau kode
+            // Heuristik: teller/pengguna ID berupa digit (≥4 angka) atau kode
             // huruf kapital khusus seperti "BRIMDBT" (biaya SMS notifikasi).
             if (preg_match('/^\d{4,}$/', $tokenAkhir) || preg_match('/^[A-Z]{4,10}$/', $tokenAkhir)) {
                 $teller = $tokenAkhir;

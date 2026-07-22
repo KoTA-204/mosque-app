@@ -8,14 +8,14 @@ use Illuminate\Foundation\Http\FormRequest;
 class StoreKegiatanRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine if the pengguna is authorized to make this request.
      */
     public function authorize(): bool
     {
-        $user = $this->user();
-        return $user && $user->roles()
-            ->whereHas('permissions', fn($q) => $q
-                ->where('permission_code', 'kegiatan.create')
+        $pengguna = $this->user();
+        return $pengguna && $pengguna->peran()
+            ->whereHas('hak_akses', fn($q) => $q
+                ->where('kode_hak_akses', 'kegiatan.create')
                 ->where('is_active', true))
             ->exists();
     }
@@ -35,7 +35,7 @@ class StoreKegiatanRequest extends FormRequest
             'tanggal_selesai' => ['nullable', 'date', 'after_or_equal:tanggal_mulai'],
             'anggaran'        => ['nullable', 'numeric', 'min:0'],
             'status'          => ['required', 'in:' . implode(',', Kegiatan::STATUS)],
-            'panitia_id'      => ['required', 'exists:users,id'],
+            'panitia_id'      => ['required', 'exists:pengguna,id'],
         ];
     }
  

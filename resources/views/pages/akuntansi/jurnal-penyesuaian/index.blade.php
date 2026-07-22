@@ -16,14 +16,12 @@
             </p>
             @endif
         </div>
-        <div class="flex items-center gap-2">
-            @if(auth()->user()->hasPermission('CREATE_JURNAL_PENYESUAIAN'))
-            <a href="{{ route('dashboard.jurnal-penyesuaian.create') }}"
-               class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-                Catat Penyesuaian
-            </a>
-            @endif
-        </div>
+        @if(auth()->user()->hasHakAkses('CREATE_JURNAL_PENYESUAIAN'))
+        <a href="{{ route('dashboard.jurnal-penyesuaian.create') }}"
+           class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
+            Catat Penyesuaian
+        </a>
+        @endif
     </div>
 
     {{-- Alert --}}
@@ -38,7 +36,7 @@
     <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
 
         {{-- Bulk Action Bar --}}
-        <x-jurnal.bulk-action-bar permission="CREATE_JURNAL_PENYESUAIAN" />
+        <x-jurnal.bulk-action-bar hak_akses="CREATE_JURNAL_PENYESUAIAN" />
 
         {{-- Toolbar --}}
         <x-jurnal.table-toolbar
@@ -181,7 +179,7 @@
                     <tr>
                         <td colspan="9" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-600">
                             Belum ada jurnal penyesuaian.
-                            @if(auth()->user()->hasPermission('CREATE_JURNAL_PENYESUAIAN'))
+                            @if(auth()->user()->hasHakAkses('CREATE_JURNAL_PENYESUAIAN'))
                                 <a href="{{ route('dashboard.jurnal-penyesuaian.create') }}" class="text-green-600 hover:underline ml-1">Catat sekarang</a>
                             @endif
                         </td>

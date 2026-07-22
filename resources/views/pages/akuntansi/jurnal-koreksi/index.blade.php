@@ -16,7 +16,7 @@
             </p>
             @endif
         </div>
-        @if(auth()->user()->hasPermission('CREATE_JURNAL_KOREKSI'))
+        @if(auth()->user()->hasHakAkses('CREATE_JURNAL_KOREKSI'))
         <a href="{{ route('dashboard.jurnal-koreksi.create') }}"
            class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
             Catat Koreksi
@@ -36,7 +36,7 @@
     <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
 
         {{-- Bulk Action Bar — pakai komponen --}}
-        <x-jurnal.bulk-action-bar permission="CREATE_JURNAL_KOREKSI" />
+        <x-jurnal.bulk-action-bar hak_akses="CREATE_JURNAL_KOREKSI" />
 
         {{-- Toolbar (Show entries + filter + search) — pakai komponen --}}
         <x-jurnal.table-toolbar
@@ -178,7 +178,7 @@
                     <tr>
                         <td colspan="9" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-600">
                             Belum ada jurnal koreksi.
-                            @if(auth()->user()->hasPermission('CREATE_JURNAL_KOREKSI'))
+                            @if(auth()->user()->hasHakAkses('CREATE_JURNAL_KOREKSI'))
                                 <a href="{{ route('dashboard.jurnal-koreksi.create') }}" class="text-green-600 hover:underline ml-1">Catat sekarang</a>
                             @endif
                         </td>

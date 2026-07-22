@@ -3,17 +3,17 @@
 namespace Database\Seeders;
 
 use App\Models\Kegiatan;
-use App\Models\User;
+use App\Models\Pengguna;
 use Illuminate\Database\Seeder;
 
 class KegiatanSeeder extends Seeder
 {
     /**
-     * Kegiatan khusus masjid. panitia_id mengarah ke user ber-role Panitia Khusus.
+     * Kegiatan khusus masjid. panitia_id mengarah ke pengguna ber-peran Panitia Khusus.
      */
     public function run(): void
     {
-        $panitia = User::where('email', 'panitia@masjid.id')->firstOrFail();
+        $panitia = Pengguna::where('email', 'panitia@masjid.id')->firstOrFail();
 
         // ══════════════════════════════════════════════════════════════
         // DATA PRODUKSI

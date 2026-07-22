@@ -2,9 +2,9 @@
 @section('title', 'Kategori Transaksi')
 @section('content')
 @php
-    $canCreateKategoriTransaksi = auth()->user()->hasPermission('CREATE_KATEGORI');
-    $canEditKategoriTransaksi   = auth()->user()->hasPermission('EDIT_KATEGORI');
-    $canDeleteKategoriTransaksi = auth()->user()->hasPermission('DELETE_KATEGORI');
+    $canCreateKategoriTransaksi = auth()->user()->hasHakAkses('CREATE_KATEGORI');
+    $canEditKategoriTransaksi   = auth()->user()->hasHakAkses('EDIT_KATEGORI');
+    $canDeleteKategoriTransaksi = auth()->user()->hasHakAkses('DELETE_KATEGORI');
 @endphp
 <div class="p-6 space-y-6">
 
@@ -34,7 +34,7 @@
     </div>
     @endif
 
-    @if(session('error') || $errors->has('permission'))
+    @if(session('error') || $errors->has('hak_akses'))
     <div id="error-alert"
         class="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400 transition-all duration-500">
 
@@ -44,7 +44,7 @@
                 clip-rule="evenodd"/>
         </svg>
 
-        {{ session('error') ?? $errors->first('permission') }}
+        {{ session('error') ?? $errors->first('hak_akses') }}
     </div>
     @endif
 

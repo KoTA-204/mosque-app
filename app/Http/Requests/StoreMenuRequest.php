@@ -28,7 +28,7 @@ class StoreMenuRequest extends FormRequest
             // Route hanya wajib untuk sub-menu (yang punya parent).
             'route_name'    => ['nullable', 'required_with:parent_id', 'string', 'max:255'],
             'icon'          => ['nullable', 'string', 'max:255'],
-            'permission_id' => ['nullable', 'exists:permissions,id'],
+            'hak_akses_id' => ['nullable', 'exists:hak_akses,id'],
             'sort_order'    => ['nullable', 'integer', 'min:0'],
             'is_active'     => ['boolean'],
         ];

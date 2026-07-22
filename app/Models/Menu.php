@@ -14,7 +14,7 @@ class Menu extends Model
         'route_name',
         'icon',
         'parent_id',
-        'permission_id',
+        'hak_akses_id',
         'sort_order',
         'is_active',
     ];
@@ -24,9 +24,9 @@ class Menu extends Model
         'sort_order' => 'integer',
     ];
 
-    public function permissions()
+    public function hak_akses()
     {
-        return $this->belongsTo(Permission::class, 'permission_id');
+        return $this->belongsTo(HakAkses::class, 'hak_akses_id');
     }
 
     public function parent()

@@ -17,9 +17,9 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('menus')
                 ->nullOnDelete();
-            $table->foreignId('permission_id')
+            $table->foreignId('hak_akses_id')
                 ->nullable()
-                ->constrained('permissions')
+                ->constrained('hak_akses')
                 ->nullOnDelete(); 
             $table->string('menu_name', 100)->unique();
             $table->string('route_name', 100)->nullable();

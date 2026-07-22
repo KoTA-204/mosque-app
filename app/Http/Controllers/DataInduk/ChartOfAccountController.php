@@ -151,7 +151,7 @@ class ChartOfAccountController extends Controller
 
     public function hapusKategoriAkun(KategoriAkun $kategori)
     {
-        if (!auth()->user()->hasPermission('DELETE_COA')) {
+        if (!auth()->user()->hasHakAkses('DELETE_COA')) {
             return back()->with('error', 'Anda tidak memiliki akses untuk menghapus kategori akun ini.');
         }
 
@@ -233,7 +233,7 @@ class ChartOfAccountController extends Controller
 
     public function hapusSubKategori(Akun $subKategori)
     {
-        if (!auth()->user()->hasPermission('DELETE_COA')) {
+        if (!auth()->user()->hasHakAkses('DELETE_COA')) {
             return back()->with('error', 'Anda tidak memiliki akses untuk menghapus sub kategori ini.');
         }
 
@@ -333,7 +333,7 @@ class ChartOfAccountController extends Controller
 
     public function hapusAkun(Akun $akun)
     {
-        if (!auth()->user()->hasPermission('DELETE_COA')) {
+        if (!auth()->user()->hasHakAkses('DELETE_COA')) {
             return back()->with('error', 'Anda tidak memiliki akses untuk menghapus akun ini.');
         }
 

@@ -2,7 +2,7 @@
 @section('title', 'Edit Jurnal Pembuka')
 @section('content')
 @php
-    $canCreateJurnalPembuka = auth()->user()->hasPermission('EDIT_JURNAL_PEMBUKA');
+    $canCreateJurnalPembuka = auth()->user()->hasHakAkses('EDIT_JURNAL_PEMBUKA');
     $namaPeriodeSaatIni   = old('nama_periode', $jurnalPembuka->periode?->nama_periode);
     $tanggalAwalSaatIni   = old('tanggal_awal', optional($jurnalPembuka->periode?->tanggal_awal)->format('Y-m-d'));
     $tanggalAkhirSaatIni  = old('tanggal_akhir', optional($jurnalPembuka->periode?->tanggal_akhir)->format('Y-m-d'));

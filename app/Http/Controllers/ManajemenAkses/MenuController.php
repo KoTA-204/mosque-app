@@ -21,7 +21,7 @@ class MenuController extends Controller
         $status   = $request->input('status');
         $parentId = $request->input('parent_menu');
 
-        $menus = Menu::with(['children', 'parent', 'permissions'])
+        $menus = Menu::with(['children', 'parent', 'hak_akses'])
             ->when($search, fn($q) =>
                 $q->where('menu_name', 'like', "%{$search}%")
                   ->orWhere('route_name', 'like', "%{$search}%")
@@ -78,7 +78,7 @@ class MenuController extends Controller
 
     public function tampilkanDetailMenu(Menu $menu)
     {
-        $menu->load(['children', 'parent', 'permissions']);
+        $menu->load(['children', 'parent', 'hak_akses']);
 
         return view('pages.manajemen-akses.menus.show', compact('menu'));
     }

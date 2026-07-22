@@ -6,18 +6,18 @@ use App\Models\Dompet;
 use App\Models\KategoriTransaksi;
 use App\Models\Kegiatan;
 use App\Models\Transaksi;
-use App\Models\User;
+use App\Models\Pengguna;
 use Illuminate\Database\Seeder;
 
 class TransaksiKegiatanSeeder extends Seeder
 {
-    private User $panitia;
+    private Pengguna $panitia;
     private Dompet $dompet;
     private KategoriTransaksi $kategori;
 
     public function run(): void
     {
-        $this->panitia  = User::where('email', 'panitia@masjid.id')->firstOrFail();
+        $this->panitia  = Pengguna::where('email', 'panitia@masjid.id')->firstOrFail();
         $this->dompet   = Dompet::firstOrFail();
         $this->kategori = KategoriTransaksi::firstOrFail();
 
@@ -156,7 +156,7 @@ class TransaksiKegiatanSeeder extends Seeder
         Transaksi::create([
             'dompet_id'             => $this->dompet->id,
             'kegiatan_id'           => $kegiatan->id,
-            'user_id'               => $this->panitia->id,
+            'pengguna_id'               => $this->panitia->id,
             'kategori_transaksi_id' => $this->kategori->id,
             'tanggal_transaksi'     => $kegiatan->tanggal_mulai ?? now()->toDateString(),
             'jenis_transaksi'       => $jenis,

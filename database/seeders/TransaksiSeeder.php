@@ -7,7 +7,7 @@ use illuminate\Support\Facades\DB;
 use App\Models\Transaksi;
 use App\Models\Kegiatan;
 use App\Models\Dompet;
-use App\Models\User;
+use App\Models\Pengguna;
 use App\Models\KategoriTransaksi;
 
 /**
@@ -38,7 +38,7 @@ class TransaksiSeeder extends Seeder
      */
     public function run(): void
     {
-        $user = User::first();
+        $pengguna = Pengguna::first();
         $kas  = Dompet::where('nama_dompet', 'Kas Masjid')->first();
         $bsi  = Dompet::where('nama_dompet', 'Bank BSI Operasional')->first();
         $bri  = Dompet::where('nama_dompet', 'Bank BRI Operasional')->first();
@@ -143,7 +143,7 @@ class TransaksiSeeder extends Seeder
 
         foreach ($transaksi as $item) {
             Transaksi::create(array_merge([
-                'user_id'         => $user->id,
+                'pengguna_id'         => $pengguna->id,
                 'catatan'         => null,
                 'status_persetujuan' => 'APPROVED',
                 'status_jurnal'   => 'MAPPED',
@@ -163,7 +163,7 @@ class TransaksiSeeder extends Seeder
         ];
 
         foreach ($transaksiPersetujuan as $row) {
-            Transaksi::create($row + ['user_id' => $user->id]);
+            Transaksi::create($row + ['pengguna_id' => $pengguna->id]);
         }
     }
 }

@@ -13,7 +13,7 @@ use App\Services\Akuntansi\JurnalPembukaService;
  *
  * Jurnal pembuka = SETUP satu-kali (opening balance), bukan CRUD biasa:
  *  - Hanya boleh ada satu jurnal pembuka (invarian domain).
- *  - Periode dihitung dari (jenis periode + tanggal awal) yang dipilih user.
+ *  - Periode dihitung dari (jenis periode + tanggal awal) yang dipilih pengguna.
  *  - Setelah diposting / ada transaksi turunan, jurnal pembuka dikunci.
  *
  * Controller tipis: aturan bisnis di service, validasi input di FormRequest.

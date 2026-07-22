@@ -21,7 +21,7 @@ class TransaksiKegiatanService
                 'transaksi as transaksi_pending_count' => fn ($q) =>
                     $q->where('status_persetujuan', 'PENDING'),
             ])
-            ->when(auth()->user()->hasRole('panitia-kegiatan-khusus'), fn ($q) =>
+            ->when(auth()->user()->hasPeran('panitia-kegiatan-khusus'), fn ($q) =>
                 $q->where('panitia_id', auth()->id()))
             // 'like' agar portable. Jika pakai PostgreSQL boleh ganti 'ilike'.
             ->when($search, fn ($q) =>
@@ -37,14 +37,14 @@ class TransaksiKegiatanService
     public function hitungRingkasanKegiatan(): array
     {
         $query = Kegiatan::query()
-            ->when(auth()->user()->hasRole('panitia-kegiatan-khusus'), fn ($q) =>
+            ->when(auth()->user()->hasPeran('panitia-kegiatan-khusus'), fn ($q) =>
                 $q->where('panitia_id', auth()->id()));
 
         return [
             'total'   => (clone $query)->count(),
             'aktif'   => (clone $query)->where('status', Kegiatan::STATUS_AKTIF)->count(),
             'pending' => Transaksi::whereHas('kegiatan', fn ($q) =>
-                    $q->when(auth()->user()->hasRole('panitia-kegiatan-khusus'), fn ($q) =>
+                    $q->when(auth()->user()->hasPeran('panitia-kegiatan-khusus'), fn ($q) =>
                         $q->where('panitia_id', auth()->id())))
                 ->where('status_persetujuan', 'PENDING')
                 ->count(),
@@ -62,7 +62,7 @@ class TransaksiKegiatanService
     public function getTransaksiPerKegiatan(Kegiatan $kegiatan, ?string $search = null, ?string $jenis = null, ?string $status = null, int $perPage = 10)
     {
         return $kegiatan->transaksi()
-            ->with(['dompet', 'kategoriTransaksi', 'user', 'buktiTransaksi'])
+            ->with(['dompet', 'kategoriTransaksi', 'pengguna', 'buktiTransaksi'])
             ->when($search, fn ($q) =>
                 $q->where('deskripsi', 'like', "%{$search}%"))
             ->when($jenis, fn ($q) =>
@@ -76,7 +76,7 @@ class TransaksiKegiatanService
 
     public function getDetailTransaksi(Transaksi $transaksi): Transaksi
     {
-        return $transaksi->load('dompet', 'kategoriTransaksi', 'user', 'kegiatan', 'buktiTransaksi');
+        return $transaksi->load('dompet', 'kategoriTransaksi', 'pengguna', 'kegiatan', 'buktiTransaksi');
     }
 
     public function getDaftarDompet()
@@ -103,7 +103,7 @@ class TransaksiKegiatanService
             $transaksi = Transaksi::create([
                 'dompet_id'             => $data['dompet_id'],
                 'kegiatan_id'           => $kegiatan->id,
-                'user_id'               => auth()->id(),
+                'pengguna_id'               => auth()->id(),
                 'kategori_transaksi_id' => $data['kategori_transaksi_id'],
                 'tanggal_transaksi'     => $data['tanggal_transaksi'],
                 'jenis_transaksi'       => $data['jenis_transaksi'],
@@ -138,7 +138,7 @@ class TransaksiKegiatanService
             foreach ($data['hapus_bukti'] ?? [] as $buktiId) {
                 $bukti = BuktiTransaksi::where('transaksi_id', $transaksi->id)->find($buktiId);
                 if ($bukti) {
-                    Storage::delete($bukti->path_file);
+                    Storage::disk('public')->delete($bukti->path_file);
                     $bukti->delete();
                 }
             }
@@ -154,13 +154,13 @@ class TransaksiKegiatanService
         if (! $transaksi->bisaDiedit()) {
             return 'Transaksi yang sudah diproses tidak bisa dihapus';
         }
-        if ($transaksi->user_id !== auth()->id()) {
+        if ($transaksi->pengguna_id !== auth()->id()) {
             return 'Anda tidak bisa menghapus transaksi orang lain';
         }
 
         DB::transaction(function () use ($transaksi) {
             foreach ($transaksi->buktiTransaksi as $bukti) {
-                Storage::delete($bukti->path_file);
+                Storage::disk('public')->delete($bukti->path_file);
                 $bukti->delete();
             }
             $transaksi->delete();
@@ -173,7 +173,7 @@ class TransaksiKegiatanService
     private function simpanBuktiTransaksi(Transaksi $transaksi, array $files): void
     {
         foreach ($files as $file) {
-            $path = $file->store('bukti_transaksi');
+            $path = $file->store('bukti_transaksi', 'public');
             BuktiTransaksi::create([
                 'transaksi_id' => $transaksi->id,
                 'nama_file'    => $file->getClientOriginalName(),

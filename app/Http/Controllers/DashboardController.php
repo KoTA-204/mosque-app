@@ -18,10 +18,10 @@ class DashboardController extends Controller
 
     public function home()
     {
-        $slug = optional(auth()->user()->roles)->slug;
+        $slug = optional(auth()->user()->peran)->slug;
 
         $map = [
-            'administrator'            => 'dashboard.users.index',
+            'administrator'            => 'dashboard.pengguna.index',
             'ketua-dkm'                => 'dashboard.index',
             'bendahara-1'              => 'dashboard.index',
             'bendahara-2'              => 'dashboard.index',

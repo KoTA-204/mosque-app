@@ -17,7 +17,7 @@ use RuntimeException;
  * Aturan bisnis "saldo awal" (opening balance).
  *  - Singleton: hanya boleh ada satu jurnal pembuka.
  *  - Periode ditentukan langsung dari (nama_periode, tanggal_awal, tanggal_akhir)
- *    yang diinput user; tanggal_akhir sudah dihitung di sisi client (akhir bulan
+ *    yang diinput pengguna; tanggal_akhir sudah dihitung di sisi client (akhir bulan
  *    dari tanggal_awal) dan divalidasi ulang di sini sebagai pengaman lapis dua.
  *  - Terkunci setelah diposting / ada transaksi turunan.
  */
@@ -265,7 +265,7 @@ class JurnalPembukaService extends JurnalService
      * @param  string       $tanggalAwal          Format Y-m-d, contoh "2026-07-15".
      * @param  string|null  $tanggalAwalSaatIni   Tanggal awal milik jurnal yang sedang
      *         diedit (Y-m-d). Jika sama dengan $tanggalAwal, validasi dilewati — supaya
-     *         user tetap bisa menyimpan ulang tanggal lama miliknya.
+     *         pengguna tetap bisa menyimpan ulang tanggal lama miliknya.
      */
     protected function pastikanTanggalTidakBerlalu(string $tanggalAwal, ?string $tanggalAwalSaatIni = null): void
     {

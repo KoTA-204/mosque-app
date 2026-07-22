@@ -10,7 +10,7 @@ use App\Models\Jurnal;
 use App\Models\KategoriTransaksi;
 use App\Models\Periode;
 use App\Models\Transaksi;
-use App\Models\User;
+use App\Models\Pengguna;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -38,7 +38,7 @@ use Illuminate\Support\Facades\DB;
  * Semua jurnal POSTED & seimbang.
  * Posisi Keuangan akhir Juni balance: Total Aset = Aset Neto = Rp 49.150.000
  *
- * PRASYARAT: RoleSeeder, UserSeeder, KategoriAkunSeeder, AkunSeeder.
+ * PRASYARAT: PeranSeeder, PenggunaSeeder, KategoriAkunSeeder, AkunSeeder.
  *   (KategoriTransaksiSeeder TIDAK diperlukan: semua transaksi di sini adalah
  *    transaksi umum tanpa kegiatan, sehingga kategori_transaksi_id = NULL.
  *    Kategori transaksi hanya wajib untuk transaksi kegiatan.)
@@ -56,7 +56,7 @@ class ContohKeuanganJuniSeeder extends Seeder
 
     private Periode $juni;
     private Periode $juli;
-    private int $userId;
+    private int $penggunaId;
 
     /** @var array<string,int> peta deskripsi jurnal umum Juni => id (untuk referensi koreksi) */
     private array $refJurnalJuni = [];
@@ -76,7 +76,7 @@ class ContohKeuanganJuniSeeder extends Seeder
             return;
         }
 
-        $this->userId = User::orderBy('id')->value('id') ?? 1;
+        $this->penggunaId = Pengguna::orderBy('id')->value('id') ?? 1;
 
         DB::transaction(function () {
             $this->siapkanPeriode();
@@ -262,7 +262,7 @@ class ContohKeuanganJuniSeeder extends Seeder
     ): Jurnal {
         $transaksi = Transaksi::create([
             'dompet_id'             => $this->dompet($namaDompet),
-            'user_id'               => $this->userId,
+            'pengguna_id'               => $this->penggunaId,
             // Transaksi umum: kegiatan_id NULL -> kategori_transaksi_id juga NULL.
             // Kategori transaksi hanya dipakai untuk transaksi kegiatan
             // (StoreTransaksiKegiatanRequest mewajibkannya). $namaKat di sini

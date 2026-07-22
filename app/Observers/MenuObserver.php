@@ -3,18 +3,18 @@
 namespace App\Observers;
 
 use App\Models\Menu;
-use App\Models\Permission;
+use App\Models\HakAkses;
 
 class MenuObserver
 {
     public function saved(Menu $menu): void
     {
-        if ($menu->route_name && ! $menu->permission_id) {
-            $this->attachViewPermission($menu);
+        if ($menu->route_name && ! $menu->hak_akses_id) {
+            $this->attachViewHakAkses($menu);
         }
     }
 
-    private function attachViewPermission(Menu $menu): void
+    private function attachViewHakAkses(Menu $menu): void
     {
         $parts = explode('.', $menu->route_name);
 
@@ -26,19 +26,19 @@ class MenuObserver
             $module = $parts[0];
         }
 
-        $permission = Permission::firstOrCreate(
+        $hak_akses = HakAkses::firstOrCreate(
             [
-                'module' => $module,
-                'action' => 'view',
+                'modul' => $module,
+                'aksi' => 'view',
             ],
             [
-                'permission_code' => 'VIEW_' . strtoupper($module),
-                'permission_name' => 'View ' . ucfirst($module),
-                'is_active'       => true,
+                'kode_hak_akses' => 'VIEW_' . strtoupper($module),
+                'nama_hak_akses' => 'View ' . ucfirst($module),
+                'aktif'       => true,
             ]
         );
 
-        $menu->permissions()->associate($permission);
+        $menu->hak_akses()->associate($hak_akses);
         $menu->saveQuietly();
         }
 }
