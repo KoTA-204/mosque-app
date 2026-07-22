@@ -48,7 +48,7 @@ class HakAksesPeranSeeder extends Seeder
                 'VIEW_KENCLENG',           'CREATE_KENCLENG',           'EDIT_KENCLENG',           'DELETE_KENCLENG',
                 'VIEW_TRANSAKSI_KEGIATAN', 'CREATE_TRANSAKSI_KEGIATAN', 'EDIT_TRANSAKSI_KEGIATAN', 'DELETE_TRANSAKSI_KEGIATAN',
                 // Kegiatan Khusus (event) dicabut dari Bendahara 1 → menu Kegiatan Khusus di Data Induk tidak muncul untuk Bendahara 1 (hanya CoA + Kategori)
-                'VIEW_APPROVAL',           'CREATE_APPROVAL',           'EDIT_APPROVAL',           'DELETE_APPROVAL',
+                'VIEW_PERSETUJUAN',           'CREATE_PERSETUJUAN',           'EDIT_PERSETUJUAN',           'DELETE_PERSETUJUAN',
                 'VIEW_JURNAL',             'CREATE_JURNAL',             'EDIT_JURNAL',             'DELETE_JURNAL',
                 'VIEW_JURNAL_PEMBUKA',     'CREATE_JURNAL_PEMBUKA',     'EDIT_JURNAL_PEMBUKA',     'DELETE_JURNAL_PEMBUKA',
                 'VIEW_JURNAL_PENYESUAIAN', 'CREATE_JURNAL_PENYESUAIAN', 'EDIT_JURNAL_PENYESUAIAN', 'DELETE_JURNAL_PENYESUAIAN',
