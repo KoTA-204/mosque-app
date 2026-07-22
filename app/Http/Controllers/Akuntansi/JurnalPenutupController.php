@@ -52,26 +52,43 @@ class JurnalPenutupController extends Controller
         ));
     }
 
-    public function tambahJurnalPenutup()
+    public function tambahJurnalPenutup(Request $request)
     {
         $periodeAktif = $this->service->getPeriodeAktif();
-        $periodeList  = $this->service->getPeriodeList();
+        // Hanya periode yang masih terbuka yang boleh ditutup.
+        $periodeList  = $this->service->getPeriodeOpenList();
+
+        // Periode yang akan ditutup: ikuti pilihan dropdown (periode_id) bila valid
+        // & masih terbuka; jika tidak, gunakan periode aktif sebagai default.
+        $periodeDipilih = $periodeAktif;
+        if ($request->filled('periode_id')) {
+            $dipilih = Periode::find($request->periode_id);
+            if ($dipilih && ! $this->periode->isPeriodeClosed($dipilih)) {
+                $periodeDipilih = $dipilih;
+            }
+        }
+
         $ringkasan     = null;
         $statusTahap   = null;
         $existingDraft = null;
 
-        if ($periodeAktif) {
-            if ($this->periode->isPeriodeClosed($periodeAktif)) {
+        if ($periodeDipilih) {
+            if ($this->periode->isPeriodeClosed($periodeDipilih)) {
                 return redirect()->route('dashboard.jurnal-penutup.index')
-                    ->with('error', 'Periode aktif sudah ditutup.');
+                    ->with('error', 'Periode yang dipilih sudah ditutup.');
             }
-            $ringkasan     = $this->service->getRingkasanPeriode($periodeAktif);
-            $statusTahap   = $this->service->getStatusTahap($periodeAktif);
-            $existingDraft = $this->service->getExistingDraft($periodeAktif);
+            $ringkasan     = $this->service->getRingkasanPeriode($periodeDipilih);
+            $statusTahap   = $this->service->getStatusTahap($periodeDipilih);
+            $existingDraft = $this->service->getExistingDraft($periodeDipilih);
         }
 
+        // Periode hanya boleh diposting/ditutup setelah benar-benar berakhir.
+        $periodeSudahBerakhir = $periodeDipilih
+            ? now()->startOfDay()->gte($periodeDipilih->tanggal_akhir->copy()->startOfDay())
+            : false;
+
         return view('pages.akuntansi.jurnal-penutup.create', compact(
-            'periodeAktif', 'periodeList', 'ringkasan', 'statusTahap', 'existingDraft'
+            'periodeAktif', 'periodeDipilih', 'periodeList', 'ringkasan', 'statusTahap', 'existingDraft', 'periodeSudahBerakhir'
         ));
     }
 
@@ -97,15 +114,24 @@ class JurnalPenutupController extends Controller
                 if ($result !== true) {
                     return redirect()->back()->with('error', $result);
                 }
+                $periodeBaru = Periode::where('status', true)
+                    ->orderBy('tanggal_awal', 'desc')
+                    ->first();
+                $pesan = "Jurnal penutup berhasil diposting dan periode {$periode->nama_periode} berhasil ditutup.";
+                if ($periodeBaru) {
+                    $pesan .= " Periode {$periodeBaru->nama_periode} kini aktif dan siap mencatat transaksi.";
+                }
                 return redirect()->route('dashboard.jurnal-penutup.index')
-                    ->with('success', 'Jurnal penutup berhasil diposting dan periode berhasil ditutup.');
+                    ->with('success', $pesan);
             }
 
             $this->service->catatSemuaTahapPenutupan($periode, $semua, $request->tanggal, 'DRAFT');
             return redirect()->route('dashboard.jurnal-penutup.index')
                 ->with('success', 'Jurnal penutup berhasil disimpan sebagai draft.');
-        } catch (\RuntimeException $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->back()
+                ->with('error', 'Gagal memproses penutupan: ' . $e->getMessage());
         }
     }
 
@@ -117,13 +143,39 @@ class JurnalPenutupController extends Controller
             return redirect()->back()->with('error', 'Periode sudah ditutup.');
         }
 
-        $result = $this->service->postingDraftPenutupan($periode);
-        if ($result !== true) {
-            return redirect()->back()->with('error', $result);
+        try {
+            $result = $this->service->postingDraftPenutupan($periode);
+            if ($result !== true) {
+                return redirect()->back()->with('error', $result);
+            }
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->back()
+                ->with('error', 'Gagal memposting draft penutup: ' . $e->getMessage());
+        }
+
+        $periodeBaru = Periode::where('status', true)
+            ->orderBy('tanggal_awal', 'desc')
+            ->first();
+        $pesan = "Jurnal penutup berhasil diposting dan periode {$periode->nama_periode} berhasil ditutup.";
+        if ($periodeBaru) {
+            $pesan .= " Periode {$periodeBaru->nama_periode} kini aktif dan siap mencatat transaksi.";
+        }
+        return redirect()->route('dashboard.jurnal-penutup.index')
+            ->with('success', $pesan);
+    }
+
+    public function bukaPeriodeBerikutnya()
+    {
+        try {
+            $baru = $this->periode->bukaPeriodeBerikutnya();
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->back()->with('error', $e->getMessage());
         }
 
         return redirect()->route('dashboard.jurnal-penutup.index')
-            ->with('success', 'Jurnal penutup berhasil diposting dan periode berhasil ditutup.');
+            ->with('success', "Periode {$baru->nama_periode} berhasil dibuka dan siap mencatat transaksi.");
     }
 
     public function tampilkanDetailJurnalPenutup(Jurnal $jurnal)

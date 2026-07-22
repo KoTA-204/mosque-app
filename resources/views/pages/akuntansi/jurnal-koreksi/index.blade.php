@@ -202,9 +202,11 @@
 
 @push('scripts')
 {{-- Shared JS (drawer + bulk) --}}
-<script src="{{ asset('js/jurnal-shared.js') }}"></script>
+<script src="{{ asset('js/jurnal-shared.js') }}?v={{ filemtime(public_path('js/jurnal-shared.js')) }}"></script>
 
 <script>
+window.drawerDetailBase = '/dashboard/jurnal-koreksi/';
+
 /**
  * renderDrawerContent — spesifik untuk Jurnal Koreksi
  * Dipanggil otomatis oleh showDrawer() di jurnal-shared.js
@@ -213,6 +215,18 @@ window.renderDrawerContent = function(data) {
     const j        = data.jurnal;
     const details  = j.detail_jurnal ?? [];
     const isPosted = j.status === 'POSTED';
+
+    const postForm = isPosted ? '' : `
+        <form method="POST" action="/dashboard/jurnal-koreksi/${j.id}/post" class="mt-6">
+            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+            <button type="submit"
+                class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Posting Jurnal ke Buku Besar
+            </button>
+        </form>`;
 
     const nomorRef = j.jurnal_ref_id
         ? 'JP-' + String(j.jurnal_ref_id).padStart(5, '0')
@@ -230,7 +244,8 @@ window.renderDrawerContent = function(data) {
             { label: 'Alasan Koreksi',   value: j.keterangan },
             { label: 'Periode',          value: j.periode?.nama_periode },
         ]) +
-        buildDetailTable(details, 'Entri Jurnal Koreksi');
+        buildDetailTable(details, 'Entri Jurnal Koreksi') +
+        postForm;
 };
 </script>
 @endpush

@@ -80,7 +80,7 @@ class LaporanKeuanganController extends Controller
     private function tentukanPeriodeAktif(Request $request): array
     {
         $periodeList  = Periode::orderByDesc('tanggal_akhir')->get();
-        $periodeAktif = Periode::where('status', true)->first();
+        $periodeAktif = Periode::berjalan();
         $selectedId   = $request->get('periode_id', $periodeAktif?->id);
         $periode      = $selectedId ? Periode::find($selectedId) : $periodeAktif;
 

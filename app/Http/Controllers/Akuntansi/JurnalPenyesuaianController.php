@@ -87,12 +87,25 @@ class JurnalPenyesuaianController extends Controller
 
     public function tampilkanDetailJurnalPenyesuaian(Jurnal $jurnal)
     {
+        if (! request()->ajax()) {
+            return redirect()->route('dashboard.jurnal-penyesuaian.index', ['buka' => $jurnal->id]);
+        }
+
         $jurnal = $this->service->getById($jurnal);
 
         return response()->json([
             'jurnal' => $jurnal,
             'labels' => JurnalPenyesuaianService::TIPE_LABELS,
         ]);
+    }
+
+    public function post(Jurnal $jurnal)
+    {
+        $result = $this->service->postingKeBukuBesar($jurnal);
+
+        return $result === true
+            ? back()->with('success', 'Jurnal berhasil diposting.')
+            : back()->with('error', $result);
     }
 
     public function bulkPost(BulkPostRequest $request)

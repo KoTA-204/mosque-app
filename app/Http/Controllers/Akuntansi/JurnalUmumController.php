@@ -42,8 +42,35 @@ class JurnalUmumController extends Controller
 
     public function tampilkanDetailJurnalUmum(Jurnal $jurnalUmum)
     {
-        $jurnalUmum->load('periode', 'detailJurnal.akun');
-        return view('pages.akuntansi.jurnal-umum.show', ['jurnal' => $jurnalUmum]);
+        // Endpoint ini melayani drawer via AJAX (JSON). Jika diakses langsung
+        // dari browser (mis. tautan "Buka & posting"), arahkan ke halaman index
+        // agar tidak menampilkan JSON mentah; drawer terbuka otomatis via ?buka.
+        if (! request()->ajax()) {
+            return redirect()->route('dashboard.jurnal-umum.index', ['buka' => $jurnalUmum->id]);
+        }
+
+        $jurnalUmum->load('periode', 'transaksi', 'detailJurnal.akun');
+
+        return response()->json([
+            'jurnal' => [
+                'id'           => $jurnalUmum->id,
+                'nomor_jurnal' => $jurnalUmum->kode_jurnal,
+                'tanggal'      => $jurnalUmum->tanggal?->format('j M Y'),
+                'keterangan'   => $jurnalUmum->keterangan ?: $jurnalUmum->transaksi?->deskripsi,
+                'status'       => $jurnalUmum->status,
+                'periode'      => [
+                    'nama_periode' => $jurnalUmum->periode->nama_periode ?? '—',
+                ],
+                'detail_jurnal' => $jurnalUmum->detailJurnal->map(fn($d) => [
+                    'tipe'    => $d->tipe,
+                    'nominal' => (float) $d->nominal,
+                    'akun'    => [
+                        'kode_akun' => $d->akun->kode_akun ?? '',
+                        'nama_akun' => $d->akun->nama_akun ?? '—',
+                    ],
+                ]),
+            ],
+        ]);
     }
 
     public function post(Jurnal $jurnalUmum)

@@ -141,6 +141,35 @@ class JurnalPenyesuaianService extends JurnalService
     }
 
     // ── Aksi ────────────────────────────────────────────
+    /**
+     * Tipe penyesuaian yang digerakkan oleh data aset (bukan mutasi kas periode
+     * berjalan), sehingga tidak mensyaratkan adanya jurnal umum yang diposting
+     * lebih dulu pada periode tersebut.
+     */
+    const TIPE_TANPA_PRASYARAT_UMUM = ['PENYUSUTAN_ASET', 'PELEPASAN_ASET'];
+
+    public function validasiPrasyaratPenyesuaian(Periode $periode, ?string $tipe = null): ?string
+    {
+        // Penyesuaian berbasis aset (penyusutan/pelepasan) tidak bergantung pada
+        // transaksi periode berjalan, jadi boleh dibuat tanpa syarat jurnal umum.
+        if ($tipe !== null && in_array($tipe, self::TIPE_TANPA_PRASYARAT_UMUM, true)) {
+            return null;
+        }
+
+        $adaDasar = Jurnal::where('periode_id', $periode->id)
+            ->whereIn('jenis_jurnal', ['PEMBUKA', 'UMUM'])
+            ->where('status', 'POSTED')
+            ->exists();
+
+        if (!$adaDasar) {
+            return 'Belum ada jurnal umum yang diposting pada periode '
+                 . $periode->nama_periode . '. Catat & posting transaksi '
+                 . 'terlebih dahulu sebelum membuat jurnal penyesuaian.';
+        }
+
+        return null;
+    }
+
     public function catatPenyesuaian(array $data, string $status = 'DRAFT'): Jurnal
     {
         return DB::transaction(function () use ($data, $status) {
@@ -153,13 +182,19 @@ class JurnalPenyesuaianService extends JurnalService
                 );
             }
 
+            if ($err = $this->validasiPrasyaratPenyesuaian($periode, $data['tipe_penyesuaian'] ?? null)) {
+                throw new \RuntimeException($err);
+            }
+
             $jurnal = Jurnal::create([
                 'periode_id'       => $periode->id,
                 'transaksi_id'     => null,
                 'jurnal_ref_id'    => null,
                 'jenis_jurnal'     => 'PENYESUAIAN',
                 'tipe_penyesuaian' => $data['tipe_penyesuaian'],
-                'tanggal'          => $data['tanggal'],
+                // Jurnal penyesuaian dikunci pada akhir periode (konvensi entri akhir
+                // periode). Tanggal dari form diabaikan agar konsisten walau di-bypass.
+                'tanggal'          => $periode->tanggal_akhir->toDateString(),
                 'keterangan'       => $data['keterangan'] ?? null,
                 'status'           => 'DRAFT',
             ]);

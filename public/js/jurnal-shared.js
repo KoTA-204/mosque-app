@@ -294,3 +294,16 @@ async function submitBulkPost(formId = 'bulkForm', containerId = 'bulkInputsCont
 
     document.getElementById(formId).submit();
 }
+
+/* ─── Auto-buka drawer via query ?buka= ────────────────────────────
+   Halaman index men-set window.drawerDetailBase, mis. '/dashboard/jurnal-umum/'.
+   Dipakai oleh tautan "Buka & posting" dari daftar draft penghambat penutupan. */
+document.addEventListener('DOMContentLoaded', function () {
+    try {
+        var params = new URLSearchParams(window.location.search);
+        var buka = params.get('buka');
+        if (buka && window.drawerDetailBase && typeof showDrawer === 'function') {
+            showDrawer(window.drawerDetailBase + encodeURIComponent(buka));
+        }
+    } catch (e) {}
+});
