@@ -67,11 +67,11 @@ class JurnalPenutupService extends JurnalService
                 $q->where(function ($sub) {
                     $sub->where('status_jurnal', 'UNMAPPED')
                         ->where(function ($appr) {
-                            $appr->whereNull('status_approval')
-                                 ->orWhere('status_approval', '!=', 'REJECTED');
+                            $appr->whereNull('status_persetujuan')
+                                 ->orWhere('status_persetujuan', '!=', 'REJECTED');
                         });
                 })
-                ->orWhereIn('status_approval', ['PENDING', 'REVISION']);
+                ->orWhereIn('status_persetujuan', ['PENDING', 'REVISION']);
             })
             ->exists();
 

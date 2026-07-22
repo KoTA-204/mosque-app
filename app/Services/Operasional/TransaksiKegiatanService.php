@@ -19,7 +19,7 @@ class TransaksiKegiatanService
             ->withCount('transaksi')
             ->withCount([
                 'transaksi as transaksi_pending_count' => fn ($q) =>
-                    $q->where('status_approval', 'PENDING'),
+                    $q->where('status_persetujuan', 'PENDING'),
             ])
             ->when(auth()->user()->hasRole('panitia-kegiatan-khusus'), fn ($q) =>
                 $q->where('panitia_id', auth()->id()))
@@ -46,7 +46,7 @@ class TransaksiKegiatanService
             'pending' => Transaksi::whereHas('kegiatan', fn ($q) =>
                     $q->when(auth()->user()->hasRole('panitia-kegiatan-khusus'), fn ($q) =>
                         $q->where('panitia_id', auth()->id())))
-                ->where('status_approval', 'PENDING')
+                ->where('status_persetujuan', 'PENDING')
                 ->count(),
         ];
     }
@@ -68,7 +68,7 @@ class TransaksiKegiatanService
             ->when($jenis, fn ($q) =>
                 $q->where('jenis_transaksi', strtoupper($jenis)))
             ->when($status, fn ($q) =>
-                $q->where('status_approval', strtoupper($status)))
+                $q->where('status_persetujuan', strtoupper($status)))
             ->orderBy('tanggal_transaksi', 'desc')
             ->paginate($perPage)
             ->withQueryString();
@@ -109,7 +109,7 @@ class TransaksiKegiatanService
                 'jenis_transaksi'       => $data['jenis_transaksi'],
                 'jumlah'                => $data['jumlah'],
                 'deskripsi'             => $data['deskripsi'] ?? null,
-                'status_approval'       => 'PENDING',
+                'status_persetujuan'       => 'PENDING',
                 'status_jurnal'         => 'UNMAPPED',
             ]);
 
@@ -130,7 +130,7 @@ class TransaksiKegiatanService
                 'jumlah'                => $data['jumlah'],
                 'deskripsi'             => $data['deskripsi'] ?? null,
                 // setelah revisi diperbaiki, kembalikan ke PENDING untuk ditinjau ulang
-                'status_approval'       => 'PENDING',
+                'status_persetujuan'       => 'PENDING',
                 'catatan'               => null, // ✅ diperbaiki (sebelumnya 'catatan_revisi' yg tak ada)
             ]);
 

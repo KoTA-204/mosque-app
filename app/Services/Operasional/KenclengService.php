@@ -35,7 +35,7 @@ class KenclengService
             )
             ->when($status, fn($q) =>
                 $q->whereHas('transaksi', fn($q) =>
-                    $q->where('status_approval', $status)
+                    $q->where('status_persetujuan', $status)
                 )
             )
             ->orderBy('created_at', $order)
@@ -98,7 +98,7 @@ class KenclengService
                     'jenis_transaksi'       => 'PEMASUKAN',
                     'jumlah'                => $totalFisik,
                     'deskripsi'             => $data['keterangan'] ?? null,
-                    'status_approval'       => 'PENDING',
+                    'status_persetujuan'       => 'PENDING',
                     'status_jurnal'         => 'UNMAPPED',
                 ]);
 
@@ -161,7 +161,7 @@ class KenclengService
                     'tanggal_transaksi' => $data['tanggal_hitung'],
                     'jumlah'            => $totalFisik,
                     'deskripsi'         => $data['keterangan'] ?? null,
-                    'status_approval'   => 'PENDING',
+                    'status_persetujuan'   => 'PENDING',
                 ]);
 
                 $kencleng->update(['berita_acara' => $pathBA]);
@@ -203,7 +203,7 @@ class KenclengService
     {
         $transaksi = $kencleng->transaksi;
 
-        if (!in_array($transaksi->status_approval, ['PENDING', 'REVISION', 'DRAFT'])) {
+        if (!in_array($transaksi->status_persetujuan, ['PENDING', 'REVISION', 'DRAFT'])) {
             return 'Kencleng yang sudah diapprove tidak bisa dihapus';
         }
 

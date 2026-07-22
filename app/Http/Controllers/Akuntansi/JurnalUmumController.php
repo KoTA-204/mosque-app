@@ -24,10 +24,12 @@ class JurnalUmumController extends Controller
         $jurnals = $this->service->daftar($filter);
         ['totalDebit' => $totalDebit, 'totalKredit' => $totalKredit] = $this->service->getRingkasan($filter);
         $periodes = $this->service->getPeriodeList();
+        $stats    = $this->service->getStatistik($filter);
 
         if ($request->ajax()) {
             return response()->json([
-                'html' => view('pages.akuntansi.jurnal-umum.table', compact('jurnals'))->render(),
+                'html'  => view('pages.akuntansi.jurnal-umum.table', compact('jurnals'))->render(),
+                'stats' => $stats,
             ]);
         }
 
@@ -36,7 +38,7 @@ class JurnalUmumController extends Controller
         $status = $filter['status'];
 
         return view('pages.akuntansi.jurnal-umum.index', compact(
-            'jurnals', 'totalDebit', 'totalKredit', 'periodes', 'bulan', 'search', 'status'
+            'jurnals', 'totalDebit', 'totalKredit', 'periodes', 'bulan', 'search', 'status', 'stats'
         ));
     }
 

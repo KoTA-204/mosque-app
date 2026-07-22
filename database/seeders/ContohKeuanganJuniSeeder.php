@@ -266,7 +266,7 @@ class ContohKeuanganJuniSeeder extends Seeder
             'jenis_transaksi'       => $jenis,
             'jumlah'                => $jumlah,
             'deskripsi'             => $deskripsi,
-            'status_approval'       => 'APPROVED',
+            'status_persetujuan'       => 'APPROVED',
             'status_jurnal'         => 'MAPPED',
         ]);
 

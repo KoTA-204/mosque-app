@@ -54,7 +54,7 @@ class TransaksiService
                 'jumlah'                => $jumlah,
                 'deskripsi'             => $request->deskripsi,
                 'catatan'               => $request->catatan,
-                'status_approval'       => null,
+                'status_persetujuan'       => null,
                 'status_jurnal'         => 'MAPPED',
             ]);
 
@@ -195,7 +195,7 @@ class TransaksiService
                     'deskripsi'             => $row['deskripsi'],
                     'no_referensi'          => $row['no_referensi'],
                     'catatan'               => null,
-                    'status_approval'       => null,
+                    'status_persetujuan'       => null,
                     'status_jurnal'         => 'MAPPED',
                 ]);
 

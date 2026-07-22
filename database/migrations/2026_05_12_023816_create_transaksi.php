@@ -44,7 +44,7 @@ return new class extends Migration
             $table->decimal('jumlah', 15, 2);
             $table->text('deskripsi')->nullable();
             $table->text('catatan')->nullable();
-            $table->enum('status_approval', [
+            $table->enum('status_persetujuan', [
                 'DRAFT',
                 'PENDING',
                 'APPROVED',

@@ -91,7 +91,7 @@
     <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
         {{-- Toolbar pakai x-jurnal.table-toolbar --}}
         <x-jurnal.table-toolbar
-            :route="route('dashboard.approval.index')"
+            :route="route('dashboard.persetujuan.index')"
             :per-page="$perPage"
             :search="$search"
             :hidden-params="['tab' => $tab, 'dari' => $dari, 'sampai' => $sampai, 'urut' => $urut]">
@@ -108,7 +108,7 @@
                     <option value="desc" {{ $urut === 'desc' ? 'selected' : '' }}>Terbaru</option>
                 </select>
                 @if($sumber || $dari || $sampai || $urut !== 'asc' || $search)
-                <a href="{{ route('dashboard.approval.index') }}?tab={{ $tab }}"
+                <a href="{{ route('dashboard.persetujuan.index') }}?tab={{ $tab }}"
                    class="text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
                     Reset
                 </a>
@@ -207,7 +207,7 @@
                         @endif
                         <td class="px-5 py-3.5">
                             <div class="flex items-center justify-center">
-                                <a href="{{ route('dashboard.approval.show', $item) }}"
+                                <a href="{{ route('dashboard.persetujuan.show', $item) }}"
                                    class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -254,7 +254,7 @@
                         class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                     Batal
                 </button>
-                <form id="form-bulk-approve" method="POST" action="{{ route('dashboard.approval.bulk-approve') }}">
+                <form id="form-bulk-approve" method="POST" action="{{ route('dashboard.persetujuan.bulk-approve') }}">
                     @csrf
                     <input type="hidden" name="ids" id="approve-ids">
                     <button type="submit"
@@ -272,7 +272,7 @@
             <div class="border-b border-gray-100 dark:border-gray-800 px-6 py-4">
                 <h3 class="text-base font-semibold text-gray-900 dark:text-white">Bulk Reject — Isi Catatan</h3>
             </div>
-            <form id="form-bulk-reject" method="POST" action="{{ route('dashboard.approval.bulk-reject') }}">
+            <form id="form-bulk-reject" method="POST" action="{{ route('dashboard.persetujuan.bulk-reject') }}">
                 @csrf
                 <div class="px-6 py-5">
                     <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
@@ -300,7 +300,7 @@
             <div class="border-b border-gray-100 dark:border-gray-800 px-6 py-4">
                 <h3 class="text-base font-semibold text-gray-900 dark:text-white">Bulk Revisi — Isi Catatan</h3>
             </div>
-            <form id="form-bulk-revisi" method="POST" action="{{ route('dashboard.approval.bulk-revisi') }}">
+            <form id="form-bulk-revisi" method="POST" action="{{ route('dashboard.persetujuan.bulk-revisi') }}">
                 @csrf
                 <div class="px-6 py-5">
                     <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">

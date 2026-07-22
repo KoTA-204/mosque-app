@@ -33,8 +33,8 @@ class TutupKegiatanOtomatis extends Command
 
             // Di TutupKegiatanOtomatis
             $adaBelumApproved = $kegiatan->transaksi()
-                ->whereNotNull('status_approval')
-                ->whereNotIn('status_approval', ['APPROVED'])
+                ->whereNotNull('status_persetujuan')
+                ->whereNotIn('status_persetujuan', ['APPROVED'])
                 ->exists();
 
             if ($adaBelumApproved) continue;

@@ -132,7 +132,7 @@
                     @forelse($kencleng as $index => $item)
                     @php
                         $totalFisik  = $item->detail->sum(fn($d) => $d->pecahan * $d->jumlah_pecahan);
-                        $itemStatus  = $item->transaksi->status_approval;
+                        $itemStatus  = $item->transaksi->status_persetujuan;
                         $isDeletable = in_array($itemStatus, ['PENDING', 'REVISION', 'DRAFT']);
                         $isEditable  = in_array($itemStatus, ['PENDING', 'REVISION', 'DRAFT']);
 

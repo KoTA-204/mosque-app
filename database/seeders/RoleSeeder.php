@@ -12,7 +12,7 @@ class RoleSeeder extends Seeder
         $roles = [
             ['role_name' => 'Administrator',           'description' => 'Administrator sistem, akses penuh ke seluruh fitur'],
             ['role_name' => 'Ketua DKM',               'description' => 'Ketua Dewan Kemakmuran Masjid, akses dashboard dan laporan keuangan'],
-            ['role_name' => 'Bendahara 1',             'description' => 'Bendahara utama, pencatatan pemasukan/pengeluaran, approval, dan laporan keuangan'],
+            ['role_name' => 'Bendahara 1',             'description' => 'Bendahara utama, pencatatan pemasukan/pengeluaran, persetujuan, dan laporan keuangan'],
             ['role_name' => 'Bendahara 2',             'description' => 'Bendahara pembantu, pencatatan transaksi operasional'],
             ['role_name' => 'Pengurus Harian Masjid', 'description' => 'Pengurus Harian Masjid, mencatat setoran kencleng'],
             ['role_name' => 'Panitia Kegiatan Khusus', 'description' => 'Panitia kegiatan khusus, mencatat transaksi kegiatan yang ditugaskan'],

@@ -64,11 +64,11 @@ class PermissionSeeder extends Seeder
             ['permission_code' => 'EDIT_KEGIATAN',   'permission_name' => 'Edit Kegiatan',   'module' => 'kegiatan', 'action' => 'update'],
             ['permission_code' => 'DELETE_KEGIATAN', 'permission_name' => 'Delete Kegiatan', 'module' => 'kegiatan', 'action' => 'delete'],
 
-            // ── Approval ───────────────────────────────────────────
-            ['permission_code' => 'VIEW_APPROVAL',   'permission_name' => 'View Approval',   'module' => 'approval', 'action' => 'view'],
-            ['permission_code' => 'CREATE_APPROVAL', 'permission_name' => 'Create Approval', 'module' => 'approval', 'action' => 'create'],
-            ['permission_code' => 'EDIT_APPROVAL',   'permission_name' => 'Edit Approval',   'module' => 'approval', 'action' => 'update'],
-            ['permission_code' => 'DELETE_APPROVAL', 'permission_name' => 'Delete Approval', 'module' => 'approval', 'action' => 'delete'],
+            // ── Persetujuan ───────────────────────────────────────────
+            ['permission_code' => 'VIEW_PERSETUJUAN',   'permission_name' => 'View Persetujuan',   'module' => 'persetujuan', 'action' => 'view'],
+            ['permission_code' => 'CREATE_PERSETUJUAN', 'permission_name' => 'Create Persetujuan', 'module' => 'persetujuan', 'action' => 'create'],
+            ['permission_code' => 'EDIT_PERSETUJUAN',   'permission_name' => 'Edit Persetujuan',   'module' => 'persetujuan', 'action' => 'update'],
+            ['permission_code' => 'DELETE_PERSETUJUAN', 'permission_name' => 'Delete Persetujuan', 'module' => 'persetujuan', 'action' => 'delete'],
 
             // ── Akuntansi - Jurnal Umum ────────────────────────────
             ['permission_code' => 'VIEW_JURNAL',                'permission_name' => 'View Jurnal Umum',          'module' => 'jurnal',             'action' => 'view'],

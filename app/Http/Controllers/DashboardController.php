@@ -57,8 +57,8 @@ class DashboardController extends Controller
     private function hitungDataDashboard(?Periode $periodeAktif, ?Periode $periodeSebelumnya): array
     {
         $approved = fn() => Transaksi::where(function ($q) {
-            $q->whereNull('status_approval')
-            ->orWhere('status_approval', 'APPROVED');
+            $q->whereNull('status_persetujuan')
+            ->orWhere('status_persetujuan', 'APPROVED');
         });
 
         $now = Carbon::now();
@@ -194,8 +194,8 @@ class DashboardController extends Controller
         // ── Transaksi terbaru & kegiatan berjalan: TIDAK bergantung periode ────
         $transaksiTerbaru = Transaksi::with('kategoriTransaksi')
             ->where(function ($q) {
-                $q->whereNull('status_approval')
-                ->orWhere('status_approval', 'APPROVED');
+                $q->whereNull('status_persetujuan')
+                ->orWhere('status_persetujuan', 'APPROVED');
             })
             ->latest('tanggal_transaksi')
             ->take(6)
@@ -205,8 +205,8 @@ class DashboardController extends Controller
             ->withSum(['transaksi as terkumpul' => fn($q) =>
                 $q->where('jenis_transaksi', 'PEMASUKAN')
                 ->where(function ($q2) {
-                    $q2->whereNull('status_approval')
-                        ->orWhere('status_approval', 'APPROVED');
+                    $q2->whereNull('status_persetujuan')
+                        ->orWhere('status_persetujuan', 'APPROVED');
                 })
             ], 'jumlah')
             ->take(4)
@@ -236,8 +236,8 @@ class DashboardController extends Controller
 
         $transaksi = Transaksi::with('kategoriTransaksi')
             ->where(function ($q) {
-                $q->whereNull('status_approval')
-                  ->orWhere('status_approval', 'APPROVED');
+                $q->whereNull('status_persetujuan')
+                  ->orWhere('status_persetujuan', 'APPROVED');
             })
             ->when($periodeAktif, fn($q) => $q->whereBetween('tanggal_transaksi', [
                 $periodeAktif->tanggal_awal->startOfDay(),

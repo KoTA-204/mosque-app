@@ -50,6 +50,41 @@ class JurnalUmumService extends JurnalService
         ];
     }
 
+    /**
+     * Statistik kartu Jurnal Umum: jumlah jurnal & total dana untuk
+     * status DRAFT dan POSTED. Mengikuti filter bulan & pencarian,
+     * TETAPI mengabaikan filter status agar kedua kartu selalu terisi.
+     * "Total dana" = total sisi DEBIT tiap jurnal (nilai balance).
+     */
+    public function getStatistik(array $filter): array
+    {
+        $base = Jurnal::where('jenis_jurnal', self::JENIS)
+            ->when($filter['bulan'] ?? null, function ($q) use ($filter) {
+                $q->whereYear('tanggal', substr($filter['bulan'], 0, 4))
+                  ->whereMonth('tanggal', substr($filter['bulan'], 5, 2));
+            })
+            ->when($filter['search'] ?? null, fn($q) =>
+                $q->where(function ($qq) use ($filter) {
+                    $qq->where('keterangan', 'like', "%{$filter['search']}%")
+                       ->orWhereHas('transaksi', fn($q2) =>
+                           $q2->where('deskripsi', 'like', "%{$filter['search']}%")
+                       );
+                })
+            );
+
+        $draftIds  = (clone $base)->where('status', 'DRAFT')->pluck('id');
+        $postedIds = (clone $base)->where('status', 'POSTED')->pluck('id');
+
+        return [
+            'draft_count'  => $draftIds->count(),
+            'posted_count' => $postedIds->count(),
+            'draft_total'  => (float) DetailJurnal::whereIn('jurnal_id', $draftIds)
+                                ->where('tipe', 'DEBIT')->sum('nominal'),
+            'posted_total' => (float) DetailJurnal::whereIn('jurnal_id', $postedIds)
+                                ->where('tipe', 'DEBIT')->sum('nominal'),
+        ];
+    }
+
     // Posting massal memakai postingMassalKeBukuBesar() dari induk (DRY).
     // (method bulkPosting() lama sudah dihapus.)
 }

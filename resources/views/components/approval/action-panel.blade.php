@@ -5,7 +5,7 @@
     'revisiPlaceholder' => 'Tuliskan catatan yang perlu diperbaiki...',
 ])
 
-@if($transaksi->status_approval === 'PENDING')
+@if($transaksi->status_persetujuan === 'PENDING')
     {{-- Action Bar --}}
     <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-6 py-4 flex items-center justify-between flex-wrap gap-4">
         <div>

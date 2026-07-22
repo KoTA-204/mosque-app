@@ -249,12 +249,12 @@
                         $jurnalLines = $detailJurnal->where('tipe', 'DEBIT')->values()
                             ->concat($detailJurnal->where('tipe', 'KREDIT')->values());
 
-                        $dariBendahara = is_null($t->status_approval);
-                        $dariApproval  = $t->status_approval === 'APPROVED';
+                        $dariBendahara = is_null($t->status_persetujuan) && is_null($t->status_persetujuan);
+                        $dariPersetujuan  = $t->status_persetujuan === 'APPROVED';
                         $dariKencleng  = $t->relationLoaded('kencleng') && !is_null($t->kencleng);
                         $dariKegiatan  = !is_null($t->kegiatan_id);
 
-                        $isUnmapped = $dariApproval && $t->status_jurnal === 'UNMAPPED';
+                        $isUnmapped = $dariPersetujuan && $t->status_jurnal === 'UNMAPPED';
 
                         $bisaEditHapus = $isUnmapped || $jurnal?->status === 'DRAFT';
                     @endphp
@@ -278,7 +278,7 @@
                             </span>
                         </td>
                         <td class="px-2 py-3 text-xs">
-                            @if($dariApproval)
+                            @if($dariPersetujuan)
                                 <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
                                     Disetujui
                                 </span>

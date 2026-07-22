@@ -21,7 +21,7 @@ class Transaksi extends Model
         'jumlah',
         'deskripsi',
         'no_referensi',
-        'status_approval',
+        'status_persetujuan',
         'catatan',
         'status_jurnal',
     ];
@@ -44,7 +44,7 @@ class Transaksi extends Model
 
     public function bisaDiedit(): bool
     {
-        return in_array($this->status_approval, self::STATUS_EDITABLE, true);
+        return in_array($this->status_persetujuan, self::STATUS_EDITABLE, true);
     }
 
     public function dompet()

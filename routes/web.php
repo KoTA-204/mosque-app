@@ -11,7 +11,7 @@ use App\Http\Controllers\ManajemenAkses\MenuController;
 use App\Http\Controllers\ManajemenAkses\UserController;
 use App\Http\Controllers\Operasional\TransaksiController;
 use App\Http\Controllers\Operasional\TransaksiKegiatanController;
-use App\Http\Controllers\Operasional\ApprovalController;
+use App\Http\Controllers\Operasional\PersetujuanController;
 use App\Http\Controllers\DataInduk\KegiatanController;
 use App\Http\Controllers\DataInduk\ChartOfAccountController;
 use App\Http\Controllers\Operasional\KenclengController;
@@ -255,19 +255,19 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
             ->name('transaksi-kegiatan.transaksi.destroy');
     });
 
-    // ── Approval ───────────────────────────────────────────────────────────
-    Route::middleware('permission:VIEW_APPROVAL')->group(function () {
-        Route::get('/approval/transaksi', [ApprovalController::class, 'tampilkanDaftarApproval'])->name('approval.index');
-        Route::get('/approval/transaksi/{transaksi}', [ApprovalController::class, 'tampilkanDetailApproval'])->name('approval.show');
+    // ── Persetujuan ───────────────────────────────────────────────────────────
+    Route::middleware('permission:VIEW_PERSETUJUAN')->group(function () {
+        Route::get('/persetujuan/transaksi', [PersetujuanController::class, 'tampilkanDaftarPersetujuan'])->name('persetujuan.index');
+        Route::get('/persetujuan/transaksi/{transaksi}', [PersetujuanController::class, 'tampilkanDetailPersetujuan'])->name('persetujuan.show');
     });
  
-    Route::middleware('permission:EDIT_APPROVAL')->group(function () {
-        Route::post('/approval/transaksi/bulk-approve', [ApprovalController::class, 'setujuiTransaksiMassal'])->name('approval.bulk-approve');
-        Route::post('/approval/transaksi/bulk-reject', [ApprovalController::class, 'tolakTransaksiMassal'])->name('approval.bulk-reject');
-        Route::post('/approval/transaksi/bulk-revisi', [ApprovalController::class, 'revisiTransaksiMassal'])->name('approval.bulk-revisi');
-        Route::post('/approval/transaksi/{transaksi}/approve', [ApprovalController::class, 'setujuiTransaksi'])->name('approval.approve');
-        Route::post('/approval/transaksi/{transaksi}/reject', [ApprovalController::class, 'tolakTransaksi'])->name('approval.reject');
-        Route::post('/approval/transaksi/{transaksi}/revision', [ApprovalController::class, 'revisiTransaksi'])->name('approval.revision');
+    Route::middleware('permission:EDIT_PERSETUJUAN')->group(function () {
+        Route::post('/persetujuan/transaksi/bulk-approve', [PersetujuanController::class, 'setujuiTransaksiMassal'])->name('persetujuan.bulk-approve');
+        Route::post('/persetujuan/transaksi/bulk-reject', [PersetujuanController::class, 'tolakTransaksiMassal'])->name('persetujuan.bulk-reject');
+        Route::post('/persetujuan/transaksi/bulk-revisi', [PersetujuanController::class, 'revisiTransaksiMassal'])->name('persetujuan.bulk-revisi');
+        Route::post('/persetujuan/transaksi/{transaksi}/approve', [PersetujuanController::class, 'setujuiTransaksi'])->name('persetujuan.approve');
+        Route::post('/persetujuan/transaksi/{transaksi}/reject', [PersetujuanController::class, 'tolakTransaksi'])->name('persetujuan.reject');
+        Route::post('/persetujuan/transaksi/{transaksi}/revision', [PersetujuanController::class, 'revisiTransaksi'])->name('persetujuan.revision');
     });
 
     // ── Manajemen Aset ─────────────────────────────────────────────────────

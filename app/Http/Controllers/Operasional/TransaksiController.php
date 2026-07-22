@@ -97,8 +97,8 @@ class TransaksiController extends Controller
                 'aset',
             ])
             ->where(function ($q) {
-                $q->whereNull('status_approval')
-                ->orWhere('status_approval', 'APPROVED');
+                $q->whereNull('status_persetujuan')
+                ->orWhere('status_persetujuan', 'APPROVED');
             });
 
         // Filter periode aktif (prioritas di atas filter tanggal manual)
@@ -220,7 +220,7 @@ class TransaksiController extends Controller
     public function perbaruiTransaksi(UpdateTransaksiRequest $request, Transaksi $transaksi)
     {
         $jurnal = $transaksi->jurnal()->where('jenis_jurnal', 'UMUM')->first();
-        $isUnmapped = $transaksi->status_approval === 'APPROVED' 
+        $isUnmapped = $transaksi->status_persetujuan === 'APPROVED' 
                 && $transaksi->status_jurnal === 'UNMAPPED';
 
         if (!$isUnmapped && $jurnal?->status !== 'DRAFT') {
@@ -248,7 +248,7 @@ class TransaksiController extends Controller
     public function hapusTransaksi(Transaksi $transaksi)
     {
         $jurnal = $transaksi->jurnal()->where('jenis_jurnal', 'UMUM')->first();
-        $isUnmapped = $transaksi->status_approval === 'APPROVED'
+        $isUnmapped = $transaksi->status_persetujuan === 'APPROVED'
                 && $transaksi->status_jurnal === 'UNMAPPED';
 
         if (!$isUnmapped && $jurnal?->status !== 'DRAFT') {

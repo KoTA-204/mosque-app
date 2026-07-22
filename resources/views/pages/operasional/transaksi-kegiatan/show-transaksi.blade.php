@@ -11,16 +11,16 @@
             <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Detail Transaksi</h1>
         </div>
         @php
-            $statusLabel = match($transaksi->status_approval) {
+            $statusLabel = match($transaksi->status_persetujuan) {
                 'APPROVED' => 'Disetujui',
                 'PENDING'  => 'Menunggu',
                 'REVISION' => 'Revisi',
                 'REJECTED' => 'Ditolak',
                 'DRAFT'    => 'Draf',
-                default    => $transaksi->status_approval,
+                default    => $transaksi->status_persetujuan,
             };
 
-            $statusClass = match($transaksi->status_approval) {
+            $statusClass = match($transaksi->status_persetujuan) {
                 'APPROVED' => 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
                 'PENDING'  => 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400',
                 'REVISION' => 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
@@ -33,7 +33,7 @@
     </div>
 
     {{-- Catatan Revisi --}}
-    @if($transaksi->catatan && $transaksi->status_approval === 'REVISION')
+    @if($transaksi->catatan && $transaksi->status_persetujuan === 'REVISION')
     <div class="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-5 dark:border-blue-900/50 dark:bg-blue-900/20">
         <p class="mb-1 text-sm font-medium text-blue-800 dark:text-blue-200">Catatan revisi dari Bendahara:</p>
         <p class="text-sm text-blue-700 dark:text-blue-300">{{ $transaksi->catatan }}</p>
