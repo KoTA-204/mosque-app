@@ -91,7 +91,7 @@ class Transaksi extends Model
     
     public function scopePeriodeAktif($query)
     {
-        $periode = \App\Models\Periode::aktif()->first();
+        $periode = \App\Models\Periode::berjalan();
 
         if (!$periode) {
             // Tidak ada periode

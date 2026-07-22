@@ -4,6 +4,7 @@ namespace App\Services\Akuntansi;
 
 use App\Models\Akun;
 use App\Models\Aset;
+use App\Models\DetailJurnal;
 use App\Models\Jurnal;
 use App\Models\Periode;
 use App\Models\Transaksi;
@@ -62,7 +63,7 @@ class JurnalPenutupService extends JurnalService
         $awal  = $periode->tanggal_awal->toDateString();
         $akhir = $periode->tanggal_akhir->toDateString();
 
-        $adaTransaksiMenggantung = Transaksi::whereBetween('tanggal_transaksi', [$awal, $akhir])
+        $transaksiMenggantung = Transaksi::whereBetween('tanggal_transaksi', [$awal, $akhir])
             ->where(function ($q) {
                 $q->where(function ($sub) {
                     $sub->where('status_jurnal', 'UNMAPPED')
@@ -73,23 +74,56 @@ class JurnalPenutupService extends JurnalService
                 })
                 ->orWhereIn('status_persetujuan', ['PENDING', 'REVISION']);
             })
-            ->exists();
+            ->orderBy('tanggal_transaksi')
+            ->get();
 
-        if ($adaTransaksiMenggantung) {
-            return 'Masih ada transaksi yang belum dijurnalkan atau belum disetujui '
-                 . 'pada periode ini. Selesaikan pemetaan jurnal dan persetujuan '
-                 . 'transaksi terlebih dahulu sebelum menutup periode.';
+        if ($transaksiMenggantung->isNotEmpty()) {
+            $rincian = $transaksiMenggantung
+                ->map(function ($t) {
+                    $tgl  = $t->tanggal_transaksi?->translatedFormat('d M Y') ?? '-';
+                    $desk = $t->deskripsi ?: 'Transaksi tanpa deskripsi';
+                    $nom  = 'Rp ' . number_format((float) $t->jumlah, 0, ',', '.');
+                    return "- {$desk} ({$tgl}, {$nom})";
+                })
+                ->implode("\n");
+
+            return 'Masih ada ' . $transaksiMenggantung->count() . ' transaksi yang belum '
+                 . "dijurnalkan/disetujui sehingga belum masuk buku besar:\n" . $rincian
+                 . "\nSelesaikan pemetaan jurnal & persetujuan transaksi tersebut sebelum menutup periode.";
         }
 
-        $adaDraft = Jurnal::where('periode_id', $periode->id)
+        $jurnalDraft = Jurnal::with('detailJurnal.akun')
+            ->where('periode_id', $periode->id)
             ->where('jenis_jurnal', '!=', 'PENUTUP')
             ->where('status', 'DRAFT')
-            ->exists();
+            ->orderBy('tanggal')
+            ->get();
 
-        if ($adaDraft) {
-            return 'Masih ada jurnal yang belum diposting (termasuk jurnal pembuka, '
-                 . 'penyesuaian, atau koreksi). Posting semua jurnal terlebih dahulu '
-                 . 'sebelum menutup periode.';
+        if ($jurnalDraft->isNotEmpty()) {
+            // Daftar jurnalnya tidak dirangkai di pesan ini karena kartu tautan ke
+            // masing-masing jurnal draft sudah ditampilkan tepat di bawah peringatan.
+            return 'Masih ada ' . $jurnalDraft->count() . ' jurnal yang belum diposting ke buku besar. '
+                 . 'Posting seluruh jurnal draft di bawah ini terlebih dahulu agar buku besar lengkap sebelum ditutup.';
+        }
+
+        $saldo = DetailJurnal::whereHas('jurnal', function ($q) use ($periode) {
+                $q->where('periode_id', $periode->id)
+                  ->where('jenis_jurnal', '!=', 'PENUTUP')
+                  ->where('status', 'POSTED');
+            })
+            ->selectRaw("COALESCE(SUM(CASE WHEN tipe = 'DEBIT' THEN nominal ELSE 0 END), 0) AS total_debit")
+            ->selectRaw("COALESCE(SUM(CASE WHEN tipe = 'KREDIT' THEN nominal ELSE 0 END), 0) AS total_kredit")
+            ->first();
+
+        $totalDebit  = (float) ($saldo->total_debit ?? 0);
+        $totalKredit = (float) ($saldo->total_kredit ?? 0);
+
+        if (abs($totalDebit - $totalKredit) > 0.5) {
+            return 'Buku besar periode belum seimbang: total debit Rp '
+                 . number_format($totalDebit, 0, ',', '.')
+                 . ' tidak sama dengan total kredit Rp '
+                 . number_format($totalKredit, 0, ',', '.')
+                 . '. Perbaiki jurnal yang tidak seimbang sebelum menutup periode.';
         }
 
         return null;
@@ -122,6 +156,58 @@ class JurnalPenutupService extends JurnalService
         return $peringatan;
     }
 
+    /**
+     * Daftar jurnal berstatus DRAFT (selain PENUTUP) yang menghambat penutupan,
+     * lengkap dengan tautan ke halaman detail masing-masing jurnal agar bisa
+     * langsung dibuka dan diposting oleh pengguna.
+     *
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    public function getJurnalDraftPenghambat(Periode $periode): Collection
+    {
+        $rute = [
+            'UMUM'        => 'dashboard.jurnal-umum.index',
+            'PENYESUAIAN' => 'dashboard.jurnal-penyesuaian.index',
+            'KOREKSI'     => 'dashboard.jurnal-koreksi.index',
+            'PEMBUKA'     => 'dashboard.jurnal-pembuka.index',
+        ];
+
+        $label = [
+            'UMUM'        => 'Jurnal Umum',
+            'PENYESUAIAN' => 'Jurnal Penyesuaian',
+            'KOREKSI'     => 'Jurnal Koreksi',
+            'PEMBUKA'     => 'Jurnal Pembuka',
+        ];
+
+        return Jurnal::with('detailJurnal.akun')
+            ->where('periode_id', $periode->id)
+            ->where('jenis_jurnal', '!=', 'PENUTUP')
+            ->where('status', 'DRAFT')
+            ->orderBy('tanggal')
+            ->get()
+            ->map(function ($j) use ($rute, $label) {
+                $akun = $j->detailJurnal
+                    ->map(fn($d) => $d->akun ? "{$d->akun->kode_akun} {$d->akun->nama_akun}" : null)
+                    ->filter()
+                    ->unique()
+                    ->implode(', ');
+
+                $namaRute = $rute[$j->jenis_jurnal] ?? null;
+
+                return [
+                    'id'          => $j->id,
+                    'kode_jurnal' => $j->kode_jurnal,
+                    'jenis'       => $j->jenis_jurnal,
+                    'jenis_label' => $label[$j->jenis_jurnal] ?? $j->jenis_jurnal,
+                    'keterangan'  => $j->keterangan ?: 'Tanpa keterangan',
+                    'tanggal'     => $j->tanggal?->translatedFormat('d M Y') ?? '-',
+                    'akun'        => $akun,
+                    'url'         => $namaRute ? route($namaRute, ['buka' => $j->id]) : null,
+                ];
+            })
+            ->values();
+    }
+
     private function validasiTanggalPenutupan(Periode $periode, string $tanggal): ?string
     {
         if (\Illuminate\Support\Carbon::parse($tanggal)->lt($periode->tanggal_akhir)) {
@@ -129,6 +215,25 @@ class JurnalPenutupService extends JurnalService
                  . $periode->tanggal_akhir->translatedFormat('d M Y') . '). '
                  . 'Tutup periode pada atau setelah tanggal tersebut agar tidak ada '
                  . 'transaksi di sisa hari yang terlewat.';
+        }
+
+        return null;
+    }
+
+    /**
+     * Periode hanya boleh DITUTUP (diposting) setelah benar-benar berakhir,
+     * yaitu hari ini sudah mencapai/melewati tanggal akhir periode. Menyimpan
+     * draft tetap diperbolehkan sebelum periode berakhir.
+     */
+    private function validasiPeriodeSudahBerakhir(Periode $periode): ?string
+    {
+        $hariIni = now()->startOfDay();
+        $akhir   = $periode->tanggal_akhir->copy()->startOfDay();
+        if ($hariIni->lt($akhir)) {
+            return 'Periode ' . $periode->nama_periode . ' baru dapat ditutup mulai '
+                 . $akhir->translatedFormat('d F Y') . ' (akhir periode). '
+                 . 'Hari ini baru ' . $hariIni->translatedFormat('d F Y') . '. '
+                 . 'Sebelum itu, penutupan hanya dapat disimpan sebagai draft.';
         }
 
         return null;
@@ -178,6 +283,7 @@ class JurnalPenutupService extends JurnalService
             'total_beban'      => $totalBeban,
             'surplus'          => $totalPendapatan - $totalBeban,
             'pesan_tidak_siap' => $pesanTidakSiap,
+            'jurnal_draft'     => $this->getJurnalDraftPenghambat($periode),
             'peringatan'       => $this->peringatanSebelumTutup($periode),
         ];
     }
@@ -467,6 +573,9 @@ class JurnalPenutupService extends JurnalService
         if ($err = $this->validasiPeriodeSiapTutup($periode)) {
             return $err;
         }
+        if ($err = $this->validasiPeriodeSudahBerakhir($periode)) {
+            return $err;
+        }
         DB::transaction(function () use ($periode) {
             Jurnal::where('periode_id', $periode->id)
                 ->where('jenis_jurnal', 'PENUTUP')
@@ -491,6 +600,9 @@ class JurnalPenutupService extends JurnalService
             return $err;
         }
         if ($err = $this->validasiTanggalPenutupan($periode, $tanggal)) {
+            return $err;
+        }
+        if ($err = $this->validasiPeriodeSudahBerakhir($periode)) {
             return $err;
         }
         DB::transaction(function () use ($periode, $semua, $tanggal) {

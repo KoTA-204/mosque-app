@@ -27,6 +27,13 @@
 
     <x-jurnal.error-banner />
 
+    @if(session('error'))
+        <x-jurnal.alert type="error" :message="session('error')" />
+    @endif
+    @if(session('success'))
+        <x-jurnal.alert type="success" :message="session('success')" />
+    @endif
+
     <x-jurnal.stepper :steps="['Informasi & Detail', 'Review & Simpan']" />
 
     <form action="{{ route('dashboard.jurnal-penyesuaian.store') }}" method="POST" id="jurnalForm">
@@ -52,28 +59,50 @@
                     </svg>
                     Informasi Umum
                 </h3>
+                @php
+                    $periodeTerpilih = collect($periodeList)->firstWhere('id', (int) old('periode_id')) ?? $periodeAktif ?? collect($periodeList)->first();
+                    $tanggalKunci = $periodeTerpilih?->tanggal_akhir;
+                @endphp
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                             Tanggal Jurnal <span class="text-red-500">*</span>
                         </label>
-                        <input type="hidden" name="tanggal" value="<?php echo e(now()->format('Y-m-d')); ?>">
-                        <div class="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-700/40 text-gray-500 dark:text-gray-400 cursor-not-allowed"><?php echo e(now()->translatedFormat('d F Y')); ?></div>
+                        <input type="hidden" name="tanggal" id="tanggalPenyesuaian" value="{{ $tanggalKunci?->format('Y-m-d') }}">
+                        <div id="tanggalPenyesuaianLabel" class="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-700/40 text-gray-500 dark:text-gray-400 cursor-not-allowed">{{ $tanggalKunci?->translatedFormat('d F Y') ?? '—' }}</div>
+                        <p class="text-xs text-gray-400 mt-1">Otomatis mengikuti akhir periode (konvensi jurnal penyesuaian).</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                             Periode <span class="text-red-500">*</span>
                         </label>
-                        <select name="periode_id"
+                        <select name="periode_id" id="periodeSelectPenyesuaian" onchange="syncTanggalPenyesuaian()"
                                 class="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500">
                             @foreach($periodeList as $periode)
                             <option value="{{ $periode->id }}"
+                                data-akhir="{{ $periode->tanggal_akhir->format('Y-m-d') }}"
+                                data-akhir-label="{{ $periode->tanggal_akhir->translatedFormat('d F Y') }}"
                                 {{ ($periodeAktif && $periodeAktif->id == $periode->id) || old('periode_id') == $periode->id ? 'selected' : '' }}>
                                 {{ $periode->nama_periode }}
                             </option>
                             @endforeach
                         </select>
                     </div>
+                    <script>
+                        function syncTanggalPenyesuaian() {
+                            var sel = document.getElementById('periodeSelectPenyesuaian');
+                            if (!sel) return;
+                            var opt = sel.options[sel.selectedIndex];
+                            if (!opt) return;
+                            var akhir = opt.getAttribute('data-akhir');
+                            var label = opt.getAttribute('data-akhir-label');
+                            var input = document.getElementById('tanggalPenyesuaian');
+                            var disp  = document.getElementById('tanggalPenyesuaianLabel');
+                            if (akhir && input) input.value = akhir;
+                            if (label && disp) disp.textContent = label;
+                        }
+                        document.addEventListener('DOMContentLoaded', syncTanggalPenyesuaian);
+                    </script>
                 </div>
             </div>
 

@@ -14,6 +14,13 @@
 
     <x-jurnal.error-banner />
 
+    @if(session('error'))
+        <x-jurnal.alert type="error" :message="session('error')" />
+    @endif
+    @if(session('success'))
+        <x-jurnal.alert type="success" :message="session('success')" />
+    @endif
+
     <x-jurnal.stepper :steps="['Periode & Ringkasan', 'Preview Entri', 'Review & Posting']" />
 
     {{-- FORM A — Simpan baru (DRAFT atau POSTING) dari Step 1–3 --}}
@@ -34,7 +41,7 @@
                 </span>
             </div>
 
-            {{-- Informasi Periode }}
+            {{-- Informasi Periode --}}
             <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
                 <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                     <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,10 +57,10 @@
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                             Periode yang Ditutup <span class="text-red-500">*</span>
                         </label>
-                        <select name="periode_id" id="periodeSelect"
+                        <select name="periode_id" id="periodeSelect" onchange="gantiPeriode(this.value)"
                                 class="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500">
                             @foreach($periodeList as $p)
-                            <option value="{{ $p->id }}" {{ $periodeAktif && $periodeAktif->id == $p->id ? 'selected' : '' }}>
+                            <option value="{{ $p->id }}" {{ $periodeDipilih && $periodeDipilih->id == $p->id ? 'selected' : '' }}>
                                 {{ $p->nama_periode }}
                             </option>
                             @endforeach
@@ -63,12 +70,22 @@
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                             Tanggal Penutupan <span class="text-red-500">*</span>
                         </label>
-                        <input type="date" name="tanggal" id="inputTanggal"
-                               value="{{ old('tanggal', now()->format('Y-m-d')) }}"
-                               class="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500">
+                        <input type="date" name="tanggal" id="inputTanggal" readonly
+                               value="{{ $periodeDipilih ? $periodeDipilih->tanggal_akhir->format('Y-m-d') : now()->format('Y-m-d') }}"
+                               class="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 cursor-not-allowed focus:outline-none">
+                        <p class="mt-1.5 text-xs text-gray-400">Dikunci otomatis ke akhir periode terpilih{{ $periodeDipilih ? ' (' . $periodeDipilih->tanggal_akhir->translatedFormat('d M Y') . ')' : '' }}.</p>
                     </div>
                 </div>
             </div>
+
+            @if($periodeDipilih && ! $periodeSudahBerakhir)
+            <div class="flex items-start gap-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl px-4 py-3 text-sm text-yellow-700 dark:text-yellow-400">
+                <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <span>Periode <strong>{{ $periodeDipilih->nama_periode }}</strong> belum berakhir. Penutupan baru dapat <strong>diposting</strong> mulai {{ $periodeDipilih->tanggal_akhir->translatedFormat('d F Y') }}. Sebelum itu kamu tetap bisa menyimpannya sebagai <strong>draft</strong>.</span>
+            </div>
+            @endif
 
             {{-- Ringkasan Saldo Periode --}}
             @if($ringkasan)
@@ -109,13 +126,102 @@
                 @if($ringkasan['pesan_tidak_siap'])
                 <div id="alertTidakSiap" class="mb-4">
                     <x-ui.alert variant="error" title="Periode belum siap ditutup" :message="$ringkasan['pesan_tidak_siap']" />
+
+                    @if(!empty($ringkasan['jurnal_draft']) && count($ringkasan['jurnal_draft']))
+                    @php
+                        $draftItems  = collect($ringkasan['jurnal_draft']);
+                        $draftTotal  = $draftItems->count();
+                        $draftGroups = $draftItems->groupBy('jenis');
+                        $draftIndexRoute = [
+                            'UMUM'        => 'dashboard.jurnal-umum.index',
+                            'PENYESUAIAN' => 'dashboard.jurnal-penyesuaian.index',
+                            'KOREKSI'     => 'dashboard.jurnal-koreksi.index',
+                        ];
+                        $draftPreview = $draftItems->take(5);
+                        $draftRest    = $draftItems->slice(5);
+                    @endphp
+                    <div class="mt-3 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 p-4">
+                        <p class="text-sm font-semibold text-red-700 dark:text-red-400 mb-3">
+                            {{ $draftTotal }} jurnal masih draft dan menghambat penutupan. Cara tercepat: posting massal per jenis.
+                        </p>
+
+                        {{-- Ringkasan per jenis + tautan ke halaman posting massal (bulk-post) --}}
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            @foreach($draftGroups as $jenis => $items)
+                            @php $ruteKelola = $draftIndexRoute[$jenis] ?? null; @endphp
+                            @if($ruteKelola)
+                            <a href="{{ route($ruteKelola, ['status' => 'draft', 'bulan' => '']) }}"
+                               class="inline-flex items-center gap-2 rounded-lg border border-red-200 dark:border-red-800 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors">
+                                <span class="font-medium">{{ $items->first()['jenis_label'] }}</span>
+                                <span class="px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-900/40 text-xs font-semibold">{{ $items->count() }}</span>
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            </a>
+                            @else
+                            <span class="inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300">
+                                <span class="font-medium">{{ $items->first()['jenis_label'] }}</span>
+                                <span class="px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-semibold">{{ $items->count() }}</span>
+                            </span>
+                            @endif
+                            @endforeach
+                        </div>
+
+                        {{-- Daftar ringkas: 5 pertama, sisanya dilipat --}}
+                        <p class="text-xs font-medium text-red-600 dark:text-red-400 mb-2">Atau buka satu per satu:</p>
+                        <ul class="space-y-2">
+                            @foreach($draftPreview as $d)
+                            <li class="flex items-start justify-between gap-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 px-3 py-2">
+                                <div class="min-w-0">
+                                    <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                                        <span class="inline-block px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-xs mr-1">{{ $d['jenis_label'] }}</span>
+                                        [{{ $d['kode_jurnal'] }}] {{ $d['keterangan'] }}
+                                    </p>
+                                    <p class="text-xs text-gray-400 truncate">{{ $d['tanggal'] }}@if($d['akun']) · {{ $d['akun'] }}@endif</p>
+                                </div>
+                                @if($d['url'])
+                                <a href="{{ $d['url'] }}" class="shrink-0 inline-flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-700 whitespace-nowrap">
+                                    Buka &amp; posting
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                </a>
+                                @endif
+                            </li>
+                            @endforeach
+                        </ul>
+
+                        @if($draftRest->count())
+                        <details class="mt-2">
+                            <summary class="cursor-pointer select-none text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700">
+                                Lihat {{ $draftRest->count() }} draft lainnya
+                            </summary>
+                            <ul class="space-y-2 mt-2">
+                                @foreach($draftRest as $d)
+                                <li class="flex items-start justify-between gap-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 px-3 py-2">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                                            <span class="inline-block px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-xs mr-1">{{ $d['jenis_label'] }}</span>
+                                            [{{ $d['kode_jurnal'] }}] {{ $d['keterangan'] }}
+                                        </p>
+                                        <p class="text-xs text-gray-400 truncate">{{ $d['tanggal'] }}@if($d['akun']) · {{ $d['akun'] }}@endif</p>
+                                    </div>
+                                    @if($d['url'])
+                                    <a href="{{ $d['url'] }}" class="shrink-0 inline-flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-700 whitespace-nowrap">
+                                        Buka &amp; posting
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                    </a>
+                                    @endif
+                                </li>
+                                @endforeach
+                            </ul>
+                        </details>
+                        @endif
+                    </div>
+                    @endif
                 </div>
                 @else
                 <div class="flex items-center gap-2 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 text-sm text-green-700 dark:text-green-400 mb-4">
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
-                    Semua jurnal periode {{ $periodeAktif->nama_periode }} sudah diposting. Siap untuk proses penutupan.
+                    Semua jurnal periode {{ $periodeDipilih->nama_periode }} sudah diposting. Siap untuk proses penutupan.
                 </div>
                 @endif
 
@@ -296,7 +402,7 @@
     {{-- FORM B — Post existing DRAFT --}}
     <form action="{{ route('dashboard.jurnal-penutup.post-draft') }}" method="POST" id="postDraftForm" class="hidden">
         @csrf
-        <input type="hidden" name="periode_id" value="{{ $periodeAktif?->id }}">
+        <input type="hidden" name="periode_id" value="{{ $periodeDipilih?->id }}">
     </form>
 </div>
 @endsection
@@ -308,6 +414,15 @@ import { formatRp, makeStepperController } from '/js/jurnal-helpers.js';
 // Data dari server
 const ringkasan     = @json($ringkasan ?? []);
 const existingDraft = @json($existingDraft ?? []);
+
+// Ganti periode yang akan ditutup: muat ulang halaman dengan periode terpilih
+// agar ringkasan, preview entri, dan status kesiapan mengikuti periode tersebut.
+window.gantiPeriode = function(id) {
+    if (!id) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('periode_id', id);
+    window.location.href = url.toString();
+};
 
 // pesan_tidak_siap: string jika periode belum siap, null jika siap
 const pesanTidakSiap = ringkasan.pesan_tidak_siap ?? null;

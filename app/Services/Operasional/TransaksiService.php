@@ -14,8 +14,55 @@ use Illuminate\Support\Facades\Storage;
 
 class TransaksiService
 {
+    /**
+     * Gerbang siklus akuntansi: transaksi (yang otomatis menghasilkan jurnal
+     * umum) hanya boleh dicatat setelah saldo awal / jurnal pembuka dibuat dan
+     * diposting. Pengecekan ringan berbasis exists().
+     */
+    private function pastikanPembukaSiap(): void
+    {
+        $adaPembukaPosted = Jurnal::where('jenis_jurnal', 'PEMBUKA')
+            ->where('status', 'POSTED')
+            ->exists();
+
+        if (!$adaPembukaPosted) {
+            throw new \RuntimeException(
+                'Belum ada saldo awal (jurnal pembuka) yang diposting. '
+                . 'Buat dan posting jurnal pembuka terlebih dahulu sebelum mencatat transaksi.'
+            );
+        }
+    }
+
+    /**
+     * Immutability periode: transaksi yang tanggalnya jatuh pada periode yang
+     * sudah ditutup tidak boleh dicatat, diubah, atau dihapus, agar laporan
+     * periode yang sudah final tidak berubah retroaktif (menegakkan cut-off).
+     */
+    private function pastikanTanggalTidakDiPeriodeTertutup(?string $tanggal): void
+    {
+        if (!$tanggal) {
+            return;
+        }
+
+        $periodeTertutup = Periode::where('status', false)
+            ->whereDate('tanggal_awal', '<=', $tanggal)
+            ->whereDate('tanggal_akhir', '>=', $tanggal)
+            ->first();
+
+        if ($periodeTertutup) {
+            throw new \RuntimeException(
+                "Periode {$periodeTertutup->nama_periode} sudah ditutup. "
+                . 'Transaksi dengan tanggal pada periode tersebut tidak dapat dicatat, '
+                . 'diubah, atau dihapus. Gunakan jurnal koreksi pada periode berjalan bila perlu.'
+            );
+        }
+    }
+
     public function simpanTransaksiBaru(StoreTransaksiRequest $request, bool $force = false): Transaksi
     {
+        $this->pastikanPembukaSiap();
+        $this->pastikanTanggalTidakDiPeriodeTertutup($request->tanggal_transaksi);
+
         return DB::transaction(function () use ($request, $force) {
 
             $entries = $request->input('jurnal', []);
@@ -73,6 +120,9 @@ class TransaksiService
 
     public function perbaruiTransaksi(UpdateTransaksiRequest $request, Transaksi $transaksi): Transaksi
     {
+        $this->pastikanTanggalTidakDiPeriodeTertutup($transaksi->tanggal_transaksi?->toDateString());
+        $this->pastikanTanggalTidakDiPeriodeTertutup($request->tanggal_transaksi);
+
         return DB::transaction(function () use ($request, $transaksi) {
 
             $entries = $request->input('jurnal', []);
@@ -105,6 +155,8 @@ class TransaksiService
 
     public function hapusTransaksi(Transaksi $transaksi): void
     {
+        $this->pastikanTanggalTidakDiPeriodeTertutup($transaksi->tanggal_transaksi?->toDateString());
+
         DB::transaction(function () use ($transaksi) {
             foreach ($transaksi->buktiTransaksi as $bukti) {
                 Storage::delete($bukti->path_file);

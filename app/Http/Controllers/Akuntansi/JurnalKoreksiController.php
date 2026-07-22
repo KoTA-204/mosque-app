@@ -70,6 +70,10 @@ class JurnalKoreksiController extends Controller
 
     public function tampilkanDetailJurnalKoreksi(Jurnal $jurnal)
     {
+        if (! request()->ajax()) {
+            return redirect()->route('dashboard.jurnal-koreksi.index', ['buka' => $jurnal->id]);
+        }
+
         $jurnal = $this->service->getById($jurnal);
 
         return response()->json([
@@ -103,6 +107,15 @@ class JurnalKoreksiController extends Controller
                 ]),
             ],
         ]);
+    }
+
+    public function post(Jurnal $jurnal)
+    {
+        $result = $this->service->postingKeBukuBesar($jurnal);
+
+        return $result === true
+            ? back()->with('success', 'Jurnal berhasil diposting.')
+            : back()->with('error', $result);
     }
 
     public function bulkPost(BulkPostRequest $request)

@@ -79,6 +79,10 @@ class JurnalPembukaController extends Controller
 
     public function tampilkanDetailJurnalPembuka(Jurnal $jurnalPembuka)
     {
+        if (! request()->ajax()) {
+            return redirect()->route('dashboard.jurnal-pembuka.index', ['buka' => $jurnalPembuka->id]);
+        }
+
         $jurnalPembuka->load(['periode', 'detailJurnal.akun']);
 
         return response()->json([

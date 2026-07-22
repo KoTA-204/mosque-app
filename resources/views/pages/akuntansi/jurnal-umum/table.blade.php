@@ -80,6 +80,15 @@
                     <td class="px-4 py-3.5 text-center">
                         @if($j === 0)
                         <div class="flex items-center justify-center gap-2">
+                            {{-- Tombol Lihat detail (drawer) --}}
+                            <button type="button" onclick="showDrawer('/dashboard/jurnal-umum/{{ $jurnal->id }}')" title="Lihat detail"
+                                class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium border rounded-lg text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                                Lihat
+                            </button>
                             @if($jurnal->status === 'DRAFT')
                             {{-- Tombol Post --}}
                             <form action="{{ route('dashboard.jurnal-umum.post', $jurnal->id) }}" method="POST"
@@ -106,9 +115,6 @@
                                     </svg>
                                 </button>
                             </form>
-                            @else
-                            {{-- Sudah posted, tidak bisa dihapus/diedit --}}
-                            <span class="text-xs text-gray-400 dark:text-gray-500 italic">—</span>
                             @endif
                         </div>
                         @endif

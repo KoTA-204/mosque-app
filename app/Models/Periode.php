@@ -39,6 +39,28 @@ class Periode extends Model
         return $query->where('status', true);
     }
 
+    /**
+     * Periode "berjalan" untuk tampilan default (dashboard, laporan, filter).
+     * Dengan multi-periode, beberapa periode bisa open sekaligus, jadi
+     * "berjalan" = periode open yang memuat tanggal hari ini.
+     * Fallback: periode open terbaru, lalu periode terbaru apa pun.
+     */
+    public static function berjalan(): ?self
+    {
+        $hariIni = now()->toDateString();
+
+        return static::where('status', true)
+                ->whereDate('tanggal_awal', '<=', $hariIni)
+                ->whereDate('tanggal_akhir', '>=', $hariIni)
+                ->orderByDesc('tanggal_awal')
+                ->first()
+            ?? static::where('status', true)
+                ->orderByDesc('tanggal_awal')
+                ->first()
+            ?? static::orderByDesc('tanggal_akhir')
+                ->first();
+    }
+
     // ── Perilaku domain periode ───────────────────────────────────
 
     /**

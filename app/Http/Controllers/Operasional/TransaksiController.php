@@ -86,7 +86,7 @@ class TransaksiController extends Controller
 
     public function tampilkanDaftarTransaksi(Request $request)
     {
-        $periodeAktif = Periode::aktif()->first();
+        $periodeAktif = Periode::berjalan();
 
         $query = Transaksi::with([
                 'kategoriTransaksi',

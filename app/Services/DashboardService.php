@@ -179,8 +179,7 @@ class DashboardService
 
     public function resolvePeriodeAktif(): array
     {
-        $periode = Periode::where('status', true)->first()
-            ?? Periode::orderByDesc('tanggal_akhir')->first();
+        $periode = Periode::berjalan();
 
         $periodePrev = null;
         if ($periode) {

@@ -422,6 +422,7 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
     Route::middleware('permission:CREATE_JURNAL_PENYESUAIAN')->group(function () {
         Route::post('/jurnal-penyesuaian', [JurnalPenyesuaianController::class, 'simpanJurnalPenyesuaian'])->name('jurnal-penyesuaian.store');
         Route::post('/jurnal-penyesuaian/bulk-post', [JurnalPenyesuaianController::class, 'bulkPost'])->name('jurnal-penyesuaian.bulk-post');
+        Route::post('/jurnal-penyesuaian/{jurnal}/post', [JurnalPenyesuaianController::class, 'post'])->whereNumber('jurnal')->name('jurnal-penyesuaian.post');
     });
  
     Route::middleware('permission:DELETE_JURNAL_PENYESUAIAN')->group(function () {
@@ -441,6 +442,7 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
     Route::middleware('permission:CREATE_JURNAL_KOREKSI')->group(function () {
         Route::post('/jurnal-koreksi', [JurnalKoreksiController::class, 'simpanJurnalKoreksi'])->name('jurnal-koreksi.store');
         Route::post('/jurnal-koreksi/bulk-post', [JurnalKoreksiController::class, 'bulkPost'])->name('jurnal-koreksi.bulk-post');
+        Route::post('/jurnal-koreksi/{jurnal}/post', [JurnalKoreksiController::class, 'post'])->whereNumber('jurnal')->name('jurnal-koreksi.post');
     });
  
     Route::middleware('permission:DELETE_JURNAL_KOREKSI')->group(function () {
@@ -460,6 +462,7 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
     Route::middleware('permission:CREATE_JURNAL_PENUTUP')->group(function () {
         Route::post('/jurnal-penutup', [JurnalPenutupController::class, 'simpanJurnalPenutup'])->name('jurnal-penutup.store');
         Route::post('/jurnal-penutup/post-draft', [JurnalPenutupController::class, 'postDraft'])->name('jurnal-penutup.post-draft');
+        Route::post('/jurnal-penutup/buka-periode-berikutnya', [JurnalPenutupController::class, 'bukaPeriodeBerikutnya'])->name('jurnal-penutup.buka-periode');
         Route::post('/jurnal-penutup/konfirmasi-tahap', [JurnalPenutupController::class, 'konfirmasiTahap'])->name('jurnal-penutup.konfirmasi-tahap');
         Route::post('/jurnal-penutup/bulk-post', [JurnalPenutupController::class, 'bulkPost'])->name('jurnal-penutup.bulk-post');
     });

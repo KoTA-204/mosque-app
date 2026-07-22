@@ -16,12 +16,14 @@
             </p>
             @endif
         </div>
-        @if(auth()->user()->hasPermission('CREATE_JURNAL_PENYESUAIAN'))
-        <a href="{{ route('dashboard.jurnal-penyesuaian.create') }}"
-           class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-            Catat Penyesuaian
-        </a>
-        @endif
+        <div class="flex items-center gap-2">
+            @if(auth()->user()->hasPermission('CREATE_JURNAL_PENYESUAIAN'))
+            <a href="{{ route('dashboard.jurnal-penyesuaian.create') }}"
+               class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
+                Catat Penyesuaian
+            </a>
+            @endif
+        </div>
     </div>
 
     {{-- Alert --}}
@@ -202,9 +204,11 @@
 @endsection
 
 @push('scripts')
-<script src="{{ asset('js/jurnal-shared.js') }}"></script>
+<script src="{{ asset('js/jurnal-shared.js') }}?v={{ filemtime(public_path('js/jurnal-shared.js')) }}"></script>
 
 <script>
+window.drawerDetailBase = '/dashboard/jurnal-penyesuaian/';
+
 /**
  * renderDrawerContent — spesifik untuk Jurnal Penyesuaian
  */
@@ -214,6 +218,18 @@ window.renderDrawerContent = function(data) {
     const details  = j.detail_jurnal ?? [];
     const asets    = j.aset ?? [];
     const isPosted = j.status === 'POSTED';
+
+    const postForm = isPosted ? '' : `
+        <form method="POST" action="/dashboard/jurnal-penyesuaian/${j.id}/post" class="mt-6">
+            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+            <button type="submit"
+                class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Posting Jurnal ke Buku Besar
+            </button>
+        </form>`;
 
     // Section aset (hanya untuk PENYUSUTAN_ASET)
     let asetSection = '';
@@ -251,7 +267,8 @@ window.renderDrawerContent = function(data) {
             { label: 'Tanggal', value: new Date(j.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) },,
         ]) +
         buildDetailTable(details, 'Detail Debit & Kredit') +
-        asetSection;
+        asetSection +
+        postForm;
 };
 </script>
 @endpush

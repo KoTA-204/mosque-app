@@ -38,8 +38,10 @@ use Illuminate\Support\Facades\DB;
  * Semua jurnal POSTED & seimbang.
  * Posisi Keuangan akhir Juni balance: Total Aset = Aset Neto = Rp 49.150.000
  *
- * PRASYARAT: RoleSeeder, UserSeeder, KategoriTransaksiSeeder,
- *            KategoriAkunSeeder, AkunSeeder
+ * PRASYARAT: RoleSeeder, UserSeeder, KategoriAkunSeeder, AkunSeeder.
+ *   (KategoriTransaksiSeeder TIDAK diperlukan: semua transaksi di sini adalah
+ *    transaksi umum tanpa kegiatan, sehingga kategori_transaksi_id = NULL.
+ *    Kategori transaksi hanya wajib untuk transaksi kegiatan.)
  *
  * Cara pakai:
  *   php artisan db:seed --class=Database\\Seeders\\ContohKeuanganJuniSeeder
@@ -261,7 +263,12 @@ class ContohKeuanganJuniSeeder extends Seeder
         $transaksi = Transaksi::create([
             'dompet_id'             => $this->dompet($namaDompet),
             'user_id'               => $this->userId,
-            'kategori_transaksi_id' => $this->kategori($namaKat),
+            // Transaksi umum: kegiatan_id NULL -> kategori_transaksi_id juga NULL.
+            // Kategori transaksi hanya dipakai untuk transaksi kegiatan
+            // (StoreTransaksiKegiatanRequest mewajibkannya). $namaKat di sini
+            // hanya sebagai label deskriptif di definisi data, tidak disimpan.
+            'kegiatan_id'           => null,
+            'kategori_transaksi_id' => null,
             'tanggal_transaksi'     => $tgl,
             'jenis_transaksi'       => $jenis,
             'jumlah'                => $jumlah,

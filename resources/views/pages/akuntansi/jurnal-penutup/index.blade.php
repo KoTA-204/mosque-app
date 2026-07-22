@@ -15,12 +15,24 @@
             </p>
             @endif
         </div>
-        @if(!$periodeAktif || $tahapSelesai < 3)
-            <a href="{{ route('dashboard.jurnal-penutup.create') }}"
-            class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-                Mulai Penutupan
-            </a>
-        @endif
+        <div class="flex items-center gap-2">
+            {{-- Multi-periode: buka periode berikutnya secara manual --}}
+            <form action="{{ route('dashboard.jurnal-penutup.buka-periode') }}" method="POST">
+                @csrf
+                <button type="submit"
+                        onclick="event.preventDefault(); confirmAction({ title: 'Buka Periode Berikutnya', message: 'Buka periode bulan berikutnya? Periode ini bisa terbuka bersamaan dengan periode berjalan sehingga transaksi bulan baru dapat langsung dicatat.', confirmLabel: 'Buka Periode', confirmClass: 'bg-green-600 hover:bg-green-700', onConfirm: () => this.closest('form').submit() })"
+                        class="inline-flex items-center gap-2 border border-blue-600 text-blue-700 dark:text-blue-400 dark:border-blue-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                    Buka Periode Berikutnya
+                </button>
+            </form>
+
+            @if(!$periodeAktif || $tahapSelesai < 3)
+                <a href="{{ route('dashboard.jurnal-penutup.create') }}"
+                class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
+                    Mulai Penutupan
+                </a>
+            @endif
+        </div>
     </div>
 
     {{-- Alert --}}
@@ -275,7 +287,7 @@
 @endsection
 
 @push('scripts')
-<script src="{{ asset('js/jurnal-shared.js') }}"></script>
+<script src="{{ asset('js/jurnal-shared.js') }}?v={{ filemtime(public_path('js/jurnal-shared.js')) }}"></script>
 
 <script>
 window.renderDrawerContent = function(data) {
