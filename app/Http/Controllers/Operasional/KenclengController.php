@@ -54,7 +54,7 @@ class KenclengController extends Controller
 
     public function tampilkanDetailKencleng(Kencleng $kencleng)
     {
-        if ($kencleng->transaksi->user_id !== auth()->id()) {
+        if ($kencleng->transaksi->pengguna_id !== auth()->id()) {
             abort(403);
         }
 
@@ -66,7 +66,7 @@ class KenclengController extends Controller
 
     public function tampilkanFormEditKencleng(Kencleng $kencleng)
     {
-        if ($kencleng->transaksi->user_id !== auth()->id()) {
+        if ($kencleng->transaksi->pengguna_id !== auth()->id()) {
             abort(403);
         }
 
@@ -85,7 +85,7 @@ class KenclengController extends Controller
 
     public function perbaruiKencleng(UpdateKenclengRequest $request, Kencleng $kencleng)
     {
-        if ($kencleng->transaksi->user_id !== auth()->id()) {
+        if ($kencleng->transaksi->pengguna_id !== auth()->id()) {
             abort(403);
         }
 

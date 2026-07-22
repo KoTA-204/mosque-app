@@ -8,8 +8,8 @@ use App\Models\Akun;
 use App\Models\KategoriAkun;
 use App\Models\KategoriTransaksi;
 use App\Models\Menu;
-use App\Models\Role;
-use App\Models\Permission;
+use App\Models\Peran;
+use App\Models\HakAkses;
 
 class NamaMiripRule implements ValidationRule
 {
@@ -56,8 +56,8 @@ class NamaMiripRule implements ValidationRule
 
             // Modul akses
             'menu'       => Menu::pluck('menu_name', 'id'),
-            'role'       => Role::pluck('role_name', 'id'),
-            'permission' => Permission::pluck('permission_name', 'id'),
+            'peran'       => Peran::pluck('nama_peran', 'id'),
+            'hak_akses' => HakAkses::pluck('nama_hak_akses', 'id'),
 
             default       => collect(),
         };

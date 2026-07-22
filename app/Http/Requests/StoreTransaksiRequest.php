@@ -10,7 +10,7 @@ class StoreTransaksiRequest extends FormRequest
     protected $errorBag = 'createTransaksi';
 
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine if the pengguna is authorized to make this request.
      */
     public function authorize(): bool
     {
@@ -30,7 +30,7 @@ class StoreTransaksiRequest extends FormRequest
             'jurnal.*.nominal'      => 'required|numeric|min:1',
             'deskripsi'             => 'nullable|string|max:500',
             'catatan'               => 'nullable|string|max:500',
-            'bukti_transaksi'       => 'required|array',
+            'bukti_transaksi'       => 'nullable|array',
             'bukti_transaksi.*'     => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
             'is_aset'               => 'nullable|boolean',
             'force'                 => 'nullable|boolean',  
@@ -62,7 +62,6 @@ class StoreTransaksiRequest extends FormRequest
             'akun_debit_id.required'         => 'Akun debit wajib dipilih.',
             'akun_kredit_id.required'        => 'Akun kredit wajib dipilih.',
             'dompet_id.required'             => 'Dompet wajib dipilih',
-            'bukti_transaksi.required'       => 'Bukti transaksi wajib diunggah',
             'bukti_transaksi.*.mimes'        => 'File harus berformat JPG, PNG, atau PDF',
             'bukti_transaksi.*.max'          => 'Ukuran file maksimal 5MB',
             'catatan.max'                    => 'Catatan tidak boleh lebih dari 500 karakter',

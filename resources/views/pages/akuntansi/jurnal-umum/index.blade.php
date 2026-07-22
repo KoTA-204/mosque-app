@@ -24,7 +24,7 @@
         <x-jurnal.bulk-action-bar
             post-label="Post Terpilih"
             on-post="submitBulkPost()"
-            permission="CREATE_JURNAL"
+            hak_akses="CREATE_JURNAL"
         />
 
         {{-- Toolbar --}}

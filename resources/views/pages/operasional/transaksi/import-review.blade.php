@@ -238,8 +238,8 @@
             id="btnSimpanKlasifikasi"
             @class([
                 'h-9 px-5 text-sm font-medium rounded-xl transition-colors flex items-center gap-2',
-                'bg-green-700 text-white hover:bg-green-800' => auth()->user()->hasPermission('CREATE_TRANSAKSI'),
-                'bg-gray-200 text-gray-400' => !auth()->user()->hasPermission('CREATE_TRANSAKSI'),
+                'bg-green-700 text-white hover:bg-green-800' => auth()->user()->hasHakAkses('CREATE_TRANSAKSI'),
+                'bg-gray-200 text-gray-400' => !auth()->user()->hasHakAkses('CREATE_TRANSAKSI'),
             ])>
             <svg id="spinnerKlasifikasi" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>

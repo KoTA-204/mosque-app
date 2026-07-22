@@ -22,8 +22,8 @@ class KenclengService
         $status = $status ?? '';
         $order  = $sort === 'terlama' ? 'asc' : 'desc';
 
-        return Kencleng::with(['transaksi.user', 'transaksi.dompet', 'detail'])
-            ->whereHas('transaksi', fn($q) => $q->where('user_id', auth()->id()))
+        return Kencleng::with(['transaksi.pengguna', 'transaksi.dompet', 'detail'])
+            ->whereHas('transaksi', fn($q) => $q->where('pengguna_id', auth()->id()))
             ->when($search, fn($q) =>
                 $q->where(function ($q) use ($search) {          // ← dibungkus closure
                     $term = '%' . strtolower($search) . '%';
@@ -44,7 +44,7 @@ class KenclengService
     
     public function getDetailKencleng(Kencleng $kencleng): Kencleng
     {
-        return $kencleng->load('transaksi.user', 'transaksi.dompet', 'transaksi.kategoriTransaksi', 'detail');
+        return $kencleng->load('transaksi.pengguna', 'transaksi.dompet', 'transaksi.kategoriTransaksi', 'detail');
     }
 
     public function getDaftarDompet()
@@ -92,7 +92,7 @@ class KenclengService
                 $transaksi = Transaksi::create([
                     'dompet_id'             => $data['dompet_id'],
                     'kegiatan_id'           => null,
-                    'user_id'               => auth()->id(),
+                    'pengguna_id'               => auth()->id(),
                     'kategori_transaksi_id' => $kategori?->id,
                     'tanggal_transaksi'     => $data['tanggal_hitung'],
                     'jenis_transaksi'       => 'PEMASUKAN',
@@ -207,7 +207,7 @@ class KenclengService
             return 'Kencleng yang sudah diapprove tidak bisa dihapus';
         }
 
-        if ($transaksi->user_id !== auth()->id()) {
+        if ($transaksi->pengguna_id !== auth()->id()) {
             return 'Anda tidak bisa menghapus kencleng orang lain';
         }
 

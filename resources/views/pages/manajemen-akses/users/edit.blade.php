@@ -1,26 +1,26 @@
-<x-modal id="editUserModal" title="Edit Pengguna">
+<x-modal id="editPenggunaModal" title="Edit Pengguna">
 
-    <form id="editUserForm">
+    <form id="editPenggunaForm">
         @csrf
 
         <div class="px-6 py-5 space-y-4">
 
             <div>
                 <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Nama Lengkap <span class="text-red-500">*</span></label>
-                <input type="text" name="name" value="{{ $user->name }}" placeholder="Masukkan nama lengkap"
+                <input type="text" name="nama" value="{{ $pengguna->nama }}" placeholder="Masukkan nama lengkap"
                     class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
                 <p id="err-name" class="text-xs text-red-500 mt-1"></p>
             </div>
 
             <div>
                 <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Username</label>
-                <input type="text" value="{{ explode('@', $user->email)[0] }}" readonly
+                <input type="text" value="{{ explode('@', $pengguna->email)[0] }}" readonly
                     class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500 outline-none cursor-not-allowed">
             </div>
 
             <div>
                 <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Email <span class="text-red-500">*</span></label>
-                <input type="email" name="email" value="{{ $user->email }}" placeholder="Masukkan email"
+                <input type="email" name="email" value="{{ $pengguna->email }}" placeholder="Masukkan email"
                     class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
                 <p id="err-email" class="text-xs text-red-500 mt-1"></p>
             </div>
@@ -28,15 +28,15 @@
             <div>
                 <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Password Awal (dibuat admin)</label>
                 <div class="relative">
-                    <input type="password" id="initialPasswordField" value="{{$user->initial_password ?? '' }}" readonly
-                        placeholder="{{$user->initial_password ? '' : 'Belum ada (user dibuat sebelum fitur ini)' }}"
+                    <input type="password" id="initialPasswordField" value="{{$pengguna->password_awal ?? '' }}" readonly
+                        placeholder="{{$pengguna->password_awal ? '' : 'Belum ada (pengguna dibuat sebelum fitur ini)' }}"
                         class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 pr-10 text-sm bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 outline-none cursor-not-allowed">
                     <button type="button" onclick="toggleInitialPassword()"
                         class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                     </button>
                 </div>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Hanya admin yang dapat melihat ini. User dapat menggantinya sendiri lewat tautan di email.</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Hanya admin yang dapat melihat ini. Pengguna dapat menggantinya sendiri lewat tautan di email.</p>
             </div>
             <script>
                 function toggleInitialPassword() {
@@ -47,27 +47,27 @@
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Role <span class="text-red-500">*</span></label>
+                    <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Peran <span class="text-red-500">*</span></label>
                     <div class="relative">
-                        <select name="role_id"
+                        <select name="peran_id"
                             class="w-full appearance-none border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
-                            @foreach($roles as $role)
-                            <option value="{{ $role->id }}" {{ $user->role_id == $role->id ? 'selected' : '' }}>
-                                {{ $role->role_name }}
+                            @foreach($peran as $p)
+                            <option value="{{ $p->id }}" {{ $pengguna->peran_id == $p->id ? 'selected' : '' }}>
+                                {{ $p->nama_peran }}
                             </option>
                             @endforeach
                         </select>
                         <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </div>
-                    <p id="err-role_id" class="text-xs text-red-500 mt-1"></p>
+                    <p id="err-peran_id" class="text-xs text-red-500 mt-1"></p>
                 </div>
                 <div>
                     <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Status <span class="text-red-500">*</span></label>
                     <div class="relative">
                         <select name="status"
                             class="w-full appearance-none border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
-                            <option value="active"   {{ $user->status === 'active'   ? 'selected' : '' }}>Aktif</option>
-                            <option value="inactive" {{ $user->status === 'inactive' ? 'selected' : '' }}>Tidak Aktif</option>
+                            <option value="active"   {{ $pengguna->status === 'active'   ? 'selected' : '' }}>Aktif</option>
+                            <option value="inactive" {{ $pengguna->status === 'inactive' ? 'selected' : '' }}>Tidak Aktif</option>
                         </select>
                         <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </div>
@@ -78,12 +78,12 @@
 
         {{-- Footer --}}
         <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-            <button type="button" onclick="closeModal('editUserModal')"
+            <button type="button" onclick="closeModal('editPenggunaModal')"
                 class="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 Batal
             </button>
             <button type="button"
-                onclick="submitUserForm('editUserForm', 'PUT', '{{ route('dashboard.users.update', $user->id) }}')"
+                onclick="submitPenggunaForm('editPenggunaForm', 'PUT', '{{ route('dashboard.pengguna.update', $pengguna->id) }}')"
                 class="px-5 py-2 text-sm font-medium text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors">
                 Simpan Perubahan
             </button>

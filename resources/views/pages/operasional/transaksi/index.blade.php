@@ -498,7 +498,7 @@
 // Permission untuk aksi hapus transaksi (dipakai oleh konfirmasiHapus()).
 // Sebelumnya variabel ini tidak pernah didefinisikan sehingga setiap klik
 // tombol Hapus memicu ReferenceError dan tombol terlihat tidak berfungsi.
-const CAN_HAPUS_TRANSAKSI = @json(auth()->user()->hasPermission('DELETE_TRANSAKSI'));
+const CAN_HAPUS_TRANSAKSI = @json(auth()->user()->hasHakAkses('DELETE_TRANSAKSI'));
 
 function openModal(id) {
     const modal = document.getElementById(id);

@@ -67,11 +67,11 @@
                 entries
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-                <select id="filterRole" onchange="applyFilters()"
+                <select id="filterPeran" onchange="applyFilters()"
                     class="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400">
                     <option value="">Semua Peran</option>
-                    @foreach($roles as $role)
-                    <option value="{{ $role->role_name }}">{{ $role->role_name }}</option>
+                    @foreach($peran as $p)
+                    <option value="{{ $p->nama_peran }}">{{ $p->nama_peran }}</option>
                     @endforeach
                 </select>
                 <select id="filterStatus" onchange="applyFilters()"
@@ -90,7 +90,7 @@
             </div>
         </div>
         <div id="tableWrapper">
-            @include('pages.manajemen-akses.users.table')
+            @include('pages.manajemen-akses.pengguna.table')
         </div>
     </div>
 </div>
@@ -99,7 +99,7 @@
 <x-confirm-modal
     id="kirimKredensialModal"
     title="Kirim Kredensial"
-    message="Kirim email berisi kredensial (email & password awal) ke user ini?"
+    message="Kirim email berisi kredensial (email & password awal) ke pengguna ini?"
     confirmLabel="Kirim Email"
     confirmClass="bg-green-600 hover:bg-green-700"
     onConfirm="confirmSendCredentials()" />
@@ -109,8 +109,8 @@
 <script>
 const modalContainer = document.getElementById('modalContainer');
 const csrfToken      = document.querySelector('meta[name="csrf-token"]').content;
-const baseUrl        = "{{ url('dashboard/users') }}";
-const filterUrl      = "{{ route('dashboard.users.index') }}";
+const baseUrl        = "{{ url('dashboard/pengguna') }}";
+const filterUrl      = "{{ route('dashboard.pengguna.index') }}";
 let filterDebounce;
 
 function openModal(id) {
@@ -225,7 +225,7 @@ function updateStats(stats) {
     document.getElementById('stat-tidak-aktif').textContent = stats.tidak_aktif;
 }
 
-function submitUserForm(formId, method, url) {
+function submitPenggunaForm(formId, method, url) {
     const form = document.getElementById(formId);
     form.querySelectorAll('[id^="err-"]').forEach(el => el.textContent = '');
     form.querySelectorAll('input,select,textarea').forEach(el => el.classList.remove('border-red-400'));
@@ -260,12 +260,12 @@ function submitUserForm(formId, method, url) {
 function applyFilters() {
     const params  = new URLSearchParams();
     const search  = document.getElementById('filterSearch').value;
-    const role    = document.getElementById('filterRole').value;
+    const peran    = document.getElementById('filterPeran').value;
     const status  = document.getElementById('filterStatus').value;
     const perPage = document.getElementById('perPage').value;
 
     if (search)  params.set('search',  search);
-    if (role)    params.set('role',    role);
+    if (peran)    params.set('peran',    peran);
     if (status)  params.set('status',  status);
     params.set('per_page', perPage);
 

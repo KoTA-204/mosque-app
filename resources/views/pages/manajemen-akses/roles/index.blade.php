@@ -11,7 +11,7 @@
             <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Manajemen Peran</h1>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('dashboard.roles.create') }}"
+            <a href="{{ route('dashboard.peran.create') }}"
                class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
                 Tambah Peran
             </a>
@@ -43,12 +43,12 @@
             <p class="text-sm text-gray-500 dark:text-gray-400">
                 @if($search)
                     Hasil pencarian "<span class="font-medium text-gray-900 dark:text-white">{{ $search }}</span>":
-                    <span class="font-medium">{{ $roles->total() }}</span> peran ditemukan
+                    <span class="font-medium">{{ $peran->total() }}</span> peran ditemukan
                 @else
-                    Total <span class="font-medium text-gray-900 dark:text-white">{{ $roles->total() }}</span> peran
+                    Total <span class="font-medium text-gray-900 dark:text-white">{{ $peran->total() }}</span> peran
                 @endif
             </p>
-            <form method="GET" action="{{ route('dashboard.roles.index') }}" class="flex items-center gap-2">
+            <form method="GET" action="{{ route('dashboard.peran.index') }}" class="flex items-center gap-2">
                 <div class="relative">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -58,7 +58,7 @@
                            class="pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-green-400 w-56 placeholder-gray-400">
                 </div>
                 @if($search)
-                    <a href="{{ route('dashboard.roles.index') }}"
+                    <a href="{{ route('dashboard.peran.index') }}"
                        class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
                         Reset
                     </a>
@@ -70,7 +70,7 @@
         <div class="p-5">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
 
-        @forelse($roles as $role)
+        @forelse($peran as $item)
         <div class="flex flex-col rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 transition-shadow duration-200 hover:shadow-md">
 
             {{-- Card Body --}}
@@ -89,14 +89,14 @@
                             </svg>
                         </div>
                         <h3 class="truncate text-base font-semibold text-gray-900 dark:text-white">
-                            {{ $role->role_name }}
+                            {{ $item->nama_peran }}
                         </h3>
                     </div>
                 </div>
 
                 {{-- Description --}}
                 <p class="mb-4 flex-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400 line-clamp-2">
-                    {{ $role->description ?? 'Tidak ada deskripsi' }}
+                    {{ $item->deskripsi ?? 'Tidak ada deskripsi' }}
                 </p>
 
                 {{-- Stats --}}
@@ -107,7 +107,7 @@
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                             <circle cx="12" cy="7" r="4"/>
                         </svg>
-                        <span><strong class="text-gray-800 dark:text-gray-200">{{ $role->users_count }}</strong> Pengguna</span>
+                        <span><strong class="text-gray-800 dark:text-gray-200">{{ $item->pengguna_count }}</strong> Pengguna</span>
                     </div>
                     <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -115,7 +115,7 @@
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                         </svg>
-                        <span><strong class="text-gray-800 dark:text-gray-200">{{ $role->permissions->count() }}</strong> Hak Akses</span>
+                        <span><strong class="text-gray-800 dark:text-gray-200">{{ $item->hak_akses->count() }}</strong> Hak Akses</span>
                     </div>
                 </div>
             </div>
@@ -123,7 +123,7 @@
             {{-- Card Footer Actions --}}
             <div class="flex items-center justify-between gap-2 border-t border-gray-100 dark:border-gray-800 px-5 py-3">
                 <div class="flex items-center gap-2">
-                    <a href="{{ route('dashboard.roles.edit', $role) }}"
+                    <a href="{{ route('dashboard.peran.edit', $item) }}"
                        class="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -132,8 +132,8 @@
                         </svg>
                         Edit
                     </a>
-                    <form action="{{ route('dashboard.roles.destroy', $role) }}" method="POST"
-                          data-confirm="Yakin hapus role '{{ addslashes($role->role_name) }}'?" data-confirm-label="Hapus">
+                    <form action="{{ route('dashboard.peran.destroy', $item) }}" method="POST"
+                          data-confirm="Yakin hapus peran '{{ addslashes($item->nama_peran) }}'?" data-confirm-label="Hapus">
                         @csrf
                         @method('DELETE')
                         
@@ -151,7 +151,7 @@
                     </form>
 
                 </div>
-                <a href="{{ route('dashboard.roles.show', $role) }}"
+                <a href="{{ route('dashboard.peran.show', $peran) }}"
                    class="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                     Detail
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -175,32 +175,32 @@
             </div>
             <p class="mb-1 text-sm font-medium text-gray-900 dark:text-white">
                 @if($search)
-                    Tidak ada role yang sesuai pencarian
+                    Tidak ada peran yang sesuai pencarian
                 @else
-                    Belum ada role
+                    Belum ada peran
                 @endif
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
                 @if($search)
-                    Coba kata kunci lain atau <a href="{{ route('dashboard.roles.index') }}" class="text-green-600 hover:underline">reset pencarian</a>
+                    Coba kata kunci lain atau <a href="{{ route('dashboard.peran.index') }}" class="text-green-600 hover:underline">reset pencarian</a>
                 @else
-                    Mulai dengan <a href="{{ route('dashboard.roles.create') }}" class="text-green-600 hover:underline">menambahkan role baru</a>
+                    Mulai dengan <a href="{{ route('dashboard.peran.create') }}" class="text-green-600 hover:underline">menambahkan peran baru</a>
                 @endif
             </p>
         </div>
         @endforelse
 
-        {{-- Card Tambah Role --}}
-        @if(!$search && $roles->count() > 0)
-        <a href="{{ route('dashboard.roles.create') }}"
+        {{-- Card Tambah Peran --}}
+        @if(!$search && $peran->count() > 0)
+        <a href="{{ route('dashboard.peran.create') }}"
            class="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 hover:border-green-400 hover:bg-green-50/30 dark:hover:border-green-600 dark:hover:bg-green-900/10 transition-colors min-h-[180px]">
             <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full border-2 border-gray-200 dark:border-gray-700">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 </svg>
             </div>
-            <span class="text-sm font-medium text-gray-900 dark:text-white">Tambah Role</span>
-            <span class="mt-1 text-xs text-gray-500 dark:text-gray-400">Buat role baru</span>
+            <span class="text-sm font-medium text-gray-900 dark:text-white">Tambah Peran</span>
+            <span class="mt-1 text-xs text-gray-500 dark:text-gray-400">Buat peran baru</span>
         </a>
         @endif
 
@@ -208,22 +208,22 @@
         </div>{{-- end p-5 --}}
 
     {{-- Pagination --}}
-    @if($roles->hasPages())
+    @if($peran->hasPages())
     <div class="flex items-center justify-between px-5 py-4 border-t border-gray-100 dark:border-gray-800 flex-wrap gap-3">
         <div class="flex items-center gap-1">
 
             {{-- Previous --}}
-            @if($roles->onFirstPage())
+            @if($peran->onFirstPage())
                 <span class="px-3 py-1.5 text-sm text-gray-300 dark:text-gray-600 border border-gray-200 dark:border-gray-700 rounded-lg">Previous</span>
             @else
-                <a href="{{ $roles->previousPageUrl() }}"
+                <a href="{{ $peran->previousPageUrl() }}"
                    class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Previous</a>
             @endif
 
             {{-- Page Numbers --}}
             @php
-                $current = $roles->currentPage();
-                $last    = $roles->lastPage();
+                $current = $peran->currentPage();
+                $last    = $peran->lastPage();
                 $pages   = [1];
                 for ($i = max(2, $current - 1); $i <= min($last - 1, $current + 1); $i++) {
                     $pages[] = $i;
@@ -238,7 +238,7 @@
                 @if($prev !== null && $page - $prev > 1)
                     <span class="w-8 h-8 flex items-center justify-center text-sm text-gray-400">…</span>
                 @endif
-                <a href="{{ $roles->url($page) }}"
+                <a href="{{ $peran->url($page) }}"
                    class="w-8 h-8 flex items-center justify-center text-sm rounded-lg transition-colors
                        {{ $page === $current
                            ? 'bg-green-600 text-white font-medium'
@@ -249,8 +249,8 @@
             @endforeach
 
             {{-- Next --}}
-            @if($roles->hasMorePages())
-                <a href="{{ $roles->nextPageUrl() }}"
+            @if($peran->hasMorePages())
+                <a href="{{ $peran->nextPageUrl() }}"
                    class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Next</a>
             @else
                 <span class="px-3 py-1.5 text-sm text-gray-300 dark:text-gray-600 border border-gray-200 dark:border-gray-700 rounded-lg">Next</span>
@@ -259,7 +259,7 @@
         </div>
 
         <span class="text-xs text-gray-400 dark:text-gray-600">
-            Showing {{ $roles->firstItem() }} to {{ $roles->lastItem() }} of {{ $roles->total() }} entries
+            Showing {{ $peran->firstItem() }} to {{ $peran->lastItem() }} of {{ $peran->total() }} entries
         </span>
     </div>
     @endif

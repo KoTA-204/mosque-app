@@ -9,23 +9,25 @@ use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Auth\Notifications\ResetPassword;
 
-class User extends Authenticatable implements CanResetPasswordContract
+class Pengguna extends Authenticatable implements CanResetPasswordContract
 {
+    protected $table = 'pengguna';
+
     use HasFactory, Notifiable, CanResetPassword;
 
     protected $fillable = [
-        'name',
+        'nama',
         'email',
         'password',
-        'initial_password',
+        'password_awal',
         'status',
-        'role_id',
-        'credentials_sent_at',
+        'peran_id',
+        'kredensial_dikirim_pada',
     ];
 
     protected $hidden = [
         'password',
-        'initial_password',
+        'password_awal',
         'remember_token',
     ];
 
@@ -34,14 +36,14 @@ class User extends Authenticatable implements CanResetPasswordContract
         return [
             'email_verified_at'   => 'datetime',
             'password'            => 'hashed',
-            'initial_password'    => 'encrypted',
-            'credentials_sent_at' => 'datetime',
+            'password_awal'    => 'encrypted',
+            'kredensial_dikirim_pada' => 'datetime',
         ];
     }
 
-    public function roles()
+    public function peran()
     {
-        return $this->belongsTo(Role::class, 'role_id');
+        return $this->belongsTo(Peran::class, 'peran_id');
     }
 
     public function sendPasswordResetNotification($token)
@@ -49,19 +51,19 @@ class User extends Authenticatable implements CanResetPasswordContract
         $this->notify(new ResetPassword($token));
     }
 
-    public function hasPermission(string $permissionCode): bool
+    public function hasHakAkses(string $hakAksesCode): bool
     {
-        return $this->roles()
-            ->whereHas('permissions', function ($query) use ($permissionCode) {
-                $query->where('permission_code', $permissionCode)
-                      ->where('is_active', true);
+        return $this->peran()
+            ->whereHas('hak_akses', function ($query) use ($hakAksesCode) {
+                $query->where('kode_hak_akses', $hakAksesCode)
+                      ->where('aktif', true);
             })
             ->exists();
     }
 
-    public function hasRole(string $roleSlug): bool
+    public function hasPeran(string $peranSlug): bool
     {
-        return optional($this->roles)->slug === $roleSlug;
+        return optional($this->peran)->slug === $peranSlug;
     }
 
     public function getUsernameAttribute(): string
@@ -69,15 +71,15 @@ class User extends Authenticatable implements CanResetPasswordContract
         return explode('@', $this->email)[0];
     }
 
-    // Cek apakah user sudah pernah mencatat transaksi
+    // Cek apakah pengguna sudah pernah mencatat transaksi
     public function hasTransaksi(): bool
     {
-        return \App\Models\Transaksi::where('user_id', $this->id)->exists();
+        return \App\Models\Transaksi::where('pengguna_id', $this->id)->exists();
     }
 
-    // Apakah kredensial (email + password awal) sudah dikirim ke user?
+    // Apakah kredensial (email + password awal) sudah dikirim ke pengguna?
     public function credentialsSent(): bool
     {
-        return $this->credentials_sent_at !== null;
+        return $this->kredensial_dikirim_pada !== null;
     }
 }

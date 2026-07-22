@@ -14,7 +14,7 @@ class Transaksi extends Model
     protected $fillable = [
         'dompet_id',
         'kegiatan_id',
-        'user_id',
+        'pengguna_id',
         'kategori_transaksi_id',
         'tanggal_transaksi',
         'jenis_transaksi',
@@ -57,9 +57,9 @@ class Transaksi extends Model
         return $this->belongsTo(Kegiatan::class);
     }
 
-    public function user()
+    public function pengguna()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Pengguna::class);
     }
 
     public function kategoriTransaksi()

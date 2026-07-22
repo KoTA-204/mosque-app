@@ -30,7 +30,7 @@ return new class extends Migration
             ])->default('AKTIF');
 
             $table->foreignId('panitia_id')
-                ->constrained('users')
+                ->constrained('pengguna')
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
                 

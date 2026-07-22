@@ -113,7 +113,7 @@ class TransaksiKegiatanController extends Controller
         if (! $transaksi->bisaDiedit()) {
             return back()->with('error', 'Transaksi tidak dapat diedit karena sudah diproses');
         }
-        if ($transaksi->user_id !== auth()->id()) {
+        if ($transaksi->pengguna_id !== auth()->id()) {
             abort(403);
         }
 
@@ -166,7 +166,7 @@ class TransaksiKegiatanController extends Controller
     // ── Helpers ────────────────────────────────────────────────
     private function pastikanBerhakAtasKegiatan(Kegiatan $kegiatan): void
     {
-        if (auth()->user()->hasRole('panitia-kegiatan-khusus') && $kegiatan->panitia_id !== auth()->id()) {
+        if (auth()->user()->hasPeran('panitia-kegiatan-khusus') && $kegiatan->panitia_id !== auth()->id()) {
             abort(403);
         }
     }

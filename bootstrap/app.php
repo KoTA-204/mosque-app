@@ -13,8 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'permission' => \App\Http\Middleware\CheckPermission::class,
-            'active'     => \App\Http\Middleware\EnsureUserIsActive::class,
+            'hak_akses' => \App\Http\Middleware\CekHakAkses::class,
+            'active'     => \App\Http\Middleware\PastikanPenggunaAktif::class,
         ]);
 
         $middleware->redirectGuestsTo(function () {

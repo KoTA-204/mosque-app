@@ -85,7 +85,7 @@
                             <form action="{{ route('dashboard.jurnal-umum.post', $jurnal->id) }}" method="POST"
                                 data-confirm="Posting jurnal ini?" data-confirm-title="Posting Jurnal" data-confirm-label="Posting" data-confirm-class="bg-green-600 hover:bg-green-700">
                                 @csrf
-                                @php $canPostJurnal = auth()->user()?->hasPermission('CREATE_JURNAL'); @endphp
+                                @php $canPostJurnal = auth()->user()?->hasHakAkses('CREATE_JURNAL'); @endphp
                                 <button type="submit" <?php echo $canPostJurnal ? '' : 'disabled aria-disabled="true"'; ?> title="<?php echo $canPostJurnal ? 'Posting' : 'Anda tidak memiliki izin untuk posting jurnal'; ?>"
                                     class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium border rounded-lg transition-colors <?php echo $canPostJurnal ? 'text-green-700 dark:text-green-400 border-green-300 dark:border-green-700 hover:bg-green-50 dark:hover:bg-green-900/20' : 'text-gray-300 dark:text-gray-600 border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed'; ?>">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,7 +98,7 @@
                             <form action="{{ route('dashboard.jurnal-umum.destroy', $jurnal->id) }}" method="POST"
                                 data-confirm="Hapus jurnal ini?" data-confirm-label="Hapus">
                                 @csrf @method('DELETE')
-                                @php $canDeleteJurnal = auth()->user()?->hasPermission('DELETE_JURNAL'); @endphp
+                                @php $canDeleteJurnal = auth()->user()?->hasHakAkses('DELETE_JURNAL'); @endphp
                                 <button type="submit" <?php echo $canDeleteJurnal ? '' : 'disabled aria-disabled="true"'; ?> title="<?php echo $canDeleteJurnal ? 'Hapus' : 'Anda tidak memiliki izin untuk menghapus jurnal'; ?>"
                                     class="transition-colors <?php echo $canDeleteJurnal ? 'text-gray-400 hover:text-red-500' : 'text-gray-200 dark:text-gray-700 opacity-60 cursor-not-allowed'; ?>">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

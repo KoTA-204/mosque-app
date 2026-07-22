@@ -87,7 +87,7 @@
             <div>
                 <p class="mb-1 text-xs text-body dark:text-bodydark">Dicatat oleh</p>
                 <p class="text-sm text-black dark:text-white">
-                    {{ $kencleng->transaksi->user->name }}
+                    {{ $kencleng->transaksi->pengguna->nama }}
                     · {{ $kencleng->transaksi->created_at->format('j M Y H.i') }}
                 </p>
             </div>

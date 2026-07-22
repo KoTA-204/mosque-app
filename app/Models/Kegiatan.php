@@ -42,7 +42,7 @@ class Kegiatan extends Model
     // ── Relationships ──────────────────────────────────────────
     public function panitia()
     {
-        return $this->belongsTo(User::class, 'panitia_id');
+        return $this->belongsTo(Pengguna::class, 'panitia_id');
     }
 
     public function transaksi()
@@ -56,9 +56,9 @@ class Kegiatan extends Model
         return $query->where('status', self::STATUS_AKTIF);
     }
 
-    public function scopeMilikPanitia($query, int $userId)
+    public function scopeMilikPanitia($query, int $penggunaId)
     {
-        return $query->where('panitia_id', $userId);
+        return $query->where('panitia_id', $penggunaId);
     }
 
     // ── Helpers ────────────────────────────────────────────────

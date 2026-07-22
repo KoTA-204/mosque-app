@@ -170,7 +170,7 @@
                 class="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 Batal
             </button>
-            @php $canCreateAset = auth()->user()?->hasPermission('CREATE_ASET'); @endphp
+            @php $canCreateAset = auth()->user()?->hasHakAkses('CREATE_ASET'); @endphp
             @if($canCreateAset)
             <button type="button"
                 onclick="submitAsetForm('createAsetForm', 'POST', '{{ route('dashboard.aset.store') }}')"

@@ -82,7 +82,7 @@
             </div>
             <div>
                 <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">Dicatat oleh</p>
-                <p class="text-sm text-gray-900 dark:text-white">{{ $transaksi->user->name }} <span class="text-gray-400">·</span> {{ $transaksi->created_at->format('j M Y H.i') }}</p>
+                <p class="text-sm text-gray-900 dark:text-white">{{ $transaksi->pengguna->nama }} <span class="text-gray-400">·</span> {{ $transaksi->created_at->format('j M Y H.i') }}</p>
             </div>
         </div>
 

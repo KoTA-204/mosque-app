@@ -259,7 +259,7 @@
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-gray-500 dark:text-gray-400">Dibuat oleh</span>
-                                <span class="font-medium text-gray-900 dark:text-white">{{ auth()->user()->name ?? '—' }}</span>
+                                <span class="font-medium text-gray-900 dark:text-white">{{ auth()->user()->nama ?? '—' }}</span>
                             </div>
                         </div>
                         <div class="mt-4">

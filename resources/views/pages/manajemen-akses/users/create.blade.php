@@ -1,6 +1,6 @@
-<x-modal id="createUserModal" title="Tambah Pengguna">
+<x-modal id="createPenggunaModal" title="Tambah Pengguna">
 
-    <form id="createUserForm">
+    <form id="createPenggunaForm">
         @csrf
 
         <div class="px-6 py-5 space-y-4">
@@ -9,7 +9,7 @@
                 <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
                     Nama Lengkap <span class="text-red-500">*</span>
                 </label>
-                <input type="text" name="name" placeholder="Masukkan nama lengkap"
+                <input type="text" name="nama" placeholder="Masukkan nama lengkap"
                     class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
                 <p id="err-name" class="text-xs text-red-500 mt-1"></p>
             </div>
@@ -22,7 +22,7 @@
                     class="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-green-400 transition-colors">
                 <p id="err-email" class="text-xs text-red-500 mt-1"></p>
                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                    Kredensial (email &amp; password) dapat dikirim ke alamat ini lewat ikon email setelah user dibuat.
+                    Kredensial (email &amp; password) dapat dikirim ke alamat ini lewat ikon email setelah pengguna dibuat.
                 </p>
             </div>
 
@@ -44,20 +44,20 @@
                 </div>
             </div>
             <p class="text-xs text-gray-400 dark:text-gray-500 -mt-2">
-                Password ini disimpan aman &amp; tetap dapat Anda lihat lagi di menu Edit. Kirim ke user lewat ikon email setelah verifikasi permission.
+                Password ini disimpan aman &amp; tetap dapat Anda lihat lagi di menu Edit. Kirim ke pengguna lewat ikon email setelah verifikasi hak_akses.
             </p>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                        Role <span class="text-red-500">*</span>
+                        Peran <span class="text-red-500">*</span>
                     </label>
                     <div class="relative">
-                        <select name="role_id"
+                        <select name="peran_id"
                             class="w-full appearance-none border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-green-400 transition-colors">
-                            <option value="">Pilih Role</option>
-                            @foreach($roles as $role)
-                            <option value="{{ $role->id }}">{{ $role->role_name }}</option>
+                            <option value="">Pilih Peran</option>
+                            @foreach($peran as $p)
+                            <option value="{{ $p->id }}">{{ $p->nama_peran }}</option>
                             @endforeach
                         </select>
                         <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
@@ -65,7 +65,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </div>
-                    <p id="err-role_id" class="text-xs text-red-500 mt-1"></p>
+                    <p id="err-peran_id" class="text-xs text-red-500 mt-1"></p>
                 </div>
                 <div>
                     <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5">Status <span class="text-red-500">*</span></label>
@@ -87,18 +87,18 @@
 
         {{-- Footer --}}
         <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-            <button type="button" onclick="closeModal('createUserModal')"
+            <button type="button" onclick="closeModal('createPenggunaModal')"
                 class="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 Batal
             </button>
-            <button type="button" id="btnSimpanUser"
-                onclick="submitCreateUser()"
+            <button type="button" id="btnSimpanPengguna"
+                onclick="submitCreatePengguna()"
                 class="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
                 <svg id="btnSimpanSpinner" class="hidden animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                 </svg>
-                <span id="btnSimpanLabel">Simpan User</span>
+                <span id="btnSimpanLabel">Simpan Pengguna</span>
             </button>
         </div>
     </form>
@@ -106,9 +106,9 @@
 </x-modal>
 
 <script>
-function submitCreateUser() {
-    const form    = document.getElementById('createUserForm');
-    const btn     = document.getElementById('btnSimpanUser');
+function submitCreatePengguna() {
+    const form    = document.getElementById('createPenggunaForm');
+    const btn     = document.getElementById('btnSimpanPengguna');
     const spinner = document.getElementById('btnSimpanSpinner');
     const label   = document.getElementById('btnSimpanLabel');
 
@@ -122,7 +122,7 @@ function submitCreateUser() {
     label.textContent = 'Menyimpan...';
 
     const data = new FormData(form);
-    const url  = '{{ route('dashboard.users.store') }}';
+    const url  = '{{ route('dashboard.pengguna.store') }}';
 
     fetch(url, {
         method: 'POST',
@@ -137,10 +137,10 @@ function submitCreateUser() {
         // Reset loading state
         btn.disabled = false;
         spinner.classList.add('hidden');
-        label.textContent = 'Simpan User';
+        label.textContent = 'Simpan Pengguna';
 
         if (res.success) {
-            closeModal('createUserModal');
+            closeModal('createPenggunaModal');
 
             // Tampilkan alert berbeda tergantung status email
             showAlert(res.message, 'success');
@@ -157,7 +157,7 @@ function submitCreateUser() {
     .catch(() => {
         btn.disabled = false;
         spinner.classList.add('hidden');
-        label.textContent = 'Simpan User';
+        label.textContent = 'Simpan Pengguna';
         showAlert('Terjadi kesalahan koneksi.', 'error');
     });
 }

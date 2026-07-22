@@ -2,8 +2,8 @@
 @section('title', 'Jurnal Pembuka')
 @section('content')
 @php
-    $canEditJurnalPembuka   = auth()->user()->hasPermission('EDIT_JURNAL_PEMBUKA');
-    $canDeleteJurnalPembuka = auth()->user()->hasPermission('DELETE_JURNAL_PEMBUKA');
+    $canEditJurnalPembuka   = auth()->user()->hasHakAkses('EDIT_JURNAL_PEMBUKA');
+    $canDeleteJurnalPembuka = auth()->user()->hasHakAkses('DELETE_JURNAL_PEMBUKA');
     $bolehUbah = $jurnalPembuka->status === 'DRAFT';
 @endphp
 <div class="space-y-4 p-6">
@@ -124,7 +124,7 @@ const CSRF = document.querySelector('meta[name=csrf-token]').content;
 const CAN_DELETE_JURNAL_PEMBUKA = @json($canDeleteJurnalPembuka);
 
 function showPageAlert(message) {
-    const c = document.getElementById('permissionAlertContainer');
+    const c = document.getElementById('hakAksesAlertContainer');
     if (!c) return;
     c.innerHTML = '<div class="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400 mb-4">' + message + '</div>';
     clearTimeout(c._t);

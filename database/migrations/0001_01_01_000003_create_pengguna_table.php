@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('pengguna', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('role_id')
-                ->constrained('roles')
+            $table->foreignId('peran_id')
+                ->constrained('peran')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
                 
             $table->string('email')->unique();
-            $table->string('name', 100);
+            $table->string('nama', 100);
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->enum('status', ['active', 'inactive'])->default('active');
@@ -48,7 +48,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('pengguna');
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
     }

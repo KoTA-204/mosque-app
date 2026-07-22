@@ -10,7 +10,7 @@ class UpdateTransaksiRequest extends FormRequest
     protected $errorBag = 'editTransaksi'; 
     
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine if the pengguna is authorized to make this request.
      */
     public function authorize(): bool
     {
@@ -28,7 +28,7 @@ class UpdateTransaksiRequest extends FormRequest
             'jurnal.*.tipe'         => 'required|in:DEBIT,KREDIT',
             'jurnal.*.nominal'      => 'required|numeric|min:1',
             'deskripsi'             => 'nullable|string|max:500',
-            'bukti_transaksi'       => 'required|array|max:5',
+            'bukti_transaksi'       => 'nullable|array|max:5',
             'bukti_transaksi.*'     => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
         ];
     }
@@ -41,7 +41,6 @@ class UpdateTransaksiRequest extends FormRequest
             'jenis_transaksi.required'       => 'Jenis transaksi wajib dipilih',
             'akun_debit_id.required'         => 'Akun debit wajib dipilih.',
             'akun_kredit_id.required'        => 'Akun kredit wajib dipilih.',
-            'bukti_transaksi.required'       => 'Bukti transaksi wajib diunggah.',
             'bukti_transaksi.*.mimes'        => 'File harus berformat JPG, PNG, atau PDF.',
             'bukti_transaksi.*.max'          => 'Ukuran file maksimal 5 MB.',
         ];

@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Menu;
-use App\Models\Permission;
+use App\Models\HakAkses;
 
 class MenuSeeder extends Seeder
 {
@@ -13,18 +13,18 @@ class MenuSeeder extends Seeder
         // Hapus data lama agar tidak duplikat saat db:seed dijalankan ulang
         \App\Models\Menu::query()->forceDelete();
 
-        $perm = fn(string $code) => Permission::where('permission_code', $code)->value('id');
+        $perm = fn(string $code) => HakAkses::where('kode_hak_akses', $code)->value('id');
 
         // ── Beranda ──────────────────────────────────────────────────────────
         // Hanya Bendahara 1, Bendahara 2, Ketua DKM yang punya VIEW_LAPORAN_KEUANGAN
-        // Pakai permission itu sebagai gate supaya PHM / Panitia / Sekretaris
+        // Pakai hak_akses itu sebagai gate supaya PHM / Panitia / Sekretaris
         // tidak melihat menu ini.
         $beranda = Menu::create([
             'menu_name'     => 'Beranda',
             'route_name'    => null,
             'icon'          => 'home',
             'sort_order'    => 1,
-            'permission_id' => $perm('VIEW_LAPORAN_KEUANGAN'),
+            'hak_akses_id' => $perm('VIEW_LAPORAN_KEUANGAN'),
         ]);
 
         Menu::create([
@@ -33,43 +33,43 @@ class MenuSeeder extends Seeder
             'icon'          => 'home',
             'parent_id'     => $beranda->id,
             'sort_order'    => 2,
-            'permission_id' => $perm('VIEW_LAPORAN_KEUANGAN'),
+            'hak_akses_id' => $perm('VIEW_LAPORAN_KEUANGAN'),
         ]);
 
         // ── Manajemen Pengguna ───────────────────────────────────────────────
-        $manajemenUser = Menu::create([
+        $manajemenPengguna = Menu::create([
             'menu_name'     => 'Manajemen Pengguna',
             'route_name'    => null,
-            'icon'          => 'users-group',
+            'icon'          => 'pengguna-group',
             'sort_order'    => 10,
-            'permission_id' => $perm('VIEW_USERS'),
+            'hak_akses_id' => $perm('VIEW_PENGGUNA'),
         ]);
 
         Menu::create([
             'menu_name'     => 'Pengguna',
-            'route_name'    => 'dashboard.users.index',
-            'icon'          => 'user',
-            'parent_id'     => $manajemenUser->id,
+            'route_name'    => 'dashboard.pengguna.index',
+            'icon'          => 'pengguna',
+            'parent_id'     => $manajemenPengguna->id,
             'sort_order'    => 11,
-            'permission_id' => $perm('VIEW_USERS'),
+            'hak_akses_id' => $perm('VIEW_PENGGUNA'),
         ]);
 
         Menu::create([
             'menu_name'     => 'Peran',
-            'route_name'    => 'dashboard.roles.index',
+            'route_name'    => 'dashboard.peran.index',
             'icon'          => 'shield',
-            'parent_id'     => $manajemenUser->id,
+            'parent_id'     => $manajemenPengguna->id,
             'sort_order'    => 12,
-            'permission_id' => $perm('VIEW_ROLES'),
+            'hak_akses_id' => $perm('VIEW_PERAN'),
         ]);
 
         Menu::create([
             'menu_name'     => 'Hak Akses',
-            'route_name'    => 'dashboard.permissions.index',
+            'route_name'    => 'dashboard.hak-akses.index',
             'icon'          => 'lock',
-            'parent_id'     => $manajemenUser->id,
+            'parent_id'     => $manajemenPengguna->id,
             'sort_order'    => 13,
-            'permission_id' => $perm('VIEW_PERMISSIONS'),
+            'hak_akses_id' => $perm('VIEW_HAK_AKSES'),
         ]);
 
         // Manajemen Menu — hanya Administrator (punya VIEW_MENUS) yang melihat & CRUD
@@ -77,9 +77,9 @@ class MenuSeeder extends Seeder
             'menu_name'     => 'Manajemen Menu',
             'route_name'    => 'dashboard.menus.index',
             'icon'          => 'tables',
-            'parent_id'     => $manajemenUser->id,
+            'parent_id'     => $manajemenPengguna->id,
             'sort_order'    => 14,
-            'permission_id' => $perm('VIEW_MENUS'),
+            'hak_akses_id' => $perm('VIEW_MENUS'),
         ]);
 
         // ── Pencatatan Transaksi ─────────────────────────────────────────────
@@ -89,7 +89,7 @@ class MenuSeeder extends Seeder
             'route_name'    => null,
             'icon'          => 'notebook',
             'sort_order'    => 20,
-            'permission_id' => $perm('VIEW_TRANSAKSI'),
+            'hak_akses_id' => $perm('VIEW_TRANSAKSI'),
         ]);
 
         Menu::create([
@@ -98,7 +98,7 @@ class MenuSeeder extends Seeder
             'icon'          => 'forms',
             'parent_id'     => $pencatatan->id,
             'sort_order'    => 21,
-            'permission_id' => $perm('VIEW_TRANSAKSI'),
+            'hak_akses_id' => $perm('VIEW_TRANSAKSI'),
         ]);
 
         Menu::create([
@@ -107,7 +107,7 @@ class MenuSeeder extends Seeder
             'icon'          => 'pig-money',
             'parent_id'     => $pencatatan->id,
             'sort_order'    => 22,
-            'permission_id' => $perm('VIEW_KENCLENG'),
+            'hak_akses_id' => $perm('VIEW_KENCLENG'),
         ]);
 
         Menu::create([
@@ -116,7 +116,7 @@ class MenuSeeder extends Seeder
             'icon'          => 'receipt',
             'parent_id'     => $pencatatan->id,
             'sort_order'    => 23,
-            'permission_id' => $perm('VIEW_TRANSAKSI_KEGIATAN'),
+            'hak_akses_id' => $perm('VIEW_TRANSAKSI_KEGIATAN'),
         ]);
 
         // ── Persetujuan ──────────────────────────────────────────────────────
@@ -125,7 +125,7 @@ class MenuSeeder extends Seeder
             'route_name'    => null,
             'icon'          => 'checks',
             'sort_order'    => 30,
-            'permission_id' => $perm('VIEW_APPROVAL'),
+            'hak_akses_id' => $perm('VIEW_APPROVAL'),
         ]);
 
         Menu::create([
@@ -134,7 +134,7 @@ class MenuSeeder extends Seeder
             'icon'          => 'checks',
             'parent_id'     => $persetujuan->id,
             'sort_order'    => 31,
-            'permission_id' => $perm('VIEW_APPROVAL'),
+            'hak_akses_id' => $perm('VIEW_APPROVAL'),
         ]);
 
         // ── Akuntansi ────────────────────────────────────────────────────────
@@ -143,7 +143,7 @@ class MenuSeeder extends Seeder
             'route_name'    => null,
             'icon'          => 'book-2',
             'sort_order'    => 40,
-            'permission_id' => $perm('VIEW_JURNAL'),
+            'hak_akses_id' => $perm('VIEW_JURNAL'),
         ]);
 
         Menu::create([
@@ -152,7 +152,7 @@ class MenuSeeder extends Seeder
             'icon'          => 'notebook',
             'parent_id'     => $akuntansi->id,
             'sort_order'    => 41,
-            'permission_id' => $perm('VIEW_JURNAL_PEMBUKA'),
+            'hak_akses_id' => $perm('VIEW_JURNAL_PEMBUKA'),
         ]);
 
         Menu::create([
@@ -161,7 +161,7 @@ class MenuSeeder extends Seeder
             'icon'          => 'notebook',
             'parent_id'     => $akuntansi->id,
             'sort_order'    => 42,
-            'permission_id' => $perm('VIEW_JURNAL'),
+            'hak_akses_id' => $perm('VIEW_JURNAL'),
         ]);
 
         Menu::create([
@@ -170,7 +170,7 @@ class MenuSeeder extends Seeder
             'icon'          => 'notebook',
             'parent_id'     => $akuntansi->id,
             'sort_order'    => 43,
-            'permission_id' => $perm('VIEW_JURNAL_PENYESUAIAN'),
+            'hak_akses_id' => $perm('VIEW_JURNAL_PENYESUAIAN'),
         ]);
 
         Menu::create([
@@ -179,7 +179,7 @@ class MenuSeeder extends Seeder
             'icon'          => 'notebook',
             'parent_id'     => $akuntansi->id,
             'sort_order'    => 44,
-            'permission_id' => $perm('VIEW_JURNAL_KOREKSI'),
+            'hak_akses_id' => $perm('VIEW_JURNAL_KOREKSI'),
         ]);
 
         Menu::create([
@@ -188,7 +188,7 @@ class MenuSeeder extends Seeder
             'icon'          => 'notebook',
             'parent_id'     => $akuntansi->id,
             'sort_order'    => 45,
-            'permission_id' => $perm('VIEW_JURNAL_PENUTUP'),
+            'hak_akses_id' => $perm('VIEW_JURNAL_PENUTUP'),
         ]);
 
         Menu::create([
@@ -197,7 +197,7 @@ class MenuSeeder extends Seeder
             'icon'          => 'database',
             'parent_id'     => $akuntansi->id,
             'sort_order'    => 46,
-            'permission_id' => $perm('VIEW_BUKU_BESAR'),
+            'hak_akses_id' => $perm('VIEW_BUKU_BESAR'),
         ]);
 
         Menu::create([
@@ -206,7 +206,7 @@ class MenuSeeder extends Seeder
             'icon'          => 'checks',
             'parent_id'     => $akuntansi->id,
             'sort_order'    => 47,
-            'permission_id' => $perm('VIEW_NERACA_SALDO'),
+            'hak_akses_id' => $perm('VIEW_NERACA_SALDO'),
         ]);
 
         // ── Laporan ──────────────────────────────────────────────────────────
@@ -215,7 +215,7 @@ class MenuSeeder extends Seeder
             'route_name'    => null,
             'icon'          => 'charts',
             'sort_order'    => 50,
-            'permission_id' => $perm('VIEW_LAPORAN_KEUANGAN'),
+            'hak_akses_id' => $perm('VIEW_LAPORAN_KEUANGAN'),
         ]);
 
         Menu::create([
@@ -224,7 +224,7 @@ class MenuSeeder extends Seeder
             'icon'          => 'receipt',
             'parent_id'     => $laporan->id,
             'sort_order'    => 51,
-            'permission_id' => $perm('VIEW_LAPORAN_KEUANGAN'),
+            'hak_akses_id' => $perm('VIEW_LAPORAN_KEUANGAN'),
         ]);
 
         // ── Data Induk ───────────────────────────────────────────────────────
@@ -233,7 +233,7 @@ class MenuSeeder extends Seeder
             'route_name'    => null,
             'icon'          => 'database',
             'sort_order'    => 60,
-            'permission_id' => $perm('VIEW_COA'),
+            'hak_akses_id' => $perm('VIEW_COA'),
         ]);
 
         Menu::create([
@@ -242,7 +242,7 @@ class MenuSeeder extends Seeder
             'icon'          => 'book-2',
             'parent_id'     => $dataInduk->id,
             'sort_order'    => 61,
-            'permission_id' => $perm('VIEW_COA'),
+            'hak_akses_id' => $perm('VIEW_COA'),
         ]);
 
         Menu::create([
@@ -251,18 +251,18 @@ class MenuSeeder extends Seeder
             'icon'          => 'tag',
             'parent_id'     => $dataInduk->id,
             'sort_order'    => 62,
-            'permission_id' => $perm('VIEW_KATEGORI'),
+            'hak_akses_id' => $perm('VIEW_KATEGORI'),
         ]);
 
         // Kegiatan Khusus — tetap dikelompokkan di bawah Data Induk
-        // Gate CREATE_KEGIATAN agar hanya role yang berwenang (mis. Administrator) yang melihatnya
+        // Gate CREATE_KEGIATAN agar hanya peran yang berwenang (mis. Administrator) yang melihatnya
         Menu::create([
             'menu_name'     => 'Kegiatan Khusus',
             'route_name'    => 'dashboard.kegiatan.index',
             'icon'          => 'calendar-event',
             'parent_id'     => $dataInduk->id,
             'sort_order'    => 63,
-            'permission_id' => $perm('CREATE_KEGIATAN'),
+            'hak_akses_id' => $perm('CREATE_KEGIATAN'),
         ]);
 
         // Aset TIDAK di bawah Data Induk — lihat grup menu utama "Aset" (induk › anak) di bawah.
@@ -274,7 +274,7 @@ class MenuSeeder extends Seeder
             'route_name'    => 'dashboard.kencleng.index',
             'icon'          => 'pig-money',
             'sort_order'    => 70,
-            'permission_id' => $perm('VIEW_KENCLENG'),
+            'hak_akses_id' => $perm('VIEW_KENCLENG'),
         ]);
 
         // ── Transaksi Kegiatan (standalone untuk Panitia) ────────────────────
@@ -283,7 +283,7 @@ class MenuSeeder extends Seeder
             'route_name'    => 'dashboard.transaksi-kegiatan.index',
             'icon'          => 'receipt',
             'sort_order'    => 71,
-            'permission_id' => $perm('VIEW_TRANSAKSI_KEGIATAN'),
+            'hak_akses_id' => $perm('VIEW_TRANSAKSI_KEGIATAN'),
         ]);
 
         // ── Aset (grup menu utama khusus Sekretaris) ─────────────────────────
@@ -293,7 +293,7 @@ class MenuSeeder extends Seeder
             'route_name'    => null,
             'icon'          => 'ecommerce',
             'sort_order'    => 72,
-            'permission_id' => $perm('VIEW_ASET'),
+            'hak_akses_id' => $perm('VIEW_ASET'),
         ]);
 
         Menu::create([
@@ -302,7 +302,7 @@ class MenuSeeder extends Seeder
             'icon'          => 'ecommerce',
             'parent_id'     => $aset->id,
             'sort_order'    => 73,
-            'permission_id' => $perm('VIEW_ASET'),
+            'hak_akses_id' => $perm('VIEW_ASET'),
         ]);
     }
 }

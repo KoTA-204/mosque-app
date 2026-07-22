@@ -141,21 +141,17 @@ class ChartOfAccountController extends Controller
     public function perbaruiKategoriAkun(UpdateKategoriRequest $request, KategoriAkun $kategori)
     {
         if ($kategori->akunKeuangan()->exists()) {
-            return redirect()
-                ->route('dashboard.coa.index')
-                ->with('error', 'Kategori tidak dapat diubah karena sudah memiliki akun turunan.');
+            return back()->with("error",
+                "Kategori tidak dapat diubah karena sudah memiliki akun turunan.");
         }
-
         $kategori->update($request->validated());
-
-        return redirect()
-            ->route('dashboard.coa.index')
-            ->with('success', 'Kategori akun berhasil diperbarui.');
+        return redirect()->route("dashboard.coa.index")
+            ->with("success", "Kategori akun berhasil diperbarui.");
     }
 
     public function hapusKategoriAkun(KategoriAkun $kategori)
     {
-        if (!auth()->user()->hasPermission('DELETE_COA')) {
+        if (!auth()->user()->hasHakAkses('DELETE_COA')) {
             return back()->with('error', 'Anda tidak memiliki akses untuk menghapus kategori akun ini.');
         }
 
@@ -227,23 +223,17 @@ class ChartOfAccountController extends Controller
     public function perbaruiSubKategori(UpdateSubKategoriRequest $request, Akun $subKategori)
     {
         if ($subKategori->children()->exists()) {
-            return redirect()
-                ->route('dashboard.coa.index')
-                ->with('error', 'Sub kategori tidak dapat diubah karena sudah memiliki akun turunan.');
+            return back()->with("error",
+                "Sub kategori tidak dapat diubah karena sudah memiliki akun turunan.");
         }
-
-        $data = $request->validated();
-
-        $subKategori->update($data);
-
-        return redirect()
-            ->route('dashboard.coa.index')
-            ->with('success', 'Sub kategori akun berhasil diperbarui.');
+        $subKategori->update([...$request->validated()]);
+        return redirect()->route("dashboard.coa.index")
+            ->with("success", "Sub kategori akun berhasil diperbarui.");
     }
 
     public function hapusSubKategori(Akun $subKategori)
     {
-        if (!auth()->user()->hasPermission('DELETE_COA')) {
+        if (!auth()->user()->hasHakAkses('DELETE_COA')) {
             return back()->with('error', 'Anda tidak memiliki akses untuk menghapus sub kategori ini.');
         }
 
@@ -329,25 +319,21 @@ class ChartOfAccountController extends Controller
 
     public function perbaruiAkun(UpdateAkunRequest $request, Akun $akun)
     {
-        $data = $request->validated();
-        
-        if (DetailJurnal::where('akun_id', $akun->id)->exists()) {
-            $data = ['status' => $data['status']];
+        if (DetailJurnal::where("akun_id", $akun->id)->exists()) {
+            // Sudah dipakai transaksi: hanya status yang boleh berubah
+            $akun->update(["status" => $request->validated()["status"]]);
         } else {
             $subKategori = Akun::findOrFail($request->parent_id);
-            $data['kategori_akun_id'] = $subKategori->kategori_akun_id;
+            $akun->update([...$request->validated(),
+                "kategori_akun_id" => $subKategori->kategori_akun_id]);
         }
-
-        $akun->update($data);
-
-        return redirect()
-            ->route('dashboard.coa.index')
-            ->with('success', 'Akun berhasil diperbarui.');
+        return redirect()->route("dashboard.coa.index")
+            ->with("success", "Akun berhasil diperbarui.");
     }
 
     public function hapusAkun(Akun $akun)
     {
-        if (!auth()->user()->hasPermission('DELETE_COA')) {
+        if (!auth()->user()->hasHakAkses('DELETE_COA')) {
             return back()->with('error', 'Anda tidak memiliki akses untuk menghapus akun ini.');
         }
 

@@ -48,8 +48,8 @@
                 @endif
             </div>
             <div>
-                <p class="text-xs text-gray-400">Permission</p>
-                <p class="text-sm text-gray-900 dark:text-white">{{ $menu->permission?->permission_name ?? '-' }}</p>
+                <p class="text-xs text-gray-400">HakAkses</p>
+                <p class="text-sm text-gray-900 dark:text-white">{{ $menu->hak_akses?->nama_hak_akses ?? '-' }}</p>
             </div>
         </div>
 

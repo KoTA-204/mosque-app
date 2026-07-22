@@ -2,7 +2,7 @@
 @section('title', 'Jurnal Pembuka')
 @section('content')
 @php
-    $canCreateJurnalPembuka = auth()->user()->hasPermission('CREATE_JURNAL_PEMBUKA');
+    $canCreateJurnalPembuka = auth()->user()->hasHakAkses('CREATE_JURNAL_PEMBUKA');
 @endphp
 <div class="space-y-4 p-6">
 
@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function () {
 const NAMA_BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
 /**
- * Hitung tanggal akhir bulan dari tanggal awal yang dipilih user,
+ * Hitung tanggal akhir bulan dari tanggal awal yang dipilih pengguna,
  */
 function hitungTanggalAkhirDanNama() {
     const val = document.getElementById('inputTanggalAwal').value; // format: yyyy-mm-dd

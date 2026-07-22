@@ -70,7 +70,7 @@
                 </td>
 
                 <td class="px-4 py-3">
-                    @if(auth()->user()?->hasPermission('EDIT_ASET'))
+                    @if(auth()->user()?->hasHakAkses('EDIT_ASET'))
                     <button onclick="toggleStatus({{ $aset->id }}, '{{ $aset->status_aset }}')"
                         id="toggle-{{ $aset->id }}"
                         title="{{ $toggleTitle }}"
@@ -113,7 +113,7 @@
                         @php
                             $bisaHapus = !is_null($aset->umur_manfaat) && $aset->hitungNilaiBukuRealTime() <= 0;
                         @endphp
-                        @if($bisaHapus && auth()->user()?->hasPermission('DELETE_ASET'))
+                        @if($bisaHapus && auth()->user()?->hasHakAkses('DELETE_ASET'))
                         <button onclick="hapusAset( {{ $aset->id }} , '{{ addslashes($aset->nama_aset) }}' )"
                             class="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors" title="Hapus">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -6,7 +6,7 @@
     {{-- Header --}}
     <div class="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 px-6 py-4 mb-6">
         <div class="flex items-center gap-3">
-            <a href="{{ route('dashboard.roles.index') }}"
+            <a href="{{ route('dashboard.peran.index') }}"
                class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -16,11 +16,11 @@
         </div>
     </div>
 
-    <form action="{{ route('dashboard.roles.update', $role) }}" method="POST">
+    <form action="{{ route('dashboard.peran.update', $peran) }}" method="POST">
         @csrf
         @method('PUT')
 
-        @error('permission')
+        @error('hak_akses')
         <div class="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400">
             <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
@@ -29,19 +29,19 @@
         </div>
         @enderror
 
-        {{-- Info Role --}}
+        {{-- Info Peran --}}
         <div class="rounded-xl border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark mb-6">
             <h3 class="mb-4 text-lg font-medium text-black dark:text-white">Informasi Peran</h3>
 
-            {{-- Role Name --}}
+            {{-- Peran Name --}}
             <div class="mb-4">
                 <label class="mb-2 block text-sm font-medium text-black dark:text-white">
                     Nama Peran <span class="text-red-500">*</span>
                 </label>
-                <input type="text" name="role_name"
-                       value="{{ old('role_name', $role->role_name) }}"
-                       class="w-full rounded-lg border border-stroke px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white @error('role_name') border-red-500 @enderror">
-                @error('role_name')
+                <input type="text" name="nama_peran"
+                       value="{{ old('nama_peran', $peran->nama_peran) }}"
+                       class="w-full rounded-lg border border-stroke px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white @error('nama_peran') border-red-500 @enderror">
+                @error('nama_peran')
                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                 @enderror
             </div>
@@ -51,12 +51,12 @@
                 <label class="mb-2 block text-sm font-medium text-black dark:text-white">
                     Deskripsi
                 </label>
-                <textarea name="description" rows="3"
-                          class="w-full rounded-lg border border-stroke px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white">{{ old('description', $role->description) }}</textarea>
+                <textarea name="deskripsi" rows="3"
+                          class="w-full rounded-lg border border-stroke px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-strokedark dark:bg-boxdark dark:text-white">{{ old('deskripsi', $peran->deskripsi) }}</textarea>
             </div>
         </div>
 
-        {{-- Permission Matrix --}}
+        {{-- HakAkses Matrix --}}
         <div class="rounded-xl border border-stroke bg-white p-6 shadow-default dark:border-strokedark dark:bg-boxdark mb-6">
             <h3 class="mb-4 text-lg font-medium text-black dark:text-white">Hak Akses</h3>
 
@@ -130,19 +130,19 @@
                                                 ? 'dashboard'
                                                 : ($routeParts[1] ?? null);
 
-                                            $permission = $module
-                                                ? ($permissions[$module] ?? collect())
-                                                    ->where('action', $action)
+                                            $hak_akses = $module
+                                                ? ($hak_akses[$module] ?? collect())
+                                                    ->where('aksi', $action)
                                                     ->first()
                                                 : null;
                                         @endphp
 
                                         <td class="px-4 py-3 text-center">
-                                            @if($permission)
+                                            @if($hak_akses)
                                                 <input type="checkbox"
-                                                    name="permission_ids[]"
-                                                    value="{{ $permission->id }}"
-                                                    {{ in_array($permission->id, old('permission_ids', $assignedIds)) ? 'checked' : '' }}
+                                                    name="hak_akses_ids[]"
+                                                    value="{{ $hak_akses->id }}"
+                                                    {{ in_array($hak_akses->id, old('hak_akses_ids', $assignedIds)) ? 'checked' : '' }}
                                                     class="h-4 w-4 rounded border-stroke cursor-pointer">
                                             @else
                                                 <span class="text-gray-300 dark:text-gray-600">—</span>
@@ -181,19 +181,19 @@
                                             ? 'dashboard'
                                             : ($routeParts[1] ?? null);
 
-                                        $permission = $module
-                                            ? ($permissions[$module] ?? collect())
-                                                ->where('action', $action)
+                                        $hak_akses = $module
+                                            ? ($hak_akses[$module] ?? collect())
+                                                ->where('aksi', $action)
                                                 ->first()
                                             : null;
                                     @endphp
 
                                     <td class="px-4 py-3 text-center">
-                                        @if($permission)
+                                        @if($hak_akses)
                                             <input type="checkbox"
-                                                name="permission_ids[]"
-                                                value="{{ $permission->id }}"
-                                                {{ in_array($permission->id, old('permission_ids', $assignedIds)) ? 'checked' : '' }}
+                                                name="hak_akses_ids[]"
+                                                value="{{ $hak_akses->id }}"
+                                                {{ in_array($hak_akses->id, old('hak_akses_ids', $assignedIds)) ? 'checked' : '' }}
                                                 class="h-4 w-4 rounded border-stroke cursor-pointer">
                                         @else
                                             <span class="text-gray-300 dark:text-gray-600">—</span>
@@ -214,7 +214,7 @@
                     class="rounded-lg bg-brand-500 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-600 transition-colors duration-150">
                     Update
             </button>
-            <a href="{{ route('dashboard.roles.index') }}"
+            <a href="{{ route('dashboard.peran.index') }}"
                class="rounded-lg border border-stroke px-6 py-2.5 text-sm font-medium text-black hover:bg-gray-100 dark:text-white">
                 Batal
             </a>

@@ -171,7 +171,7 @@
             @endforeach
         </nav>
 
-        <!-- Bottom: User Profile + Logout -->
+        <!-- Bottom: Pengguna Profile + Logout -->
         <div class="mt-auto border-t border-gray-100 dark:border-gray-800 pt-4">
             <div class="flex items-center gap-3 px-3 py-2 mb-3"
                 :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'justify-center' : ''">
@@ -183,10 +183,10 @@
                 <div x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen"
                     class="overflow-hidden">
                     <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                        {{ auth()->user()->name ?? 'Wulan bin Fulan' }}
+                        {{ auth()->user()->nama ?? 'Wulan bin Fulan' }}
                     </p>
                     <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {{ auth()->user()->roles->role_name ?? 'Admin' }}
+                        {{ auth()->user()->peran->nama_peran ?? 'Admin' }}
                     </p>
                 </div>
             </div>

@@ -11,14 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('permissions', function (Blueprint $table) {
+        Schema::create('peran', function (Blueprint $table) {
             $table->id();
-            $table->string('permission_code')->unique();
-            $table->string('permission_name');
-            $table->string('module');
-            $table->string('action');
-            $table->string('description')->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->string('nama_peran', 100)->unique();
+            $table->string('deskripsi', 255)->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('permissions');
+        Schema::dropIfExists('peran');
     }
 };

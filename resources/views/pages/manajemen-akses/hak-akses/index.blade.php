@@ -11,7 +11,7 @@
             <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Manajemen Hak Akses</h1>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('dashboard.permissions.create') }}"
+            <a href="{{ route('dashboard.hak-akses.create') }}"
                class="inline-flex items-center gap-2 border border-green-600 text-green-700 dark:text-green-400 dark:border-green-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -95,7 +95,7 @@
 
                 {{-- Reset — tampil hanya jika ada filter aktif --}}
                 @if(request('search') || request('module') || request('action'))
-                <a href="{{ route('dashboard.permissions.index') }}"
+                <a href="{{ route('dashboard.hak-akses.index') }}"
                    class="shrink-0 text-sm text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
                     Reset
                 </a>
@@ -109,7 +109,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
                 <input type="text" name="search" value="{{ request('search') }}"
-                    placeholder="Cari permission..."
+                    placeholder="Cari hak_akses..."
                     class="pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:border-blue-400 w-52 placeholder-gray-400">
             </div>
 
@@ -142,20 +142,20 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
-                @forelse($permissions as $permission)
+                @forelse($hak_akses as $item)
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                     <td class="px-5 py-3.5 text-center text-gray-500 dark:text-gray-400">
-                        {{ $permissions->firstItem() + $loop->index }}
+                        {{ $hak_akses->firstItem() + $loop->index }}
                     </td>
                     <td class="px-4 py-3.5 font-mono text-xs text-gray-700 dark:text-gray-300">
-                        {{ $permission->permission_code }}
+                        {{ $item->kode_hak_akses }}
                     </td>
                     <td class="px-4 py-3.5 font-medium text-gray-800 dark:text-gray-200">
-                        {{ $permission->permission_name }}
+                        {{ $item->nama_hak_akses }}
                     </td>
                     <td class="px-4 py-3.5 text-center">
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400">
-                            {{ $permission->module }}
+                            {{ $item->modul }}
                         </span>
                     </td>
                     <td class="px-4 py-3.5 text-center">
@@ -166,21 +166,21 @@
                                 'update' => 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400',
                                 'delete' => 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400',
                             ];
-                            $style = $actionStyles[$permission->action] ?? 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400';
+                            $style = $actionStyles[$item->aksi] ?? 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400';
                         @endphp
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $style }}">
-                            {{ ucfirst($permission->action) }}
+                            {{ ucfirst($item->aksi) }}
                         </span>
                     </td>
                     <td class="px-4 py-3.5 text-center">
-                        <span class="text-sm font-medium {{ $permission->is_active ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400' }}">
-                            {{ $permission->is_active ? 'Aktif' : 'Nonaktif' }}
+                        <span class="text-sm font-medium {{ $item->aktif ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400' }}">
+                            {{ $item->aktif ? 'Aktif' : 'Nonaktif' }}
                         </span>
                     </td>
                     <td class="px-5 py-3.5">
                         <div class="flex items-center justify-center gap-1">
                             {{-- Detail --}}
-                            <a href="{{ route('dashboard.permissions.show', $permission) }}"
+                            <a href="{{ route('dashboard.hak-akses.show', $item) }}"
                                class="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                title="Detail">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -190,7 +190,7 @@
                             </a>
 
                             {{-- Edit --}}
-                            <a href="{{ route('dashboard.permissions.edit', $permission) }}"
+                            <a href="{{ route('dashboard.hak-akses.edit', $item) }}"
                                class="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                title="Edit">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,8 +199,8 @@
                             </a>
 
                             {{-- Delete --}}
-                            <form action="{{ route('dashboard.permissions.destroy', $permission) }}" method="POST"
-                                  data-confirm="Yakin hapus permission ini?" data-confirm-label="Hapus">
+                            <form action="{{ route('dashboard.hak-akses.destroy', $item) }}" method="POST"
+                                  data-confirm="Yakin hapus hak akses ini?" data-confirm-label="Hapus">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"
@@ -217,8 +217,8 @@
                 @empty
                 <tr>
                     <td colspan="7" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-600">
-                        Belum ada data permission.
-                        <a href="{{ route('dashboard.permissions.create') }}" class="text-blue-600 hover:underline ml-1">Tambah sekarang</a>
+                        Belum ada data hak akses.
+                        <a href="{{ route('dashboard.hak-akses.create') }}" class="text-blue-600 hover:underline ml-1">Tambah sekarang</a>
                     </td>
                 </tr>
                 @endforelse
@@ -227,22 +227,22 @@
         </div>
 
         {{-- Pagination --}}
-        @if($permissions->hasPages())
+        @if($hak_akses->hasPages())
         <div class="flex items-center justify-between px-5 py-4 border-t border-gray-100 dark:border-gray-800 flex-wrap gap-3">
             <div class="flex items-center gap-1">
                 {{-- Previous --}}
-                @if($permissions->onFirstPage())
+                @if($hak_akses->onFirstPage())
                 <span class="px-3 py-1.5 text-sm text-gray-300 dark:text-gray-600 border border-gray-200 dark:border-gray-700 rounded-lg">Previous</span>
                 @else
-                <a href="{{ $permissions->previousPageUrl() }}"
+                <a href="{{ $hak_akses->previousPageUrl() }}"
                    class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Previous</a>
                 @endif
 
                 {{-- Page Numbers --}}
-                @foreach($permissions->getUrlRange(1, $permissions->lastPage()) as $page => $url)
+                @foreach($hak_akses->getUrlRange(1, $hak_akses->lastPage()) as $page => $url)
                 <a href="{{ $url }}"
                    class="w-8 h-8 flex items-center justify-center text-sm rounded-lg transition-colors
-                       {{ $page === $permissions->currentPage()
+                       {{ $page === $hak_akses->currentPage()
                            ? 'bg-blue-600 text-white font-medium'
                            : 'text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
                     {{ $page }}
@@ -250,8 +250,8 @@
                 @endforeach
 
                 {{-- Next --}}
-                @if($permissions->hasMorePages())
-                <a href="{{ $permissions->nextPageUrl() }}"
+                @if($hak_akses->hasMorePages())
+                <a href="{{ $hak_akses->nextPageUrl() }}"
                    class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Next</a>
                 @else
                 <span class="px-3 py-1.5 text-sm text-gray-300 dark:text-gray-600 border border-gray-200 dark:border-gray-700 rounded-lg">Next</span>
@@ -259,7 +259,7 @@
             </div>
 
             <span class="text-xs text-gray-400 dark:text-gray-600">
-                Showing {{ $permissions->firstItem() }} to {{ $permissions->lastItem() }} of {{ $permissions->total() }} entries
+                Showing {{ $hak_akses->firstItem() }} to {{ $hak_akses->lastItem() }} of {{ $hak_akses->total() }} entries
             </span>
         </div>
         @endif

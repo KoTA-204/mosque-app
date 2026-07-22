@@ -222,7 +222,7 @@
                     <tr>
                         <td colspan="6" class="px-5 py-12 text-center text-sm text-gray-400 dark:text-gray-600">
                             Belum ada data kencleng.
-                            @if(auth()->user()->hasPermission('CREATE_KENCLENG'))
+                            @if(auth()->user()->hasHakAkses('CREATE_KENCLENG'))
                             <a href="{{ route('dashboard.kencleng.create') }}" class="text-green-600 hover:underline ml-1">Catat sekarang</a>
                             @endif
                         </td>

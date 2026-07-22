@@ -183,7 +183,7 @@
                                 @endif
                             </div>
                         </td>
-                        <td class="px-4 py-3.5 text-gray-500 dark:text-gray-400">{{ $item->user->name }}</td>
+                        <td class="px-4 py-3.5 text-gray-500 dark:text-gray-400">{{ $item->pengguna->nama }}</td>
                         <td class="px-4 py-3.5 text-center">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $jenis === 'PEMASUKAN' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'}}">
                                 {{ ucfirst(strtolower($jenis)) }}

@@ -11,10 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('roles', function (Blueprint $table) {
+        Schema::create('hak_akses', function (Blueprint $table) {
             $table->id();
-            $table->string('role_name', 100)->unique();
-            $table->string('description', 255)->nullable();
+            $table->string('kode_hak_akses')->unique();
+            $table->string('nama_hak_akses');
+            $table->string('modul');
+            $table->string('aksi');
+            $table->string('deskripsi')->nullable();
+            $table->boolean('aktif')->default(true);
             $table->timestamps();
         });
     }
@@ -24,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('roles');
+        Schema::dropIfExists('hak_akses');
     }
 };
