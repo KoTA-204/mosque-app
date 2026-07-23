@@ -151,7 +151,7 @@
                     </form>
 
                 </div>
-                <a href="{{ route('dashboard.peran.show', $peran) }}"
+                <a href="{{ route('dashboard.peran.show', $item) }}"
                    class="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                     Detail
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"

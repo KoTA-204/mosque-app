@@ -130,19 +130,19 @@
                                                 ? 'dashboard'
                                                 : ($routeParts[1] ?? null);
 
-                                            $hak_akses = $module
-                                                ? ($hak_akses[$module] ?? collect())
+                                            $hakAksesItem = $module
+                                                ? ($hak_akses[$module] ?? $hak_akses[str_replace('-', '_', $module)] ?? collect())
                                                     ->where('aksi', $action)
                                                     ->first()
                                                 : null;
                                         @endphp
 
                                         <td class="px-4 py-3 text-center">
-                                            @if($hak_akses)
+                                            @if($hakAksesItem)
                                                 <input type="checkbox"
                                                     name="hak_akses_ids[]"
-                                                    value="{{ $hak_akses->id }}"
-                                                    {{ in_array($hak_akses->id, old('hak_akses_ids', $assignedIds)) ? 'checked' : '' }}
+                                                    value="{{ $hakAksesItem->id }}"
+                                                    {{ in_array($hakAksesItem->id, old('hak_akses_ids', $assignedIds)) ? 'checked' : '' }}
                                                     class="h-4 w-4 rounded border-stroke cursor-pointer">
                                             @else
                                                 <span class="text-gray-300 dark:text-gray-600">—</span>
@@ -181,19 +181,19 @@
                                             ? 'dashboard'
                                             : ($routeParts[1] ?? null);
 
-                                        $hak_akses = $module
-                                            ? ($hak_akses[$module] ?? collect())
+                                        $hakAksesItem = $module
+                                            ? ($hak_akses[$module] ?? $hak_akses[str_replace('-', '_', $module)] ?? collect())
                                                 ->where('aksi', $action)
                                                 ->first()
                                             : null;
                                     @endphp
 
                                     <td class="px-4 py-3 text-center">
-                                        @if($hak_akses)
+                                        @if($hakAksesItem)
                                             <input type="checkbox"
                                                 name="hak_akses_ids[]"
-                                                value="{{ $hak_akses->id }}"
-                                                {{ in_array($hak_akses->id, old('hak_akses_ids', $assignedIds)) ? 'checked' : '' }}
+                                                value="{{ $hakAksesItem->id }}"
+                                                {{ in_array($hakAksesItem->id, old('hak_akses_ids', $assignedIds)) ? 'checked' : '' }}
                                                 class="h-4 w-4 rounded border-stroke cursor-pointer">
                                         @else
                                             <span class="text-gray-300 dark:text-gray-600">—</span>
