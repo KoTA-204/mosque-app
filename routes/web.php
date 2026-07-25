@@ -302,15 +302,15 @@ Route::middleware(['auth', 'active'])->prefix('dashboard')->name('dashboard.')->
     });
 
     // ── Akuntansi - Jurnal Umum ────────────────────────────────────────────
-    Route::middleware('hak_akses:VIEW_JURNAL')->group(function () {
+    Route::middleware('hak_akses:VIEW_JURNAL_UMUM')->group(function () {
         Route::get('/jurnal-umum', [JurnalUmumController::class, 'tampilkanJurnalUmum'])->name('jurnal-umum.index');
 
-        Route::middleware('hak_akses:CREATE_JURNAL')->group(function () {
+        Route::middleware('hak_akses:CREATE_JURNAL_UMUM')->group(function () {
             Route::post('/jurnal-umum/bulk-post', [JurnalUmumController::class, 'bulkPost'])->name('jurnal-umum.bulk-post');
             Route::post('/jurnal-umum/{jurnalUmum}/post', [JurnalUmumController::class, 'post'])->name('jurnal-umum.post');
         });
 
-        Route::middleware('hak_akses:DELETE_JURNAL')->group(function () {
+        Route::middleware('hak_akses:DELETE_JURNAL_UMUM')->group(function () {
             Route::delete('/jurnal-umum/{jurnalUmum}', [JurnalUmumController::class, 'hapusJurnalUmum'])->name('jurnal-umum.destroy');
         });
 
